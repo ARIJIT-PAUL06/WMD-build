@@ -1,0 +1,166 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Bharat Builds Environmental Hacks - 3D Interactive Air Quality System
+  Architecture: S3 + CloudFront (Frontend), API Gateway + Lambda (API), DynamoDB (Storage), Bedrock (AI).
+
+Globals:
+  Function:
+    Timeout: 15
+    MemorySize: 256
+    Runtime: nodejs20.x
+    Architectures:
+      - arm64
+
+Resources:
+  # =================================================================
+  # 1. Amazon DynamoDB: Historical Readings Store
+  # =================================================================
+  AirQualityDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: AirQualityReadings
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: city
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: N
+      KeySchema:
+        - AttributeName: city
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # =================================================================
+  # 2. Amazon Bedrock & DynamoDB IAM Policy for Lambda
+  # =================================================================
+  AirQualityBackendRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBReadWriteAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource: !GetAtt AirQualityDynamoDBTable.Arn
+        - PolicyName: BedrockInvokeModelAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                Resource: '*'
+
+  # =================================================================
+  # 3. AWS Lambda & API Gateway: Environmental API Handler
+  # =================================================================
+  AirQualityLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: BharatBuildsAirQualityFunction
+      CodeUri: ./lambda/
+      Handler: airQualityHandler.handler
+      Role: !GetAtt AirQualityBackendRole.Arn
+      Environment:
+        Variables:
+          DYNAMODB_TABLE_NAME: !Ref AirQualityDynamoDBTable
+          BEDROCK_MODEL_ID: 'anthropic.claude-3-haiku-20240307-v1:0'
+      Events:
+        GetAirQuality:
+          Type: HttpApi
+          Properties:
+            Path: /api/air-quality
+            Method: GET
+        GetHistory:
+          Type: HttpApi
+          Properties:
+            Path: /api/history
+            Method: GET
+
+  # =================================================================
+  # 4. Amazon S3 & CloudFront: Static Frontend Hosting
+  # =================================================================
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "bharatbuilds-air-3d-${AWS::AccountId}-${AWS::Region}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  CloudFrontOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: "FrontendOAC"
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  FrontendCloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: index.html
+        Comment: "Bharat Builds Environmental Hacks 3D Frontend"
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+        CustomErrorResponses:
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+
+Outputs:
+  HttpApiUrl:
+    Description: "API Gateway Base URL"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+  DynamoDBTableName:
+    Description: "DynamoDB Historical Table"
+    Value: !Ref AirQualityDynamoDBTable
+  CloudFrontUrl:
+    Description: "CloudFront CDN URL"
+    Value: !Sub "https://${FrontendCloudFrontDistribution.DomainName}"
+  S3BucketName:
+    Description: "S3 Website Bucket Name"
+    Value: !Ref FrontendBucket

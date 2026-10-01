@@ -1,0 +1,20 @@
+{
+  "deviceId": "cpcb-sensor-delhi-bawana-04",
+  "city": "Delhi (DTU / Bawana)",
+  "timestamp": 1727678400000,
+  "aqi": 342,
+  "pollutants": {
+    "pm25": 195.4,
+    "pm10": 310.2,
+    "no2": 42.1,
+    "so2": 15.6,
+    "o3": 28.4,
+    "co": 1.2
+  },
+  "weather": {
+    "temp": 31.5,
+    "humidity": 48.0
+  },
+  "batteryPercent": 94,
+  "firmware": "v2.4.1-esp32"
+}
