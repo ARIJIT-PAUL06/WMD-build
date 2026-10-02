@@ -571,94 +571,145 @@ function getAqiColor(val, activeRange) {
 
 /**
  * Applies the signature Mapbox 'navigation-night-v1' color palette to vector tile layers.
- * Synchronizes vector layers with Mapbox's midnight obsidian background (#070b14),
- * rich deep marine navy water (#08152b), electric blue expressways (#2563eb),
- * cobalt arterial roads (#1d4ed8), slate streets (#16233b), cyan state borders (#38bdf8),
- * and crisp white typography (#f1f5f9) with dark halos.
+ * Synchronizes vector layers with Mapbox's luminous slate-navy background (#1c2638),
+ * rich deep marine navy water (#121e30), electric cyan expressways (#38bdf8),
+ * azure arterial roads (#0ea5e9), visible slate secondary road web (#334155),
+ * crisp white state borders (#f8fafc), and crisp luminous white typography (#f8fafc)
+ * with sharp dark halos.
  */
 function applyNavigationNightPalette(map) {
   if (!map || typeof map.getStyle !== 'function') return;
   const style = map.getStyle();
   if (!style || !style.layers) return;
 
-  // 1. Background / Land
+  // 1. Background / Land: Mapbox luminous slate-navy background (#1c2638)
   if (map.getLayer('background')) {
-    map.setPaintProperty('background', 'background-color', '#070b14');
+    map.setPaintProperty('background', 'background-color', '#1c2638');
   }
 
   style.layers.forEach((l) => {
     const id = l.id;
     const type = l.type;
 
-    // 2. Waterways & Water Bodies (Deep Marine Navy #08152b)
+    // 2. Waterways & Water Bodies (Deep Marine Navy #121e30, canals/streams #1a2a42)
     if (id.includes('water') || id.includes('ocean')) {
       if (type === 'fill') {
-        map.setPaintProperty(id, 'fill-color', '#08152b');
+        map.setPaintProperty(id, 'fill-color', '#121e30');
       } else if (type === 'line') {
-        map.setPaintProperty(id, 'line-color', '#0c2347');
+        map.setPaintProperty(id, 'line-color', '#1a2a42');
       }
     }
 
-    // 3. Landuse, Forests, Parks & Residential
+    // 3. Landuse, Forests, Parks & Residential (Soft tinted overlay matching Mapbox terrain)
     if (id.includes('wood') || id.includes('forest') || id.includes('park') || id.includes('grass')) {
       if (type === 'fill') {
-        map.setPaintProperty(id, 'fill-color', '#081817');
-        map.setPaintProperty(id, 'fill-opacity', 0.55);
+        map.setPaintProperty(id, 'fill-color', '#192b3a');
+        map.setPaintProperty(id, 'fill-opacity', 0.45);
       }
-    } else if (id.includes('residential') || id.includes('commercial') || id.includes('industrial')) {
+    } else if (id.includes('residential') || id.includes('commercial') || id.includes('industrial') || id.includes('landuse')) {
       if (type === 'fill') {
-        map.setPaintProperty(id, 'fill-color', '#090e19');
+        map.setPaintProperty(id, 'fill-color', '#1e2b3e');
+        map.setPaintProperty(id, 'fill-opacity', 0.5);
       }
     }
 
-    // 4. Buildings Footprints (#0c1524)
+    // 4. Buildings Footprints (#182436 with subtle stroke #253752)
     if (id.includes('building')) {
       if (type === 'fill') {
-        map.setPaintProperty(id, 'fill-color', '#0c1524');
-        map.setPaintProperty(id, 'fill-outline-color', '#13213a');
+        map.setPaintProperty(id, 'fill-color', '#182436');
+        map.setPaintProperty(id, 'fill-outline-color', '#253752');
       }
     }
 
-    // 5. Roads & Highways (Mapbox Navigation Night signature Electric Blues & Slates)
+    // 5. Roads & Highways (Exact Mapbox Navigation Night signature: Cyan expressways, azure trunks, visible slate road web)
     if (type === 'line') {
       if (id.includes('motorway') || id.includes('freeway')) {
         if (id.includes('casing')) {
-          map.setPaintProperty(id, 'line-color', '#091c3d');
+          map.setPaintProperty(id, 'line-color', '#0c1b33');
         } else {
-          map.setPaintProperty(id, 'line-color', '#2563eb');
+          map.setPaintProperty(id, 'line-color', '#38bdf8'); // Electric vibrant cyan
         }
-      } else if (id.includes('trunk') || id.includes('primary') || id.includes('highway_major')) {
+      } else if (id.includes('major') || id.includes('trunk') || id.includes('primary')) {
         if (id.includes('casing')) {
-          map.setPaintProperty(id, 'line-color', '#07132a');
+          map.setPaintProperty(id, 'line-color', '#091629');
         } else {
-          map.setPaintProperty(id, 'line-color', '#1d4ed8');
+          map.setPaintProperty(id, 'line-color', '#0ea5e9'); // Azure cyan
         }
-      } else if (id.includes('secondary')) {
-        map.setPaintProperty(id, 'line-color', '#1e3a8a');
-      } else if (id.includes('minor') || id.includes('tertiary') || id.includes('service')) {
-        map.setPaintProperty(id, 'line-color', '#16233b');
+      } else if (id.includes('minor') || id.includes('tertiary') || id.includes('secondary') || id.includes('service')) {
+        // Visible secondary web across terrain matching Mapbox
+        map.setPaintProperty(id, 'line-color', '#334155');
+        map.setPaintProperty(id, 'line-opacity', 0.85);
       } else if (id.includes('path') || id.includes('track') || id.includes('pedestrian')) {
-        map.setPaintProperty(id, 'line-color', '#0f172a');
+        map.setPaintProperty(id, 'line-color', '#273549');
+        map.setPaintProperty(id, 'line-opacity', 0.7);
       }
     }
 
-    // 6. Boundaries (Vivid Cyan #38bdf8 & Azure #60a5fa)
+    // 6. Boundaries (Crisp white state boundaries & cyan country borders matching Mapbox)
     if (id.includes('boundary')) {
       if (id.includes('state')) {
-        map.setPaintProperty(id, 'line-color', '#38bdf8');
-        map.setPaintProperty(id, 'line-opacity', 0.92);
+        map.setPaintProperty(id, 'line-color', '#f8fafc');
+        map.setPaintProperty(id, 'line-opacity', 0.9);
       } else if (id.includes('country')) {
-        map.setPaintProperty(id, 'line-color', '#60a5fa');
+        map.setPaintProperty(id, 'line-color', '#38bdf8');
+        map.setPaintProperty(id, 'line-opacity', 0.95);
       }
     }
 
-    // 7. Typography and City/Place Labels (Crisp Luminous White with Dark Halo)
+    // 7. Typography and City/Place Labels: Unconditionally override OpenFreeMap dark style's gray/black labels!
     if (type === 'symbol') {
       try {
-        if (map.getPaintProperty(id, 'text-color') !== undefined) {
+        if (id.includes('country')) {
+          map.setPaintProperty(id, 'text-color', '#ffffff');
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(5, 10, 20, 0.9)');
+          map.setPaintProperty(id, 'text-halo-width', 1.2);
+          map.setPaintProperty(id, 'text-halo-blur', 0);
+          map.setPaintProperty(id, 'text-opacity', 1.0);
+        } else if (id.includes('state') || id === 'place_state') {
+          map.setPaintProperty(id, 'text-color', '#ffffff');
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(5, 10, 20, 0.85)');
+          map.setPaintProperty(id, 'text-halo-width', 1.0);
+          map.setPaintProperty(id, 'text-halo-blur', 0);
+          map.setPaintProperty(id, 'text-opacity', 1.0);
+          try {
+            map.setLayoutProperty(id, 'text-size', ['interpolate', ['linear'], ['zoom'], 3, 11, 6, 14, 9, 18]);
+            map.setLayoutProperty(id, 'text-letter-spacing', 0.12);
+          } catch {}
+        } else if (id.includes('city')) {
+          map.setPaintProperty(id, 'text-color', '#ffffff');
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(5, 10, 20, 0.85)');
+          map.setPaintProperty(id, 'text-halo-width', 1.0);
+          map.setPaintProperty(id, 'text-halo-blur', 0);
+          map.setPaintProperty(id, 'text-opacity', 1.0);
+          map.setPaintProperty(id, 'icon-opacity', 1.0);
+          try {
+            map.setLayoutProperty(id, 'text-size', ['interpolate', ['linear'], ['zoom'], 4, 11, 7, 13, 10, 16]);
+          } catch {}
+        } else if (id.includes('town') || id.includes('village') || id.includes('suburb') || id.includes('place_other')) {
           map.setPaintProperty(id, 'text-color', '#f1f5f9');
-          map.setPaintProperty(id, 'text-halo-color', '#020617');
-          map.setPaintProperty(id, 'text-halo-width', 1.6);
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(5, 10, 20, 0.85)');
+          map.setPaintProperty(id, 'text-halo-width', 1.0);
+          map.setPaintProperty(id, 'text-halo-blur', 0);
+          map.setPaintProperty(id, 'text-opacity', 1.0);
+          map.setPaintProperty(id, 'icon-opacity', 0.95);
+        } else if (id.includes('water_name')) {
+          map.setPaintProperty(id, 'text-color', '#7dd3fc');
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(5, 15, 30, 0.9)');
+          map.setPaintProperty(id, 'text-halo-width', 1.0);
+          map.setPaintProperty(id, 'text-halo-blur', 0);
+          map.setPaintProperty(id, 'text-opacity', 0.95);
+        } else if (id.includes('highway_name')) {
+          map.setPaintProperty(id, 'text-color', '#f8fafc');
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(5, 10, 20, 0.85)');
+          map.setPaintProperty(id, 'text-halo-width', 1.0);
+          map.setPaintProperty(id, 'text-halo-blur', 0);
+          map.setPaintProperty(id, 'text-opacity', 1.0);
+        } else {
+          map.setPaintProperty(id, 'text-color', '#ffffff');
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(5, 10, 20, 0.85)');
+          map.setPaintProperty(id, 'text-halo-width', 1.0);
+          map.setPaintProperty(id, 'text-halo-blur', 0);
+          map.setPaintProperty(id, 'text-opacity', 1.0);
         }
       } catch {
         // safely pass non-paint symbol properties
@@ -1468,6 +1519,9 @@ export default function DelhiAqiHeatmap() {
 
     map.on('load', () => {
       mapLoadedRef.current = true;
+      if (typeof window !== 'undefined') {
+        window.__wmd_map = map;
+      }
 
       // Retune vector tiles to match Mapbox navigation-night palette in standby mode
       if (!isMapbox) {
@@ -2190,8 +2244,8 @@ return (
             <span style={{ fontSize: '0.76rem', fontWeight: 800, letterSpacing: '0.04em', color: '#f8fafc' }}>
               INDIA AQI ENGINE
             </span>
-            <span style={{ fontSize: '0.68rem', color: '#64748b' }}>•</span>
-            <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{lastUpdated}</span>
+            <span style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>•</span>
+            <span style={{ fontSize: '0.7rem', color: '#e2e8f0', fontWeight: 500 }}>{lastUpdated}</span>
 
             {/* Provider Mode Pill / Instant Reversibility Toggle */}
             <button
@@ -2374,7 +2428,7 @@ return (
         >
           {/* Quick Glide Capital City Shortcuts */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.67rem', fontWeight: 800, color: '#64748b', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '3px' }}>
+            <span style={{ fontSize: '0.67rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '3px' }}>
               GLIDE:
             </span>
             {INDIA_REGION_PRESETS.map((preset) => {
@@ -2580,7 +2634,7 @@ return (
 
         {/* TIER 1: PRIMARY MAP LAYERS & DISPLAY MODES */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#64748b', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '2px' }}>
+          <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '2px' }}>
             Layers:
           </span>
 
@@ -2742,7 +2796,7 @@ return (
 
           {/* Quick Opacity Presets */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ color: '#64748b', fontSize: '0.68rem', marginRight: '2px' }}>Presets:</span>
+            <span style={{ color: '#cbd5e1', fontSize: '0.68rem', marginRight: '2px', fontWeight: 600 }}>Presets:</span>
             {[
               { label: 'Subtle', val: 0.28 },
               { label: 'Balanced', val: 0.45 },
@@ -3181,7 +3235,7 @@ return (
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', margin: '0 0 4px' }}>
                 {displayStation.name}
               </h3>
-              <p style={{ fontSize: '0.74rem', color: '#64748b', margin: '0 0 14px' }}>
+              <p style={{ fontSize: '0.74rem', color: '#cbd5e1', margin: '0 0 14px' }}>
                 {displayStation.zone || displayStation.state || 'India'} · Multi-Source Ground & Satellite Grid
               </p>
 
