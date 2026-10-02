@@ -874,6 +874,7 @@ export default function DelhiAqiHeatmap() {
 
   // Stop cinematic 360-degree orbit immediately on user intervention
   const cancelCinematic360Tour = useCallback(() => {
+    if (!isOrbitingRef.current && !orbitAnimIdRef.current) return;
     isOrbitingRef.current = false;
     if (orbitAnimIdRef.current) {
       cancelAnimationFrame(orbitAnimIdRef.current);
@@ -1283,6 +1284,9 @@ export default function DelhiAqiHeatmap() {
     map.scrollZoom.enable();
     map.touchZoomRotate.enable();
     map.doubleClickZoom.enable();
+    map.touchPitch.enable();
+    map.boxZoom.enable();
+    map.keyboard.enable();
 
     map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'bottom-right');
 
@@ -1504,26 +1508,19 @@ export default function DelhiAqiHeatmap() {
         updateRasterForViewport();
       });
 
-      // Immediately halt any camera animation (tour, flyTo, easeTo) and unlock manual drag on ANY user interaction
-      const handleUserInteractionStart = () => {
+      // Pause follow-mode and stop 360 tour when user manually drags, rotates, or interacts with the map
+      const handleUserGesture = () => {
         if (isOrbitingRef.current || orbitAnimIdRef.current) {
           cancelCinematic360TourRef.current?.();
-        }
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.stop();
         }
         setIsFollowingUser(false);
       };
 
-      map.on('mousedown', handleUserInteractionStart);
-      map.on('dragstart', handleUserInteractionStart);
-      map.on('movestart', (e) => {
-        if (e.originalEvent) {
-          handleUserInteractionStart();
-        }
-      });
-      map.on('wheel', handleUserInteractionStart);
-      map.on('touchstart', handleUserInteractionStart);
+      map.on('dragstart', handleUserGesture);
+      map.on('rotatestart', handleUserGesture);
+      map.on('pitchstart', handleUserGesture);
+      map.on('wheel', handleUserGesture);
+      map.on('touchstart', handleUserGesture);
 
       if (pendingOrbitOnScrollRef.current && !hasPlayedIntroOrbitRef.current) {
         pendingOrbitOnScrollRef.current = false;

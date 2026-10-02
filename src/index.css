@@ -232,15 +232,15 @@ input[type="range"]::-webkit-slider-thumb:hover {
   animation: floatMote 4s infinite ease-in-out;
 }
 
-/* Explicit Grab & Grabbing cursors for Mapbox canvas and map container */
-#delhi-aqi-heatmap,
+/* Explicit Grab & Grabbing cursors for Mapbox canvas */
 #delhi-aqi-heatmap .mapboxgl-canvas-container,
 #delhi-aqi-heatmap .mapboxgl-canvas-container.mapboxgl-interactive,
 #delhi-aqi-heatmap canvas.mapboxgl-canvas {
   cursor: grab !important;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-#delhi-aqi-heatmap:active,
 #delhi-aqi-heatmap .mapboxgl-canvas-container:active,
 #delhi-aqi-heatmap .mapboxgl-canvas-container.mapboxgl-interactive:active,
 #delhi-aqi-heatmap canvas.mapboxgl-canvas:active {
