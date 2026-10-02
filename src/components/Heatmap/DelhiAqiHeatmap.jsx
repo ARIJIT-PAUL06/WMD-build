@@ -20,7 +20,8 @@ import {
   LocateFixed,
   Locate,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  RotateCw
 } from 'lucide-react';
 
 // Import official India national boundary GeoJSON (MultiPolygon covering mainland + islands)
@@ -565,6 +566,14 @@ export default function DelhiAqiHeatmap() {
   const [isLocating, setIsLocating] = useState(false);
   const [gpsError, setGpsError] = useState(null);
 
+  // Cinematic 360° 3D Slanted Orbital Tour State & Refs
+  const [isOrbiting360, setIsOrbiting360] = useState(false);
+  const sectionContainerRef = useRef(null);
+  const hasPlayedIntroOrbitRef = useRef(false);
+  const orbitAnimIdRef = useRef(null);
+  const mapLoadedRef = useRef(false);
+  const pendingOrbitOnScrollRef = useRef(false);
+
   const watchIdRef = useRef(null);
   const hasCenteredOnGpsRef = useRef(false);
   const hasUserManuallySelectedStationRef = useRef(false);
@@ -835,6 +844,98 @@ export default function DelhiAqiHeatmap() {
     }
   }, []);
 
+  // Stop cinematic 360-degree orbit immediately on user intervention
+  const cancelCinematic360Tour = useCallback(() => {
+    if (orbitAnimIdRef.current) {
+      cancelAnimationFrame(orbitAnimIdRef.current);
+      orbitAnimIdRef.current = null;
+    }
+    const map = mapInstanceRef.current;
+    if (map) {
+      map.stop();
+    }
+    setIsOrbiting360(false);
+  }, []);
+
+  // Cinematic 360° 3D slanted orbital flyaround and seamless GPS zoom-in
+  const playCinematic360Tour = useCallback((customTarget = null) => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (orbitAnimIdRef.current) {
+      cancelAnimationFrame(orbitAnimIdRef.current);
+      orbitAnimIdRef.current = null;
+    }
+
+    // Determine target coordinates (Live GPS, or custom target, or default Mansarovar/Jaipur coordinates)
+    const targetLon = customTarget?.lon ?? userLocationRef.current?.lon ?? 75.76;
+    const targetLat = customTarget?.lat ?? userLocationRef.current?.lat ?? 26.85;
+    const targetCenter = [targetLon, targetLat];
+
+    setIsOrbiting360(true);
+    hasPlayedIntroOrbitRef.current = true;
+
+    // Phase 1: Set 3D slanted perspective matching the user's reference screenshot (pitch: 62°, zoom: 6.0)
+    map.stop();
+    map.jumpTo({
+      center: targetCenter,
+      zoom: 6.0,
+      pitch: 62,
+      bearing: 0,
+    });
+
+    const orbitDuration = 7200; // 7.2s smooth full 360° orbital revolution
+    let startTime = null;
+    const startBearing = 0;
+
+    // Smooth cubic easing for fluid acceleration and deceleration
+    const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+    const orbitStep = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(1, elapsed / orbitDuration);
+      const eased = easeInOutCubic(progress);
+
+      const currentBearing = (startBearing + eased * 360) % 360;
+
+      // Keep camera locked in 3D slanted position orbiting targetCenter
+      map.jumpTo({
+        center: targetCenter,
+        zoom: 6.0,
+        pitch: 62,
+        bearing: currentBearing,
+      });
+
+      if (progress < 1) {
+        orbitAnimIdRef.current = requestAnimationFrame(orbitStep);
+      } else {
+        orbitAnimIdRef.current = null;
+
+        // Phase 2: Seamlessly zoom down into the user's live GPS coordinates!
+        map.flyTo({
+          center: targetCenter,
+          zoom: 12.8,
+          pitch: 28,
+          bearing: 0,
+          speed: 0.82,
+          curve: 1.35,
+          essential: true,
+        });
+
+        // When zoom flyTo finishes, release orbiting state and enable tracking
+        const handleZoomEnd = () => {
+          map.off('moveend', handleZoomEnd);
+          setIsOrbiting360(false);
+          setIsFollowingUser(true);
+        };
+        map.on('moveend', handleZoomEnd);
+      }
+    };
+
+    orbitAnimIdRef.current = requestAnimationFrame(orbitStep);
+  }, []);
+
   // Start continuous, high-accuracy live GPS satellite tracking
   const startLiveGpsTracking = useCallback(() => {
     if (!navigator.geolocation) {
@@ -906,14 +1007,19 @@ export default function DelhiAqiHeatmap() {
         if (map) {
           if (!hasCenteredOnGpsRef.current) {
             hasCenteredOnGpsRef.current = true;
-            map.flyTo({
-              center: [longitude, latitude],
-              zoom: 12.5,
-              pitch: 24,
-              speed: 1.25,
-              curve: 1.2,
-            });
-          } else if (isFollowingUserRef.current) {
+            if (hasPlayedIntroOrbitRef.current) {
+              map.flyTo({
+                center: [longitude, latitude],
+                zoom: 12.5,
+                pitch: 24,
+                speed: 1.25,
+                curve: 1.2,
+              });
+            } else if (pendingOrbitOnScrollRef.current) {
+              pendingOrbitOnScrollRef.current = false;
+              playCinematic360Tour({ lon: longitude, lat: latitude });
+            }
+          } else if (isFollowingUserRef.current && !orbitAnimIdRef.current) {
             map.easeTo({
               center: [longitude, latitude],
               duration: 800,
@@ -943,7 +1049,7 @@ export default function DelhiAqiHeatmap() {
         maximumAge: 2000,
       }
     );
-  }, []);
+  }, [playCinematic360Tour]);
 
   // Auto-start GPS tracking on mount
   useEffect(() => {
@@ -958,6 +1064,7 @@ export default function DelhiAqiHeatmap() {
 
   // Center or re-center map on user's live position
   const handleCenterOnUser = useCallback(() => {
+    cancelCinematic360Tour();
     if (!userLocation.isLiveGps || !userLocation.lat || !userLocation.lon) {
       startLiveGpsTracking();
       return;
@@ -973,7 +1080,7 @@ export default function DelhiAqiHeatmap() {
         curve: 1.2,
       });
     }
-  }, [userLocation, startLiveGpsTracking]);
+  }, [userLocation, startLiveGpsTracking, cancelCinematic360Tour]);
 
   useEffect(() => {
     fetchLiveNationalData(userLocation.lat, userLocation.lon);
@@ -1076,6 +1183,7 @@ export default function DelhiAqiHeatmap() {
       minZoom: 3.8,
       maxZoom: 16.5,
       pitch: 16, // Gentle subcontinental perspective
+      maxPitch: 85, // Allows high-pitch 3D slanted perspective
       bearing: 0,
       attributionControl: false,
     });
@@ -1083,6 +1191,7 @@ export default function DelhiAqiHeatmap() {
     map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'bottom-right');
 
     map.on('load', () => {
+      mapLoadedRef.current = true;
       // 1. Add Stations GeoJSON Data Source
       map.addSource('aqi-stations', {
         type: 'geojson',
@@ -1296,17 +1405,52 @@ export default function DelhiAqiHeatmap() {
         updateRasterForViewport();
       });
 
-      // Pause follow-mode when user manually drags or pans the map
+      // Pause follow-mode and stop 360 tour when user manually drags, scrolls, or pinches the map
       map.on('dragstart', () => {
+        cancelCinematic360Tour();
         setIsFollowingUser(false);
       });
+      map.on('wheel', cancelCinematic360Tour);
+      map.on('touchstart', cancelCinematic360Tour);
+
+      if (pendingOrbitOnScrollRef.current && !hasPlayedIntroOrbitRef.current) {
+        pendingOrbitOnScrollRef.current = false;
+        setTimeout(() => {
+          playCinematic360Tour();
+        }, 300);
+      }
     });
 
     return () => {
+      cancelCinematic360Tour();
       map.remove();
       mapInstanceRef.current = null;
+      mapLoadedRef.current = false;
     };
-  }, [updateRasterForViewport]);
+  }, [updateRasterForViewport, cancelCinematic360Tour, playCinematic360Tour]);
+
+  // Trigger 360° slanted orbital flyaround when user scrolls down from hero into map section
+  useEffect(() => {
+    if (!sectionContainerRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !hasPlayedIntroOrbitRef.current) {
+          if (mapLoadedRef.current && mapInstanceRef.current) {
+            playCinematic360Tour();
+          } else {
+            pendingOrbitOnScrollRef.current = true;
+          }
+        }
+      },
+      {
+        threshold: 0.25,
+      }
+    );
+
+    observer.observe(sectionContainerRef.current);
+    return () => observer.disconnect();
+  }, [playCinematic360Tour]);
 
   // Update GeoJSON source when stations update
   useEffect(() => {
@@ -1619,6 +1763,7 @@ export default function DelhiAqiHeatmap() {
 
   return (
     <section
+      ref={sectionContainerRef}
       id="delhi-aqi-heatmap"
       style={{
         position: 'relative',
@@ -2027,6 +2172,50 @@ export default function DelhiAqiHeatmap() {
               }}
             />
 
+            {/* 360° Cinematic Tour Floating HUD Banner */}
+            {isOrbiting360 && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '16px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  zIndex: 25,
+                  background: 'rgba(11, 17, 32, 0.94)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(56, 189, 248, 0.45)',
+                  padding: '7px 16px',
+                  borderRadius: '9999px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  boxShadow: '0 8px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.25)',
+                }}
+              >
+                <RotateCw size={14} className="animate-spin" color="#38bdf8" />
+                <span style={{ fontSize: '0.76rem', color: '#f8fafc', fontWeight: 600 }}>
+                  360° Slanted Horizon Tour · Orbiting Live Position
+                </span>
+                <button
+                  onClick={cancelCinematic360Tour}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.22)',
+                    border: '1px solid rgba(239, 68, 68, 0.45)',
+                    color: '#f87171',
+                    padding: '2px 8px',
+                    borderRadius: '9999px',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    marginLeft: '4px',
+                  }}
+                >
+                  Skip
+                </button>
+              </div>
+            )}
+
             {/* Top-left Click-to-Inspect Hint Pill */}
             <div
               style={{
@@ -2198,6 +2387,36 @@ export default function DelhiAqiHeatmap() {
                   }}
                 >
                   3D Urban
+                </button>
+
+                {/* 360° Slanted Cinematic Orbit Button */}
+                <button
+                  onClick={() => {
+                    if (isOrbiting360) {
+                      cancelCinematic360Tour();
+                    } else {
+                      playCinematic360Tour();
+                    }
+                  }}
+                  title={isOrbiting360 ? 'Cancel 360° orbital animation' : 'Replay cinematic 360° 3D slanted orbital flyaround'}
+                  style={{
+                    background: isOrbiting360 ? 'rgba(56, 189, 248, 0.28)' : 'rgba(255, 255, 255, 0.05)',
+                    color: isOrbiting360 ? '#38bdf8' : '#cbd5e1',
+                    border: isOrbiting360 ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                    padding: '4px 9px',
+                    borderRadius: '7px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease',
+                    boxShadow: isOrbiting360 ? '0 0 12px rgba(56, 189, 248, 0.35)' : 'none',
+                  }}
+                >
+                  <RotateCw size={13} className={isOrbiting360 ? 'animate-spin' : ''} color={isOrbiting360 ? '#38bdf8' : '#cbd5e1'} />
+                  <span>{isOrbiting360 ? 'Orbiting 360° (Stop)' : '360° Orbit'}</span>
                 </button>
               </div>
 
