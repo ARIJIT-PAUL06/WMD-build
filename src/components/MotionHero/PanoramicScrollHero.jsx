@@ -167,7 +167,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
               transition: 'all 0.3s ease',
             }}
           >
-            <span>Delhi AQI Heatmap</span>
+            <span>India AQI Heatmap</span>
             <ChevronRight size={14} />
           </button>
         </div>
@@ -402,7 +402,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
                 padding: '12px 20px',
               }}
             >
-              <span>Explore Delhi AQI Heatmap</span>
+              <span>Explore India National AQI Heatmap</span>
               <ChevronRight size={16} />
             </button>
           </div>
@@ -433,7 +433,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
           <span>
             {scrollProgress < 0.95
               ? 'Scroll down to journey from toxic smog to clean atmospheric renewal'
-              : 'Continue scrolling down to explore the Delhi AQI Heatmap'}
+              : 'Continue scrolling down to explore the India National AQI Heatmap'}
           </span>
         </div>
       </div>
