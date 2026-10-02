@@ -49,16 +49,16 @@ export const getActiveMapProvider = () => {
   return import.meta.env.VITE_MAP_PROVIDER || 'free';
 };
 
-const INITIAL_PROVIDER = getActiveMapProvider();
-const IS_MAPBOX_PROVIDER = INITIAL_PROVIDER === 'mapbox';
-
-// Set access token only when in live Mapbox mode
-if (IS_MAPBOX_PROVIDER) {
-  mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
-}
-
-// Select map engine: Mapbox GL JS when in live Mapbox mode, MapLibre GL JS when in zero-credit Standby mode
-const mapEngine = IS_MAPBOX_PROVIDER ? mapboxgl : maplibregl;
+export const getMapEngine = () => {
+  const provider = getActiveMapProvider();
+  if (provider === 'mapbox') {
+    if (typeof mapboxgl !== 'undefined' && !mapboxgl.accessToken) {
+      mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
+    }
+    return mapboxgl;
+  }
+  return maplibregl;
+};
 
 export const OPENFREEMAP_DARK_STYLE = 'https://tiles.openfreemap.org/styles/dark';
 export const MAPBOX_DARK_STYLE = 'mapbox://styles/mapbox/navigation-night-v1';
@@ -584,10 +584,17 @@ function applyNavigationNightPalette(map) {
   const style = map.getStyle();
   if (!style || !style.layers) return;
 
+  // Helper to safely set paint properties without crashing if layer/property is unsupported
+  const safePaint = (layerId, prop, val) => {
+    try {
+      if (map.getLayer(layerId)) {
+        map.setPaintProperty(layerId, prop, val);
+      }
+    } catch {}
+  };
+
   // 1. Background / Land: Mapbox luminous slate-navy background (#1c2638)
-  if (map.getLayer('background')) {
-    map.setPaintProperty('background', 'background-color', '#1c2638');
-  }
+  safePaint('background', 'background-color', '#1c2638');
 
   // 2. Configure Zoom Ranges (Progressive Level of Detail - declutter high-altitude view)
   const safeZoomRange = (id, min, max) => {
@@ -618,8 +625,9 @@ function applyNavigationNightPalette(map) {
   const singleLineField = ['coalesce', ['get', 'name_en'], ['get', 'name:latin'], ['get', 'name']];
 
   style.layers.forEach((l) => {
-    const id = l.id;
-    const type = l.type;
+    try {
+      const id = l.id;
+      const type = l.type;
 
     // Waterways & Water Bodies (Deep Marine Navy #121e30, canals/streams #1a2a42)
     if (id.includes('water') || id.includes('ocean')) {
@@ -952,6 +960,7 @@ function applyNavigationNightPalette(map) {
         }
       } catch {}
     }
+  } catch {}
   });
 }
 
@@ -968,7 +977,7 @@ export default function DelhiAqiHeatmap() {
   const [lastUpdated, setLastUpdated] = useState('Fetching live national telemetry...');
 
   // Map Provider Standby / Live Mode state
-  const [mapProvider, setMapProvider] = useState(INITIAL_PROVIDER);
+  const [mapProvider, setMapProvider] = useState(getActiveMapProvider);
   const isMapboxMode = mapProvider === 'mapbox';
 
   const handleToggleMapProvider = useCallback(() => {
@@ -1722,6 +1731,7 @@ export default function DelhiAqiHeatmap() {
     const activeProvider = getActiveMapProvider();
     const isMapbox = activeProvider === 'mapbox';
     const chosenStyle = isMapbox ? MAPBOX_DARK_STYLE : OPENFREEMAP_DARK_STYLE;
+    const activeEngine = getMapEngine();
 
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const initialLng = urlParams && urlParams.get('lng') ? parseFloat(urlParams.get('lng')) : 78.9629;
@@ -1729,7 +1739,7 @@ export default function DelhiAqiHeatmap() {
     const initialZoom = urlParams && urlParams.get('zoom') ? parseFloat(urlParams.get('zoom')) : 4.6;
     const initialPitch = urlParams && urlParams.get('pitch') ? parseFloat(urlParams.get('pitch')) : 16;
 
-    const map = new mapEngine.Map({
+    const map = new activeEngine.Map({
       container: mapContainerRef.current,
       style: chosenStyle, // High-contrast night navigation (Mapbox) or OpenFreeMap dark vector style (0 credits)
       center: [initialLng, initialLat],
@@ -1758,7 +1768,11 @@ export default function DelhiAqiHeatmap() {
     map.boxZoom.enable();
     map.keyboard.enable();
 
-    map.addControl(new mapEngine.NavigationControl({ visualizePitch: true }), 'bottom-right');
+    map.addControl(new activeEngine.NavigationControl({ visualizePitch: true }), 'bottom-right');
+
+    map.on('error', (e) => {
+      console.warn('Map engine warning/event:', e?.error?.message || e?.message || e);
+    });
 
     map.on('load', () => {
       mapLoadedRef.current = true;
@@ -2218,7 +2232,8 @@ export default function DelhiAqiHeatmap() {
         setInspectedPoint(null);
       });
 
-      const marker = new mapEngine.Marker({ element: el, anchor: 'bottom' })
+      const Engine = getMapEngine();
+      const marker = new Engine.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([st.lon, st.lat])
         .addTo(map);
 
@@ -2295,7 +2310,8 @@ export default function DelhiAqiHeatmap() {
       </div>
     `;
 
-    targetMarkerRef.current = new mapEngine.Marker({ element: targetEl, anchor: 'center' })
+    const Engine = getMapEngine();
+    targetMarkerRef.current = new Engine.Marker({ element: targetEl, anchor: 'center' })
       .setLngLat([inspectedPoint.lon, inspectedPoint.lat])
       .addTo(map);
   }, [inspectedPoint, activeRange]);
@@ -2388,7 +2404,8 @@ export default function DelhiAqiHeatmap() {
         </div>
       `;
 
-      userMarkerRef.current = new mapEngine.Marker({ element: userEl, anchor: 'center' })
+      const Engine = getMapEngine();
+      userMarkerRef.current = new Engine.Marker({ element: userEl, anchor: 'center' })
         .setLngLat([userLocation.lon, userLocation.lat])
         .addTo(map);
     } else {
