@@ -21,10 +21,7 @@ import {
   Locate,
   CheckCircle2,
   AlertCircle,
-  RotateCw,
-  ChevronRight,
-  ChevronLeft,
-  Activity
+  RotateCw
 } from 'lucide-react';
 
 // Import official India national boundary GeoJSON (MultiPolygon covering mainland + islands)
@@ -32,23 +29,8 @@ import indiaBoundaryGeoJson from '../../data/indiaBoundary.json';
 // Import 108 nationwide ground/CAAQMS monitoring stations across all Indian states
 import initialIndiaStations from '../../data/indiaStations.json';
 
-// Provider mode helper: 'free' (zero Mapbox API calls/credits, OpenFreeMap vector style) | 'mapbox' (official Mapbox style)
-export const getActiveMapProvider = () => {
-  if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem('wmd_map_provider');
-    if (saved === 'free' || saved === 'mapbox') return saved;
-  }
-  return import.meta.env.VITE_MAP_PROVIDER || 'free';
-};
-
-const INITIAL_PROVIDER = getActiveMapProvider();
-const IS_MAPBOX_PROVIDER = INITIAL_PROVIDER === 'mapbox';
-
-// Zero-credit safety: when provider is 'free', clear accessToken so Mapbox GL JS makes ZERO calls to api.mapbox.com
-mapboxgl.accessToken = IS_MAPBOX_PROVIDER ? (import.meta.env.VITE_MAPBOX_TOKEN || '') : '';
-
-export const OPENFREEMAP_DARK_STYLE = 'https://tiles.openfreemap.org/styles/dark';
-export const MAPBOX_DARK_STYLE = 'mapbox://styles/mapbox/navigation-night-v1';
+// Set public access token from environment variable
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
 /**
  * Geographic Bounding Box tightly enclosing the official Indian national boundary
@@ -94,15 +76,15 @@ const INDIA_RASTER_COORDINATES = [
  * Smoothly flies the camera without segmenting or reloading the nationwide heatmap.
  */
 const INDIA_REGION_PRESETS = [
-  { id: 'all-india', name: 'ALL INDIA', center: [79.2, 22.8], zoom: 4.6, pitch: 15, state: 'National Subcontinent' },
-  { id: 'delhi-ncr', name: 'DELHI NCR', center: [77.16, 28.66], zoom: 9.8, pitch: 26, state: 'National Capital Region' },
-  { id: 'mumbai', name: 'MUMBAI', center: [72.8777, 19.0760], zoom: 10.0, pitch: 26, state: 'Maharashtra' },
-  { id: 'bengaluru', name: 'BENGALURU', center: [77.5946, 12.9716], zoom: 10.0, pitch: 26, state: 'Karnataka' },
-  { id: 'gangetic', name: 'INDO-GANGETIC', center: [82.5, 26.0], zoom: 7.0, pitch: 22, state: 'UP & Bihar River Corridor' },
-  { id: 'kolkata', name: 'KOLKATA', center: [88.3639, 22.5726], zoom: 10.2, pitch: 26, state: 'West Bengal' },
-  { id: 'chennai', name: 'CHENNAI', center: [80.2707, 13.0827], zoom: 10.2, pitch: 26, state: 'Tamil Nadu' },
-  { id: 'hyderabad', name: 'HYDERABAD', center: [78.4867, 17.3850], zoom: 10.0, pitch: 26, state: 'Telangana' },
-  { id: 'himalayas', name: 'HIMALAYAS', center: [76.5, 33.5], zoom: 6.8, pitch: 28, state: 'J&K / Ladakh' },
+  { id: 'all-india', name: 'All India Overview', icon: '🇮🇳', center: [79.2, 22.8], zoom: 4.6, pitch: 15, state: 'National Subcontinent' },
+  { id: 'delhi-ncr', name: 'Delhi NCR & North', icon: '🏛️', center: [77.16, 28.66], zoom: 9.8, pitch: 26, state: 'National Capital Region' },
+  { id: 'mumbai', name: 'Mumbai MMR', icon: '🌊', center: [72.8777, 19.0760], zoom: 10.0, pitch: 26, state: 'Maharashtra' },
+  { id: 'bengaluru', name: 'Bengaluru Tech Belt', icon: '🌳', center: [77.5946, 12.9716], zoom: 10.0, pitch: 26, state: 'Karnataka' },
+  { id: 'gangetic', name: 'Indo-Gangetic Basin', icon: '🌾', center: [82.5, 26.0], zoom: 7.0, pitch: 22, state: 'UP & Bihar River Corridor' },
+  { id: 'kolkata', name: 'Kolkata & Bengal', icon: '🌉', center: [88.3639, 22.5726], zoom: 10.2, pitch: 26, state: 'West Bengal' },
+  { id: 'chennai', name: 'Chennai & South Coast', icon: '🏖️', center: [80.2707, 13.0827], zoom: 10.2, pitch: 26, state: 'Tamil Nadu' },
+  { id: 'hyderabad', name: 'Hyderabad & Deccan', icon: '💎', center: [78.4867, 17.3850], zoom: 10.0, pitch: 26, state: 'Telangana' },
+  { id: 'himalayas', name: 'Himalayas & Ladakh', icon: '🏔️', center: [76.5, 33.5], zoom: 6.8, pitch: 28, state: 'J&K / Ladakh' },
 ];
 
 // Distance helper (Haversine in km)
@@ -568,18 +550,6 @@ export default function DelhiAqiHeatmap() {
   const [isLoadingLive, setIsLoadingLive] = useState(false);
   const [lastUpdated, setLastUpdated] = useState('Fetching live national telemetry...');
 
-  // Map Provider Standby / Live Mode state
-  const [mapProvider, setMapProvider] = useState(INITIAL_PROVIDER);
-  const isMapboxMode = mapProvider === 'mapbox';
-
-  const handleToggleMapProvider = useCallback(() => {
-    const nextProvider = mapProvider === 'free' ? 'mapbox' : 'free';
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('wmd_map_provider', nextProvider);
-      window.location.reload();
-    }
-  }, [mapProvider]);
-
   // User live GPS location coordinates (NO DEMO DATA - initialized null until real device GPS locks)
   const [userLocation, setUserLocation] = useState({
     lat: null,
@@ -592,13 +562,12 @@ export default function DelhiAqiHeatmap() {
     timestamp: null,
   });
   const [gpsStatus, setGpsStatus] = useState('requesting'); // 'requesting' | 'active' | 'denied' | 'unavailable' | 'unsupported' | 'error'
-  const [isFollowingUser, setIsFollowingUser] = useState(false);
+  const [isFollowingUser, setIsFollowingUser] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
   const [gpsError, setGpsError] = useState(null);
 
   // Cinematic 360° 3D Slanted Orbital Tour State & Refs
   const [isOrbiting360, setIsOrbiting360] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const sectionContainerRef = useRef(null);
   const hasPlayedIntroOrbitRef = useRef(false);
   const orbitAnimIdRef = useRef(null);
@@ -627,14 +596,6 @@ export default function DelhiAqiHeatmap() {
   const [showHeatmapLayer, setShowHeatmapLayer] = useState(true);
   const [showStateBorders, setShowStateBorders] = useState(true);
   const [is3DBuildings, setIs3DBuildings] = useState(true);
-
-  const showStateBordersRef = useRef(showStateBorders);
-  showStateBordersRef.current = showStateBorders;
-
-  const updateRasterForViewportRef = useRef(null);
-  const cancelCinematic360TourRef = useRef(null);
-  const playCinematic360TourRef = useRef(null);
-  const getCameraPaddingRef = useRef(null);
 
   // Dynamic Zoom-Adaptive Contrast Calibration State
   const [isAdaptiveMode, setIsAdaptiveMode] = useState(true);
@@ -739,7 +700,6 @@ export default function DelhiAqiHeatmap() {
       });
     }
   }, []);
-  updateRasterForViewportRef.current = updateRasterForViewport;
 
   // Gemini AI Advisory State (Token-Optimized)
   const [geminiAdvisory, setGeminiAdvisory] = useState('');
@@ -779,19 +739,6 @@ export default function DelhiAqiHeatmap() {
     }
   }, [updateRasterForViewport]);
 
-  // Camera padding helper so map features are centered in the visible area left of the floating HUD
-  const getCameraPadding = useCallback(() => {
-    if (typeof window === 'undefined') return { right: 0, left: 0, top: 0, bottom: 0 };
-    const isWide = window.innerWidth >= 1024;
-    return {
-      right: isSidebarOpen && isWide ? 440 : 40,
-      left: 40,
-      top: 80,
-      bottom: 80,
-    };
-  }, [isSidebarOpen]);
-  getCameraPaddingRef.current = getCameraPadding;
-
   // Smooth camera glide to any region of India without reloading the heatmap
   const handleGlideToRegion = useCallback((preset) => {
     if (!preset) return;
@@ -807,10 +754,9 @@ export default function DelhiAqiHeatmap() {
         pitch: preset.pitch || 20,
         speed: 1.25,
         curve: 1.2,
-        padding: getCameraPadding(),
       });
     }
-  }, [getCameraPadding]);
+  }, []);
 
   // Geocoding search handler (supports cities, districts, and towns across India)
   const handleSearchInput = async (val) => {
@@ -823,37 +769,15 @@ export default function DelhiAqiHeatmap() {
 
     setIsSearching(true);
     try {
-      if (isMapboxMode && mapboxgl.accessToken) {
-        const token = mapboxgl.accessToken;
-        const res = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(val)}.json?access_token=${token}&country=in&types=place,locality,region&limit=6`
-        );
-        if (res.ok) {
-          const json = await res.json();
-          if (json.features) {
-            setSearchResults(json.features);
-            setShowSearchDropdown(true);
-            return;
-          }
-        }
-      }
-
-      // Free Zero-Credit Geocoding via Photon / OpenStreetMap (0 Mapbox credits used)
+      const token = mapboxgl.accessToken;
       const res = await fetch(
-        `https://photon.komoot.io/api/?q=${encodeURIComponent(val)}&limit=6`
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(val)}.json?access_token=${token}&country=in&types=place,locality,region&limit=6`
       );
       if (res.ok) {
         const json = await res.json();
         if (json.features) {
-          const mapped = json.features.map((f) => ({
-            id: f.properties.osm_id || Math.random().toString(),
-            text: f.properties.name || val,
-            place_name: [f.properties.name, f.properties.city, f.properties.state, f.properties.country].filter(Boolean).join(', '),
-            center: f.geometry.coordinates,
-          }));
-          setSearchResults(mapped);
+          setSearchResults(json.features);
           setShowSearchDropdown(true);
-          return;
         }
       }
     } catch (err) {
@@ -876,7 +800,6 @@ export default function DelhiAqiHeatmap() {
     };
     handleGlideToRegion(customPreset);
   };
-  const handleSelectSearchResult = handleSelectSearchedPlace;
 
   // Fetch token-optimized Gemini advisory
   const fetchGeminiAdvisory = useCallback(async (station) => {
@@ -924,7 +847,6 @@ export default function DelhiAqiHeatmap() {
 
   // Stop cinematic 360-degree orbit immediately on user intervention
   const cancelCinematic360Tour = useCallback(() => {
-    if (!isOrbitingRef.current && !orbitAnimIdRef.current) return;
     isOrbitingRef.current = false;
     if (orbitAnimIdRef.current) {
       cancelAnimationFrame(orbitAnimIdRef.current);
@@ -933,15 +855,15 @@ export default function DelhiAqiHeatmap() {
     const map = mapInstanceRef.current;
     if (map) {
       map.stop();
-      ['admin-1-boundary', 'admin-1-boundary-bg', 'boundary_state'].forEach((id) => {
-        if (showStateBordersRef.current && map.getLayer(id)) {
-          map.setLayoutProperty(id, 'visibility', 'visible');
-        }
-      });
+      if (showStateBorders && map.getLayer('admin-1-boundary')) {
+        map.setLayoutProperty('admin-1-boundary', 'visibility', 'visible');
+      }
+      if (showStateBorders && map.getLayer('admin-1-boundary-bg')) {
+        map.setLayoutProperty('admin-1-boundary-bg', 'visibility', 'visible');
+      }
     }
     setIsOrbiting360(false);
-  }, []);
-  cancelCinematic360TourRef.current = cancelCinematic360Tour;
+  }, [showStateBorders]);
 
   // Cinematic 360° 3D slanted orbital flyaround and seamless GPS zoom-in
   // Render-optimized: zoomed out to 4.85 so local streets and complex boundaries are not rendered,
@@ -965,13 +887,12 @@ export default function DelhiAqiHeatmap() {
     hasPlayedIntroOrbitRef.current = true;
 
     // Temporarily disable boundary lines during 360° rotation to eliminate vector tessellation overhead
-    ['admin-1-boundary', 'admin-1-boundary-bg', 'boundary_state'].forEach((id) => {
-      if (map.getLayer(id)) {
-        map.setLayoutProperty(id, 'visibility', 'none');
-      }
-    });
-
-    const currentPadding = getCameraPaddingRef.current ? getCameraPaddingRef.current() : { right: 0, left: 0, top: 0, bottom: 0 };
+    if (map.getLayer('admin-1-boundary')) {
+      map.setLayoutProperty('admin-1-boundary', 'visibility', 'none');
+    }
+    if (map.getLayer('admin-1-boundary-bg')) {
+      map.setLayoutProperty('admin-1-boundary-bg', 'visibility', 'none');
+    }
 
     // Phase 1: Set 3D slanted perspective zoomed out to 4.85 so streets & granular vector geometry aren't rendered
     map.stop();
@@ -980,7 +901,6 @@ export default function DelhiAqiHeatmap() {
       zoom: 4.85,
       pitch: 58,
       bearing: 0,
-      padding: currentPadding,
     });
 
     const orbitDuration = 6800; // 6.8s fluid, cinematic 360° orbital revolution
@@ -1004,7 +924,6 @@ export default function DelhiAqiHeatmap() {
         zoom: 4.85,
         pitch: 58,
         bearing: currentBearing,
-        padding: getCameraPaddingRef.current ? getCameraPaddingRef.current() : { right: 0, left: 0, top: 0, bottom: 0 },
       });
 
       if (progress < 1) {
@@ -1014,15 +933,14 @@ export default function DelhiAqiHeatmap() {
         isOrbitingRef.current = false;
 
         // Restore boundaries as camera swoops down
-        if (showStateBordersRef.current) {
-          ['admin-1-boundary', 'admin-1-boundary-bg', 'boundary_state'].forEach((id) => {
-            if (map.getLayer(id)) {
-              map.setLayoutProperty(id, 'visibility', 'visible');
-            }
-          });
+        if (showStateBorders && map.getLayer('admin-1-boundary')) {
+          map.setLayoutProperty('admin-1-boundary', 'visibility', 'visible');
+        }
+        if (showStateBorders && map.getLayer('admin-1-boundary-bg')) {
+          map.setLayoutProperty('admin-1-boundary-bg', 'visibility', 'visible');
         }
 
-        // Phase 2: Seamlessly zoom down into the target coordinates (user can freely take over anytime)
+        // Phase 2: Seamlessly zoom down into the user's live GPS coordinates!
         map.flyTo({
           center: targetCenter,
           zoom: 12.8,
@@ -1030,23 +948,22 @@ export default function DelhiAqiHeatmap() {
           bearing: 0,
           speed: 0.82,
           curve: 1.35,
-          padding: getCameraPaddingRef.current ? getCameraPaddingRef.current() : { right: 0, left: 0, top: 0, bottom: 0 },
-          essential: false,
+          essential: true,
         });
 
-        // When zoom flyTo finishes, release orbiting state and calibrate viewport
+        // When zoom flyTo finishes, release orbiting state, enable tracking and calibrate viewport
         const handleZoomEnd = () => {
           map.off('moveend', handleZoomEnd);
           setIsOrbiting360(false);
-          updateRasterForViewportRef.current?.();
+          setIsFollowingUser(true);
+          updateRasterForViewport();
         };
         map.on('moveend', handleZoomEnd);
       }
     };
 
     orbitAnimIdRef.current = requestAnimationFrame(orbitStep);
-  }, []);
-  playCinematic360TourRef.current = playCinematic360Tour;
+  }, [showStateBorders, updateRasterForViewport]);
 
   // Start continuous, high-accuracy live GPS satellite tracking
   const startLiveGpsTracking = useCallback(() => {
@@ -1084,8 +1001,8 @@ export default function DelhiAqiHeatmap() {
         if (shouldRev) {
           lastGeocodedCoordRef.current = { lat: latitude, lon: longitude };
           try {
-            if (isMapboxMode && mapboxgl.accessToken) {
-              const token = mapboxgl.accessToken;
+            const token = mapboxgl.accessToken;
+            if (token) {
               const revRes = await fetch(
                 `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${token}&country=in&types=neighborhood,locality,place,district&limit=1`
               );
@@ -1095,18 +1012,6 @@ export default function DelhiAqiHeatmap() {
                   placeName = revJson.features[0].place_name;
                 } else if (revJson.features?.[0]?.text) {
                   placeName = revJson.features[0].text;
-                }
-              }
-            } else {
-              // Free Zero-Credit reverse geocoding via OpenStreetMap Nominatim
-              const revRes = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-                { headers: { 'User-Agent': 'WMD-AQI-App/1.0' } }
-              );
-              if (revRes.ok) {
-                const revJson = await revRes.json();
-                if (revJson.display_name) {
-                  placeName = revJson.display_name.split(',').slice(0, 3).join(', ').trim();
                 }
               }
             }
@@ -1202,30 +1107,9 @@ export default function DelhiAqiHeatmap() {
         pitch: 26,
         speed: 1.4,
         curve: 1.2,
-        padding: getCameraPadding(),
       });
     }
-  }, [userLocation, startLiveGpsTracking, cancelCinematic360Tour, getCameraPadding]);
-
-  // Synchronize Mapbox viewport on resize or sidebar collapse/expand
-  useEffect(() => {
-    const handleResize = () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.resize();
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    if (mapInstanceRef.current) {
-      const timer = setTimeout(() => {
-        mapInstanceRef.current.resize();
-      }, 320);
-      return () => clearTimeout(timer);
-    }
-  }, [isSidebarOpen]);
+  }, [userLocation, startLiveGpsTracking, cancelCinematic360Tour]);
 
   useEffect(() => {
     fetchLiveNationalData(userLocation.lat, userLocation.lon);
@@ -1320,13 +1204,9 @@ export default function DelhiAqiHeatmap() {
     if (!mapContainerRef.current) return;
     if (mapInstanceRef.current) return;
 
-    const activeProvider = getActiveMapProvider();
-    const isMapbox = activeProvider === 'mapbox';
-    const chosenStyle = isMapbox ? MAPBOX_DARK_STYLE : OPENFREEMAP_DARK_STYLE;
-
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: chosenStyle, // High-contrast night navigation (Mapbox) or OpenFreeMap dark vector style (0 credits)
+      style: 'mapbox://styles/mapbox/navigation-night-v1', // High-contrast night navigation showing roads, highways and labels
       center: [78.9629, 22.5937], // Center of India
       zoom: 4.6,
       minZoom: 3.8,
@@ -1335,23 +1215,7 @@ export default function DelhiAqiHeatmap() {
       maxPitch: 85, // Allows high-pitch 3D slanted perspective
       bearing: 0,
       attributionControl: false,
-      interactive: true,
-      dragPan: true,
-      dragRotate: true,
-      scrollZoom: true,
-      touchZoomRotate: true,
-      doubleClickZoom: true,
     });
-
-    // Explicitly guarantee all interactive manipulation controls are active
-    map.dragPan.enable();
-    map.dragRotate.enable();
-    map.scrollZoom.enable();
-    map.touchZoomRotate.enable();
-    map.doubleClickZoom.enable();
-    map.touchPitch.enable();
-    map.boxZoom.enable();
-    map.keyboard.enable();
 
     map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'bottom-right');
 
@@ -1365,10 +1229,10 @@ export default function DelhiAqiHeatmap() {
 
       // 2. LAYER POSITIONING: Insert raster underneath roads, state borders, and labels
       // This ensures roads, national highways, and state lines render crisply ON TOP of the heatmap!
-      const layers = map.getStyle().layers || [];
-      const roadLayerId = layers.find((l) => (l.id.startsWith('road') || l.id.startsWith('highway_')) && l.type === 'line')?.id;
-      const adminLayerId = layers.find((l) => l.id === 'admin-1-boundary-bg' || l.id === 'admin-1-boundary' || l.id === 'boundary_state')?.id;
-      const symbolLayerId = layers.find((l) => l.type === 'symbol' && (l.layout?.['text-field'] || l.id.startsWith('place_') || l.id.startsWith('highway_name') || l.id.startsWith('water_name')) )?.id;
+      const layers = map.getStyle().layers;
+      const roadLayerId = layers.find((l) => l.id.startsWith('road-') && l.type === 'line')?.id;
+      const adminLayerId = layers.find((l) => l.id === 'admin-1-boundary-bg' || l.id === 'admin-1-boundary')?.id;
+      const symbolLayerId = layers.find((l) => l.type === 'symbol' && l.layout && l.layout['text-field'])?.id;
       const beforeLayerId = roadLayerId || adminLayerId || symbolLayerId;
 
       // Real GPS Accuracy Radar Radius Layer (rendered beneath roads & borders)
@@ -1461,59 +1325,24 @@ export default function DelhiAqiHeatmap() {
         map.setPaintProperty('admin-1-boundary-bg', 'line-opacity', 0.80);
       }
 
-      if (map.getLayer('boundary_state')) {
-        map.setPaintProperty('boundary_state', 'line-color', '#93c5fd');
-        map.setPaintProperty('boundary_state', 'line-width', [
-          'interpolate', ['linear'], ['zoom'],
-          3, 1.2,
-          6, 1.8,
-          10, 2.5
-        ]);
-        map.setPaintProperty('boundary_state', 'line-opacity', 0.88);
-        map.setPaintProperty('boundary_state', 'line-dasharray', [4, 2]);
-      }
-
       // 5. 3D Building Extrusion Layer (Shows urban architecture on close zoom)
-      if (map.getSource('composite')) {
-        map.addLayer(
-          {
-            id: '3d-buildings',
-            source: 'composite',
-            'source-layer': 'building',
-            filter: ['==', 'extrude', 'true'],
-            type: 'fill-extrusion',
-            minzoom: 13,
-            paint: {
-              'fill-extrusion-color': '#111827',
-              'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.05, ['get', 'height']],
-              'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.05, ['get', 'min_height']],
-              'fill-extrusion-opacity': 0.65,
-            },
+      map.addLayer(
+        {
+          id: '3d-buildings',
+          source: 'composite',
+          'source-layer': 'building',
+          filter: ['==', 'extrude', 'true'],
+          type: 'fill-extrusion',
+          minzoom: 13,
+          paint: {
+            'fill-extrusion-color': '#111827',
+            'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.05, ['get', 'height']],
+            'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.05, ['get', 'min_height']],
+            'fill-extrusion-opacity': 0.65,
           },
-          symbolLayerId
-        );
-      } else if (map.getSource('openmaptiles')) {
-        try {
-          map.addLayer(
-            {
-              id: '3d-buildings',
-              source: 'openmaptiles',
-              'source-layer': 'building',
-              type: 'fill-extrusion',
-              minzoom: 13,
-              paint: {
-                'fill-extrusion-color': '#111827',
-                'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.05, ['coalesce', ['get', 'render_height'], 14]],
-                'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.05, ['coalesce', ['get', 'render_min_height'], 0]],
-                'fill-extrusion-opacity': 0.65,
-              },
-            },
-            symbolLayerId
-          );
-        } catch {
-          // smoothly skip if vector building schema is planar only
-        }
-      }
+        },
+        symbolLayerId
+      );
 
       // 6. Official India National Perimeter Border Line
       map.addSource('india-boundary-source', {
@@ -1608,35 +1437,29 @@ export default function DelhiAqiHeatmap() {
         updateRasterForViewport();
       });
 
-      // Pause follow-mode and stop 360 tour when user manually drags, rotates, or interacts with the map
-      const handleUserGesture = () => {
-        if (isOrbitingRef.current || orbitAnimIdRef.current) {
-          cancelCinematic360TourRef.current?.();
-        }
+      // Pause follow-mode and stop 360 tour when user manually drags, scrolls, or pinches the map
+      map.on('dragstart', () => {
+        cancelCinematic360Tour();
         setIsFollowingUser(false);
-      };
-
-      map.on('dragstart', handleUserGesture);
-      map.on('rotatestart', handleUserGesture);
-      map.on('pitchstart', handleUserGesture);
-      map.on('wheel', handleUserGesture);
-      map.on('touchstart', handleUserGesture);
+      });
+      map.on('wheel', cancelCinematic360Tour);
+      map.on('touchstart', cancelCinematic360Tour);
 
       if (pendingOrbitOnScrollRef.current && !hasPlayedIntroOrbitRef.current) {
         pendingOrbitOnScrollRef.current = false;
         setTimeout(() => {
-          playCinematic360TourRef.current?.();
+          playCinematic360Tour();
         }, 300);
       }
     });
 
     return () => {
-      cancelCinematic360TourRef.current?.();
+      cancelCinematic360Tour();
       map.remove();
       mapInstanceRef.current = null;
       mapLoadedRef.current = false;
     };
-  }, []);
+  }, [updateRasterForViewport, cancelCinematic360Tour, playCinematic360Tour]);
 
   // Trigger 360° slanted orbital flyaround when user scrolls down from hero into map section
   useEffect(() => {
@@ -1646,7 +1469,7 @@ export default function DelhiAqiHeatmap() {
         const [entry] = entries;
         if (entry.isIntersecting && !hasPlayedIntroOrbitRef.current) {
           if (mapLoadedRef.current && mapInstanceRef.current) {
-            playCinematic360TourRef.current?.();
+            playCinematic360Tour();
           } else {
             pendingOrbitOnScrollRef.current = true;
           }
@@ -1659,7 +1482,7 @@ export default function DelhiAqiHeatmap() {
 
     observer.observe(sectionContainerRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [playCinematic360Tour]);
 
   // Update GeoJSON source when stations update
   useEffect(() => {
@@ -1696,12 +1519,11 @@ export default function DelhiAqiHeatmap() {
   // Toggle State Boundaries visibility
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map) return;
-    ['admin-1-boundary', 'admin-1-boundary-bg', 'boundary_state'].forEach((id) => {
-      if (map.getLayer(id)) {
-        map.setLayoutProperty(id, 'visibility', showStateBorders ? 'visible' : 'none');
-      }
-    });
+    if (!map || !map.getLayer('admin-1-boundary')) return;
+    map.setLayoutProperty('admin-1-boundary', 'visibility', showStateBorders ? 'visible' : 'none');
+    if (map.getLayer('admin-1-boundary-bg')) {
+      map.setLayoutProperty('admin-1-boundary-bg', 'visibility', showStateBorders ? 'visible' : 'none');
+    }
   }, [showStateBorders]);
 
   // Toggle 3D Buildings visibility
@@ -1978,175 +1800,115 @@ export default function DelhiAqiHeatmap() {
     }
   }, [userLocation, userAqiEstimate]);
 
-return (
+  return (
     <section
       ref={sectionContainerRef}
       id="delhi-aqi-heatmap"
       style={{
         position: 'relative',
         zIndex: 40,
-        width: '100%',
-        height: '100vh',
-        minHeight: '780px',
+        minHeight: '100vh',
         background: '#070a12',
         color: '#f8fafc',
-        overflow: 'hidden',
+        padding: '40px 24px 80px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
       }}
     >
-      {/* ============================================================== */}
-      {/* 1. FULL-BLEED BORDERLESS MAP CANVAS                           */}
-      {/* ============================================================== */}
-      <div
-        ref={mapContainerRef}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          background: '#040711',
-          zIndex: 1,
-          cursor: 'grab',
-          pointerEvents: 'auto',
-        }}
-      />
-
-      {/* ============================================================== */}
-      {/* 2. BUTTER-SMOOTH PERIMETER SCENE FADE (FEATHERED & UNOBTRUSIVE)*/}
-      {/* ============================================================== */}
+      {/* Background subtle grid pattern */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          zIndex: 2,
           pointerEvents: 'none',
-          background: `
-            linear-gradient(to bottom, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) top / 100% 46px no-repeat,
-            linear-gradient(to top, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) bottom / 100% 46px no-repeat,
-            linear-gradient(to right, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) left / 42px 100% no-repeat,
-            linear-gradient(to left, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) right / 42px 100% no-repeat
-          `,
+          backgroundImage:
+            'radial-gradient(circle at 50% 15%, rgba(30, 41, 59, 0.4) 0%, transparent 70%), linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px)',
+          backgroundSize: '100% 100%, 40px 40px, 40px 40px',
+          opacity: 0.8,
         }}
       />
 
-      {/* ============================================================== */}
-      {/* 3. TOP FLOATING COMMAND DECK (TRANSLUCENT & STREAMLINED)       */}
-      {/* ============================================================== */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '20px',
-          left: '24px',
-          right: isSidebarOpen ? '444px' : '24px',
-          zIndex: 25,
-          transition: 'right 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          pointerEvents: 'none',
-        }}
-      >
-        {/* Tier 1: Branding, Telemetry Switcher, GPS Tracker & Telemetry Toggle */}
+      <div style={{ maxWidth: '1440px', width: '100%', position: 'relative', zIndex: 10 }}>
+        {/* ============================================================== */}
+        {/* SECTION HEADER & CONTROL STRIP                                 */}
+        {/* ============================================================== */}
         <div
           style={{
-            pointerEvents: 'auto',
             display: 'flex',
+            flexWrap: 'wrap',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '12px',
-            flexWrap: 'wrap',
-            padding: '8px 16px',
-            borderRadius: '14px',
-            background: 'rgba(11, 17, 32, 0.58)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.45), 0 0 20px rgba(56, 189, 248, 0.04)',
+            gap: '20px',
+            marginBottom: '24px',
+            paddingBottom: '20px',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
           }}
         >
-          {/* Engine Title & Last Updated */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span
-              style={{
-                width: '7px',
-                height: '7px',
-                borderRadius: '50%',
-                background: '#38bdf8',
-                boxShadow: '0 0 10px #38bdf8',
-              }}
-            />
-            <span style={{ fontSize: '0.76rem', fontWeight: 800, letterSpacing: '0.04em', color: '#f8fafc' }}>
-              INDIA AQI ENGINE
-            </span>
-            <span style={{ fontSize: '0.68rem', color: '#64748b' }}>•</span>
-            <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{lastUpdated}</span>
-
-            {/* Provider Mode Pill / Instant Reversibility Toggle */}
-            <button
-              onClick={handleToggleMapProvider}
-              title={
-                mapProvider === 'free'
-                  ? 'Currently in Credit-Saver Standby Mode (0 Mapbox credits consumed). Click to connect with Mapbox Live.'
-                  : 'Currently connected to Mapbox Live (Consuming Mapbox credits). Click to switch to Credit-Saver Standby Mode.'
-              }
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                background: mapProvider === 'free' ? 'rgba(16, 185, 129, 0.16)' : 'rgba(59, 130, 246, 0.18)',
-                color: mapProvider === 'free' ? '#34d399' : '#60a5fa',
-                border: `1px solid ${mapProvider === 'free' ? 'rgba(16, 185, 129, 0.45)' : 'rgba(59, 130, 246, 0.45)'}`,
-                padding: '3px 9px',
-                borderRadius: '9999px',
-                fontSize: '0.66rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: mapProvider === 'free' ? '0 0 12px rgba(16, 185, 129, 0.18)' : '0 0 12px rgba(59, 130, 246, 0.25)',
-              }}
-            >
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
               <span
                 style={{
-                  width: '6px',
-                  height: '6px',
+                  width: '8px',
+                  height: '8px',
                   borderRadius: '50%',
-                  background: mapProvider === 'free' ? '#10b981' : '#60a5fa',
-                  boxShadow: mapProvider === 'free' ? '0 0 6px #10b981' : '0 0 6px #60a5fa',
+                  background: '#38bdf8',
+                  boxShadow: '0 0 10px #38bdf8',
                 }}
               />
-              <span>{mapProvider === 'free' ? 'Standby Mode (0 Mapbox Calls)' : 'Mapbox Live'}</span>
-            </button>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', color: '#38bdf8', textTransform: 'uppercase' }}>
+                Mapbox GL National Subcontinent Engine · India-Wide Real-Time Grid
+              </span>
+              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>•</span>
+              <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{lastUpdated}</span>
+            </div>
+            <h2
+              style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: '2.2rem',
+                fontWeight: 800,
+                color: '#ffffff',
+                letterSpacing: '-0.02em',
+                margin: 0,
+              }}
+            >
+              India National Multi-Point AQI Heatmap
+            </h2>
+            <p style={{ fontSize: '0.88rem', color: '#94a3b8', margin: '6px 0 0' }}>
+              Subcontinental 2D spatial AQI plot · Web Mercator precision border lock · Translucent atmospheric layer revealing state borders, highways & topography beneath
+            </p>
           </div>
 
-          {/* Action Buttons: Metrics, Refresh, GPS & Integrated Telemetry Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Metric Switcher & GPS Trigger */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             {/* Metric Selector Tabs */}
             <div
               style={{
                 display: 'flex',
-                background: 'rgba(2, 6, 23, 0.55)',
-                padding: '3px',
+                background: 'rgba(15, 23, 42, 0.8)',
+                padding: '4px',
                 borderRadius: '9999px',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
               }}
             >
               {[
-                { id: 'aqi', label: 'AQI' },
-                { id: 'pm25', label: 'PM2.5' },
-                { id: 'pm10', label: 'PM10' },
+                { id: 'aqi', label: 'Air Quality (AQI)' },
+                { id: 'pm25', label: 'PM2.5 (µg/m³)' },
+                { id: 'pm10', label: 'PM10 (µg/m³)' },
               ].map((m) => (
                 <button
                   key={m.id}
                   onClick={() => setActivePollutant(m.id)}
                   style={{
-                    background: activePollutant === m.id ? 'rgba(56, 189, 248, 0.22)' : 'transparent',
+                    background: activePollutant === m.id ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
                     color: activePollutant === m.id ? '#38bdf8' : '#94a3b8',
                     border: activePollutant === m.id ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent',
-                    padding: '3px 11px',
+                    padding: '6px 14px',
                     borderRadius: '9999px',
-                    fontSize: '0.7rem',
+                    fontSize: '0.75rem',
                     fontWeight: 600,
                     cursor: 'pointer',
-                    transition: 'all 0.18s ease',
+                    transition: 'all 0.2s ease',
                   }}
                 >
                   {m.label}
@@ -2161,130 +1923,111 @@ return (
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '5px',
-                background: 'rgba(15, 23, 42, 0.55)',
+                gap: '6px',
+                background: 'rgba(15, 23, 42, 0.8)',
                 color: '#cbd5e1',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                padding: '5px 11px',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                padding: '8px 14px',
                 borderRadius: '9999px',
-                fontSize: '0.7rem',
+                fontSize: '0.75rem',
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
             >
-              <RefreshCw size={12} className={isLoadingLive ? 'animate-spin' : ''} />
-              <span>{isLoadingLive ? '...' : 'Refresh'}</span>
+              <RefreshCw size={13} className={isLoadingLive ? 'animate-spin' : ''} />
+              <span>{isLoadingLive ? 'Refreshing...' : 'Refresh Telemetry'}</span>
             </button>
 
             {/* Live GPS Tracking Controller */}
-            <button
-              onClick={handleCenterOnUser}
-              title={userLocation.isLiveGps ? 'Center camera on your live GPS position' : 'Start live GPS tracking'}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: userLocation.isLiveGps ? 'rgba(16, 185, 129, 0.2)' : 'rgba(56, 189, 248, 0.14)',
-                color: userLocation.isLiveGps ? '#34d399' : '#38bdf8',
-                border: `1px solid ${userLocation.isLiveGps ? 'rgba(16, 185, 129, 0.45)' : 'rgba(56, 189, 248, 0.3)'}`,
-                padding: '5px 12px',
-                borderRadius: '9999px',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: userLocation.isLiveGps ? '0 0 14px rgba(16, 185, 129, 0.2)' : 'none',
-              }}
-            >
-              {isLocating ? (
-                <RefreshCw size={12} className="animate-spin" color="#38bdf8" />
-              ) : userLocation.isLiveGps ? (
-                <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981', animation: 'pulse 1.2s infinite' }} />
-              ) : (
-                <Navigation size={12} color="#38bdf8" />
-              )}
-              <span>
-                {isLocating
-                  ? 'Acquiring...'
-                  : userLocation.isLiveGps
-                  ? `GPS Lock${userLocation.accuracy ? ` (±${userLocation.accuracy}m)` : ''}`
-                  : 'Track My Location'}
-              </span>
-            </button>
-
-            {userLocation.isLiveGps && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button
-                onClick={() => setIsFollowingUser((f) => !f)}
-                title="Toggle automatic camera tracking as you move"
+                onClick={handleCenterOnUser}
+                title={userLocation.isLiveGps ? 'Center camera on your live GPS position' : 'Start live GPS tracking'}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  background: isFollowingUser ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                  color: isFollowingUser ? '#38bdf8' : '#94a3b8',
-                  border: isFollowingUser ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
-                  padding: '5px 9px',
+                  gap: '8px',
+                  background: userLocation.isLiveGps ? 'rgba(16, 185, 129, 0.2)' : 'rgba(56, 189, 248, 0.15)',
+                  color: userLocation.isLiveGps ? '#34d399' : '#38bdf8',
+                  border: `1px solid ${userLocation.isLiveGps ? 'rgba(16, 185, 129, 0.45)' : 'rgba(56, 189, 248, 0.3)'}`,
+                  padding: '8px 16px',
                   borderRadius: '9999px',
-                  fontSize: '0.68rem',
-                  fontWeight: 600,
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
                   cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: userLocation.isLiveGps ? '0 0 16px rgba(16, 185, 129, 0.25)' : 'none',
                 }}
               >
-                <LocateFixed size={12} color={isFollowingUser ? '#38bdf8' : '#94a3b8'} />
-                <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
+                {isLocating ? (
+                  <RefreshCw size={14} className="animate-spin" color="#38bdf8" />
+                ) : userLocation.isLiveGps ? (
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px #10b981', animation: 'pulse 1.2s infinite' }} />
+                ) : (
+                  <Navigation size={14} color="#38bdf8" />
+                )}
+                <span>
+                  {isLocating
+                    ? 'Acquiring GPS...'
+                    : userLocation.isLiveGps
+                    ? `Live GPS Track${userLocation.accuracy ? ` (±${userLocation.accuracy}m)` : ''}`
+                    : 'Track My Location'}
+                </span>
               </button>
-            )}
 
-            {/* Seamless Telemetry Toggle Button - Integrated into action bar to eliminate any overlap */}
-            <button
-              onClick={() => setIsSidebarOpen((v) => !v)}
-              title={isSidebarOpen ? 'Hide telemetry panel to maximize map' : 'Show telemetry & advisory HUD'}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: isSidebarOpen ? 'rgba(255, 255, 255, 0.06)' : 'rgba(56, 189, 248, 0.18)',
-                color: isSidebarOpen ? '#cbd5e1' : '#38bdf8',
-                border: `1px solid ${isSidebarOpen ? 'rgba(255, 255, 255, 0.12)' : 'rgba(56, 189, 248, 0.45)'}`,
-                padding: '5px 12px',
-                borderRadius: '9999px',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: !isSidebarOpen ? '0 0 14px rgba(56, 189, 248, 0.25)' : 'none',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {isSidebarOpen ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
-              <span>{isSidebarOpen ? 'Hide Telemetry' : 'Show Telemetry'}</span>
-              <Activity size={13} color={isSidebarOpen ? '#94a3b8' : '#10b981'} />
-            </button>
+              {userLocation.isLiveGps && (
+                <button
+                  onClick={() => setIsFollowingUser((f) => !f)}
+                  title="Toggle automatic camera tracking as you move"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    background: isFollowingUser ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    color: isFollowingUser ? '#38bdf8' : '#94a3b8',
+                    border: isFollowingUser ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                    padding: '8px 12px',
+                    borderRadius: '9999px',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease',
+                  }}
+                >
+                  <LocateFixed size={13} color={isFollowingUser ? '#38bdf8' : '#94a3b8'} />
+                  <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Tier 2: Capital City Shortcuts (NO icons, decluttered) + Autocomplete Search Bar */}
+        {/* ============================================================== */}
+        {/* NATIONWIDE REGION GLIDING BAR + PLACE SEARCH BAR              */}
+        {/* ============================================================== */}
         <div
           style={{
-            pointerEvents: 'auto',
+            position: 'relative',
+            zIndex: 100,
             display: 'flex',
+            flexWrap: 'wrap',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '10px',
-            flexWrap: 'wrap',
-            padding: '6px 12px',
-            borderRadius: '12px',
-            background: 'rgba(11, 17, 32, 0.58)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
+            gap: '14px',
+            marginBottom: '22px',
+            padding: '12px 18px',
+            borderRadius: '16px',
+            background: 'rgba(15, 23, 42, 0.88)',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)',
           }}
         >
-          {/* Quick Glide Capital City Shortcuts */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.67rem', fontWeight: 800, color: '#64748b', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '3px' }}>
-              GLIDE:
+          {/* Quick Glide Region Shortcuts */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <Globe size={14} color="#38bdf8" /> Quick Glide:
             </span>
             {INDIA_REGION_PRESETS.map((preset) => {
               const isActive = activePreset.id === preset.id;
@@ -2295,20 +2038,20 @@ return (
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    padding: '3px 8px',
+                    gap: '6px',
+                    padding: '6px 12px',
                     borderRadius: '9999px',
-                    fontSize: '0.67rem',
-                    fontWeight: isActive ? 700 : 600,
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                    background: isActive ? 'rgba(56, 189, 248, 0.22)' : 'rgba(255, 255, 255, 0.03)',
+                    fontSize: '0.75rem',
+                    fontWeight: isActive ? 700 : 500,
+                    background: isActive ? 'rgba(56, 189, 248, 0.22)' : 'rgba(255, 255, 255, 0.04)',
                     color: isActive ? '#38bdf8' : '#cbd5e1',
-                    border: isActive ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.06)',
+                    border: isActive ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
                     cursor: 'pointer',
                     transition: 'all 0.18s ease',
-                    whiteSpace: 'nowrap',
+                    boxShadow: isActive ? '0 0 12px rgba(56, 189, 248, 0.3)' : 'none',
                   }}
                 >
+                  <span>{preset.icon}</span>
                   <span>{preset.name}</span>
                 </button>
               );
@@ -2321,9 +2064,9 @@ return (
             style={{
               position: 'relative',
               zIndex: 110,
-              minWidth: '220px',
-              flex: '1 1 220px',
-              maxWidth: '320px',
+              minWidth: '280px',
+              flex: '1 1 300px',
+              maxWidth: '380px',
             }}
           >
             <div
@@ -2331,17 +2074,18 @@ return (
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                background: 'rgba(2, 6, 23, 0.65)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
+                background: 'rgba(2, 6, 23, 0.92)',
+                border: '1px solid rgba(255, 255, 255, 0.16)',
                 borderRadius: '9999px',
-                padding: '4px 11px',
+                padding: '6px 14px',
                 boxShadow: showSearchDropdown ? '0 0 15px rgba(56, 189, 248, 0.2)' : 'none',
+                transition: 'border 0.2s ease, box-shadow 0.2s ease',
               }}
             >
-              <Search size={12} color="#94a3b8" />
+              <Search size={14} color="#94a3b8" />
               <input
                 type="text"
-                placeholder="Search city, district, or town..."
+                placeholder="Search any Indian city, district, or town..."
                 value={searchQuery}
                 onChange={(e) => handleSearchInput(e.target.value)}
                 onFocus={() => {
@@ -2352,11 +2096,11 @@ return (
                   border: 'none',
                   outline: 'none',
                   color: '#ffffff',
-                  fontSize: '0.73rem',
+                  fontSize: '0.78rem',
                   width: '100%',
                 }}
               />
-              {isSearching && <RefreshCw size={11} className="animate-spin" color="#38bdf8" />}
+              {isSearching && <RefreshCw size={13} className="animate-spin" color="#38bdf8" />}
               {searchQuery && !isSearching && (
                 <button
                   onClick={() => {
@@ -2370,55 +2114,57 @@ return (
                     color: '#94a3b8',
                     cursor: 'pointer',
                     padding: '2px 4px',
-                    fontSize: '0.75rem',
+                    fontSize: '0.85rem',
                     lineHeight: 1,
                   }}
+                  title="Clear search"
                 >
                   ✕
                 </button>
               )}
             </div>
 
-            {/* Autocomplete Dropdown List */}
+            {/* Dropdown Suggestions (Floats high above the map with zIndex 99999) */}
             {showSearchDropdown && searchResults.length > 0 && (
               <div
                 style={{
                   position: 'absolute',
-                  top: 'calc(100% + 6px)',
+                  top: 'calc(100% + 8px)',
                   left: 0,
                   right: 0,
-                  background: 'rgba(11, 17, 32, 0.88)',
+                  zIndex: 99999,
+                  background: 'rgba(9, 13, 26, 0.98)',
                   backdropFilter: 'blur(20px)',
                   WebkitBackdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(56, 189, 248, 0.35)',
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                  boxShadow: '0 12px 35px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.15)',
-                  maxHeight: '260px',
+                  border: '1px solid rgba(56, 189, 248, 0.45)',
+                  borderRadius: '14px',
+                  boxShadow: '0 25px 50px rgba(0, 0, 0, 0.95), 0 0 30px rgba(56, 189, 248, 0.15)',
+                  maxHeight: '340px',
                   overflowY: 'auto',
                 }}
               >
                 {searchResults.map((f) => (
                   <div
                     key={f.id}
-                    onClick={() => handleSelectSearchResult(f)}
+                    onClick={() => handleSelectSearchedPlace(f)}
                     style={{
-                      padding: '8px 12px',
+                      padding: '11px 14px',
                       cursor: 'pointer',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                      fontSize: '0.78rem',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px',
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                      fontSize: '0.74rem',
+                      gap: '10px',
+                      color: '#e2e8f0',
                       transition: 'background 0.15s ease',
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.18)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <MapPin size={13} color="#38bdf8" style={{ flexShrink: 0 }} />
+                    <MapPin size={14} color="#38bdf8" style={{ flexShrink: 0 }} />
                     <div style={{ minWidth: 0 }}>
                       <strong style={{ color: '#ffffff', display: 'block' }}>{f.text}</strong>
-                      <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {f.place_name}
                       </span>
                     </div>
@@ -2428,395 +2174,392 @@ return (
             )}
           </div>
         </div>
-      </div>
 
-      {/* 360° Cinematic Tour Floating HUD Banner */}
-      {isOrbiting360 && (
+        {/* ============================================================== */}
+        {/* MAIN SPLIT: HIGH-DETAIL MAPBOX (LEFT) + VITALS SIDEBAR (RIGHT) */}
+        {/* ============================================================== */}
         <div
           style={{
-            position: 'absolute',
-            top: '125px',
-            left: isSidebarOpen ? 'calc((100% - 420px) / 2)' : '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 25,
-            background: 'rgba(11, 17, 32, 0.68)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(56, 189, 248, 0.45)',
-            padding: '7px 16px',
-            borderRadius: '9999px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(56, 189, 248, 0.25)',
-            transition: 'left 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1.75fr) minmax(320px, 1fr)',
+            gap: '24px',
+            alignItems: 'start',
           }}
         >
-          <RotateCw size={14} className="animate-spin" color="#38bdf8" />
-          <span style={{ fontSize: '0.76rem', color: '#f8fafc', fontWeight: 600 }}>
-            360° Slanted Horizon Tour · Orbiting Live Position
-          </span>
-          <button
-            onClick={cancelCinematic360Tour}
+          {/* ============================================================ */}
+          {/* LEFT: REAL DETAILED MAPBOX MAP WITH WebGL HEATMAP            */}
+          {/* ============================================================ */}
+          <div
+            className="glass-panel"
             style={{
-              background: 'rgba(239, 68, 68, 0.22)',
-              border: '1px solid rgba(239, 68, 68, 0.45)',
-              color: '#f87171',
-              padding: '2px 8px',
-              borderRadius: '9999px',
-              fontSize: '0.68rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              marginLeft: '4px',
+              position: 'relative',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              background: '#040711',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px rgba(56, 189, 248, 0.05)',
+              height: '720px',
             }}
           >
-            Skip
-          </button>
-        </div>
-      )}
+            {/* The Actual Mapbox GL Map Container */}
+            <div
+              ref={mapContainerRef}
+              style={{
+                width: '100%',
+                height: '100%',
+                background: '#040711',
+              }}
+            />
 
-      {/* ============================================================== */}
-      {/* 4. BOTTOM-LEFT FLOATING CONTROLS HUD (LAYERS & OPACITY)        */}
-      {/* ============================================================== */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '24px',
-          left: '24px',
-          zIndex: 25,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          background: 'rgba(11, 17, 32, 0.58)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          padding: '10px 14px',
-          borderRadius: '16px',
-          boxShadow: '0 12px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.06)',
-          maxWidth: 'calc(100% - 48px)',
-        }}
-      >
-        {/* Click hint */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: '#cbd5e1' }}>
-          <Crosshair size={12} color="#f43f5e" />
-          <span>Click anywhere on map for <strong style={{ color: '#f43f5e' }}>micro-zone AQI</strong></span>
-        </div>
-
-        <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', width: '100%' }} />
-
-        {/* TIER 1: PRIMARY MAP LAYERS & DISPLAY MODES */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#64748b', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '2px' }}>
-            Layers:
-          </span>
-
-          {/* Heatmap Layer Toggle */}
-          <button
-            onClick={() => setShowHeatmapLayer((v) => !v)}
-            style={{
-              background: showHeatmapLayer ? 'rgba(249, 115, 22, 0.22)' : 'rgba(255, 255, 255, 0.05)',
-              color: showHeatmapLayer ? '#fb923c' : '#94a3b8',
-              border: showHeatmapLayer ? '1px solid rgba(249, 115, 22, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
-              padding: '4px 9px',
-              borderRadius: '7px',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <Layers size={13} color={showHeatmapLayer ? '#fb923c' : '#94a3b8'} />
-            <span>Heat: {showHeatmapLayer ? 'ON' : 'OFF'}</span>
-          </button>
-
-          {/* Adaptive Contrast Mode Toggle */}
-          <button
-            onClick={() => setIsAdaptiveMode((v) => !v)}
-            title="Dynamically recalibrate palette: lowest visible AQI becomes green, highest becomes bright red as you zoom in"
-            style={{
-              background: isAdaptiveMode ? 'rgba(16, 185, 129, 0.22)' : 'rgba(255, 255, 255, 0.05)',
-              color: isAdaptiveMode ? '#34d399' : '#94a3b8',
-              border: isAdaptiveMode ? '1px solid rgba(16, 185, 129, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
-              padding: '4px 9px',
-              borderRadius: '7px',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <Sparkles size={13} color={isAdaptiveMode ? '#34d399' : '#94a3b8'} />
-            <span>Adaptive: {isAdaptiveMode ? 'ON' : 'OFF'}</span>
-            {isAdaptiveMode && activeRange.isZoomed && (
-              <span
+            {/* 360° Cinematic Tour Floating HUD Banner */}
+            {isOrbiting360 && (
+              <div
                 style={{
-                  background: '#10b981',
-                  color: '#040711',
-                  fontSize: '9px',
-                  fontWeight: 800,
-                  padding: '1px 5px',
-                  borderRadius: '4px',
-                  marginLeft: '2px',
+                  position: 'absolute',
+                  top: '16px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  zIndex: 25,
+                  background: 'rgba(11, 17, 32, 0.94)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(56, 189, 248, 0.45)',
+                  padding: '7px 16px',
+                  borderRadius: '9999px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  boxShadow: '0 8px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.25)',
                 }}
               >
-                ZOOMED
-              </span>
-            )}
-          </button>
-
-          {/* State Borders Toggle */}
-          <button
-            onClick={() => setShowStateBorders((v) => !v)}
-            style={{
-              background: showStateBorders ? 'rgba(96, 165, 250, 0.22)' : 'rgba(255, 255, 255, 0.05)',
-              color: showStateBorders ? '#93c5fd' : '#94a3b8',
-              border: showStateBorders ? '1px solid rgba(96, 165, 250, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
-              padding: '4px 9px',
-              borderRadius: '7px',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <MapIcon size={13} color={showStateBorders ? '#93c5fd' : '#94a3b8'} />
-            <span>Borders</span>
-          </button>
-
-          {/* 108 Monitoring Pins Toggle */}
-          <button
-            onClick={() => setShowStationPins((v) => !v)}
-            style={{
-              background: showStationPins ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-              color: showStationPins ? '#38bdf8' : '#94a3b8',
-              border: showStationPins ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
-              padding: '4px 9px',
-              borderRadius: '7px',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            {showStationPins ? <Eye size={13} color="#38bdf8" /> : <EyeOff size={13} color="#94a3b8" />}
-            <span>108 Pins</span>
-          </button>
-
-          {/* 3D Buildings Toggle */}
-          <button
-            onClick={() => setIs3DBuildings((v) => !v)}
-            style={{
-              background: is3DBuildings ? 'rgba(168, 85, 247, 0.22)' : 'rgba(255, 255, 255, 0.05)',
-              color: is3DBuildings ? '#c084fc' : '#94a3b8',
-              border: is3DBuildings ? '1px solid rgba(168, 85, 247, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
-              padding: '4px 9px',
-              borderRadius: '7px',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            3D Urban
-          </button>
-
-          {/* 360° Slanted Cinematic Orbit Button */}
-          <button
-            onClick={() => {
-              if (isOrbiting360) {
-                cancelCinematic360Tour();
-              } else {
-                playCinematic360Tour();
-              }
-            }}
-            title={isOrbiting360 ? 'Cancel 360° orbital animation' : 'Replay cinematic 360° 3D slanted orbital flyaround'}
-            style={{
-              background: isOrbiting360 ? 'rgba(56, 189, 248, 0.28)' : 'rgba(255, 255, 255, 0.05)',
-              color: isOrbiting360 ? '#38bdf8' : '#cbd5e1',
-              border: isOrbiting360 ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
-              padding: '4px 9px',
-              borderRadius: '7px',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              transition: 'all 0.15s ease',
-              boxShadow: isOrbiting360 ? '0 0 12px rgba(56, 189, 248, 0.35)' : 'none',
-            }}
-          >
-            <RotateCw size={13} className={isOrbiting360 ? 'animate-spin' : ''} color={isOrbiting360 ? '#38bdf8' : '#cbd5e1'} />
-            <span>{isOrbiting360 ? 'Stop Orbit' : '360° Orbit'}</span>
-          </button>
-        </div>
-
-        {/* HAIRLINE DIVIDER */}
-        <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', width: '100%' }} />
-
-        {/* TIER 2: ATMOSPHERIC HEAT OPACITY CONTROLS & PRESETS */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-            <Sliders size={13} color="#38bdf8" />
-            <span style={{ color: '#cbd5e1', fontWeight: 600, fontSize: '0.72rem' }}>Heat Opacity:</span>
-            <input
-              type="range"
-              min="0.10"
-              max="0.85"
-              step="0.02"
-              value={heatIntensity}
-              onChange={(e) => setHeatIntensity(parseFloat(e.target.value))}
-              style={{ width: '70px', accentColor: '#38bdf8', cursor: 'pointer' }}
-            />
-            <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.74rem', minWidth: '32px' }}>
-              {Math.round(heatIntensity * 100)}%
-            </span>
-          </div>
-
-          {/* Quick Opacity Presets */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ color: '#64748b', fontSize: '0.68rem', marginRight: '2px' }}>Presets:</span>
-            {[
-              { label: 'Subtle', val: 0.28 },
-              { label: 'Balanced', val: 0.45 },
-              { label: 'Vivid', val: 0.68 },
-            ].map((p) => {
-              const isSelected = Math.abs(heatIntensity - p.val) < 0.05;
-              return (
+                <RotateCw size={14} className="animate-spin" color="#38bdf8" />
+                <span style={{ fontSize: '0.76rem', color: '#f8fafc', fontWeight: 600 }}>
+                  360° Slanted Horizon Tour · Orbiting Live Position
+                </span>
                 <button
-                  key={p.label}
-                  onClick={() => setHeatIntensity(p.val)}
+                  onClick={cancelCinematic360Tour}
                   style={{
-                    background: isSelected ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-                    color: isSelected ? '#38bdf8' : '#94a3b8',
-                    border: isSelected ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent',
+                    background: 'rgba(239, 68, 68, 0.22)',
+                    border: '1px solid rgba(239, 68, 68, 0.45)',
+                    color: '#f87171',
                     padding: '2px 8px',
-                    borderRadius: '5px',
+                    borderRadius: '9999px',
                     fontSize: '0.68rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    marginLeft: '4px',
+                  }}
+                >
+                  Skip
+                </button>
+              </div>
+            )}
+
+            {/* Top-left Click-to-Inspect Hint Pill */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '16px',
+                left: '16px',
+                zIndex: 10,
+                background: 'rgba(15, 23, 42, 0.9)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(244, 63, 94, 0.4)',
+                padding: '6px 12px',
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.6)',
+              }}
+            >
+              <Crosshair size={13} color="#f43f5e" />
+              <span style={{ fontSize: '0.74rem', color: '#cbd5e1', fontWeight: 600 }}>
+                Click anywhere on India for <strong style={{ color: '#f43f5e' }}>pinpoint micro-zone AQI</strong>
+              </span>
+            </div>
+
+            {/* Bottom-left Map Floating Controls Bar with Opacity Presets & State Borders */}
+            {/* Bottom-left Map Floating Controls Bar (Clean 2-Tier HUD Deck) */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '16px',
+                left: '16px',
+                zIndex: 10,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                background: 'rgba(11, 17, 32, 0.94)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                padding: '10px 14px',
+                borderRadius: '14px',
+                boxShadow: '0 12px 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.08)',
+                maxWidth: 'calc(100% - 85px)',
+              }}
+            >
+              {/* TIER 1: PRIMARY MAP LAYERS & DISPLAY MODES */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#64748b', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '2px' }}>
+                  Layers:
+                </span>
+
+                {/* Heatmap Layer Toggle */}
+                <button
+                  onClick={() => setShowHeatmapLayer((v) => !v)}
+                  style={{
+                    background: showHeatmapLayer ? 'rgba(249, 115, 22, 0.22)' : 'rgba(255, 255, 255, 0.05)',
+                    color: showHeatmapLayer ? '#fb923c' : '#94a3b8',
+                    border: showHeatmapLayer ? '1px solid rgba(249, 115, 22, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '4px 9px',
+                    borderRadius: '7px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <Layers size={13} color={showHeatmapLayer ? '#fb923c' : '#94a3b8'} />
+                  <span>Heat Layer: {showHeatmapLayer ? 'ON' : 'OFF'}</span>
+                </button>
+
+                {/* Adaptive Contrast Mode Toggle */}
+                <button
+                  onClick={() => setIsAdaptiveMode((v) => !v)}
+                  title="Dynamically recalibrate palette: lowest visible AQI becomes green, highest becomes bright red as you zoom in"
+                  style={{
+                    background: isAdaptiveMode ? 'rgba(16, 185, 129, 0.22)' : 'rgba(255, 255, 255, 0.05)',
+                    color: isAdaptiveMode ? '#34d399' : '#94a3b8',
+                    border: isAdaptiveMode ? '1px solid rgba(16, 185, 129, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '4px 9px',
+                    borderRadius: '7px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <Sparkles size={13} color={isAdaptiveMode ? '#34d399' : '#94a3b8'} />
+                  <span>Adaptive Contrast: {isAdaptiveMode ? 'ON' : 'OFF'}</span>
+                  {isAdaptiveMode && activeRange.isZoomed && (
+                    <span
+                      style={{
+                        background: '#10b981',
+                        color: '#040711',
+                        fontSize: '9px',
+                        fontWeight: 800,
+                        padding: '1px 5px',
+                        borderRadius: '4px',
+                        marginLeft: '2px',
+                      }}
+                    >
+                      ZOOMED
+                    </span>
+                  )}
+                </button>
+
+                {/* State Borders Toggle */}
+                <button
+                  onClick={() => setShowStateBorders((v) => !v)}
+                  style={{
+                    background: showStateBorders ? 'rgba(96, 165, 250, 0.22)' : 'rgba(255, 255, 255, 0.05)',
+                    color: showStateBorders ? '#93c5fd' : '#94a3b8',
+                    border: showStateBorders ? '1px solid rgba(96, 165, 250, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '4px 9px',
+                    borderRadius: '7px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <MapIcon size={13} color={showStateBorders ? '#93c5fd' : '#94a3b8'} />
+                  <span>State Borders: {showStateBorders ? 'ON' : 'OFF'}</span>
+                </button>
+
+                {/* 108 Monitoring Pins Toggle */}
+                <button
+                  onClick={() => setShowStationPins((v) => !v)}
+                  style={{
+                    background: showStationPins ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    color: showStationPins ? '#38bdf8' : '#94a3b8',
+                    border: showStationPins ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '4px 9px',
+                    borderRadius: '7px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {showStationPins ? <Eye size={13} color="#38bdf8" /> : <EyeOff size={13} color="#94a3b8" />}
+                  <span>108 Pins</span>
+                </button>
+
+                {/* 3D Buildings Toggle */}
+                <button
+                  onClick={() => setIs3DBuildings((v) => !v)}
+                  style={{
+                    background: is3DBuildings ? 'rgba(168, 85, 247, 0.22)' : 'rgba(255, 255, 255, 0.05)',
+                    color: is3DBuildings ? '#c084fc' : '#94a3b8',
+                    border: is3DBuildings ? '1px solid rgba(168, 85, 247, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '4px 9px',
+                    borderRadius: '7px',
+                    fontSize: '0.72rem',
                     fontWeight: 600,
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  {p.label}
+                  3D Urban
                 </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
 
-      {/* ============================================================== */}
-      {/* 5. FLOATING RIGHT-SIDE TELEMETRY HUD (COLLAPSIBLE OVERLAY)     */}
-      {/* ============================================================== */}
-      <aside
-        style={{
-          position: 'absolute',
-          top: '20px',
-          bottom: '24px',
-          right: isSidebarOpen ? '24px' : '-440px',
-          width: 'min(410px, calc(100vw - 48px))',
-          zIndex: 25,
-          transition: 'right 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
-          display: 'flex',
-          flexDirection: 'column',
-          pointerEvents: isSidebarOpen ? 'auto' : 'none',
-        }}
-      >
-        <div
-          style={{
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'rgba(11, 17, 32, 0.58)',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '20px',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.65), 0 0 30px rgba(56, 189, 248, 0.06)',
-            overflow: 'hidden',
-          }}
-        >
-          {/* HUD Header Bar */}
-          <div
-            style={{
-              padding: '14px 18px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: 'rgba(2, 6, 23, 0.35)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Activity size={16} color="#38bdf8" />
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                Telemetry & Advisory HUD
-              </span>
+                {/* 360° Slanted Cinematic Orbit Button */}
+                <button
+                  onClick={() => {
+                    if (isOrbiting360) {
+                      cancelCinematic360Tour();
+                    } else {
+                      playCinematic360Tour();
+                    }
+                  }}
+                  title={isOrbiting360 ? 'Cancel 360° orbital animation' : 'Replay cinematic 360° 3D slanted orbital flyaround'}
+                  style={{
+                    background: isOrbiting360 ? 'rgba(56, 189, 248, 0.28)' : 'rgba(255, 255, 255, 0.05)',
+                    color: isOrbiting360 ? '#38bdf8' : '#cbd5e1',
+                    border: isOrbiting360 ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                    padding: '4px 9px',
+                    borderRadius: '7px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease',
+                    boxShadow: isOrbiting360 ? '0 0 12px rgba(56, 189, 248, 0.35)' : 'none',
+                  }}
+                >
+                  <RotateCw size={13} className={isOrbiting360 ? 'animate-spin' : ''} color={isOrbiting360 ? '#38bdf8' : '#cbd5e1'} />
+                  <span>{isOrbiting360 ? 'Orbiting 360° (Stop)' : '360° Orbit'}</span>
+                </button>
+              </div>
+
+              {/* HAIRLINE DIVIDER */}
+              <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', width: '100%' }} />
+
+              {/* TIER 2: ATMOSPHERIC HEAT OPACITY CONTROLS & PRESETS */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                  <Sliders size={13} color="#38bdf8" />
+                  <span style={{ color: '#cbd5e1', fontWeight: 600, fontSize: '0.72rem' }}>Heat Opacity:</span>
+                  <input
+                    type="range"
+                    min="0.10"
+                    max="0.85"
+                    step="0.02"
+                    value={heatIntensity}
+                    onChange={(e) => setHeatIntensity(parseFloat(e.target.value))}
+                    style={{ width: '70px', accentColor: '#38bdf8', cursor: 'pointer' }}
+                  />
+                  <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.74rem', minWidth: '32px' }}>
+                    {Math.round(heatIntensity * 100)}%
+                  </span>
+                </div>
+
+                {/* Quick Opacity Presets */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ color: '#64748b', fontSize: '0.68rem', marginRight: '2px' }}>Presets:</span>
+                  {[
+                    { label: 'Subtle', val: 0.28 },
+                    { label: 'Balanced', val: 0.45 },
+                    { label: 'Vivid', val: 0.68 },
+                  ].map((p) => {
+                    const isSelected = Math.abs(heatIntensity - p.val) < 0.05;
+                    return (
+                      <button
+                        key={p.label}
+                        onClick={() => setHeatIntensity(p.val)}
+                        style={{
+                          background: isSelected ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                          color: isSelected ? '#38bdf8' : '#94a3b8',
+                          border: isSelected ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent',
+                          padding: '2px 8px',
+                          borderRadius: '5px',
+                          fontSize: '0.68rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
-            <button
-              onClick={() => setIsSidebarOpen(false)}
-              title="Hide telemetry panel to maximize map view"
+            {/* Top-right Mapbox High-Def Badge */}
+            <div
               style={{
-                display: 'inline-flex',
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                zIndex: 10,
+                background: 'rgba(15, 23, 42, 0.85)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                padding: '6px 12px',
+                borderRadius: '10px',
+                display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
-                background: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#cbd5e1',
-                padding: '4px 10px',
-                borderRadius: '9999px',
+                gap: '6px',
+                color: '#38bdf8',
                 fontSize: '0.72rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
+                fontWeight: 700,
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.5)',
               }}
             >
-              <span>Hide</span>
-              <ChevronRight size={14} />
-            </button>
+              <Compass size={15} color="#38bdf8" />
+              <span>MAPBOX VECTOR DARK · ALL INDIA</span>
+            </div>
           </div>
 
-          {/* Scrollable HUD Content Area */}
-          <div
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-            }}
-          >
+          {/* ============================================================ */}
+          {/* RIGHT: LOCALIZED TELEMETRY & PINPOINT INSPECTION            */}
+          {/* ============================================================ */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* 1. PINPOINT INSPECTION OR YOUR REAL-TIME GPS POSITION CARD */}
             {inspectedPoint ? (
               <div
+                className="glass-panel"
                 style={{
-                  padding: '20px',
-                  borderRadius: '16px',
+                  padding: '24px',
+                  borderRadius: '18px',
                   border: '1px solid rgba(244, 63, 94, 0.45)',
-                  background: 'linear-gradient(145deg, rgba(30, 15, 25, 0.65) 0%, rgba(15, 23, 42, 0.72) 100%)',
-                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(244, 63, 94, 0.1)',
+                  background: 'linear-gradient(145deg, rgba(30, 15, 25, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                  boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(244, 63, 94, 0.15)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Crosshair size={16} color="#f43f5e" />
-                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#f43f5e', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    <Crosshair size={18} color="#f43f5e" />
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#f43f5e', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                       Pinpoint Micro-Zone Analysis
                     </span>
                   </div>
@@ -2826,7 +2569,7 @@ return (
                       if (userLocation.isLiveGps) handleCenterOnUser();
                     }}
                     style={{
-                      fontSize: '0.7rem',
+                      fontSize: '0.72rem',
                       background: 'rgba(255, 255, 255, 0.08)',
                       color: '#cbd5e1',
                       border: '1px solid rgba(255, 255, 255, 0.12)',
@@ -2844,7 +2587,7 @@ return (
                   <span
                     style={{
                       fontFamily: 'var(--font-heading)',
-                      fontSize: '3.2rem',
+                      fontSize: '3.6rem',
                       fontWeight: 900,
                       lineHeight: 1,
                       color: getAqiColor(inspectedPoint.aqi, activeRange).hex,
@@ -2854,10 +2597,10 @@ return (
                     {inspectedPoint.aqi}
                   </span>
                   <div>
-                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: getAqiColor(inspectedPoint.aqi, activeRange).textHex }}>
+                    <span style={{ fontSize: '1rem', fontWeight: 700, color: getAqiColor(inspectedPoint.aqi, activeRange).textHex }}>
                       AQI · {getAqiColor(inspectedPoint.aqi, activeRange).label}
                     </span>
-                    <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: 0 }}>
+                    <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0 }}>
                       {activeRange.isZoomed
                         ? `Calibrated to local zoom viewport (${activeRange.min} → ${activeRange.max} AQI)`
                         : 'Subcontinental spatial IDW estimate at clicked point'}
@@ -2871,11 +2614,11 @@ return (
                     border: '1px solid rgba(255, 255, 255, 0.06)',
                     borderRadius: '12px',
                     padding: '12px 14px',
-                    marginTop: '14px',
+                    marginTop: '16px',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '8px',
-                    fontSize: '0.76rem',
+                    fontSize: '0.78rem',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
@@ -2898,28 +2641,29 @@ return (
               </div>
             ) : userLocation.isLiveGps && userLocation.lat && userLocation.lon ? (
               <div
+                className="glass-panel"
                 style={{
-                  padding: '20px',
-                  borderRadius: '16px',
+                  padding: '24px',
+                  borderRadius: '18px',
                   border: '1px solid rgba(16, 185, 129, 0.45)',
-                  background: 'linear-gradient(145deg, rgba(6, 28, 22, 0.65) 0%, rgba(15, 23, 42, 0.72) 100%)',
-                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(16, 185, 129, 0.1)',
+                  background: 'linear-gradient(145deg, rgba(6, 28, 22, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                  boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(16, 185, 129, 0.15)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Radio size={16} color="#10b981" />
-                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#10b981', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    <Radio size={18} color="#10b981" />
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#10b981', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                       Your Live GPS Vitals
                     </span>
                   </div>
                   <span
                     style={{
-                      fontSize: '0.7rem',
+                      fontSize: '0.72rem',
                       background: 'rgba(16, 185, 129, 0.22)',
                       color: '#34d399',
                       border: '1px solid rgba(16, 185, 129, 0.45)',
-                      padding: '3px 9px',
+                      padding: '3px 10px',
                       borderRadius: '9999px',
                       fontWeight: 700,
                       display: 'flex',
@@ -2928,7 +2672,7 @@ return (
                     }}
                   >
                     <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981', animation: 'pulse 1.2s infinite' }} />
-                    Satellite Lock
+                    Live Satellite Lock
                   </span>
                 </div>
 
@@ -2936,7 +2680,7 @@ return (
                   <span
                     style={{
                       fontFamily: 'var(--font-heading)',
-                      fontSize: '3.2rem',
+                      fontSize: '3.6rem',
                       fontWeight: 900,
                       lineHeight: 1,
                       color: userColor.hex,
@@ -2946,11 +2690,11 @@ return (
                     {userAqiEstimate !== null ? userAqiEstimate : '--'}
                   </span>
                   <div>
-                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: userColor.textHex }}>
+                    <span style={{ fontSize: '1rem', fontWeight: 700, color: userColor.textHex }}>
                       AQI · {userColor.label}
                     </span>
-                    <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: 0 }}>
-                      Spatial IDW estimate at your exact position
+                    <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0 }}>
+                      Continuous spatial IDW estimate at your exact position
                     </p>
                   </div>
                 </div>
@@ -2961,11 +2705,11 @@ return (
                     border: '1px solid rgba(255, 255, 255, 0.06)',
                     borderRadius: '12px',
                     padding: '12px 14px',
-                    marginTop: '14px',
+                    marginTop: '16px',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '8px',
-                    fontSize: '0.76rem',
+                    fontSize: '0.78rem',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
@@ -3001,47 +2745,47 @@ return (
                 </div>
 
                 {/* Quick GPS Action buttons */}
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '14px' }}>
                   <button
                     onClick={handleCenterOnUser}
                     style={{
                       flex: 1,
-                      padding: '7px 10px',
+                      padding: '8px 12px',
                       borderRadius: '8px',
                       background: 'rgba(56, 189, 248, 0.15)',
                       color: '#38bdf8',
                       border: '1px solid rgba(56, 189, 248, 0.35)',
-                      fontSize: '0.72rem',
+                      fontSize: '0.74rem',
                       fontWeight: 700,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '5px',
+                      gap: '6px',
                     }}
                   >
-                    <Crosshair size={12} />
+                    <Crosshair size={13} />
                     <span>Center Map</span>
                   </button>
                   <button
                     onClick={() => setIsFollowingUser((f) => !f)}
                     style={{
                       flex: 1,
-                      padding: '7px 10px',
+                      padding: '8px 12px',
                       borderRadius: '8px',
                       background: isFollowingUser ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                       color: isFollowingUser ? '#34d399' : '#94a3b8',
                       border: isFollowingUser ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
-                      fontSize: '0.72rem',
+                      fontSize: '0.74rem',
                       fontWeight: 600,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '5px',
+                      gap: '6px',
                     }}
                   >
-                    <LocateFixed size={12} />
+                    <LocateFixed size={13} />
                     <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
                   </button>
                 </div>
@@ -3049,36 +2793,37 @@ return (
             ) : (
               /* GPS Inactive / Requesting State (ZERO DEMO DATA) */
               <div
+                className="glass-panel"
                 style={{
-                  padding: '20px',
-                  borderRadius: '16px',
+                  padding: '24px',
+                  borderRadius: '18px',
                   border: '1px solid rgba(56, 189, 248, 0.3)',
-                  background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.65) 0%, rgba(9, 13, 24, 0.7) 100%)',
-                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5)',
+                  background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.9) 0%, rgba(9, 13, 24, 0.95) 100%)',
+                  boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)',
                   textAlign: 'center',
                 }}
               >
                 <div
                   style={{
-                    width: '46px',
-                    height: '46px',
+                    width: '54px',
+                    height: '54px',
                     borderRadius: '50%',
                     background: 'rgba(56, 189, 248, 0.12)',
                     border: '1px solid rgba(56, 189, 248, 0.3)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    margin: '0 auto 12px',
+                    margin: '0 auto 16px',
                   }}
                 >
-                  <Navigation size={20} color="#38bdf8" className={isLocating ? 'animate-spin' : ''} />
+                  <Navigation size={24} color="#38bdf8" className={isLocating ? 'animate-spin' : ''} />
                 </div>
 
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', margin: '0 0 6px' }}>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', margin: '0 0 8px' }}>
                   {isLocating ? 'Connecting to GPS...' : 'Live GPS Location Tracking'}
                 </h3>
 
-                <p style={{ fontSize: '0.75rem', color: '#94a3b8', lineHeight: 1.5, margin: '0 0 14px' }}>
+                <p style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.55, margin: '0 0 16px' }}>
                   {gpsStatus === 'requesting' || isLocating
                     ? 'Connecting to your device GPS satellites... Please allow location permission in your browser.'
                     : gpsStatus === 'denied'
@@ -3089,7 +2834,7 @@ return (
                 </p>
 
                 {gpsError && (
-                  <div style={{ marginBottom: '12px', fontSize: '0.7rem', color: '#f87171' }}>
+                  <div style={{ marginBottom: '14px', fontSize: '0.72rem', color: '#f87171' }}>
                     * {gpsError}
                   </div>
                 )}
@@ -3099,23 +2844,23 @@ return (
                   disabled={isLocating}
                   style={{
                     width: '100%',
-                    padding: '9px 14px',
-                    borderRadius: '9px',
+                    padding: '10px 16px',
+                    borderRadius: '10px',
                     background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
                     color: '#ffffff',
                     border: 'none',
-                    fontSize: '0.78rem',
+                    fontSize: '0.82rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '6px',
+                    gap: '8px',
                     boxShadow: '0 4px 15px rgba(2, 132, 199, 0.4)',
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  <Locate size={14} />
+                  <Locate size={15} />
                   <span>{isLocating ? 'Locating...' : 'Connect Live GPS'}</span>
                 </button>
               </div>
@@ -3123,20 +2868,21 @@ return (
 
             {/* 2. SELECTED CAAQMS STATION DEEP DIVE */}
             <div
+              className="glass-panel"
               style={{
-                padding: '20px',
-                borderRadius: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                background: 'rgba(15, 23, 42, 0.48)',
+                padding: '24px',
+                borderRadius: '18px',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(15, 23, 42, 0.75)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Selected Monitoring Node
                 </span>
                 <span
                   style={{
-                    fontSize: '0.7rem',
+                    fontSize: '0.72rem',
                     color: getAqiColor(displayStation.aqi, activeRange).hex,
                     background: `${getAqiColor(displayStation.aqi, activeRange).hex}22`,
                     padding: '3px 8px',
@@ -3148,31 +2894,31 @@ return (
                 </span>
               </div>
 
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', margin: '0 0 4px' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: '0 0 6px' }}>
                 {displayStation.name}
               </h3>
-              <p style={{ fontSize: '0.74rem', color: '#64748b', margin: '0 0 14px' }}>
+              <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '0 0 16px' }}>
                 {displayStation.zone || displayStation.state || 'India'} · Multi-Source Ground & Satellite Grid
               </p>
 
               {/* Station metrics grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '14px' }}>
-                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                  <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block' }}>AQI Index</span>
-                  <strong style={{ fontSize: '1.2rem', color: getAqiColor(displayStation.aqi, activeRange).hex }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '16px' }}>
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '12px 10px', borderRadius: '10px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>AQI Index</span>
+                  <strong style={{ fontSize: '1.3rem', color: getAqiColor(displayStation.aqi, activeRange).hex }}>
                     {displayStation.aqi}
                   </strong>
                 </div>
-                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                  <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block' }}>PM2.5</span>
-                  <strong style={{ fontSize: '1.1rem', color: '#f87171' }}>
-                    {displayStation.pm25} <span style={{ fontSize: '0.6rem' }}>µg</span>
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '12px 10px', borderRadius: '10px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>PM2.5 (Fine)</span>
+                  <strong style={{ fontSize: '1.2rem', color: '#f87171' }}>
+                    {displayStation.pm25} <span style={{ fontSize: '0.65rem' }}>µg</span>
                   </strong>
                 </div>
-                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                  <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block' }}>PM10</span>
-                  <strong style={{ fontSize: '1.1rem', color: '#fb923c' }}>
-                    {displayStation.pm10} <span style={{ fontSize: '0.6rem' }}>µg</span>
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '12px 10px', borderRadius: '10px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>PM10 (Coarse)</span>
+                  <strong style={{ fontSize: '1.2rem', color: '#fb923c' }}>
+                    {displayStation.pm10} <span style={{ fontSize: '0.65rem' }}>µg</span>
                   </strong>
                 </div>
               </div>
@@ -3180,32 +2926,32 @@ return (
               {/* Google Gemini AI Health & Commute Advisory */}
               <div
                 style={{
-                  padding: '12px 14px',
+                  padding: '14px 16px',
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(15, 23, 42, 0.45) 100%)',
+                  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%)',
                   border: '1px solid rgba(56, 189, 248, 0.25)',
-                  fontSize: '0.78rem',
-                  lineHeight: 1.5,
+                  fontSize: '0.8rem',
+                  lineHeight: 1.55,
                   color: '#e2e8f0',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Sparkles size={13} color="#38bdf8" />
-                    <strong style={{ color: '#38bdf8', fontSize: '0.74rem', letterSpacing: '0.03em', textTransform: 'uppercase' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Sparkles size={14} color="#38bdf8" />
+                    <strong style={{ color: '#38bdf8', fontSize: '0.76rem', letterSpacing: '0.03em', textTransform: 'uppercase' }}>
                       Gemini 3.8 Flash Advisory
                     </strong>
                   </div>
                   <span
                     style={{
-                      fontSize: '0.65rem',
+                      fontSize: '0.68rem',
                       color: '#94a3b8',
                       background: 'rgba(255, 255, 255, 0.05)',
-                      padding: '2px 5px',
+                      padding: '2px 6px',
                       borderRadius: '4px',
                     }}
                   >
-                    {isLoadingAdvisory ? 'Analyzing...' : tokenStats ? `${tokenStats.total} tokens` : 'Token-Optimized'}
+                    {isLoadingAdvisory ? 'Analyzing...' : tokenStats ? `${tokenStats.total} tokens (0 reasoning)` : 'Token-Optimized'}
                   </span>
                 </div>
                 <p style={{ margin: 0, color: '#cbd5e1' }}>
@@ -3216,51 +2962,52 @@ return (
 
             {/* 3. CALIBRATED SEAMLESS ZOOM-ADAPTIVE SPECTRUM LEGEND */}
             <div
+              className="glass-panel"
               style={{
-                padding: '16px 18px',
+                padding: '16px 20px',
                 borderRadius: '16px',
-                border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
-                background: 'rgba(15, 23, 42, 0.52)',
+                border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(15, 23, 42, 0.85)',
                 transition: 'border-color 0.3s ease',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#94a3b8', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: '#94a3b8', marginBottom: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
-                  <span style={{ fontWeight: 700, color: '#e2e8f0' }}>Continuous Spectrum</span>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+                  <span style={{ fontWeight: 700, color: '#e2e8f0' }}>Seamless Continuous Spectrum</span>
                 </div>
                 <span
                   style={{
                     color: isAdaptiveMode && activeRange.isZoomed ? '#34d399' : '#38bdf8',
                     fontWeight: 700,
-                    fontSize: '0.68rem',
+                    fontSize: '0.7rem',
                     background: isAdaptiveMode && activeRange.isZoomed ? 'rgba(16, 185, 129, 0.18)' : 'rgba(56, 189, 248, 0.12)',
-                    padding: '2px 7px',
-                    borderRadius: '5px',
+                    padding: '2px 8px',
+                    borderRadius: '6px',
                     border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(56, 189, 248, 0.25)',
                   }}
                 >
                   {isAdaptiveMode && activeRange.isZoomed
-                    ? `Zoom ${activeRange.zoom}x (${activeRange.min} → ${activeRange.max} AQI)`
-                    : `India (${activeRange.nationalMin || 40} → ${activeRange.nationalMax || 260} AQI)`}
+                    ? `Zoom ${activeRange.zoom}x · Viewport (${activeRange.min} → ${activeRange.max} AQI)`
+                    : `India Nationwide (${activeRange.nationalMin || 40} → ${activeRange.nationalMax || 260} AQI)`}
                 </span>
               </div>
 
               {/* Seamless continuous gradient bar - ZERO black contour lines */}
               <div
                 style={{
-                  height: '12px',
-                  borderRadius: '6px',
+                  height: '14px',
+                  borderRadius: '7px',
                   background:
                     'linear-gradient(90deg, #10b981 0%, #34d399 14%, #a3e635 28%, #eab308 42%, #f97316 58%, #ea580c 72%, #dc2626 86%, #b91c1c 100%)',
-                  marginBottom: '8px',
+                  marginBottom: '10px',
                   boxShadow: '0 2px 14px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2)',
                   border: '1px solid rgba(255, 255, 255, 0.15)',
                 }}
               />
 
               {/* Dynamic tick labels synchronized with viewport AQI range */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.66rem', color: '#cbd5e1', fontWeight: 700 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#cbd5e1', fontWeight: 700 }}>
                 <span style={{ color: '#10b981' }}>{activeRange.min} (Min)</span>
                 <span style={{ color: '#a3e635' }}>
                   {Math.round(activeRange.min + (activeRange.max - activeRange.min) * 0.33)}
@@ -3273,23 +3020,22 @@ return (
 
               <div
                 style={{
-                  marginTop: '8px',
-                  paddingTop: '6px',
+                  marginTop: '10px',
+                  paddingTop: '8px',
                   borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-                  fontSize: '0.68rem',
-                  lineHeight: 1.4,
+                  fontSize: '0.71rem',
+                  lineHeight: 1.45,
                   color: isAdaptiveMode && activeRange.isZoomed ? '#34d399' : '#94a3b8',
                 }}
               >
                 {isAdaptiveMode && activeRange.isZoomed
-                  ? `✦ Zoom Dynamic Contrast: Local ${activeRange.min} AQI is Green, ${activeRange.max} AQI is Bright Red.`
-                  : `✦ Nationwide Gradient: Lowest AQI is Green and highest is Bright Red. Zoom into any region to recalibrate.`}
+                  ? `✦ Zoom Dynamic Contrast: Local ${activeRange.min} AQI maps to Green and ${activeRange.max} AQI to Bright Red so subtle localized variations stand out clearly.`
+                  : `✦ Seamless Continuous Gradient: Nationwide lowest AQI is Green and highest is Bright Red. Zoom into any region to recalibrate local contrast.`}
               </div>
             </div>
           </div>
         </div>
-      </aside>
+      </div>
     </section>
   );
-
 }
