@@ -571,6 +571,7 @@ export default function DelhiAqiHeatmap() {
   const sectionContainerRef = useRef(null);
   const hasPlayedIntroOrbitRef = useRef(false);
   const orbitAnimIdRef = useRef(null);
+  const isOrbitingRef = useRef(false);
   const mapLoadedRef = useRef(false);
   const pendingOrbitOnScrollRef = useRef(false);
 
@@ -591,7 +592,7 @@ export default function DelhiAqiHeatmap() {
 
   // DEFAULT OPACITY: Balanced translucent 0.45 so the map beneath (roads, cities, terrain) is clearly visible
   const [heatIntensity, setHeatIntensity] = useState(0.45);
-  const [showStationPins, setShowStationPins] = useState(true);
+  const [showStationPins, setShowStationPins] = useState(false);
   const [showHeatmapLayer, setShowHeatmapLayer] = useState(true);
   const [showStateBorders, setShowStateBorders] = useState(true);
   const [is3DBuildings, setIs3DBuildings] = useState(true);
@@ -846,6 +847,7 @@ export default function DelhiAqiHeatmap() {
 
   // Stop cinematic 360-degree orbit immediately on user intervention
   const cancelCinematic360Tour = useCallback(() => {
+    isOrbitingRef.current = false;
     if (orbitAnimIdRef.current) {
       cancelAnimationFrame(orbitAnimIdRef.current);
       orbitAnimIdRef.current = null;
@@ -853,11 +855,19 @@ export default function DelhiAqiHeatmap() {
     const map = mapInstanceRef.current;
     if (map) {
       map.stop();
+      if (showStateBorders && map.getLayer('admin-1-boundary')) {
+        map.setLayoutProperty('admin-1-boundary', 'visibility', 'visible');
+      }
+      if (showStateBorders && map.getLayer('admin-1-boundary-bg')) {
+        map.setLayoutProperty('admin-1-boundary-bg', 'visibility', 'visible');
+      }
     }
     setIsOrbiting360(false);
-  }, []);
+  }, [showStateBorders]);
 
   // Cinematic 360° 3D slanted orbital flyaround and seamless GPS zoom-in
+  // Render-optimized: zoomed out to 4.85 so local streets and complex boundaries are not rendered,
+  // preventing frame drops and ensuring butter-smooth 60fps 3D rotation!
   const playCinematic360Tour = useCallback((customTarget = null) => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -872,19 +882,28 @@ export default function DelhiAqiHeatmap() {
     const targetLat = customTarget?.lat ?? userLocationRef.current?.lat ?? 26.85;
     const targetCenter = [targetLon, targetLat];
 
+    isOrbitingRef.current = true;
     setIsOrbiting360(true);
     hasPlayedIntroOrbitRef.current = true;
 
-    // Phase 1: Set 3D slanted perspective matching the user's reference screenshot (pitch: 62°, zoom: 6.0)
+    // Temporarily disable boundary lines during 360° rotation to eliminate vector tessellation overhead
+    if (map.getLayer('admin-1-boundary')) {
+      map.setLayoutProperty('admin-1-boundary', 'visibility', 'none');
+    }
+    if (map.getLayer('admin-1-boundary-bg')) {
+      map.setLayoutProperty('admin-1-boundary-bg', 'visibility', 'none');
+    }
+
+    // Phase 1: Set 3D slanted perspective zoomed out to 4.85 so streets & granular vector geometry aren't rendered
     map.stop();
     map.jumpTo({
       center: targetCenter,
-      zoom: 6.0,
-      pitch: 62,
+      zoom: 4.85,
+      pitch: 58,
       bearing: 0,
     });
 
-    const orbitDuration = 7200; // 7.2s smooth full 360° orbital revolution
+    const orbitDuration = 6800; // 6.8s fluid, cinematic 360° orbital revolution
     let startTime = null;
     const startBearing = 0;
 
@@ -899,11 +918,11 @@ export default function DelhiAqiHeatmap() {
 
       const currentBearing = (startBearing + eased * 360) % 360;
 
-      // Keep camera locked in 3D slanted position orbiting targetCenter
+      // Keep camera locked in 3D slanted position at zoom 4.85 orbiting targetCenter
       map.jumpTo({
         center: targetCenter,
-        zoom: 6.0,
-        pitch: 62,
+        zoom: 4.85,
+        pitch: 58,
         bearing: currentBearing,
       });
 
@@ -911,6 +930,15 @@ export default function DelhiAqiHeatmap() {
         orbitAnimIdRef.current = requestAnimationFrame(orbitStep);
       } else {
         orbitAnimIdRef.current = null;
+        isOrbitingRef.current = false;
+
+        // Restore boundaries as camera swoops down
+        if (showStateBorders && map.getLayer('admin-1-boundary')) {
+          map.setLayoutProperty('admin-1-boundary', 'visibility', 'visible');
+        }
+        if (showStateBorders && map.getLayer('admin-1-boundary-bg')) {
+          map.setLayoutProperty('admin-1-boundary-bg', 'visibility', 'visible');
+        }
 
         // Phase 2: Seamlessly zoom down into the user's live GPS coordinates!
         map.flyTo({
@@ -923,18 +951,19 @@ export default function DelhiAqiHeatmap() {
           essential: true,
         });
 
-        // When zoom flyTo finishes, release orbiting state and enable tracking
+        // When zoom flyTo finishes, release orbiting state, enable tracking and calibrate viewport
         const handleZoomEnd = () => {
           map.off('moveend', handleZoomEnd);
           setIsOrbiting360(false);
           setIsFollowingUser(true);
+          updateRasterForViewport();
         };
         map.on('moveend', handleZoomEnd);
       }
     };
 
     orbitAnimIdRef.current = requestAnimationFrame(orbitStep);
-  }, []);
+  }, [showStateBorders, updateRasterForViewport]);
 
   // Start continuous, high-accuracy live GPS satellite tracking
   const startLiveGpsTracking = useCallback(() => {
@@ -1385,21 +1414,24 @@ export default function DelhiAqiHeatmap() {
       // Real-time Viewport & Zoom listener for continuous dynamic palette recalibration
       let throttleTimer = null;
       const handleViewportChange = () => {
+        if (isOrbitingRef.current) return; // Completely skip expensive raster recalculation during 360° spin!
         if (throttleTimer) return;
         throttleTimer = setTimeout(() => {
           throttleTimer = null;
           updateRasterForViewport();
-        }, 35);
+        }, 40);
       };
 
       map.on('move', handleViewportChange);
       map.on('zoom', handleViewportChange);
       map.on('moveend', () => {
+        if (isOrbitingRef.current) return;
         if (throttleTimer) clearTimeout(throttleTimer);
         throttleTimer = null;
         updateRasterForViewport();
       });
       map.on('zoomend', () => {
+        if (isOrbitingRef.current) return;
         if (throttleTimer) clearTimeout(throttleTimer);
         throttleTimer = null;
         updateRasterForViewport();
@@ -1515,19 +1547,23 @@ export default function DelhiAqiHeatmap() {
     stations.forEach((st) => {
       const isSelected = selectedStation?.id === st.id;
 
+      // Outer wrapper element given to Mapbox - MUST NOT have style.transform mutated to avoid coordinate displacement!
       const el = document.createElement('div');
       el.className = 'mapbox-station-pin-wrap';
-      el.style.display = 'flex';
-      el.style.flexDirection = 'column';
-      el.style.alignItems = 'center';
       el.style.cursor = 'pointer';
-      el.style.transformOrigin = 'bottom center';
-      el.style.transition = 'transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)';
 
-      el.innerHTML = `
+      // Inner container for scale, hover animations, and SVG content
+      const inner = document.createElement('div');
+      inner.style.display = 'flex';
+      inner.style.flexDirection = 'column';
+      inner.style.alignItems = 'center';
+      inner.style.transformOrigin = 'bottom center';
+      inner.style.transition = 'transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      inner.style.transform = isSelected ? 'scale(1.2)' : 'scale(1)';
+
+      inner.innerHTML = `
         <div style="
           filter: drop-shadow(0 3px 6px rgba(0,0,0,0.7));
-          transform: ${isSelected ? 'scale(1.28)' : 'scale(1)'};
           transition: transform 0.2s ease;
         ">
           <svg width="${isSelected ? '24' : '18'}" height="${isSelected ? '32' : '24'}" viewBox="0 0 24 32" fill="none">
@@ -1555,11 +1591,14 @@ export default function DelhiAqiHeatmap() {
         ` : ''}
       `;
 
+      el.appendChild(inner);
+
+      // Safe hover animation targeting inner container so Mapbox coordinate transform is 100% preserved
       el.addEventListener('mouseenter', () => {
-        el.style.transform = 'scale(1.25)';
+        inner.style.transform = 'scale(1.35)';
       });
       el.addEventListener('mouseleave', () => {
-        el.style.transform = isSelected ? 'scale(1.15)' : 'scale(1)';
+        inner.style.transform = isSelected ? 'scale(1.2)' : 'scale(1)';
       });
       el.addEventListener('click', (e) => {
         e.stopPropagation();
