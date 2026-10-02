@@ -570,12 +570,14 @@ function getAqiColor(val, activeRange) {
 }
 
 /**
- * Applies the signature Mapbox 'navigation-night-v1' color palette to vector tile layers.
- * Synchronizes vector layers with Mapbox's luminous slate-navy background (#1c2638),
- * rich deep marine navy water (#121e30), electric cyan expressways (#38bdf8),
- * azure arterial roads (#0ea5e9), visible slate secondary road web (#334155),
- * crisp white state borders (#f8fafc), and crisp luminous white typography (#f8fafc)
- * with sharp dark halos.
+ * Applies the signature Mapbox 'navigation-night-v1' color palette & progressive Level of Detail (LOD)
+ * to vector tile layers:
+ * 1. Muted slate-navy land (#1c2638) and deep marine water (#121e30).
+ * 2. Roads in an elegant, faded shade of blue (#334e68 / #486581) with zoom-progressive reveal
+ *    (barely visible ghost hairlines at country view, smoothly fading in as you zoom closer).
+ * 3. Decluttered typography with single-line labels (no bilingual multi-line clutter).
+ * 4. Progressive label loading: from high above, only show major countries, states, and top metropolises;
+ *    secondary cities, towns, villages, and streets fade in gracefully only as you zoom in.
  */
 function applyNavigationNightPalette(map) {
   if (!map || typeof map.getStyle !== 'function') return;
@@ -587,11 +589,39 @@ function applyNavigationNightPalette(map) {
     map.setPaintProperty('background', 'background-color', '#1c2638');
   }
 
+  // 2. Configure Zoom Ranges (Progressive Level of Detail - declutter high-altitude view)
+  const safeZoomRange = (id, min, max) => {
+    try {
+      if (map.getLayer(id) && typeof map.setLayerZoomRange === 'function') {
+        map.setLayerZoomRange(id, min, max);
+      }
+    } catch {}
+  };
+
+  // Only major cities visible high above; secondary cities, towns, villages load progressively on zoom
+  safeZoomRange('place_city', 5.5, 14);          // Tier-2 cities appear at regional zoom (zoom 5.5+)
+  safeZoomRange('place_town', 7.0, 15);          // Towns appear at corridor/district zoom (zoom 7+)
+  safeZoomRange('place_village', 8.8, 15);       // Villages appear on local zoom (zoom 8.8+)
+  safeZoomRange('place_suburb', 9.2, 16);        // Suburbs appear on urban zoom (zoom 9.2+)
+  safeZoomRange('place_other', 9.8, 16);         // Hamlets / local features (zoom 9.8+)
+  safeZoomRange('water_name', 6.2, 20);          // Lakes / rivers labels (zoom 6.2+)
+  safeZoomRange('highway_name_motorway', 7.0, 20); // Highway shields / labels (zoom 7+)
+  safeZoomRange('highway_name_other', 8.2, 20);  // Minor street names (zoom 8.2+)
+
+  // 3. Faded Slate-Blue Palette for Roads (Replaces harsh cyan with calm, muted faded blue)
+  const FADED_BLUE = '#334e68';        // Calm, muted, faded steel-blue
+  const FADED_BLUE_ACCENT = '#486581'; // Refined steel blue for expressways
+  const ROAD_CASING = '#102a43';       // Dark slate navy casing
+  const MINOR_ROAD = '#243b53';        // Soft slate for secondary roads
+
+  // Single-line text layout: eliminates the noisy 2-line nonlatin script concatenation
+  const singleLineField = ['coalesce', ['get', 'name_en'], ['get', 'name:latin'], ['get', 'name']];
+
   style.layers.forEach((l) => {
     const id = l.id;
     const type = l.type;
 
-    // 2. Waterways & Water Bodies (Deep Marine Navy #121e30, canals/streams #1a2a42)
+    // Waterways & Water Bodies (Deep Marine Navy #121e30, canals/streams #1a2a42)
     if (id.includes('water') || id.includes('ocean')) {
       if (type === 'fill') {
         map.setPaintProperty(id, 'fill-color', '#121e30');
@@ -600,20 +630,20 @@ function applyNavigationNightPalette(map) {
       }
     }
 
-    // 3. Landuse, Forests, Parks & Residential (Soft tinted overlay matching Mapbox terrain)
+    // Landuse, Forests, Parks & Residential (Soft muted terrain tints)
     if (id.includes('wood') || id.includes('forest') || id.includes('park') || id.includes('grass')) {
       if (type === 'fill') {
         map.setPaintProperty(id, 'fill-color', '#192b3a');
-        map.setPaintProperty(id, 'fill-opacity', 0.45);
+        map.setPaintProperty(id, 'fill-opacity', 0.4);
       }
     } else if (id.includes('residential') || id.includes('commercial') || id.includes('industrial') || id.includes('landuse')) {
       if (type === 'fill') {
         map.setPaintProperty(id, 'fill-color', '#1e2b3e');
-        map.setPaintProperty(id, 'fill-opacity', 0.5);
+        map.setPaintProperty(id, 'fill-opacity', 0.45);
       }
     }
 
-    // 4. Buildings Footprints (#182436 with subtle stroke #253752)
+    // Buildings Footprints (#182436 with subtle stroke #253752)
     if (id.includes('building')) {
       if (type === 'fill') {
         map.setPaintProperty(id, 'fill-color', '#182436');
@@ -621,99 +651,198 @@ function applyNavigationNightPalette(map) {
       }
     }
 
-    // 5. Roads & Highways (Exact Mapbox Navigation Night signature: Cyan expressways, azure trunks, visible slate road web)
+    // Roads & Highways: Faded shade of blue with smooth progressive zoom reveal
     if (type === 'line') {
-      if (id.includes('motorway') || id.includes('freeway')) {
+      if (id === 'highway_motorway_subtle') {
+        // High-altitude motorway preview: very soft, faint ghost lines (0.06 to 0.45 opacity)
+        map.setPaintProperty(id, 'line-color', FADED_BLUE);
+        map.setPaintProperty(id, 'line-opacity', [
+          'interpolate', ['linear'], ['zoom'],
+          4, 0.06,
+          5.2, 0.22,
+          6, 0.45
+        ]);
+        map.setPaintProperty(id, 'line-width', [
+          'interpolate', ['linear'], ['zoom'],
+          4, 0.6,
+          6, 1.2
+        ]);
+      } else if (id.includes('motorway') || id.includes('freeway')) {
         if (id.includes('casing')) {
-          map.setPaintProperty(id, 'line-color', '#0c1b33');
+          map.setPaintProperty(id, 'line-color', ROAD_CASING);
+          map.setPaintProperty(id, 'line-opacity', 0.5);
         } else {
-          map.setPaintProperty(id, 'line-color', '#38bdf8'); // Electric vibrant cyan
+          map.setPaintProperty(id, 'line-color', FADED_BLUE_ACCENT);
+          map.setPaintProperty(id, 'line-opacity', [
+            'interpolate', ['linear'], ['zoom'],
+            6, 0.35,
+            8, 0.75,
+            12, 0.95
+          ]);
         }
+      } else if (id === 'highway_major_subtle') {
+        // Trunk roads fade in only starting at zoom 5.5+
+        map.setPaintProperty(id, 'line-color', FADED_BLUE);
+        map.setPaintProperty(id, 'line-opacity', [
+          'interpolate', ['linear'], ['zoom'],
+          5.5, 0.0,
+          7.0, 0.35,
+          9, 0.65
+        ]);
       } else if (id.includes('major') || id.includes('trunk') || id.includes('primary')) {
         if (id.includes('casing')) {
-          map.setPaintProperty(id, 'line-color', '#091629');
+          map.setPaintProperty(id, 'line-color', ROAD_CASING);
         } else {
-          map.setPaintProperty(id, 'line-color', '#0ea5e9'); // Azure cyan
+          map.setPaintProperty(id, 'line-color', FADED_BLUE);
         }
       } else if (id.includes('minor') || id.includes('tertiary') || id.includes('secondary') || id.includes('service')) {
-        // Visible secondary web across terrain matching Mapbox
-        map.setPaintProperty(id, 'line-color', '#334155');
-        map.setPaintProperty(id, 'line-opacity', 0.85);
+        // Local roads: only visible when zoomed in closer (zoom 8+)
+        map.setPaintProperty(id, 'line-color', MINOR_ROAD);
+        map.setPaintProperty(id, 'line-opacity', [
+          'interpolate', ['linear'], ['zoom'],
+          8, 0.15,
+          11, 0.6
+        ]);
       } else if (id.includes('path') || id.includes('track') || id.includes('pedestrian')) {
-        map.setPaintProperty(id, 'line-color', '#273549');
-        map.setPaintProperty(id, 'line-opacity', 0.7);
+        map.setPaintProperty(id, 'line-color', '#1d2c3d');
+        map.setPaintProperty(id, 'line-opacity', [
+          'interpolate', ['linear'], ['zoom'],
+          10, 0.0,
+          13, 0.5
+        ]);
       }
     }
 
-    // 6. Boundaries (Crisp white state boundaries & cyan country borders matching Mapbox)
+    // Boundaries: Refined slate-dashed lines (not glaring white slashes)
     if (id.includes('boundary')) {
       if (id.includes('state')) {
-        map.setPaintProperty(id, 'line-color', '#f8fafc');
-        map.setPaintProperty(id, 'line-opacity', 0.9);
+        map.setPaintProperty(id, 'line-color', '#94a3b8');
+        map.setPaintProperty(id, 'line-opacity', [
+          'interpolate', ['linear'], ['zoom'],
+          3.8, 0.35,
+          6, 0.65,
+          9, 0.85
+        ]);
+        map.setPaintProperty(id, 'line-width', 1.0);
+        map.setPaintProperty(id, 'line-dasharray', [3, 2]);
       } else if (id.includes('country')) {
-        map.setPaintProperty(id, 'line-color', '#38bdf8');
-        map.setPaintProperty(id, 'line-opacity', 0.95);
+        map.setPaintProperty(id, 'line-color', '#3b597d');
+        map.setPaintProperty(id, 'line-opacity', 0.75);
+        map.setPaintProperty(id, 'line-width', 1.2);
       }
     }
 
-    // 7. Typography and City/Place Labels: Unconditionally override OpenFreeMap dark style's gray/black labels!
+    // Typography and Labels: Clean, single-line, progressive Level of Detail
     if (type === 'symbol') {
       try {
+        // Apply clean single-line layout to avoid 2-line bilingual stacking
+        if (id.startsWith('place_') || id.startsWith('water_name') || id.startsWith('highway_name')) {
+          try {
+            map.setLayoutProperty(id, 'text-field', singleLineField);
+          } catch {}
+        }
+
         if (id.includes('country')) {
           map.setPaintProperty(id, 'text-color', '#ffffff');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(5, 10, 20, 0.9)');
-          map.setPaintProperty(id, 'text-halo-width', 1.2);
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.85)');
+          map.setPaintProperty(id, 'text-halo-width', 1.0);
           map.setPaintProperty(id, 'text-halo-blur', 0);
           map.setPaintProperty(id, 'text-opacity', 1.0);
         } else if (id.includes('state') || id === 'place_state') {
-          map.setPaintProperty(id, 'text-color', '#ffffff');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(5, 10, 20, 0.85)');
+          // State names: Soft silver, visible from country zoom, elegant letter spacing
+          map.setPaintProperty(id, 'text-color', '#cbd5e1');
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.8)');
           map.setPaintProperty(id, 'text-halo-width', 1.0);
+          map.setPaintProperty(id, 'text-halo-blur', 0);
+          map.setPaintProperty(id, 'text-opacity', [
+            'interpolate', ['linear'], ['zoom'],
+            4.0, 0.5,
+            5.5, 0.85,
+            8, 0.4
+          ]);
+          try {
+            map.setLayoutProperty(id, 'text-size', [
+              'interpolate', ['linear'], ['zoom'],
+              4, 10,
+              6, 12,
+              9, 15
+            ]);
+            map.setLayoutProperty(id, 'text-letter-spacing', 0.14);
+          } catch {}
+        } else if (id === 'place_city_large') {
+          // Top Tier Megacities (Delhi, Mumbai, Bengaluru, etc.): Crisp white, clear halo
+          map.setPaintProperty(id, 'text-color', '#ffffff');
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.9)');
+          map.setPaintProperty(id, 'text-halo-width', 1.1);
           map.setPaintProperty(id, 'text-halo-blur', 0);
           map.setPaintProperty(id, 'text-opacity', 1.0);
           try {
-            map.setLayoutProperty(id, 'text-size', ['interpolate', ['linear'], ['zoom'], 3, 11, 6, 14, 9, 18]);
-            map.setLayoutProperty(id, 'text-letter-spacing', 0.12);
+            map.setLayoutProperty(id, 'text-size', [
+              'interpolate', ['linear'], ['zoom'],
+              4, 11,
+              7, 13,
+              10, 16
+            ]);
           } catch {}
-        } else if (id.includes('city')) {
-          map.setPaintProperty(id, 'text-color', '#ffffff');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(5, 10, 20, 0.85)');
+        } else if (id === 'place_city') {
+          // Tier-2 Cities (Jaipur, Agra, Kota, etc.): Smoothly fade in on regional zoom
+          map.setPaintProperty(id, 'text-color', '#e2e8f0');
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.85)');
           map.setPaintProperty(id, 'text-halo-width', 1.0);
           map.setPaintProperty(id, 'text-halo-blur', 0);
-          map.setPaintProperty(id, 'text-opacity', 1.0);
-          map.setPaintProperty(id, 'icon-opacity', 1.0);
+          map.setPaintProperty(id, 'text-opacity', [
+            'interpolate', ['linear'], ['zoom'],
+            5.5, 0.0,
+            6.2, 0.9,
+            8, 1.0
+          ]);
           try {
-            map.setLayoutProperty(id, 'text-size', ['interpolate', ['linear'], ['zoom'], 4, 11, 7, 13, 10, 16]);
+            map.setLayoutProperty(id, 'text-size', [
+              'interpolate', ['linear'], ['zoom'],
+              5.5, 10,
+              8, 12,
+              11, 15
+            ]);
           } catch {}
-        } else if (id.includes('town') || id.includes('village') || id.includes('suburb') || id.includes('place_other')) {
-          map.setPaintProperty(id, 'text-color', '#f1f5f9');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(5, 10, 20, 0.85)');
+        } else if (id.includes('town')) {
+          // Towns: Fade in at zoom 7.0+
+          map.setPaintProperty(id, 'text-color', '#cbd5e1');
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.85)');
           map.setPaintProperty(id, 'text-halo-width', 1.0);
           map.setPaintProperty(id, 'text-halo-blur', 0);
-          map.setPaintProperty(id, 'text-opacity', 1.0);
-          map.setPaintProperty(id, 'icon-opacity', 0.95);
+          map.setPaintProperty(id, 'text-opacity', [
+            'interpolate', ['linear'], ['zoom'],
+            7.0, 0.0,
+            7.8, 0.85,
+            10, 1.0
+          ]);
+        } else if (id.includes('village') || id.includes('suburb') || id.includes('place_other')) {
+          // Villages / Suburbs: Only local zoom (zoom 8.8+)
+          map.setPaintProperty(id, 'text-color', '#cbd5e1');
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.85)');
+          map.setPaintProperty(id, 'text-halo-width', 1.0);
+          map.setPaintProperty(id, 'text-halo-blur', 0);
+          map.setPaintProperty(id, 'text-opacity', 0.9);
         } else if (id.includes('water_name')) {
-          map.setPaintProperty(id, 'text-color', '#7dd3fc');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(5, 15, 30, 0.9)');
+          map.setPaintProperty(id, 'text-color', '#5682a3');
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.85)');
           map.setPaintProperty(id, 'text-halo-width', 1.0);
           map.setPaintProperty(id, 'text-halo-blur', 0);
-          map.setPaintProperty(id, 'text-opacity', 0.95);
+          map.setPaintProperty(id, 'text-opacity', 0.85);
         } else if (id.includes('highway_name')) {
-          map.setPaintProperty(id, 'text-color', '#f8fafc');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(5, 10, 20, 0.85)');
+          map.setPaintProperty(id, 'text-color', '#94a3b8');
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.85)');
           map.setPaintProperty(id, 'text-halo-width', 1.0);
           map.setPaintProperty(id, 'text-halo-blur', 0);
-          map.setPaintProperty(id, 'text-opacity', 1.0);
+          map.setPaintProperty(id, 'text-opacity', 0.9);
         } else {
           map.setPaintProperty(id, 'text-color', '#ffffff');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(5, 10, 20, 0.85)');
+          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.85)');
           map.setPaintProperty(id, 'text-halo-width', 1.0);
           map.setPaintProperty(id, 'text-halo-blur', 0);
           map.setPaintProperty(id, 'text-opacity', 1.0);
         }
-      } catch {
-        // safely pass non-paint symbol properties
-      }
+      } catch {}
     }
   });
 }
@@ -1608,40 +1737,40 @@ export default function DelhiAqiHeatmap() {
         beforeLayerId
       );
 
-      // 4. Boost State Boundaries Visibility (Crisp silver-cyan lines on dark backdrop)
+      // 4. Subtle, Refined State Boundaries (Soft slate dashed lines)
       if (map.getLayer('admin-1-boundary')) {
-        map.setPaintProperty('admin-1-boundary', 'line-color', '#93c5fd'); // Luminous sky-blue/slate state border
+        map.setPaintProperty('admin-1-boundary', 'line-color', '#94a3b8');
         map.setPaintProperty('admin-1-boundary', 'line-width', [
           'interpolate', ['linear'], ['zoom'],
-          3, 1.2,
-          6, 1.8,
-          10, 2.5
+          3, 0.8,
+          6, 1.2,
+          10, 1.8
         ]);
-        map.setPaintProperty('admin-1-boundary', 'line-opacity', 0.92);
-        map.setPaintProperty('admin-1-boundary', 'line-dasharray', [4, 2]);
+        map.setPaintProperty('admin-1-boundary', 'line-opacity', 0.55);
+        map.setPaintProperty('admin-1-boundary', 'line-dasharray', [3, 2]);
       }
 
       if (map.getLayer('admin-1-boundary-bg')) {
         map.setPaintProperty('admin-1-boundary-bg', 'line-color', '#070a13');
         map.setPaintProperty('admin-1-boundary-bg', 'line-width', [
           'interpolate', ['linear'], ['zoom'],
-          3, 2.2,
-          6, 3.0,
-          10, 4.0
+          3, 1.4,
+          6, 2.0,
+          10, 2.8
         ]);
-        map.setPaintProperty('admin-1-boundary-bg', 'line-opacity', 0.80);
+        map.setPaintProperty('admin-1-boundary-bg', 'line-opacity', 0.50);
       }
 
       if (map.getLayer('boundary_state')) {
-        map.setPaintProperty('boundary_state', 'line-color', '#93c5fd');
+        map.setPaintProperty('boundary_state', 'line-color', '#94a3b8');
         map.setPaintProperty('boundary_state', 'line-width', [
           'interpolate', ['linear'], ['zoom'],
-          3, 1.2,
-          6, 1.8,
-          10, 2.5
+          3, 0.8,
+          6, 1.2,
+          10, 1.8
         ]);
-        map.setPaintProperty('boundary_state', 'line-opacity', 0.88);
-        map.setPaintProperty('boundary_state', 'line-dasharray', [4, 2]);
+        map.setPaintProperty('boundary_state', 'line-opacity', 0.55);
+        map.setPaintProperty('boundary_state', 'line-dasharray', [3, 2]);
       }
 
       // 5. 3D Building Extrusion Layer (Shows urban architecture on close zoom)
