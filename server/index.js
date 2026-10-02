@@ -7,7 +7,7 @@ import {
   getHistoricalReadings,
   generateBedrockAdvisory,
 } from './awsServices.js';
-import { getDelhiHeatmapData } from './fusionAqiService.js';
+import { getDelhiHeatmapData, getUniversalHeatmapData, getIndiaNationalHeatmapData } from './fusionAqiService.js';
 import { generateGeminiAdvisory } from './geminiService.js';
 
 dotenv.config();
@@ -50,6 +50,22 @@ app.get('/api/aws-status', (req, res) => {
 });
 
 /**
+ * Real-Time India National Subcontinent Spatial Heatmap Endpoint
+ * Integrates 77 CAAQMS & ground monitoring stations spanning all states and territories
+ */
+app.get('/api/india-heatmap', async (req, res) => {
+  try {
+    const lat = req.query.lat ? Number(req.query.lat) : 28.6139;
+    const lon = req.query.lon ? Number(req.query.lon) : 77.2090;
+    const data = await getIndiaNationalHeatmapData(lat, lon);
+    res.json(data);
+  } catch (err) {
+    console.error('[API /api/india-heatmap Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * Real-Time Delhi Spatial Heatmap & Fusion Algorithm Endpoint
  */
 app.get('/api/delhi-heatmap', async (req, res) => {
@@ -60,6 +76,23 @@ app.get('/api/delhi-heatmap', async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error('[API /api/delhi-heatmap Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Universal Multi-City & Global Regional Heatmap Endpoint
+ * Works for any city, urban basin, or arbitrary GPS coordinate worldwide
+ */
+app.get('/api/region-heatmap', async (req, res) => {
+  try {
+    const lat = req.query.lat ? Number(req.query.lat) : 28.7495;
+    const lon = req.query.lon ? Number(req.query.lon) : 77.1171;
+    const city = req.query.city || 'Delhi';
+    const data = await getUniversalHeatmapData(lat, lon, city);
+    res.json(data);
+  } catch (err) {
+    console.error('[API /api/region-heatmap Error]:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
