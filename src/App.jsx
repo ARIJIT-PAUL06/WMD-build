@@ -4,12 +4,25 @@ import DelhiAqiHeatmap from './components/Heatmap/DelhiAqiHeatmap';
 
 export default function App() {
   const heatmapRef = useRef(null);
+  const isMapOnly = typeof window !== 'undefined' && (
+    window.location.search.includes('view=map') ||
+    window.location.search.includes('map=true') ||
+    window.location.hash === '#heatmap'
+  );
 
   const scrollToHeatmap = () => {
     if (heatmapRef.current) {
       heatmapRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  if (isMapOnly) {
+    return (
+      <div style={{ width: '100vw', height: '100vh', background: '#070a12', overflow: 'hidden' }}>
+        <DelhiAqiHeatmap />
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#070a12' }}>

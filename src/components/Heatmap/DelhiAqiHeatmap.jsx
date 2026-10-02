@@ -643,22 +643,38 @@ function applyNavigationNightPalette(map) {
       }
     }
 
-    // Buildings Footprints (#182436 with subtle stroke #253752)
+    // Buildings Footprints: Crisp architectural footprints with visible contrast (#1e2d42 with stroke #334e70)
     if (id.includes('building')) {
       if (type === 'fill') {
-        map.setPaintProperty(id, 'fill-color', '#182436');
-        map.setPaintProperty(id, 'fill-outline-color', '#253752');
+        map.setPaintProperty(id, 'fill-color', [
+          'interpolate', ['linear'], ['zoom'],
+          12, '#182436',
+          13.5, '#1e2d42',
+          16, '#243750'
+        ]);
+        map.setPaintProperty(id, 'fill-outline-color', [
+          'interpolate', ['linear'], ['zoom'],
+          12, '#283c57',
+          13.5, '#365378',
+          16, '#4a6f9c'
+        ]);
+        map.setPaintProperty(id, 'fill-opacity', [
+          'interpolate', ['linear'], ['zoom'],
+          12, 0.5,
+          13.5, 0.8,
+          16, 0.95
+        ]);
       }
     }
 
-    // Roads & Highways: Faded shade of blue with smooth progressive zoom reveal
+    // Roads & Highways: High-altitude faded calm palette -> Zoomed-in vibrant blue lines (referencing Mapbox navigation-night)
     if (type === 'line') {
       if (id === 'highway_motorway_subtle') {
-        // High-altitude motorway preview: very soft, faint ghost lines (0.06 to 0.45 opacity)
-        map.setPaintProperty(id, 'line-color', FADED_BLUE);
+        // High-altitude motorway preview (zoom < 6): soft, faint ghost lines (0.05 to 0.45 opacity)
+        map.setPaintProperty(id, 'line-color', '#334e68');
         map.setPaintProperty(id, 'line-opacity', [
           'interpolate', ['linear'], ['zoom'],
-          4, 0.06,
+          4, 0.05,
           5.2, 0.22,
           6, 0.45
         ]);
@@ -669,45 +685,125 @@ function applyNavigationNightPalette(map) {
         ]);
       } else if (id.includes('motorway') || id.includes('freeway')) {
         if (id.includes('casing')) {
-          map.setPaintProperty(id, 'line-color', ROAD_CASING);
-          map.setPaintProperty(id, 'line-opacity', 0.5);
-        } else {
-          map.setPaintProperty(id, 'line-color', FADED_BLUE_ACCENT);
+          map.setPaintProperty(id, 'line-color', '#06101d');
           map.setPaintProperty(id, 'line-opacity', [
             'interpolate', ['linear'], ['zoom'],
             6, 0.35,
             8, 0.75,
-            12, 0.95
+            11, 0.95
+          ]);
+          map.setPaintProperty(id, 'line-width', [
+            'interpolate', ['exponential', 1.4], ['zoom'],
+            6, 2.0,
+            7.5, 3.8,
+            10, 5.5,
+            13, 9.0,
+            16, 16.0
+          ]);
+        } else {
+          // Motorway inner: smoothly transitions into vibrant blue lines as user zooms in (referencing Mapbox)
+          map.setPaintProperty(id, 'line-color', [
+            'interpolate', ['linear'], ['zoom'],
+            5.5, '#334e68',
+            7, '#0284c7',
+            8.5, '#0ea5e9',
+            11, '#38bdf8',
+            14, '#60a5fa'
+          ]);
+          map.setPaintProperty(id, 'line-opacity', [
+            'interpolate', ['linear'], ['zoom'],
+            5.5, 0.45,
+            7, 0.85,
+            9, 0.98
+          ]);
+          map.setPaintProperty(id, 'line-width', [
+            'interpolate', ['exponential', 1.4], ['zoom'],
+            5.5, 1.0,
+            7.5, 2.2,
+            10, 3.6,
+            13, 6.0,
+            16, 11.0
           ]);
         }
       } else if (id === 'highway_major_subtle') {
-        // Trunk roads fade in only starting at zoom 5.5+
-        map.setPaintProperty(id, 'line-color', FADED_BLUE);
+        // Major / Trunk highways connecting cities (active zoom 6 to 11):
+        // Fades in starting at zoom 6, turning into crisp luminous blue lines
+        map.setPaintProperty(id, 'line-color', [
+          'interpolate', ['linear'], ['zoom'],
+          6, '#23374d',
+          7.2, '#0284c7',
+          8.8, '#0ea5e9',
+          11, '#38bdf8'
+        ]);
         map.setPaintProperty(id, 'line-opacity', [
           'interpolate', ['linear'], ['zoom'],
-          5.5, 0.0,
-          7.0, 0.35,
-          9, 0.65
+          5.8, 0.0,
+          6.8, 0.50,
+          8, 0.85,
+          10, 0.95
+        ]);
+        map.setPaintProperty(id, 'line-width', [
+          'interpolate', ['linear'], ['zoom'],
+          6, 0.8,
+          8, 1.6,
+          10, 2.6,
+          11, 3.4
         ]);
       } else if (id.includes('major') || id.includes('trunk') || id.includes('primary')) {
         if (id.includes('casing')) {
-          map.setPaintProperty(id, 'line-color', ROAD_CASING);
+          map.setPaintProperty(id, 'line-color', '#06101d');
+          map.setPaintProperty(id, 'line-opacity', 0.85);
+          map.setPaintProperty(id, 'line-width', [
+            'interpolate', ['exponential', 1.3], ['zoom'],
+            11, 3.8,
+            13, 6.2,
+            16, 12.0
+          ]);
         } else {
-          map.setPaintProperty(id, 'line-color', FADED_BLUE);
+          // Major roads at zoom 11+: crisp blue lines
+          map.setPaintProperty(id, 'line-color', [
+            'interpolate', ['linear'], ['zoom'],
+            11, '#0ea5e9',
+            13, '#38bdf8',
+            16, '#60a5fa'
+          ]);
+          map.setPaintProperty(id, 'line-opacity', 0.95);
+          map.setPaintProperty(id, 'line-width', [
+            'interpolate', ['exponential', 1.3], ['zoom'],
+            11, 2.4,
+            13, 4.2,
+            16, 8.5
+          ]);
         }
       } else if (id.includes('minor') || id.includes('tertiary') || id.includes('secondary') || id.includes('service')) {
-        // Local roads: only visible when zoomed in closer (zoom 8+)
-        map.setPaintProperty(id, 'line-color', MINOR_ROAD);
+        // Minor & urban local streets: reveal progressive blue grid when zoomed in close (zoom 8+)
+        map.setPaintProperty(id, 'line-color', [
+          'interpolate', ['linear'], ['zoom'],
+          8, '#1e293b',
+          10, '#1e3e63',
+          12, '#2563eb',
+          14, '#38bdf8'
+        ]);
         map.setPaintProperty(id, 'line-opacity', [
           'interpolate', ['linear'], ['zoom'],
-          8, 0.15,
-          11, 0.6
+          8, 0.0,
+          9.2, 0.35,
+          11, 0.70,
+          13, 0.90
+        ]);
+        map.setPaintProperty(id, 'line-width', [
+          'interpolate', ['exponential', 1.4], ['zoom'],
+          8, 0.5,
+          10, 0.9,
+          12, 1.8,
+          14, 3.0,
+          16, 5.5
         ]);
       } else if (id.includes('path') || id.includes('track') || id.includes('pedestrian')) {
         map.setPaintProperty(id, 'line-color', '#1d2c3d');
         map.setPaintProperty(id, 'line-opacity', [
           'interpolate', ['linear'], ['zoom'],
-          10, 0.0,
+          11, 0.0,
           13, 0.5
         ]);
       }
@@ -829,6 +925,18 @@ function applyNavigationNightPalette(map) {
           map.setPaintProperty(id, 'text-halo-width', 1.0);
           map.setPaintProperty(id, 'text-halo-blur', 0);
           map.setPaintProperty(id, 'text-opacity', 0.85);
+        } else if (id === 'highway_name_motorway') {
+          // Yellow highway shield badges with bold numerals (e.g. NH 48, NH 52 in Mapbox reference)
+          map.setPaintProperty(id, 'text-color', '#0f172a');
+          map.setPaintProperty(id, 'text-halo-color', '#f59e0b');
+          map.setPaintProperty(id, 'text-halo-width', 3.5);
+          map.setPaintProperty(id, 'text-halo-blur', 0.2);
+          map.setPaintProperty(id, 'text-opacity', [
+            'interpolate', ['linear'], ['zoom'],
+            6.5, 0.0,
+            7.2, 0.9,
+            12, 1.0
+          ]);
         } else if (id.includes('highway_name')) {
           map.setPaintProperty(id, 'text-color', '#94a3b8');
           map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.85)');
@@ -1615,14 +1723,20 @@ export default function DelhiAqiHeatmap() {
     const isMapbox = activeProvider === 'mapbox';
     const chosenStyle = isMapbox ? MAPBOX_DARK_STYLE : OPENFREEMAP_DARK_STYLE;
 
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const initialLng = urlParams && urlParams.get('lng') ? parseFloat(urlParams.get('lng')) : 78.9629;
+    const initialLat = urlParams && urlParams.get('lat') ? parseFloat(urlParams.get('lat')) : 22.5937;
+    const initialZoom = urlParams && urlParams.get('zoom') ? parseFloat(urlParams.get('zoom')) : 4.6;
+    const initialPitch = urlParams && urlParams.get('pitch') ? parseFloat(urlParams.get('pitch')) : 16;
+
     const map = new mapEngine.Map({
       container: mapContainerRef.current,
       style: chosenStyle, // High-contrast night navigation (Mapbox) or OpenFreeMap dark vector style (0 credits)
-      center: [78.9629, 22.5937], // Center of India
-      zoom: 4.6,
+      center: [initialLng, initialLat],
+      zoom: initialZoom,
       minZoom: 3.8,
       maxZoom: 16.5,
-      pitch: 16, // Gentle subcontinental perspective
+      pitch: initialPitch,
       maxPitch: 85, // Allows high-pitch 3D slanted perspective
       bearing: 0,
       attributionControl: false,
@@ -1669,6 +1783,7 @@ export default function DelhiAqiHeatmap() {
       const roadLayerId = layers.find((l) => (l.id.startsWith('road') || l.id.startsWith('highway_')) && l.type === 'line')?.id;
       const adminLayerId = layers.find((l) => l.id === 'admin-1-boundary-bg' || l.id === 'admin-1-boundary' || l.id === 'boundary_state')?.id;
       const symbolLayerId = layers.find((l) => l.type === 'symbol' && (l.layout?.['text-field'] || l.id.startsWith('place_') || l.id.startsWith('highway_name') || l.id.startsWith('water_name')) )?.id;
+      const labelLayerId = layers.find((l) => l.type === 'symbol' && (l.id.startsWith('place_') || l.id.startsWith('poi_') || l.id.includes('settlement')) )?.id;
       const beforeLayerId = roadLayerId || adminLayerId || symbolLayerId;
 
       // Real GPS Accuracy Radar Radius Layer (rendered beneath roads & borders)
@@ -1774,46 +1889,65 @@ export default function DelhiAqiHeatmap() {
       }
 
       // 5. 3D Building Extrusion Layer (Shows urban architecture on close zoom)
-      if (map.getSource('composite')) {
-        map.addLayer(
-          {
-            id: '3d-buildings',
-            source: 'composite',
-            'source-layer': 'building',
-            filter: ['==', 'extrude', 'true'],
-            type: 'fill-extrusion',
-            minzoom: 13,
-            paint: {
-              'fill-extrusion-color': '#111827',
-              'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.05, ['get', 'height']],
-              'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.05, ['get', 'min_height']],
-              'fill-extrusion-opacity': 0.65,
-            },
-          },
-          symbolLayerId
-        );
-      } else if (map.getSource('openmaptiles')) {
+      // Placed before labelLayerId so 3D buildings extrude OVER 2D footprints & roads, but UNDER city labels
+      const buildingSource = map.getSource('composite') ? 'composite' : (map.getSource('openmaptiles') ? 'openmaptiles' : null);
+      if (buildingSource) {
         try {
-          map.addLayer(
-            {
-              id: '3d-buildings',
-              source: 'openmaptiles',
-              'source-layer': 'building',
-              type: 'fill-extrusion',
-              minzoom: 13,
-              paint: {
-                'fill-extrusion-color': '#111827',
-                'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.05, ['coalesce', ['get', 'render_height'], 14]],
-                'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.05, ['coalesce', ['get', 'render_min_height'], 0]],
-                'fill-extrusion-opacity': 0.65,
-              },
+          const building3DLayer = {
+            id: '3d-buildings',
+            source: buildingSource,
+            'source-layer': 'building',
+            type: 'fill-extrusion',
+            minzoom: 12.5,
+            paint: {
+              'fill-extrusion-color': [
+                'interpolate', ['linear'],
+                ['coalesce', ['get', 'render_height'], ['get', 'height'], 14],
+                0, '#1c293c',
+                15, '#22354e',
+                35, '#2b4465',
+                70, '#38577f',
+                120, '#446999'
+              ],
+              'fill-extrusion-height': [
+                'interpolate', ['linear'], ['zoom'],
+                12.5, 0,
+                14, [
+                  'max',
+                  ['coalesce', ['get', 'render_height'], ['get', 'height'], 14],
+                  6
+                ]
+              ],
+              'fill-extrusion-base': [
+                'interpolate', ['linear'], ['zoom'],
+                12.5, 0,
+                14, [
+                  'coalesce', ['get', 'render_min_height'], ['get', 'min_height'], 0
+                ]
+              ],
+              'fill-extrusion-opacity': 0.88,
             },
-            symbolLayerId
-          );
-        } catch {
-          // smoothly skip if vector building schema is planar only
+          };
+          if (buildingSource === 'composite') {
+            building3DLayer.filter = ['==', 'extrude', 'true'];
+          }
+          map.addLayer(building3DLayer, labelLayerId);
+        } catch (err) {
+          console.warn('Could not add 3d-buildings layer:', err);
         }
       }
+
+      // Configure atmospheric 3D directional light for illuminated building facets
+      try {
+        if (typeof map.setLight === 'function') {
+          map.setLight({
+            anchor: 'viewport',
+            color: '#cbd5e1',
+            intensity: 0.55,
+            position: [1.15, 215, 35]
+          });
+        }
+      } catch {}
 
       // 6. Official India National Perimeter Border Line
       map.addSource('india-boundary-source', {
@@ -1833,7 +1967,7 @@ export default function DelhiAqiHeatmap() {
             'line-dasharray': [3, 1.5],
           },
         },
-        symbolLayerId
+        labelLayerId || symbolLayerId
       );
 
       // 7. Click Anywhere in India to Pinpoint Inspect Micro-Zone AQI
@@ -2861,7 +2995,16 @@ return (
 
           {/* 3D Buildings Toggle */}
           <button
-            onClick={() => setIs3DBuildings((v) => !v)}
+            onClick={() => {
+              setIs3DBuildings((v) => {
+                const next = !v;
+                const map = mapInstanceRef.current;
+                if (map && next && map.getPitch() < 20) {
+                  map.easeTo({ pitch: 55, duration: 800 });
+                }
+                return next;
+              });
+            }}
             className={`glass-pill ${is3DBuildings ? 'glass-pill-active' : ''}`}
             style={{
               padding: '4px 9px',
