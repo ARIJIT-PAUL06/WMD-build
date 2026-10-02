@@ -1910,58 +1910,20 @@ return (
       />
 
       {/* ============================================================== */}
-      {/* 2. ATMOSPHERIC EDGE VIGNETTES (SEAMLESS DARK FADES)           */}
+      {/* 2. BUTTER-SMOOTH PERIMETER SCENE FADE (FEATHERED & UNOBTRUSIVE)*/}
       {/* ============================================================== */}
-      {/* Top Edge Vignette - blends smoothly into Hero section above */}
       <div
         style={{
           position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '120px',
-          background: 'linear-gradient(to bottom, #070a12 0%, rgba(7, 10, 18, 0.8) 40%, transparent 100%)',
-          zIndex: 5,
+          inset: 0,
+          zIndex: 2,
           pointerEvents: 'none',
-        }}
-      />
-      {/* Bottom Edge Vignette - blends smoothly into page bottom */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '130px',
-          background: 'linear-gradient(to top, #070a12 0%, rgba(7, 10, 18, 0.85) 45%, transparent 100%)',
-          zIndex: 5,
-          pointerEvents: 'none',
-        }}
-      />
-      {/* Left Edge Vignette */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          left: 0,
-          width: '100px',
-          background: 'linear-gradient(to right, #070a12 0%, rgba(7, 10, 18, 0.6) 45%, transparent 100%)',
-          zIndex: 5,
-          pointerEvents: 'none',
-        }}
-      />
-      {/* Right Edge Vignette */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          right: 0,
-          width: '120px',
-          background: 'linear-gradient(to left, #070a12 0%, rgba(7, 10, 18, 0.65) 45%, transparent 100%)',
-          zIndex: 5,
-          pointerEvents: 'none',
+          background: `
+            linear-gradient(to bottom, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) top / 100% 46px no-repeat,
+            linear-gradient(to top, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) bottom / 100% 46px no-repeat,
+            linear-gradient(to right, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) left / 42px 100% no-repeat,
+            linear-gradient(to left, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) right / 42px 100% no-repeat
+          `,
         }}
       />
 
@@ -1972,9 +1934,9 @@ return (
         style={{
           position: 'absolute',
           top: '20px',
-          left: '20px',
-          right: isSidebarOpen ? '444px' : '20px',
-          zIndex: 20,
+          left: '24px',
+          right: isSidebarOpen ? '444px' : '24px',
+          zIndex: 25,
           transition: 'right 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
           display: 'flex',
           flexDirection: 'column',
@@ -2382,9 +2344,9 @@ return (
       <div
         style={{
           position: 'absolute',
-          bottom: '22px',
-          left: '20px',
-          zIndex: 20,
+          bottom: '24px',
+          left: '24px',
+          zIndex: 25,
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
@@ -2395,7 +2357,7 @@ return (
           padding: '10px 14px',
           borderRadius: '16px',
           boxShadow: '0 12px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.06)',
-          maxWidth: 'calc(100% - 40px)',
+          maxWidth: 'calc(100% - 48px)',
         }}
       >
         {/* Click hint */}
@@ -2627,9 +2589,9 @@ return (
         style={{
           position: 'absolute',
           top: '20px',
-          bottom: '22px',
-          right: isSidebarOpen ? '20px' : '-440px',
-          width: 'min(410px, calc(100vw - 40px))',
+          bottom: '24px',
+          right: isSidebarOpen ? '24px' : '-440px',
+          width: 'min(410px, calc(100vw - 48px))',
           zIndex: 25,
           transition: 'right 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
           display: 'flex',
