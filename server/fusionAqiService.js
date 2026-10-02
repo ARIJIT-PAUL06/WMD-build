@@ -931,24 +931,39 @@ let cachedIndiaNationalData = null;
 let lastIndiaNationalFetchTime = 0;
 
 function recomputeIndiaUserMetrics(stations, userLat, userLon) {
-  let nearestStation = stations[0];
-  let minDistance = Infinity;
-  let weightedAqi = 0;
-  let totalWeight = 0;
+  let userEstimate = null;
 
-  for (const st of stations) {
-    const d = getDistanceKm(userLat, userLon, st.lat, st.lon);
-    if (d < minDistance) {
-      minDistance = d;
-      nearestStation = st;
+  if (typeof userLat === 'number' && typeof userLon === 'number' && !isNaN(userLat) && !isNaN(userLon)) {
+    let nearestStation = stations[0];
+    let minDistance = Infinity;
+    let weightedAqi = 0;
+    let totalWeight = 0;
+
+    for (const st of stations) {
+      const d = getDistanceKm(userLat, userLon, st.lat, st.lon);
+      if (d < minDistance) {
+        minDistance = d;
+        nearestStation = st;
+      }
+      const w = 1 / Math.pow(Math.max(10.0, d), 2.0);
+      totalWeight += w;
+      weightedAqi += st.aqi * w;
     }
-    const w = 1 / Math.pow(Math.max(10.0, d), 2.0);
-    totalWeight += w;
-    weightedAqi += st.aqi * w;
-  }
 
-  const userAqi = Math.round(weightedAqi / (totalWeight || 1));
-  const userPm25 = Math.round(nearestStation.pm25 * 10) / 10;
+    const userAqi = Math.round(weightedAqi / (totalWeight || 1));
+    const userPm25 = Math.round(nearestStation.pm25 * 10) / 10;
+
+    userEstimate = {
+      aqi: userAqi,
+      pm25: userPm25,
+      coordinates: { lat: userLat, lon: userLon },
+      nearestStation: {
+        name: nearestStation.name,
+        distanceKm: Math.round(minDistance * 10) / 10,
+        aqi: nearestStation.aqi,
+      },
+    };
+  }
 
   return {
     success: true,
@@ -961,21 +976,12 @@ function recomputeIndiaUserMetrics(stations, userLat, userLon) {
       minLat: 6.80,
       maxLat: 37.10,
     },
-    userEstimate: {
-      aqi: userAqi,
-      pm25: userPm25,
-      coordinates: { lat: userLat, lon: userLon },
-      nearestStation: {
-        name: nearestStation.name,
-        distanceKm: Math.round(minDistance * 10) / 10,
-        aqi: nearestStation.aqi,
-      },
-    },
+    userEstimate,
     lastUpdated: new Date().toISOString(),
   };
 }
 
-export async function getIndiaNationalHeatmapData(userLat = 28.6139, userLon = 77.2090) {
+export async function getIndiaNationalHeatmapData(userLat = null, userLon = null) {
   const now = Date.now();
   if (cachedIndiaNationalData && (now - lastIndiaNationalFetchTime < 300000)) {
     return recomputeIndiaUserMetrics(cachedIndiaNationalData, userLat, userLon);

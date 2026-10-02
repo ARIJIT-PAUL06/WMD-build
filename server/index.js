@@ -55,8 +55,8 @@ app.get('/api/aws-status', (req, res) => {
  */
 app.get('/api/india-heatmap', async (req, res) => {
   try {
-    const lat = req.query.lat ? Number(req.query.lat) : 28.6139;
-    const lon = req.query.lon ? Number(req.query.lon) : 77.2090;
+    const lat = req.query.lat ? Number(req.query.lat) : null;
+    const lon = req.query.lon ? Number(req.query.lon) : null;
     const data = await getIndiaNationalHeatmapData(lat, lon);
     res.json(data);
   } catch (err) {

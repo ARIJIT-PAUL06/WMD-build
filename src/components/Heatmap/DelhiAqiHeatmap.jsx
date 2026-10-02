@@ -15,7 +15,12 @@ import {
   Search,
   MapPin,
   Globe,
-  Map as MapIcon
+  Map as MapIcon,
+  Radio,
+  LocateFixed,
+  Locate,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 
 // Import official India national boundary GeoJSON (MultiPolygon covering mainland + islands)
@@ -94,6 +99,32 @@ function calculateDistanceKm(lat1, lon1, lat2, lon2) {
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return Math.round(R * c * 10) / 10;
+}
+
+/**
+ * Generate a GeoJSON Polygon circle for real GPS accuracy radius display
+ */
+function createGeoJsonCircle(center, radiusInMeters, points = 48) {
+  const [lon, lat] = center;
+  const km = Math.max(20, radiusInMeters) / 1000;
+  const ret = [];
+  const distanceX = km / (111.320 * Math.cos((lat * Math.PI) / 180));
+  const distanceY = km / 110.574;
+
+  for (let i = 0; i < points; i++) {
+    const theta = (i / points) * (2 * Math.PI);
+    const x = distanceX * Math.cos(theta);
+    const y = distanceY * Math.sin(theta);
+    ret.push([lon + x, lat + y]);
+  }
+  ret.push(ret[0]);
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [ret],
+    },
+  };
 }
 
 // Uncapped AQI Calculation based on US EPA breakpoints with extrapolation beyond 500
@@ -518,20 +549,36 @@ export default function DelhiAqiHeatmap() {
   const [isLoadingLive, setIsLoadingLive] = useState(false);
   const [lastUpdated, setLastUpdated] = useState('Fetching live national telemetry...');
 
-  // User location coordinates (defaults to Central India, or user's live GPS)
+  // User live GPS location coordinates (NO DEMO DATA - initialized null until real device GPS locks)
   const [userLocation, setUserLocation] = useState({
-    lat: 28.6139,
-    lon: 77.2090,
-    label: 'New Delhi (National Capital)',
+    lat: null,
+    lon: null,
+    label: null,
     isLiveGps: false,
     accuracy: null,
+    speed: null,
+    heading: null,
+    timestamp: null,
   });
+  const [gpsStatus, setGpsStatus] = useState('requesting'); // 'requesting' | 'active' | 'denied' | 'unavailable' | 'unsupported' | 'error'
+  const [isFollowingUser, setIsFollowingUser] = useState(true);
+  const [isLocating, setIsLocating] = useState(false);
+  const [gpsError, setGpsError] = useState(null);
+
+  const watchIdRef = useRef(null);
+  const hasCenteredOnGpsRef = useRef(false);
+  const hasUserManuallySelectedStationRef = useRef(false);
+  const userLocationRef = useRef(userLocation);
+  userLocationRef.current = userLocation;
+  const isFollowingUserRef = useRef(isFollowingUser);
+  isFollowingUserRef.current = isFollowingUser;
+  const lastGeocodedCoordRef = useRef(null);
 
   // Pinpoint clicked location on the map for micro-zone analysis anywhere in India
   const [inspectedPoint, setInspectedPoint] = useState(null);
 
   const [activePollutant, setActivePollutant] = useState('aqi'); // 'aqi' | 'pm25' | 'pm10'
-  const [selectedStation, setSelectedStation] = useState(initialIndiaStations[0]); // Default to first station
+  const [selectedStation, setSelectedStation] = useState(null);
 
   // DEFAULT OPACITY: Balanced translucent 0.45 so the map beneath (roads, cities, terrain) is clearly visible
   const [heatIntensity, setHeatIntensity] = useState(0.45);
@@ -539,8 +586,6 @@ export default function DelhiAqiHeatmap() {
   const [showHeatmapLayer, setShowHeatmapLayer] = useState(true);
   const [showStateBorders, setShowStateBorders] = useState(true);
   const [is3DBuildings, setIs3DBuildings] = useState(true);
-  const [isLocating, setIsLocating] = useState(false);
-  const [gpsError, setGpsError] = useState(null);
 
   // Dynamic Zoom-Adaptive Contrast Calibration State
   const [isAdaptiveMode, setIsAdaptiveMode] = useState(true);
@@ -652,10 +697,13 @@ export default function DelhiAqiHeatmap() {
   const [isLoadingAdvisory, setIsLoadingAdvisory] = useState(false);
 
   // Fetch live national station telemetry across all 108 stations
-  const fetchLiveNationalData = useCallback(async (userLat = 28.6139, userLon = 77.2090) => {
+  const fetchLiveNationalData = useCallback(async (userLat = null, userLon = null) => {
     setIsLoadingLive(true);
     try {
-      const res = await fetch(`/api/india-heatmap?lat=${userLat}&lon=${userLon}`);
+      const url = (typeof userLat === 'number' && typeof userLon === 'number')
+        ? `/api/india-heatmap?lat=${userLat}&lon=${userLon}`
+        : `/api/india-heatmap`;
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.stations) && data.stations.length > 0) {
@@ -787,19 +835,156 @@ export default function DelhiAqiHeatmap() {
     }
   }, []);
 
+  // Start continuous, high-accuracy live GPS satellite tracking
+  const startLiveGpsTracking = useCallback(() => {
+    if (!navigator.geolocation) {
+      setGpsStatus('unsupported');
+      setGpsError('Geolocation is not supported by your browser.');
+      setIsLocating(false);
+      return;
+    }
+
+    setGpsStatus('requesting');
+    setIsLocating(true);
+    setGpsError(null);
+
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      async (pos) => {
+        const { latitude, longitude, accuracy, speed, heading } = pos.coords;
+        setGpsStatus('active');
+        setIsLocating(false);
+        setGpsError(null);
+
+        // Check if we need to reverse-geocode (> 100m moved or initial lock)
+        let shouldRev = !lastGeocodedCoordRef.current;
+        if (lastGeocodedCoordRef.current) {
+          const d = calculateDistanceKm(latitude, longitude, lastGeocodedCoordRef.current.lat, lastGeocodedCoordRef.current.lon);
+          if (d > 0.1) shouldRev = true;
+        }
+
+        let placeName = userLocationRef.current?.label || 'Your Current Location';
+        if (shouldRev) {
+          lastGeocodedCoordRef.current = { lat: latitude, lon: longitude };
+          try {
+            const token = mapboxgl.accessToken;
+            if (token) {
+              const revRes = await fetch(
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${token}&country=in&types=neighborhood,locality,place,district&limit=1`
+              );
+              if (revRes.ok) {
+                const revJson = await revRes.json();
+                if (revJson.features?.[0]?.place_name) {
+                  placeName = revJson.features[0].place_name;
+                } else if (revJson.features?.[0]?.text) {
+                  placeName = revJson.features[0].text;
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('Reverse geocoding error:', e);
+          }
+        }
+
+        setUserLocation({
+          lat: latitude,
+          lon: longitude,
+          label: placeName,
+          accuracy: Math.round(accuracy),
+          speed: speed !== null && speed !== undefined ? Math.round(speed * 3.6) : null,
+          heading: heading !== null && heading !== undefined ? Math.round(heading) : null,
+          isLiveGps: true,
+          timestamp: pos.timestamp,
+        });
+
+        // Smooth Mapbox viewport tracking
+        const map = mapInstanceRef.current;
+        if (map) {
+          if (!hasCenteredOnGpsRef.current) {
+            hasCenteredOnGpsRef.current = true;
+            map.flyTo({
+              center: [longitude, latitude],
+              zoom: 12.5,
+              pitch: 24,
+              speed: 1.25,
+              curve: 1.2,
+            });
+          } else if (isFollowingUserRef.current) {
+            map.easeTo({
+              center: [longitude, latitude],
+              duration: 800,
+            });
+          }
+        }
+      },
+      (err) => {
+        setIsLocating(false);
+        if (err.code === 1) {
+          setGpsStatus('denied');
+          setGpsError('GPS permission was denied. Please allow location access in your browser.');
+        } else if (err.code === 2) {
+          setGpsStatus('unavailable');
+          setGpsError('GPS signal is currently unavailable.');
+        } else if (err.code === 3) {
+          setGpsStatus('timeout');
+          setGpsError('GPS satellite signal timed out. Retrying...');
+        } else {
+          setGpsStatus('error');
+          setGpsError(err.message || 'GPS location error.');
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 2000,
+      }
+    );
+  }, []);
+
+  // Auto-start GPS tracking on mount
+  useEffect(() => {
+    startLiveGpsTracking();
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
+  }, [startLiveGpsTracking]);
+
+  // Center or re-center map on user's live position
+  const handleCenterOnUser = useCallback(() => {
+    if (!userLocation.isLiveGps || !userLocation.lat || !userLocation.lon) {
+      startLiveGpsTracking();
+      return;
+    }
+    setIsFollowingUser(true);
+    const map = mapInstanceRef.current;
+    if (map) {
+      map.flyTo({
+        center: [userLocation.lon, userLocation.lat],
+        zoom: 13,
+        pitch: 26,
+        speed: 1.4,
+        curve: 1.2,
+      });
+    }
+  }, [userLocation, startLiveGpsTracking]);
+
   useEffect(() => {
     fetchLiveNationalData(userLocation.lat, userLocation.lon);
   }, [fetchLiveNationalData, userLocation.lat, userLocation.lon]);
 
-  useEffect(() => {
-    if (selectedStation) {
-      fetchGeminiAdvisory(selectedStation);
-    }
-  }, [selectedStation, fetchGeminiAdvisory]);
-
-  // Nearest station calculation
+  // Nearest station calculation based on real live GPS location
   const nearestStation = useMemo(() => {
-    let nearest = stations[0] || initialIndiaStations[0];
+    if (!userLocation.isLiveGps || !userLocation.lat || !userLocation.lon || stations.length === 0) {
+      return null;
+    }
+    let nearest = stations[0];
     let minDist = Infinity;
     stations.forEach((st) => {
       const d = calculateDistanceKm(userLocation.lat, userLocation.lon, st.lat, st.lon);
@@ -811,8 +996,26 @@ export default function DelhiAqiHeatmap() {
     return { station: nearest, distance: minDist };
   }, [stations, userLocation]);
 
-  // Interpolated AQI at user's current coordinates using nationwide IDW (p = 2.0)
+  // When GPS is resolved, automatically latch nearest station if user hasn't manually selected one
+  useEffect(() => {
+    if (nearestStation?.station && !hasUserManuallySelectedStationRef.current) {
+      setSelectedStation(nearestStation.station);
+    }
+  }, [nearestStation]);
+
+  const displayStation = selectedStation || (nearestStation ? nearestStation.station : stations[0]);
+
+  useEffect(() => {
+    if (displayStation) {
+      fetchGeminiAdvisory(displayStation);
+    }
+  }, [displayStation, fetchGeminiAdvisory]);
+
+  // Interpolated AQI at user's current live GPS coordinates using nationwide IDW (p = 2.0)
   const userAqiEstimate = useMemo(() => {
+    if (!userLocation.isLiveGps || !userLocation.lat || !userLocation.lon) {
+      return null;
+    }
     const sampled = sampleRasterGridVal(gridCacheRef.current, userLocation.lon, userLocation.lat);
     if (sampled !== null) return Math.round(sampled);
     let totalWeight = 0;
@@ -826,65 +1029,13 @@ export default function DelhiAqiHeatmap() {
     return Math.round(weightedAqi / (totalWeight || 1));
   }, [stations, userLocation]);
 
-  const userColor = useMemo(() => getAqiColor(userAqiEstimate, activeRange), [userAqiEstimate, activeRange]);
-
-  // Browser Geolocation trigger - locates user anywhere in India
-  const handleDetectLocation = () => {
-    if (!navigator.geolocation) {
-      setGpsError('Geolocation is not supported by your browser');
-      return;
+  const userColor = useMemo(() => {
+    if (userAqiEstimate === null) {
+      return { hex: '#38bdf8', label: 'Measuring AQI...', textHex: '#38bdf8', badgeBg: 'rgba(56, 189, 248, 0.2)' };
     }
-    setIsLocating(true);
-    setGpsError(null);
+    return getAqiColor(userAqiEstimate, activeRange);
+  }, [userAqiEstimate, activeRange]);
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        setIsLocating(false);
-        const { latitude, longitude, accuracy } = pos.coords;
-
-        let placeName = 'Your Live Location';
-        try {
-          const token = mapboxgl.accessToken;
-          const revRes = await fetch(
-            `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${token}&country=in&types=place,locality,neighborhood&limit=1`
-          );
-          if (revRes.ok) {
-            const revJson = await revRes.json();
-            if (revJson.features?.[0]?.text) {
-              placeName = revJson.features[0].text;
-            }
-          }
-        } catch {
-          // ignore reverse geocode error
-        }
-
-        const gpsPreset = {
-          id: 'user-gps',
-          name: placeName,
-          icon: '🎯',
-          center: [longitude, latitude],
-          zoom: 11.5,
-          pitch: 24,
-          state: `Live GPS (±${Math.round(accuracy)}m)`,
-        };
-
-        setUserLocation({
-          lat: latitude,
-          lon: longitude,
-          label: placeName,
-          isLiveGps: true,
-          accuracy: Math.round(accuracy),
-        });
-
-        handleGlideToRegion(gpsPreset);
-      },
-      () => {
-        setIsLocating(false);
-        setGpsError('Could not obtain live GPS coordinates.');
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
-  };
 
   // Convert stations to GeoJSON FeatureCollection
   const stationsGeoJson = useMemo(() => {
@@ -945,6 +1096,40 @@ export default function DelhiAqiHeatmap() {
       const adminLayerId = layers.find((l) => l.id === 'admin-1-boundary-bg' || l.id === 'admin-1-boundary')?.id;
       const symbolLayerId = layers.find((l) => l.type === 'symbol' && l.layout && l.layout['text-field'])?.id;
       const beforeLayerId = roadLayerId || adminLayerId || symbolLayerId;
+
+      // Real GPS Accuracy Radar Radius Layer (rendered beneath roads & borders)
+      map.addSource('user-gps-accuracy-source', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+
+      map.addLayer(
+        {
+          id: 'user-gps-accuracy-fill',
+          type: 'fill',
+          source: 'user-gps-accuracy-source',
+          paint: {
+            'fill-color': '#10b981',
+            'fill-opacity': 0.12,
+          },
+        },
+        beforeLayerId
+      );
+
+      map.addLayer(
+        {
+          id: 'user-gps-accuracy-outline',
+          type: 'line',
+          source: 'user-gps-accuracy-source',
+          paint: {
+            'line-color': '#10b981',
+            'line-width': 1.6,
+            'line-opacity': 0.65,
+            'line-dasharray': [3, 2],
+          },
+        },
+        beforeLayerId
+      );
 
       // 3. High-Performance Continuous 2D IDW Spatial Air Quality Raster Field across all of India
       // - Seamless continuous gradients with zero contour line darkening
@@ -1109,6 +1294,11 @@ export default function DelhiAqiHeatmap() {
         if (throttleTimer) clearTimeout(throttleTimer);
         throttleTimer = null;
         updateRasterForViewport();
+      });
+
+      // Pause follow-mode when user manually drags or pans the map
+      map.on('dragstart', () => {
+        setIsFollowingUser(false);
       });
     });
 
@@ -1320,70 +1510,111 @@ export default function DelhiAqiHeatmap() {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    if (userMarkerRef.current) {
-      userMarkerRef.current.remove();
-      userMarkerRef.current = null;
+    if (!userLocation.isLiveGps || !userLocation.lat || !userLocation.lon) {
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
+      if (map.getSource && map.getSource('user-gps-accuracy-source')) {
+        map.getSource('user-gps-accuracy-source').setData({
+          type: 'FeatureCollection',
+          features: [],
+        });
+      }
+      return;
     }
 
-    const userEl = document.createElement('div');
-    userEl.style.display = 'flex';
-    userEl.style.flexDirection = 'column';
-    userEl.style.alignItems = 'center';
-    userEl.style.pointerEvents = 'none';
+    if (!userMarkerRef.current) {
+      const userEl = document.createElement('div');
+      userEl.className = 'mapbox-user-beacon';
+      userEl.style.display = 'flex';
+      userEl.style.flexDirection = 'column';
+      userEl.style.alignItems = 'center';
+      userEl.style.pointerEvents = 'none';
 
-    userEl.innerHTML = `
-      <div style="
-        position: relative;
-        width: 38px;
-        height: 38px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      ">
-        <span style="
-          position: absolute;
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          background: rgba(56, 189, 248, 0.25);
-          border: 2px solid #38bdf8;
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        "></span>
-        <span style="
-          position: absolute;
-          width: 14px;
-          height: 14px;
-          border-radius: 50%;
-          background: #38bdf8;
-          box-shadow: 0 0 16px #38bdf8;
-          border: 2.5px solid #ffffff;
-        "></span>
-      </div>
-      <div style="
-        margin-top: 4px;
-        background: rgba(15, 23, 42, 0.94);
-        backdrop-filter: blur(8px);
-        border: 1px solid #38bdf8;
-        padding: 4px 10px;
-        border-radius: 8px;
-        font-size: 11px;
-        font-weight: 800;
-        color: #ffffff;
-        white-space: nowrap;
-        box-shadow: 0 4px 18px rgba(56, 189, 248, 0.35);
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        z-index: 2;
-      ">
-        <span style="width: 6px; height: 6px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 6px #38bdf8;"></span>
-        YOU ARE HERE (${userAqiEstimate} AQI)
-      </div>
-    `;
+      userEl.innerHTML = `
+        <div style="
+          position: relative;
+          width: 44px;
+          height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <!-- Expanding Radar Pulse Wave -->
+          <span style="
+            position: absolute;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(16, 185, 129, 0.22);
+            border: 2px solid #10b981;
+            animation: pulse 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+          "></span>
+          <span style="
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(56, 189, 248, 0.35);
+            border: 1.5px solid #38bdf8;
+            animation: ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+          "></span>
+          <!-- Core GPS Satellite Target -->
+          <span style="
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #0284c7;
+            box-shadow: 0 0 18px #38bdf8, 0 0 30px rgba(16, 185, 129, 0.6);
+            border: 2.5px solid #ffffff;
+          "></span>
+        </div>
+        <div id="user-live-beacon-badge" style="
+          margin-top: 4px;
+          background: rgba(11, 17, 32, 0.96);
+          backdrop-filter: blur(10px);
+          border: 1px solid #10b981;
+          padding: 4px 10px;
+          border-radius: 8px;
+          font-size: 11px;
+          font-weight: 800;
+          color: #ffffff;
+          white-space: nowrap;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 15px rgba(16, 185, 129, 0.3);
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          z-index: 2;
+        ">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981; animation: pulse 1s infinite;"></span>
+          <span>LIVE GPS: <strong style="color: #38bdf8;">${userAqiEstimate !== null ? userAqiEstimate + ' AQI' : 'Measuring...'}</strong>${userLocation.accuracy ? ` (±${userLocation.accuracy}m)` : ''}</span>
+        </div>
+      `;
 
-    userMarkerRef.current = new mapboxgl.Marker({ element: userEl })
-      .setLngLat([userLocation.lon, userLocation.lat])
-      .addTo(map);
+      userMarkerRef.current = new mapboxgl.Marker({ element: userEl, anchor: 'center' })
+        .setLngLat([userLocation.lon, userLocation.lat])
+        .addTo(map);
+    } else {
+      userMarkerRef.current.setLngLat([userLocation.lon, userLocation.lat]);
+      const badge = document.getElementById('user-live-beacon-badge');
+      if (badge) {
+        badge.innerHTML = `
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981; animation: pulse 1s infinite;"></span>
+          <span>LIVE GPS: <strong style="color: #38bdf8;">${userAqiEstimate !== null ? userAqiEstimate + ' AQI' : 'Measuring...'}</strong>${userLocation.accuracy ? ` (±${userLocation.accuracy}m)` : ''}</span>
+        `;
+      }
+    }
+
+    // Update GPS accuracy halo on map
+    if (map.getSource && map.getSource('user-gps-accuracy-source') && userLocation.accuracy) {
+      const circlePoly = createGeoJsonCircle([userLocation.lon, userLocation.lat], Math.max(25, userLocation.accuracy));
+      map.getSource('user-gps-accuracy-source').setData({
+        type: 'FeatureCollection',
+        features: [circlePoly],
+      });
+    }
   }, [userLocation, userAqiEstimate]);
 
   return (
@@ -1523,28 +1754,67 @@ export default function DelhiAqiHeatmap() {
               <span>{isLoadingLive ? 'Refreshing...' : 'Refresh Telemetry'}</span>
             </button>
 
-            {/* GPS Locator Button */}
-            <button
-              onClick={handleDetectLocation}
-              disabled={isLocating}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                background: userLocation.isLiveGps ? 'rgba(16, 185, 129, 0.2)' : 'rgba(56, 189, 248, 0.15)',
-                color: userLocation.isLiveGps ? '#34d399' : '#38bdf8',
-                border: `1px solid ${userLocation.isLiveGps ? 'rgba(16, 185, 129, 0.4)' : 'rgba(56, 189, 248, 0.3)'}`,
-                padding: '8px 16px',
-                borderRadius: '9999px',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              <Navigation size={14} className={isLocating ? 'animate-spin' : ''} />
-              <span>{isLocating ? 'Detecting GPS...' : userLocation.isLiveGps ? 'Live GPS Active' : 'Locate My Position'}</span>
-            </button>
+            {/* Live GPS Tracking Controller */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                onClick={handleCenterOnUser}
+                title={userLocation.isLiveGps ? 'Center camera on your live GPS position' : 'Start live GPS tracking'}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: userLocation.isLiveGps ? 'rgba(16, 185, 129, 0.2)' : 'rgba(56, 189, 248, 0.15)',
+                  color: userLocation.isLiveGps ? '#34d399' : '#38bdf8',
+                  border: `1px solid ${userLocation.isLiveGps ? 'rgba(16, 185, 129, 0.45)' : 'rgba(56, 189, 248, 0.3)'}`,
+                  padding: '8px 16px',
+                  borderRadius: '9999px',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: userLocation.isLiveGps ? '0 0 16px rgba(16, 185, 129, 0.25)' : 'none',
+                }}
+              >
+                {isLocating ? (
+                  <RefreshCw size={14} className="animate-spin" color="#38bdf8" />
+                ) : userLocation.isLiveGps ? (
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px #10b981', animation: 'pulse 1.2s infinite' }} />
+                ) : (
+                  <Navigation size={14} color="#38bdf8" />
+                )}
+                <span>
+                  {isLocating
+                    ? 'Acquiring GPS...'
+                    : userLocation.isLiveGps
+                    ? `Live GPS Track${userLocation.accuracy ? ` (±${userLocation.accuracy}m)` : ''}`
+                    : 'Track My Location'}
+                </span>
+              </button>
+
+              {userLocation.isLiveGps && (
+                <button
+                  onClick={() => setIsFollowingUser((f) => !f)}
+                  title="Toggle automatic camera tracking as you move"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    background: isFollowingUser ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    color: isFollowingUser ? '#38bdf8' : '#94a3b8',
+                    border: isFollowingUser ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                    padding: '8px 12px',
+                    borderRadius: '9999px',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease',
+                  }}
+                >
+                  <LocateFixed size={13} color={isFollowingUser ? '#38bdf8' : '#94a3b8'} />
+                  <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -2036,7 +2306,10 @@ export default function DelhiAqiHeatmap() {
                     </span>
                   </div>
                   <button
-                    onClick={() => setInspectedPoint(null)}
+                    onClick={() => {
+                      setInspectedPoint(null);
+                      if (userLocation.isLiveGps) handleCenterOnUser();
+                    }}
                     style={{
                       fontSize: '0.72rem',
                       background: 'rgba(255, 255, 255, 0.08)',
@@ -2108,35 +2381,40 @@ export default function DelhiAqiHeatmap() {
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : userLocation.isLiveGps && userLocation.lat && userLocation.lon ? (
               <div
                 className="glass-panel"
                 style={{
                   padding: '24px',
                   borderRadius: '18px',
-                  border: '1px solid rgba(56, 189, 248, 0.35)',
-                  background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.85) 0%, rgba(8, 14, 26, 0.95) 100%)',
-                  boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.45)',
+                  background: 'linear-gradient(145deg, rgba(6, 28, 22, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                  boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(16, 185, 129, 0.15)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Crosshair size={18} color="#38bdf8" />
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#38bdf8', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                      Your Micro-Zone Vitals
+                    <Radio size={18} color="#10b981" />
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#10b981', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                      Your Live GPS Vitals
                     </span>
                   </div>
                   <span
                     style={{
                       fontSize: '0.72rem',
-                      background: userLocation.isLiveGps ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.08)',
-                      color: userLocation.isLiveGps ? '#34d399' : '#94a3b8',
-                      padding: '3px 8px',
+                      background: 'rgba(16, 185, 129, 0.22)',
+                      color: '#34d399',
+                      border: '1px solid rgba(16, 185, 129, 0.45)',
+                      padding: '3px 10px',
                       borderRadius: '9999px',
-                      fontWeight: 600,
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
                     }}
                   >
-                    {userLocation.isLiveGps ? 'Live Triangulation' : 'Default Pin'}
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981', animation: 'pulse 1.2s infinite' }} />
+                    Live Satellite Lock
                   </span>
                 </div>
 
@@ -2151,14 +2429,14 @@ export default function DelhiAqiHeatmap() {
                       textShadow: `0 0 25px ${userColor.hex}66`,
                     }}
                   >
-                    {userAqiEstimate}
+                    {userAqiEstimate !== null ? userAqiEstimate : '--'}
                   </span>
                   <div>
                     <span style={{ fontSize: '1rem', fontWeight: 700, color: userColor.textHex }}>
                       AQI · {userColor.label}
                     </span>
                     <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0 }}>
-                      Spatial IDW estimate at your exact coordinates
+                      Continuous spatial IDW estimate at your exact position
                     </p>
                   </div>
                 </div>
@@ -2178,27 +2456,155 @@ export default function DelhiAqiHeatmap() {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>Location:</span>
-                    <strong style={{ color: '#ffffff' }}>{userLocation.label}</strong>
+                    <strong style={{ color: '#ffffff' }}>{userLocation.label || 'Detecting place...'}</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>Coordinates:</span>
                     <span style={{ color: '#cbd5e1', fontFamily: 'monospace' }}>
-                      {userLocation.lat.toFixed(4)}° N, {userLocation.lon.toFixed(4)}° E
+                      {userLocation.lat.toFixed(5)}° N, {userLocation.lon.toFixed(5)}° E
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
-                    <span>Nearest CAAQMS Sensor:</span>
-                    <span style={{ color: '#38bdf8', fontWeight: 600 }}>
-                      {nearestStation.station.name.split(',')[0]} ({nearestStation.distance} km)
+                    <span>GPS Accuracy:</span>
+                    <span style={{ color: '#34d399', fontWeight: 600 }}>
+                      ±{userLocation.accuracy || 15} meters
                     </span>
                   </div>
+                  {nearestStation && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
+                      <span>Nearest CAAQMS Sensor:</span>
+                      <span style={{ color: '#38bdf8', fontWeight: 600 }}>
+                        {nearestStation.station.name.split(',')[0]} ({nearestStation.distance} km)
+                      </span>
+                    </div>
+                  )}
+                  {userLocation.speed !== null && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
+                      <span>Motion Speed:</span>
+                      <span style={{ color: '#e2e8f0' }}>{userLocation.speed} km/h</span>
+                    </div>
+                  )}
                 </div>
 
+                {/* Quick GPS Action buttons */}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '14px' }}>
+                  <button
+                    onClick={handleCenterOnUser}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      background: 'rgba(56, 189, 248, 0.15)',
+                      color: '#38bdf8',
+                      border: '1px solid rgba(56, 189, 248, 0.35)',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <Crosshair size={13} />
+                    <span>Center Map</span>
+                  </button>
+                  <button
+                    onClick={() => setIsFollowingUser((f) => !f)}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      background: isFollowingUser ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                      color: isFollowingUser ? '#34d399' : '#94a3b8',
+                      border: isFollowingUser ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                      fontSize: '0.74rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <LocateFixed size={13} />
+                    <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* GPS Inactive / Requesting State (ZERO DEMO DATA) */
+              <div
+                className="glass-panel"
+                style={{
+                  padding: '24px',
+                  borderRadius: '18px',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.9) 0%, rgba(9, 13, 24, 0.95) 100%)',
+                  boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)',
+                  textAlign: 'center',
+                }}
+              >
+                <div
+                  style={{
+                    width: '54px',
+                    height: '54px',
+                    borderRadius: '50%',
+                    background: 'rgba(56, 189, 248, 0.12)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 16px',
+                  }}
+                >
+                  <Navigation size={24} color="#38bdf8" className={isLocating ? 'animate-spin' : ''} />
+                </div>
+
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', margin: '0 0 8px' }}>
+                  {isLocating ? 'Connecting to GPS...' : 'Live GPS Location Tracking'}
+                </h3>
+
+                <p style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.55, margin: '0 0 16px' }}>
+                  {gpsStatus === 'requesting' || isLocating
+                    ? 'Connecting to your device GPS satellites... Please allow location permission in your browser.'
+                    : gpsStatus === 'denied'
+                    ? 'GPS permission was denied. Please enable location permissions in your browser address bar to track your position in real time.'
+                    : gpsStatus === 'unavailable' || gpsStatus === 'timeout'
+                    ? 'GPS satellite signal timed out. Click below to reconnect to your device location.'
+                    : 'Activate live GPS to continuously track your position and get instant micro-zone AQI telemetry wherever you travel.'}
+                </p>
+
                 {gpsError && (
-                  <div style={{ marginTop: '12px', fontSize: '0.72rem', color: '#f87171' }}>
+                  <div style={{ marginBottom: '14px', fontSize: '0.72rem', color: '#f87171' }}>
                     * {gpsError}
                   </div>
                 )}
+
+                <button
+                  onClick={startLiveGpsTracking}
+                  disabled={isLocating}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 15px rgba(2, 132, 199, 0.4)',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <Locate size={15} />
+                  <span>{isLocating ? 'Locating...' : 'Connect Live GPS'}</span>
+                </button>
               </div>
             )}
 
@@ -2219,42 +2625,42 @@ export default function DelhiAqiHeatmap() {
                 <span
                   style={{
                     fontSize: '0.72rem',
-                    color: getAqiColor(selectedStation.aqi, activeRange).hex,
-                    background: `${getAqiColor(selectedStation.aqi, activeRange).hex}22`,
+                    color: getAqiColor(displayStation.aqi, activeRange).hex,
+                    background: `${getAqiColor(displayStation.aqi, activeRange).hex}22`,
                     padding: '3px 8px',
                     borderRadius: '6px',
                     fontWeight: 700,
                   }}
                 >
-                  {selectedStation.type || 'CAAQMS Node'}
+                  {displayStation.type || 'CAAQMS Node'}
                 </span>
               </div>
 
               <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: '0 0 6px' }}>
-                {selectedStation.name}
+                {displayStation.name}
               </h3>
               <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '0 0 16px' }}>
-                {selectedStation.zone || selectedStation.state || 'India'} · Multi-Source Ground & Satellite Grid
+                {displayStation.zone || displayStation.state || 'India'} · Multi-Source Ground & Satellite Grid
               </p>
 
               {/* Station metrics grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '16px' }}>
                 <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '12px 10px', borderRadius: '10px', textAlign: 'center' }}>
                   <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>AQI Index</span>
-                  <strong style={{ fontSize: '1.3rem', color: getAqiColor(selectedStation.aqi, activeRange).hex }}>
-                    {selectedStation.aqi}
+                  <strong style={{ fontSize: '1.3rem', color: getAqiColor(displayStation.aqi, activeRange).hex }}>
+                    {displayStation.aqi}
                   </strong>
                 </div>
                 <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '12px 10px', borderRadius: '10px', textAlign: 'center' }}>
                   <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>PM2.5 (Fine)</span>
                   <strong style={{ fontSize: '1.2rem', color: '#f87171' }}>
-                    {selectedStation.pm25} <span style={{ fontSize: '0.65rem' }}>µg</span>
+                    {displayStation.pm25} <span style={{ fontSize: '0.65rem' }}>µg</span>
                   </strong>
                 </div>
                 <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '12px 10px', borderRadius: '10px', textAlign: 'center' }}>
                   <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>PM10 (Coarse)</span>
                   <strong style={{ fontSize: '1.2rem', color: '#fb923c' }}>
-                    {selectedStation.pm10} <span style={{ fontSize: '0.65rem' }}>µg</span>
+                    {displayStation.pm10} <span style={{ fontSize: '0.65rem' }}>µg</span>
                   </strong>
                 </div>
               </div>
