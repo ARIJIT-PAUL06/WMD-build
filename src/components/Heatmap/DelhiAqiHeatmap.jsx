@@ -561,6 +561,7 @@ export default function DelhiAqiHeatmap() {
   const [activePreset, setActivePreset] = useState(INDIA_REGION_PRESETS[0]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const searchContainerRef = useRef(null);
 
