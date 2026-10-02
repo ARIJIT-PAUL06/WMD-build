@@ -561,8 +561,19 @@ export default function DelhiAqiHeatmap() {
   const [activePreset, setActivePreset] = useState(INDIA_REGION_PRESETS[0]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const searchContainerRef = useRef(null);
+
+  // Close search dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setShowSearchDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Cached IDW grid and synchronization refs for high-speed 60fps viewport updates
   const gridCacheRef = useRef(null);
@@ -1541,6 +1552,8 @@ export default function DelhiAqiHeatmap() {
         {/* ============================================================== */}
         <div
           style={{
+            position: 'relative',
+            zIndex: 100,
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'center',
@@ -1549,9 +1562,10 @@ export default function DelhiAqiHeatmap() {
             marginBottom: '22px',
             padding: '12px 18px',
             borderRadius: '16px',
-            background: 'rgba(15, 23, 42, 0.82)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            background: 'rgba(15, 23, 42, 0.88)',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
             boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)',
           }}
         >
@@ -1590,16 +1604,27 @@ export default function DelhiAqiHeatmap() {
           </div>
 
           {/* Place Search Bar with Autocomplete across India */}
-          <div style={{ position: 'relative', minWidth: '280px', flex: '1 1 300px', maxWidth: '380px' }}>
+          <div
+            ref={searchContainerRef}
+            style={{
+              position: 'relative',
+              zIndex: 110,
+              minWidth: '280px',
+              flex: '1 1 300px',
+              maxWidth: '380px',
+            }}
+          >
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                background: 'rgba(2, 6, 23, 0.85)',
-                border: '1px solid rgba(255, 255, 255, 0.14)',
+                background: 'rgba(2, 6, 23, 0.92)',
+                border: '1px solid rgba(255, 255, 255, 0.16)',
                 borderRadius: '9999px',
                 padding: '6px 14px',
+                boxShadow: showSearchDropdown ? '0 0 15px rgba(56, 189, 248, 0.2)' : 'none',
+                transition: 'border 0.2s ease, box-shadow 0.2s ease',
               }}
             >
               <Search size={14} color="#94a3b8" />
@@ -1621,22 +1646,46 @@ export default function DelhiAqiHeatmap() {
                 }}
               />
               {isSearching && <RefreshCw size={13} className="animate-spin" color="#38bdf8" />}
+              {searchQuery && !isSearching && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSearchResults([]);
+                    setShowSearchDropdown(false);
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    padding: '2px 4px',
+                    fontSize: '0.85rem',
+                    lineHeight: 1,
+                  }}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
             </div>
 
-            {/* Dropdown Suggestions */}
+            {/* Dropdown Suggestions (Floats high above the map with zIndex 99999) */}
             {showSearchDropdown && searchResults.length > 0 && (
               <div
                 style={{
                   position: 'absolute',
-                  top: 'calc(100% + 6px)',
+                  top: 'calc(100% + 8px)',
                   left: 0,
                   right: 0,
-                  zIndex: 60,
-                  background: '#090d1a',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
-                  borderRadius: '12px',
-                  boxShadow: '0 15px 35px rgba(0,0,0,0.85)',
-                  overflow: 'hidden',
+                  zIndex: 99999,
+                  background: 'rgba(9, 13, 26, 0.98)',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(56, 189, 248, 0.45)',
+                  borderRadius: '14px',
+                  boxShadow: '0 25px 50px rgba(0, 0, 0, 0.95), 0 0 30px rgba(56, 189, 248, 0.15)',
+                  maxHeight: '340px',
+                  overflowY: 'auto',
                 }}
               >
                 {searchResults.map((f) => (
@@ -1644,23 +1693,23 @@ export default function DelhiAqiHeatmap() {
                     key={f.id}
                     onClick={() => handleSelectSearchedPlace(f)}
                     style={{
-                      padding: '10px 14px',
+                      padding: '11px 14px',
                       cursor: 'pointer',
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
                       fontSize: '0.78rem',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px',
+                      gap: '10px',
                       color: '#e2e8f0',
                       transition: 'background 0.15s ease',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.15)')}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.18)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <MapPin size={13} color="#38bdf8" />
-                    <div>
-                      <strong style={{ color: '#ffffff' }}>{f.text}</strong>
-                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block' }}>
+                    <MapPin size={14} color="#38bdf8" style={{ flexShrink: 0 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <strong style={{ color: '#ffffff', display: 'block' }}>{f.text}</strong>
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {f.place_name}
                       </span>
                     </div>
