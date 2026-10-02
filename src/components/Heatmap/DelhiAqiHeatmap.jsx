@@ -569,6 +569,104 @@ function getAqiColor(val, activeRange) {
   return { hex, label, textHex, badgeBg };
 }
 
+/**
+ * Applies the signature Mapbox 'navigation-night-v1' color palette to vector tile layers.
+ * Synchronizes vector layers with Mapbox's midnight obsidian background (#070b14),
+ * rich deep marine navy water (#08152b), electric blue expressways (#2563eb),
+ * cobalt arterial roads (#1d4ed8), slate streets (#16233b), cyan state borders (#38bdf8),
+ * and crisp white typography (#f1f5f9) with dark halos.
+ */
+function applyNavigationNightPalette(map) {
+  if (!map || typeof map.getStyle !== 'function') return;
+  const style = map.getStyle();
+  if (!style || !style.layers) return;
+
+  // 1. Background / Land
+  if (map.getLayer('background')) {
+    map.setPaintProperty('background', 'background-color', '#070b14');
+  }
+
+  style.layers.forEach((l) => {
+    const id = l.id;
+    const type = l.type;
+
+    // 2. Waterways & Water Bodies (Deep Marine Navy #08152b)
+    if (id.includes('water') || id.includes('ocean')) {
+      if (type === 'fill') {
+        map.setPaintProperty(id, 'fill-color', '#08152b');
+      } else if (type === 'line') {
+        map.setPaintProperty(id, 'line-color', '#0c2347');
+      }
+    }
+
+    // 3. Landuse, Forests, Parks & Residential
+    if (id.includes('wood') || id.includes('forest') || id.includes('park') || id.includes('grass')) {
+      if (type === 'fill') {
+        map.setPaintProperty(id, 'fill-color', '#081817');
+        map.setPaintProperty(id, 'fill-opacity', 0.55);
+      }
+    } else if (id.includes('residential') || id.includes('commercial') || id.includes('industrial')) {
+      if (type === 'fill') {
+        map.setPaintProperty(id, 'fill-color', '#090e19');
+      }
+    }
+
+    // 4. Buildings Footprints (#0c1524)
+    if (id.includes('building')) {
+      if (type === 'fill') {
+        map.setPaintProperty(id, 'fill-color', '#0c1524');
+        map.setPaintProperty(id, 'fill-outline-color', '#13213a');
+      }
+    }
+
+    // 5. Roads & Highways (Mapbox Navigation Night signature Electric Blues & Slates)
+    if (type === 'line') {
+      if (id.includes('motorway') || id.includes('freeway')) {
+        if (id.includes('casing')) {
+          map.setPaintProperty(id, 'line-color', '#091c3d');
+        } else {
+          map.setPaintProperty(id, 'line-color', '#2563eb');
+        }
+      } else if (id.includes('trunk') || id.includes('primary') || id.includes('highway_major')) {
+        if (id.includes('casing')) {
+          map.setPaintProperty(id, 'line-color', '#07132a');
+        } else {
+          map.setPaintProperty(id, 'line-color', '#1d4ed8');
+        }
+      } else if (id.includes('secondary')) {
+        map.setPaintProperty(id, 'line-color', '#1e3a8a');
+      } else if (id.includes('minor') || id.includes('tertiary') || id.includes('service')) {
+        map.setPaintProperty(id, 'line-color', '#16233b');
+      } else if (id.includes('path') || id.includes('track') || id.includes('pedestrian')) {
+        map.setPaintProperty(id, 'line-color', '#0f172a');
+      }
+    }
+
+    // 6. Boundaries (Vivid Cyan #38bdf8 & Azure #60a5fa)
+    if (id.includes('boundary')) {
+      if (id.includes('state')) {
+        map.setPaintProperty(id, 'line-color', '#38bdf8');
+        map.setPaintProperty(id, 'line-opacity', 0.92);
+      } else if (id.includes('country')) {
+        map.setPaintProperty(id, 'line-color', '#60a5fa');
+      }
+    }
+
+    // 7. Typography and City/Place Labels (Crisp Luminous White with Dark Halo)
+    if (type === 'symbol') {
+      try {
+        if (map.getPaintProperty(id, 'text-color') !== undefined) {
+          map.setPaintProperty(id, 'text-color', '#f1f5f9');
+          map.setPaintProperty(id, 'text-halo-color', '#020617');
+          map.setPaintProperty(id, 'text-halo-width', 1.6);
+        }
+      } catch {
+        // safely pass non-paint symbol properties
+      }
+    }
+  });
+}
+
 export default function DelhiAqiHeatmap() {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -1370,6 +1468,12 @@ export default function DelhiAqiHeatmap() {
 
     map.on('load', () => {
       mapLoadedRef.current = true;
+
+      // Retune vector tiles to match Mapbox navigation-night palette in standby mode
+      if (!isMapbox) {
+        applyNavigationNightPalette(map);
+      }
+
       // 1. Add Stations GeoJSON Data Source
       map.addSource('aqi-stations', {
         type: 'geojson',
@@ -2060,6 +2164,7 @@ return (
       >
         {/* Tier 1: Branding, Telemetry Switcher, GPS Tracker & Telemetry Toggle */}
         <div
+          className="glass-panel-master"
           style={{
             pointerEvents: 'auto',
             display: 'flex',
@@ -2069,11 +2174,6 @@ return (
             flexWrap: 'wrap',
             padding: '8px 16px',
             borderRadius: '14px',
-            background: 'rgba(11, 17, 32, 0.58)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.45), 0 0 20px rgba(56, 189, 248, 0.04)',
           }}
         >
           {/* Engine Title & Last Updated */}
@@ -2096,6 +2196,7 @@ return (
             {/* Provider Mode Pill / Instant Reversibility Toggle */}
             <button
               onClick={handleToggleMapProvider}
+              className={`glass-pill ${mapProvider === 'free' ? 'glass-pill-success' : 'glass-pill-active'}`}
               title={
                 mapProvider === 'free'
                   ? 'Currently in Credit-Saver Standby Mode (0 Mapbox credits consumed). Click to connect with Mapbox Live.'
@@ -2105,16 +2206,11 @@ return (
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '5px',
-                background: mapProvider === 'free' ? 'rgba(16, 185, 129, 0.16)' : 'rgba(59, 130, 246, 0.18)',
-                color: mapProvider === 'free' ? '#34d399' : '#60a5fa',
-                border: `1px solid ${mapProvider === 'free' ? 'rgba(16, 185, 129, 0.45)' : 'rgba(59, 130, 246, 0.45)'}`,
-                padding: '3px 9px',
+                padding: '3px 10px',
                 borderRadius: '9999px',
                 fontSize: '0.66rem',
                 fontWeight: 700,
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: mapProvider === 'free' ? '0 0 12px rgba(16, 185, 129, 0.18)' : '0 0 12px rgba(59, 130, 246, 0.25)',
               }}
             >
               <span
@@ -2134,12 +2230,11 @@ return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {/* Metric Selector Tabs */}
             <div
+              className="glass-pill"
               style={{
                 display: 'flex',
-                background: 'rgba(2, 6, 23, 0.55)',
                 padding: '3px',
                 borderRadius: '9999px',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
               }}
             >
               {[
@@ -2150,16 +2245,13 @@ return (
                 <button
                   key={m.id}
                   onClick={() => setActivePollutant(m.id)}
+                  className={`glass-pill ${activePollutant === m.id ? 'glass-pill-active' : ''}`}
                   style={{
-                    background: activePollutant === m.id ? 'rgba(56, 189, 248, 0.22)' : 'transparent',
-                    color: activePollutant === m.id ? '#38bdf8' : '#94a3b8',
-                    border: activePollutant === m.id ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent',
                     padding: '3px 11px',
                     borderRadius: '9999px',
                     fontSize: '0.7rem',
                     fontWeight: 600,
                     cursor: 'pointer',
-                    transition: 'all 0.18s ease',
                   }}
                 >
                   {m.label}
@@ -2171,14 +2263,13 @@ return (
             <button
               onClick={() => fetchLiveNationalData(userLocation.lat, userLocation.lon)}
               disabled={isLoadingLive}
+              className="glass-pill"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '5px',
-                background: 'rgba(15, 23, 42, 0.55)',
                 color: '#cbd5e1',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                padding: '5px 11px',
+                padding: '5px 12px',
                 borderRadius: '9999px',
                 fontSize: '0.7rem',
                 fontWeight: 600,
@@ -2193,20 +2284,16 @@ return (
             <button
               onClick={handleCenterOnUser}
               title={userLocation.isLiveGps ? 'Center camera on your live GPS position' : 'Start live GPS tracking'}
+              className={`glass-pill ${userLocation.isLiveGps ? 'glass-pill-success' : ''}`}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                background: userLocation.isLiveGps ? 'rgba(16, 185, 129, 0.2)' : 'rgba(56, 189, 248, 0.14)',
-                color: userLocation.isLiveGps ? '#34d399' : '#38bdf8',
-                border: `1px solid ${userLocation.isLiveGps ? 'rgba(16, 185, 129, 0.45)' : 'rgba(56, 189, 248, 0.3)'}`,
                 padding: '5px 12px',
                 borderRadius: '9999px',
                 fontSize: '0.72rem',
                 fontWeight: 700,
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: userLocation.isLiveGps ? '0 0 14px rgba(16, 185, 129, 0.2)' : 'none',
               }}
             >
               {isLocating ? (
@@ -2229,14 +2316,12 @@ return (
               <button
                 onClick={() => setIsFollowingUser((f) => !f)}
                 title="Toggle automatic camera tracking as you move"
+                className={`glass-pill ${isFollowingUser ? 'glass-pill-active' : ''}`}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px',
-                  background: isFollowingUser ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                  color: isFollowingUser ? '#38bdf8' : '#94a3b8',
-                  border: isFollowingUser ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
-                  padding: '5px 9px',
+                  padding: '5px 10px',
                   borderRadius: '9999px',
                   fontSize: '0.68rem',
                   fontWeight: 600,
@@ -2252,20 +2337,17 @@ return (
             <button
               onClick={() => setIsSidebarOpen((v) => !v)}
               title={isSidebarOpen ? 'Hide telemetry panel to maximize map' : 'Show telemetry & advisory HUD'}
+              className={`glass-pill ${!isSidebarOpen ? 'glass-pill-active' : ''}`}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                background: isSidebarOpen ? 'rgba(255, 255, 255, 0.06)' : 'rgba(56, 189, 248, 0.18)',
                 color: isSidebarOpen ? '#cbd5e1' : '#38bdf8',
-                border: `1px solid ${isSidebarOpen ? 'rgba(255, 255, 255, 0.12)' : 'rgba(56, 189, 248, 0.45)'}`,
                 padding: '5px 12px',
                 borderRadius: '9999px',
                 fontSize: '0.72rem',
                 fontWeight: 700,
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: !isSidebarOpen ? '0 0 14px rgba(56, 189, 248, 0.25)' : 'none',
                 whiteSpace: 'nowrap',
               }}
             >
@@ -2278,6 +2360,7 @@ return (
 
         {/* Tier 2: Capital City Shortcuts (NO icons, decluttered) + Autocomplete Search Bar */}
         <div
+          className="glass-panel-master"
           style={{
             pointerEvents: 'auto',
             display: 'flex',
@@ -2287,11 +2370,6 @@ return (
             flexWrap: 'wrap',
             padding: '6px 12px',
             borderRadius: '12px',
-            background: 'rgba(11, 17, 32, 0.58)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
           }}
         >
           {/* Quick Glide Capital City Shortcuts */}
@@ -2305,20 +2383,17 @@ return (
                 <button
                   key={preset.id}
                   onClick={() => handleGlideToRegion(preset)}
+                  className={`glass-pill ${isActive ? 'glass-pill-active' : ''}`}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    padding: '3px 8px',
+                    padding: '3px 9px',
                     borderRadius: '9999px',
                     fontSize: '0.67rem',
                     fontWeight: isActive ? 700 : 600,
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
-                    background: isActive ? 'rgba(56, 189, 248, 0.22)' : 'rgba(255, 255, 255, 0.03)',
-                    color: isActive ? '#38bdf8' : '#cbd5e1',
-                    border: isActive ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.06)',
                     cursor: 'pointer',
-                    transition: 'all 0.18s ease',
                     whiteSpace: 'nowrap',
                   }}
                 >
@@ -2340,15 +2415,13 @@ return (
             }}
           >
             <div
+              className="glass-input"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                background: 'rgba(2, 6, 23, 0.65)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
                 borderRadius: '9999px',
-                padding: '4px 11px',
-                boxShadow: showSearchDropdown ? '0 0 15px rgba(56, 189, 248, 0.2)' : 'none',
+                padding: '4px 12px',
               }}
             >
               <Search size={12} color="#94a3b8" />
@@ -2395,18 +2468,14 @@ return (
             {/* Autocomplete Dropdown List */}
             {showSearchDropdown && searchResults.length > 0 && (
               <div
+                className="glass-panel-master"
                 style={{
                   position: 'absolute',
                   top: 'calc(100% + 6px)',
                   left: 0,
                   right: 0,
-                  background: 'rgba(11, 17, 32, 0.88)',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(56, 189, 248, 0.35)',
                   borderRadius: '12px',
                   overflow: 'hidden',
-                  boxShadow: '0 12px 35px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.15)',
                   maxHeight: '260px',
                   overflowY: 'auto',
                 }}
@@ -2446,22 +2515,18 @@ return (
       {/* 360° Cinematic Tour Floating HUD Banner */}
       {isOrbiting360 && (
         <div
+          className="glass-panel-master"
           style={{
             position: 'absolute',
             top: '125px',
             left: isSidebarOpen ? 'calc((100% - 420px) / 2)' : '50%',
             transform: 'translateX(-50%)',
             zIndex: 25,
-            background: 'rgba(11, 17, 32, 0.68)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(56, 189, 248, 0.45)',
             padding: '7px 16px',
             borderRadius: '9999px',
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(56, 189, 248, 0.25)',
             transition: 'left 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
@@ -2471,9 +2536,8 @@ return (
           </span>
           <button
             onClick={cancelCinematic360Tour}
+            className="glass-pill"
             style={{
-              background: 'rgba(239, 68, 68, 0.22)',
-              border: '1px solid rgba(239, 68, 68, 0.45)',
               color: '#f87171',
               padding: '2px 8px',
               borderRadius: '9999px',
@@ -2492,6 +2556,7 @@ return (
       {/* 4. BOTTOM-LEFT FLOATING CONTROLS HUD (LAYERS & OPACITY)        */}
       {/* ============================================================== */}
       <div
+        className="glass-panel-master"
         style={{
           position: 'absolute',
           bottom: '24px',
@@ -2500,13 +2565,8 @@ return (
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
-          background: 'rgba(11, 17, 32, 0.58)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
           padding: '10px 14px',
           borderRadius: '16px',
-          boxShadow: '0 12px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.06)',
           maxWidth: 'calc(100% - 48px)',
         }}
       >
@@ -2527,10 +2587,8 @@ return (
           {/* Heatmap Layer Toggle */}
           <button
             onClick={() => setShowHeatmapLayer((v) => !v)}
+            className={`glass-pill ${showHeatmapLayer ? 'glass-pill-active' : ''}`}
             style={{
-              background: showHeatmapLayer ? 'rgba(249, 115, 22, 0.22)' : 'rgba(255, 255, 255, 0.05)',
-              color: showHeatmapLayer ? '#fb923c' : '#94a3b8',
-              border: showHeatmapLayer ? '1px solid rgba(249, 115, 22, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
               padding: '4px 9px',
               borderRadius: '7px',
               fontSize: '0.72rem',
@@ -2539,10 +2597,9 @@ return (
               display: 'flex',
               alignItems: 'center',
               gap: '5px',
-              transition: 'all 0.15s ease',
             }}
           >
-            <Layers size={13} color={showHeatmapLayer ? '#fb923c' : '#94a3b8'} />
+            <Layers size={13} color={showHeatmapLayer ? '#38bdf8' : '#94a3b8'} />
             <span>Heat: {showHeatmapLayer ? 'ON' : 'OFF'}</span>
           </button>
 
@@ -2550,10 +2607,8 @@ return (
           <button
             onClick={() => setIsAdaptiveMode((v) => !v)}
             title="Dynamically recalibrate palette: lowest visible AQI becomes green, highest becomes bright red as you zoom in"
+            className={`glass-pill ${isAdaptiveMode ? 'glass-pill-success' : ''}`}
             style={{
-              background: isAdaptiveMode ? 'rgba(16, 185, 129, 0.22)' : 'rgba(255, 255, 255, 0.05)',
-              color: isAdaptiveMode ? '#34d399' : '#94a3b8',
-              border: isAdaptiveMode ? '1px solid rgba(16, 185, 129, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
               padding: '4px 9px',
               borderRadius: '7px',
               fontSize: '0.72rem',
@@ -2562,7 +2617,6 @@ return (
               display: 'flex',
               alignItems: 'center',
               gap: '5px',
-              transition: 'all 0.15s ease',
             }}
           >
             <Sparkles size={13} color={isAdaptiveMode ? '#34d399' : '#94a3b8'} />
@@ -2587,10 +2641,8 @@ return (
           {/* State Borders Toggle */}
           <button
             onClick={() => setShowStateBorders((v) => !v)}
+            className={`glass-pill ${showStateBorders ? 'glass-pill-active' : ''}`}
             style={{
-              background: showStateBorders ? 'rgba(96, 165, 250, 0.22)' : 'rgba(255, 255, 255, 0.05)',
-              color: showStateBorders ? '#93c5fd' : '#94a3b8',
-              border: showStateBorders ? '1px solid rgba(96, 165, 250, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
               padding: '4px 9px',
               borderRadius: '7px',
               fontSize: '0.72rem',
@@ -2599,20 +2651,17 @@ return (
               display: 'flex',
               alignItems: 'center',
               gap: '5px',
-              transition: 'all 0.15s ease',
             }}
           >
-            <MapIcon size={13} color={showStateBorders ? '#93c5fd' : '#94a3b8'} />
+            <MapIcon size={13} color={showStateBorders ? '#38bdf8' : '#94a3b8'} />
             <span>Borders</span>
           </button>
 
           {/* 108 Monitoring Pins Toggle */}
           <button
             onClick={() => setShowStationPins((v) => !v)}
+            className={`glass-pill ${showStationPins ? 'glass-pill-active' : ''}`}
             style={{
-              background: showStationPins ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-              color: showStationPins ? '#38bdf8' : '#94a3b8',
-              border: showStationPins ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
               padding: '4px 9px',
               borderRadius: '7px',
               fontSize: '0.72rem',
@@ -2621,7 +2670,6 @@ return (
               display: 'flex',
               alignItems: 'center',
               gap: '5px',
-              transition: 'all 0.15s ease',
             }}
           >
             {showStationPins ? <Eye size={13} color="#38bdf8" /> : <EyeOff size={13} color="#94a3b8" />}
@@ -2631,16 +2679,13 @@ return (
           {/* 3D Buildings Toggle */}
           <button
             onClick={() => setIs3DBuildings((v) => !v)}
+            className={`glass-pill ${is3DBuildings ? 'glass-pill-active' : ''}`}
             style={{
-              background: is3DBuildings ? 'rgba(168, 85, 247, 0.22)' : 'rgba(255, 255, 255, 0.05)',
-              color: is3DBuildings ? '#c084fc' : '#94a3b8',
-              border: is3DBuildings ? '1px solid rgba(168, 85, 247, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
               padding: '4px 9px',
               borderRadius: '7px',
               fontSize: '0.72rem',
               fontWeight: 600,
               cursor: 'pointer',
-              transition: 'all 0.15s ease',
             }}
           >
             3D Urban
@@ -2656,10 +2701,8 @@ return (
               }
             }}
             title={isOrbiting360 ? 'Cancel 360° orbital animation' : 'Replay cinematic 360° 3D slanted orbital flyaround'}
+            className={`glass-pill ${isOrbiting360 ? 'glass-pill-active' : ''}`}
             style={{
-              background: isOrbiting360 ? 'rgba(56, 189, 248, 0.28)' : 'rgba(255, 255, 255, 0.05)',
-              color: isOrbiting360 ? '#38bdf8' : '#cbd5e1',
-              border: isOrbiting360 ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
               padding: '4px 9px',
               borderRadius: '7px',
               fontSize: '0.72rem',
@@ -2668,8 +2711,6 @@ return (
               display: 'flex',
               alignItems: 'center',
               gap: '5px',
-              transition: 'all 0.15s ease',
-              boxShadow: isOrbiting360 ? '0 0 12px rgba(56, 189, 248, 0.35)' : 'none',
             }}
           >
             <RotateCw size={13} className={isOrbiting360 ? 'animate-spin' : ''} color={isOrbiting360 ? '#38bdf8' : '#cbd5e1'} />
@@ -2712,16 +2753,13 @@ return (
                 <button
                   key={p.label}
                   onClick={() => setHeatIntensity(p.val)}
+                  className={`glass-pill ${isSelected ? 'glass-pill-active' : ''}`}
                   style={{
-                    background: isSelected ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-                    color: isSelected ? '#38bdf8' : '#94a3b8',
-                    border: isSelected ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent',
                     padding: '2px 8px',
-                    borderRadius: '5px',
+                    borderRadius: '6px',
                     fontSize: '0.68rem',
                     fontWeight: 600,
                     cursor: 'pointer',
-                    transition: 'all 0.15s ease',
                   }}
                 >
                   {p.label}
@@ -2750,16 +2788,12 @@ return (
         }}
       >
         <div
+          className="glass-panel-master"
           style={{
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
-            background: 'rgba(11, 17, 32, 0.58)',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
             borderRadius: '20px',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.65), 0 0 30px rgba(56, 189, 248, 0.06)',
             overflow: 'hidden',
           }}
         >
@@ -2771,7 +2805,7 @@ return (
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: 'rgba(2, 6, 23, 0.35)',
+              background: 'rgba(255, 255, 255, 0.02)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2784,19 +2818,17 @@ return (
             <button
               onClick={() => setIsSidebarOpen(false)}
               title="Hide telemetry panel to maximize map view"
+              className="glass-pill"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '4px',
-                background: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
                 color: '#cbd5e1',
                 padding: '4px 10px',
                 borderRadius: '9999px',
                 fontSize: '0.72rem',
                 fontWeight: 600,
                 cursor: 'pointer',
-                transition: 'all 0.15s ease',
               }}
             >
               <span>Hide</span>
@@ -2818,11 +2850,11 @@ return (
             {/* 1. PINPOINT INSPECTION OR YOUR REAL-TIME GPS POSITION CARD */}
             {inspectedPoint ? (
               <div
+                className="glass-panel-sub"
                 style={{
                   padding: '20px',
                   borderRadius: '16px',
                   border: '1px solid rgba(244, 63, 94, 0.45)',
-                  background: 'linear-gradient(145deg, rgba(30, 15, 25, 0.65) 0%, rgba(15, 23, 42, 0.72) 100%)',
                   boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(244, 63, 94, 0.1)',
                 }}
               >
@@ -2838,11 +2870,10 @@ return (
                       setInspectedPoint(null);
                       if (userLocation.isLiveGps) handleCenterOnUser();
                     }}
+                    className="glass-pill"
                     style={{
                       fontSize: '0.7rem',
-                      background: 'rgba(255, 255, 255, 0.08)',
                       color: '#cbd5e1',
-                      border: '1px solid rgba(255, 255, 255, 0.12)',
                       padding: '3px 10px',
                       borderRadius: '9999px',
                       fontWeight: 600,
@@ -2879,9 +2910,8 @@ return (
                 </div>
 
                 <div
+                  className="glass-panel-sub"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
                     borderRadius: '12px',
                     padding: '12px 14px',
                     marginTop: '14px',
@@ -2911,11 +2941,11 @@ return (
               </div>
             ) : userLocation.isLiveGps && userLocation.lat && userLocation.lon ? (
               <div
+                className="glass-panel-sub"
                 style={{
                   padding: '20px',
                   borderRadius: '16px',
                   border: '1px solid rgba(16, 185, 129, 0.45)',
-                  background: 'linear-gradient(145deg, rgba(6, 28, 22, 0.65) 0%, rgba(15, 23, 42, 0.72) 100%)',
                   boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(16, 185, 129, 0.1)',
                 }}
               >
@@ -2927,11 +2957,9 @@ return (
                     </span>
                   </div>
                   <span
+                    className="glass-pill glass-pill-success"
                     style={{
                       fontSize: '0.7rem',
-                      background: 'rgba(16, 185, 129, 0.22)',
-                      color: '#34d399',
-                      border: '1px solid rgba(16, 185, 129, 0.45)',
                       padding: '3px 9px',
                       borderRadius: '9999px',
                       fontWeight: 700,
@@ -2969,9 +2997,8 @@ return (
                 </div>
 
                 <div
+                  className="glass-panel-sub"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
                     borderRadius: '12px',
                     padding: '12px 14px',
                     marginTop: '14px',
@@ -3017,13 +3044,11 @@ return (
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                   <button
                     onClick={handleCenterOnUser}
+                    className="glass-pill glass-pill-active"
                     style={{
                       flex: 1,
                       padding: '7px 10px',
                       borderRadius: '8px',
-                      background: 'rgba(56, 189, 248, 0.15)',
-                      color: '#38bdf8',
-                      border: '1px solid rgba(56, 189, 248, 0.35)',
                       fontSize: '0.72rem',
                       fontWeight: 700,
                       cursor: 'pointer',
@@ -3038,13 +3063,11 @@ return (
                   </button>
                   <button
                     onClick={() => setIsFollowingUser((f) => !f)}
+                    className={`glass-pill ${isFollowingUser ? 'glass-pill-active' : ''}`}
                     style={{
                       flex: 1,
                       padding: '7px 10px',
                       borderRadius: '8px',
-                      background: isFollowingUser ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                      color: isFollowingUser ? '#34d399' : '#94a3b8',
-                      border: isFollowingUser ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
                       fontSize: '0.72rem',
                       fontWeight: 600,
                       cursor: 'pointer',
@@ -3062,22 +3085,21 @@ return (
             ) : (
               /* GPS Inactive / Requesting State (ZERO DEMO DATA) */
               <div
+                className="glass-panel-sub"
                 style={{
                   padding: '20px',
                   borderRadius: '16px',
                   border: '1px solid rgba(56, 189, 248, 0.3)',
-                  background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.65) 0%, rgba(9, 13, 24, 0.7) 100%)',
                   boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5)',
                   textAlign: 'center',
                 }}
               >
                 <div
+                  className="glass-pill"
                   style={{
                     width: '46px',
                     height: '46px',
                     borderRadius: '50%',
-                    background: 'rgba(56, 189, 248, 0.12)',
-                    border: '1px solid rgba(56, 189, 248, 0.3)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -3110,13 +3132,11 @@ return (
                 <button
                   onClick={startLiveGpsTracking}
                   disabled={isLocating}
+                  className="glass-pill glass-pill-active"
                   style={{
                     width: '100%',
                     padding: '9px 14px',
                     borderRadius: '9px',
-                    background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                    color: '#ffffff',
-                    border: 'none',
                     fontSize: '0.78rem',
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -3124,8 +3144,6 @@ return (
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '6px',
-                    boxShadow: '0 4px 15px rgba(2, 132, 199, 0.4)',
-                    transition: 'all 0.2s ease',
                   }}
                 >
                   <Locate size={14} />
@@ -3136,11 +3154,10 @@ return (
 
             {/* 2. SELECTED CAAQMS STATION DEEP DIVE */}
             <div
+              className="glass-panel-sub"
               style={{
                 padding: '20px',
                 borderRadius: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                background: 'rgba(15, 23, 42, 0.48)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
@@ -3148,10 +3165,10 @@ return (
                   Selected Monitoring Node
                 </span>
                 <span
+                  className="glass-pill"
                   style={{
                     fontSize: '0.7rem',
                     color: getAqiColor(displayStation.aqi, activeRange).hex,
-                    background: `${getAqiColor(displayStation.aqi, activeRange).hex}22`,
                     padding: '3px 8px',
                     borderRadius: '6px',
                     fontWeight: 700,
@@ -3170,19 +3187,19 @@ return (
 
               {/* Station metrics grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '14px' }}>
-                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                <div className="glass-panel-sub" style={{ padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
                   <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block' }}>AQI Index</span>
                   <strong style={{ fontSize: '1.2rem', color: getAqiColor(displayStation.aqi, activeRange).hex }}>
                     {displayStation.aqi}
                   </strong>
                 </div>
-                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                <div className="glass-panel-sub" style={{ padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
                   <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block' }}>PM2.5</span>
                   <strong style={{ fontSize: '1.1rem', color: '#f87171' }}>
                     {displayStation.pm25} <span style={{ fontSize: '0.6rem' }}>µg</span>
                   </strong>
                 </div>
-                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                <div className="glass-panel-sub" style={{ padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
                   <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block' }}>PM10</span>
                   <strong style={{ fontSize: '1.1rem', color: '#fb923c' }}>
                     {displayStation.pm10} <span style={{ fontSize: '0.6rem' }}>µg</span>
@@ -3192,10 +3209,10 @@ return (
 
               {/* Google Gemini AI Health & Commute Advisory */}
               <div
+                className="glass-panel-sub"
                 style={{
                   padding: '12px 14px',
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(15, 23, 42, 0.45) 100%)',
                   border: '1px solid rgba(56, 189, 248, 0.25)',
                   fontSize: '0.78rem',
                   lineHeight: 1.5,
@@ -3210,11 +3227,11 @@ return (
                     </strong>
                   </div>
                   <span
+                    className="glass-pill"
                     style={{
                       fontSize: '0.65rem',
                       color: '#94a3b8',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      padding: '2px 5px',
+                      padding: '2px 6px',
                       borderRadius: '4px',
                     }}
                   >
@@ -3229,11 +3246,11 @@ return (
 
             {/* 3. CALIBRATED SEAMLESS ZOOM-ADAPTIVE SPECTRUM LEGEND */}
             <div
+              className="glass-panel-sub"
               style={{
                 padding: '16px 18px',
                 borderRadius: '16px',
                 border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
-                background: 'rgba(15, 23, 42, 0.52)',
                 transition: 'border-color 0.3s ease',
               }}
             >
@@ -3243,14 +3260,12 @@ return (
                   <span style={{ fontWeight: 700, color: '#e2e8f0' }}>Continuous Spectrum</span>
                 </div>
                 <span
+                  className={`glass-pill ${isAdaptiveMode && activeRange.isZoomed ? 'glass-pill-success' : 'glass-pill-active'}`}
                   style={{
-                    color: isAdaptiveMode && activeRange.isZoomed ? '#34d399' : '#38bdf8',
                     fontWeight: 700,
                     fontSize: '0.68rem',
-                    background: isAdaptiveMode && activeRange.isZoomed ? 'rgba(16, 185, 129, 0.18)' : 'rgba(56, 189, 248, 0.12)',
-                    padding: '2px 7px',
-                    borderRadius: '5px',
-                    border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(56, 189, 248, 0.25)',
+                    padding: '2px 8px',
+                    borderRadius: '6px',
                   }}
                 >
                   {isAdaptiveMode && activeRange.isZoomed
