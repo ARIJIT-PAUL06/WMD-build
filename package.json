@@ -23,6 +23,7 @@
     "leaflet": "^1.9.4",
     "lucide-react": "^1.49.0",
     "mapbox-gl": "^3.32.0",
+    "maplibre-gl": "^6.11.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "three": "^0.186.1"

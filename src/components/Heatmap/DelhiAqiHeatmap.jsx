@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
+import * as maplibregl from 'maplibre-gl';
+import maplibreglWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import 'maplibre-gl/dist/maplibre-gl.css';
+
+// Configure MapLibre Web Worker URL for Vite environment
+if (typeof maplibregl.setWorkerUrl === 'function') {
+  maplibregl.setWorkerUrl(maplibreglWorkerUrl);
+}
 import {
   Navigation,
   Crosshair,
@@ -32,7 +40,7 @@ import indiaBoundaryGeoJson from '../../data/indiaBoundary.json';
 // Import 108 nationwide ground/CAAQMS monitoring stations across all Indian states
 import initialIndiaStations from '../../data/indiaStations.json';
 
-// Provider mode helper: 'free' (zero Mapbox API calls/credits, OpenFreeMap vector style) | 'mapbox' (official Mapbox style)
+// Provider mode helper: 'free' (zero Mapbox API calls/credits, OpenFreeMap vector style via MapLibre) | 'mapbox' (official Mapbox style)
 export const getActiveMapProvider = () => {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('wmd_map_provider');
@@ -44,8 +52,13 @@ export const getActiveMapProvider = () => {
 const INITIAL_PROVIDER = getActiveMapProvider();
 const IS_MAPBOX_PROVIDER = INITIAL_PROVIDER === 'mapbox';
 
-// Zero-credit safety: when provider is 'free', clear accessToken so Mapbox GL JS makes ZERO calls to api.mapbox.com
-mapboxgl.accessToken = IS_MAPBOX_PROVIDER ? (import.meta.env.VITE_MAPBOX_TOKEN || '') : '';
+// Set access token only when in live Mapbox mode
+if (IS_MAPBOX_PROVIDER) {
+  mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
+}
+
+// Select map engine: Mapbox GL JS when in live Mapbox mode, MapLibre GL JS when in zero-credit Standby mode
+const mapEngine = IS_MAPBOX_PROVIDER ? mapboxgl : maplibregl;
 
 export const OPENFREEMAP_DARK_STYLE = 'https://tiles.openfreemap.org/styles/dark';
 export const MAPBOX_DARK_STYLE = 'mapbox://styles/mapbox/navigation-night-v1';
@@ -1324,7 +1337,7 @@ export default function DelhiAqiHeatmap() {
     const isMapbox = activeProvider === 'mapbox';
     const chosenStyle = isMapbox ? MAPBOX_DARK_STYLE : OPENFREEMAP_DARK_STYLE;
 
-    const map = new mapboxgl.Map({
+    const map = new mapEngine.Map({
       container: mapContainerRef.current,
       style: chosenStyle, // High-contrast night navigation (Mapbox) or OpenFreeMap dark vector style (0 credits)
       center: [78.9629, 22.5937], // Center of India
@@ -1353,7 +1366,7 @@ export default function DelhiAqiHeatmap() {
     map.boxZoom.enable();
     map.keyboard.enable();
 
-    map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'bottom-right');
+    map.addControl(new mapEngine.NavigationControl({ visualizePitch: true }), 'bottom-right');
 
     map.on('load', () => {
       mapLoadedRef.current = true;
@@ -1784,7 +1797,7 @@ export default function DelhiAqiHeatmap() {
         setInspectedPoint(null);
       });
 
-      const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+      const marker = new mapEngine.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([st.lon, st.lat])
         .addTo(map);
 
@@ -1861,7 +1874,7 @@ export default function DelhiAqiHeatmap() {
       </div>
     `;
 
-    targetMarkerRef.current = new mapboxgl.Marker({ element: targetEl, anchor: 'center' })
+    targetMarkerRef.current = new mapEngine.Marker({ element: targetEl, anchor: 'center' })
       .setLngLat([inspectedPoint.lon, inspectedPoint.lat])
       .addTo(map);
   }, [inspectedPoint, activeRange]);
@@ -1954,7 +1967,7 @@ export default function DelhiAqiHeatmap() {
         </div>
       `;
 
-      userMarkerRef.current = new mapboxgl.Marker({ element: userEl, anchor: 'center' })
+      userMarkerRef.current = new mapEngine.Marker({ element: userEl, anchor: 'center' })
         .setLngLat([userLocation.lon, userLocation.lat])
         .addTo(map);
     } else {
