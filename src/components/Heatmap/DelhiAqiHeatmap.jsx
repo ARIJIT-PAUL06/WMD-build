@@ -11,103 +11,74 @@ import {
   EyeOff,
   Sparkles,
   Sliders,
-  Maximize2
+  Maximize2,
+  Search,
+  MapPin,
+  Globe,
+  Map as MapIcon
 } from 'lucide-react';
 
-// Import official NCT Delhi state boundary GeoJSON
-import delhiBoundaryGeoJson from '../../data/delhiBoundary.json';
+// Import official India national boundary GeoJSON (MultiPolygon covering mainland + islands)
+import indiaBoundaryGeoJson from '../../data/indiaBoundary.json';
+// Import 108 nationwide ground/CAAQMS monitoring stations across all Indian states
+import initialIndiaStations from '../../data/indiaStations.json';
 
 // Set public access token from environment variable
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
+/**
+ * Geographic Bounding Box tightly enclosing the official Indian national boundary
+ */
+const INDIA_RASTER_BOUNDS = {
+  minLon: 68.10, // West coast of Gujarat / Rann of Kutch
+  maxLon: 97.45, // Eastern border of Arunachal Pradesh
+  minLat: 6.75,  // Indira Point / Great Nicobar & Kanyakumari
+  maxLat: 37.10, // Northern frontier of Ladakh / Kashmir
+};
 
 /**
- * 18 Official CAAQMS & Ground Stations across Delhi NCR with exact GPS coordinates
+ * Convert Latitude in degrees to Web Mercator Y (radians).
+ * Critical for 100% pixel-perfect alignment with Mapbox GL vector tiles.
  */
+function latToMercatorY(lat) {
+  const rad = (Math.max(-85, Math.min(85, lat)) * Math.PI) / 180;
+  return Math.log(Math.tan(Math.PI / 4 + rad / 2));
+}
+
 /**
- * 51 Official CAAQMS & Ground Monitoring Nodes covering every district and border corridor of Delhi NCR
+ * Convert Web Mercator Y (radians) back to Latitude in degrees.
  */
-const DELHI_STATIONS_INITIAL = [
-  // North & North-West Delhi
-  { id: 'bawana', name: 'Bawana Industrial Area', lat: 28.7762, lon: 77.0510, aqi: 365, pm25: 220, pm10: 380, zone: 'North West Delhi', type: 'Industrial' },
-  { id: 'narela', name: 'Narela Sub-City', lat: 28.8526, lon: 77.0924, aqi: 340, pm25: 205, pm10: 360, zone: 'North Delhi', type: 'Industrial-Suburban' },
-  { id: 'singhu', name: 'Singhu Border (NH44 Gateway)', lat: 28.8780, lon: 77.1320, aqi: 310, pm25: 180, pm10: 320, zone: 'North Delhi Border', type: 'Highway Gateway' },
-  { id: 'alipur', name: 'Alipur G.T. Road', lat: 28.8153, lon: 77.1530, aqi: 285, pm25: 165, pm10: 290, zone: 'North Delhi', type: 'Suburban-Green' },
-  { id: 'dtu', name: 'Delhi Tech University (DTU)', lat: 28.7495, lon: 77.1171, aqi: 245, pm25: 142, pm10: 260, zone: 'North Delhi', type: 'Institutional' },
-  { id: 'burari', name: 'Burari Crossing', lat: 28.7257, lon: 77.2012, aqi: 290, pm25: 170, pm10: 310, zone: 'North Delhi', type: 'Transit Corridor' },
-  { id: 'jahangirpuri', name: 'Jahangirpuri', lat: 28.7325, lon: 77.1706, aqi: 385, pm25: 240, pm10: 410, zone: 'North West Delhi', type: 'Dense Urban' },
-  { id: 'rohini', name: 'Rohini Sector 16', lat: 28.7325, lon: 77.1199, aqi: 318, pm25: 185, pm10: 310, zone: 'North West Delhi', type: 'Residential' },
-  { id: 'wazirpur', name: 'Wazirpur Industrial Zone', lat: 28.6997, lon: 77.1654, aqi: 396, pm25: 250, pm10: 405, zone: 'North Delhi', type: 'Industrial' },
-  { id: 'ashok-vihar', name: 'Ashok Vihar', lat: 28.6954, lon: 77.1816, aqi: 298, pm25: 175, pm10: 300, zone: 'North Delhi', type: 'Residential' },
-  { id: 'civil-lines', name: 'Civil Lines (DU North)', lat: 28.6814, lon: 77.2227, aqi: 242, pm25: 138, pm10: 245, zone: 'North Central', type: 'Institutional' },
-  { id: 'kanjhawala', name: 'Kanjhawala', lat: 28.7280, lon: 77.0040, aqi: 260, pm25: 150, pm10: 270, zone: 'North West Delhi', type: 'Rural-Suburban' },
+function mercatorYToLat(y) {
+  return (2 * Math.atan(Math.exp(y)) - Math.PI / 2) * (180 / Math.PI);
+}
 
-  // Central Delhi & Old Delhi
-  { id: 'chandni-chowk', name: 'Chandni Chowk (Old Delhi)', lat: 28.6562, lon: 77.2307, aqi: 330, pm25: 195, pm10: 345, zone: 'Central Delhi', type: 'Dense Heritage' },
-  { id: 'connaught-place', name: 'Connaught Place / Mandir Marg', lat: 28.6315, lon: 77.2167, aqi: 252, pm25: 148, pm10: 255, zone: 'Central Delhi', type: 'Commercial Heart' },
-  { id: 'ito', name: 'ITO Intersection', lat: 28.6288, lon: 77.2410, aqi: 315, pm25: 188, pm10: 320, zone: 'Central Delhi', type: 'Commercial Hub' },
-  { id: 'national-stadium', name: 'Major Dhyan Chand Stadium', lat: 28.6120, lon: 77.2370, aqi: 225, pm25: 130, pm10: 230, zone: 'Central Delhi', type: 'Institutional' },
-  { id: 'lodhi-road', name: 'Lodhi Road (IMD / Ridge)', lat: 28.5918, lon: 77.2273, aqi: 178, pm25: 88, pm10: 165, zone: 'South Central Delhi', type: 'Green Buffer Zone' },
-  { id: 'pusa', name: 'Pusa (IMD Eco Reserve)', lat: 28.6360, lon: 77.1590, aqi: 210, pm25: 118, pm10: 215, zone: 'Central West', type: 'Eco Buffer' },
+const Y_MIN = latToMercatorY(INDIA_RASTER_BOUNDS.minLat);
+const Y_MAX = latToMercatorY(INDIA_RASTER_BOUNDS.maxLat);
+const Y_SPAN = Y_MAX - Y_MIN;
+const LON_SPAN = INDIA_RASTER_BOUNDS.maxLon - INDIA_RASTER_BOUNDS.minLon;
 
-  // West & South-West Delhi
-  { id: 'punjabi-bagh', name: 'Punjabi Bagh', lat: 28.6740, lon: 77.1310, aqi: 335, pm25: 195, pm10: 340, zone: 'West Delhi', type: 'Commercial-Transit' },
-  { id: 'mundka', name: 'Mundka Industrial Zone', lat: 28.6847, lon: 77.0298, aqi: 410, pm25: 265, pm10: 430, zone: 'West Delhi', type: 'Heavy Industrial' },
-  { id: 'baprola', name: 'Baprola / Bakkarwala', lat: 28.6360, lon: 76.9950, aqi: 270, pm25: 158, pm10: 275, zone: 'West Delhi Outer', type: 'Suburban-Residential' },
-  { id: 'paschim-vihar', name: 'Paschim Vihar', lat: 28.6685, lon: 77.0945, aqi: 295, pm25: 172, pm10: 295, zone: 'West Delhi', type: 'Residential' },
-  { id: 'shadipur', name: 'Shadipur Depot', lat: 28.6514, lon: 77.1578, aqi: 320, pm25: 190, pm10: 330, zone: 'West Delhi', type: 'Industrial-Transit' },
-  { id: 'dwarka', name: 'Dwarka Sector 8', lat: 28.5710, lon: 77.0719, aqi: 268, pm25: 158, pm10: 275, zone: 'South West Delhi', type: 'Residential' },
-  { id: 'dwarka-sec21', name: 'Dwarka Sector 21', lat: 28.5524, lon: 77.0583, aqi: 275, pm25: 162, pm10: 280, zone: 'South West Delhi', type: 'Transit Hub' },
-  { id: 'igi-airport', name: 'IGI Airport (T3)', lat: 28.5562, lon: 77.1000, aqi: 294, pm25: 172, pm10: 305, zone: 'South West Delhi', type: 'Aviation-Highway' },
-  { id: 'najafgarh', name: 'Najafgarh', lat: 28.6090, lon: 76.9855, aqi: 228, pm25: 130, pm10: 235, zone: 'South West Delhi', type: 'Rural-Suburban' },
-  { id: 'aya-nagar', name: 'Aya Nagar (IMD Airbase)', lat: 28.4707, lon: 77.1099, aqi: 215, pm25: 122, pm10: 220, zone: 'South West Delhi', type: 'Buffer Station' },
-  { id: 'kapashera', name: 'Kapashera Border', lat: 28.5180, lon: 77.0850, aqi: 285, pm25: 168, pm10: 290, zone: 'South West Border', type: 'Transit Arterial' },
-
-  // East & North-East Delhi
-  { id: 'anand-vihar', name: 'Anand Vihar (ISBT / Border)', lat: 28.6508, lon: 77.3153, aqi: 468, pm25: 325, pm10: 510, zone: 'East Delhi', type: 'Heavy Transit Corridor' },
-  { id: 'vivek-vihar', name: 'Vivek Vihar', lat: 28.6723, lon: 77.3152, aqi: 385, pm25: 240, pm10: 380, zone: 'East Delhi', type: 'Residential-Urban' },
-  { id: 'jhilmil', name: 'Jhilmil Industrial Area', lat: 28.6730, lon: 77.2910, aqi: 370, pm25: 228, pm10: 375, zone: 'Shahdara / East Delhi', type: 'Industrial' },
-  { id: 'patparganj', name: 'Patparganj Industrial Area', lat: 28.6237, lon: 77.2872, aqi: 355, pm25: 215, pm10: 360, zone: 'East Delhi', type: 'Industrial-Commercial' },
-  { id: 'sonia-vihar', name: 'Sonia Vihar', lat: 28.7106, lon: 77.2492, aqi: 325, pm25: 195, pm10: 330, zone: 'North East Delhi', type: 'Suburban-Riverbank' },
-  { id: 'dilshad-garden', name: 'Dilshad Garden', lat: 28.6811, lon: 77.3050, aqi: 310, pm25: 180, pm10: 315, zone: 'North East Delhi', type: 'Residential-Border' },
-  { id: 'mayur-vihar', name: 'Mayur Vihar Phase II', lat: 28.6080, lon: 77.2990, aqi: 295, pm25: 172, pm10: 300, zone: 'East Delhi', type: 'Residential-Transit' },
-
-  // South & South-East Delhi
-  { id: 'rk-puram', name: 'R.K. Puram', lat: 28.5632, lon: 77.1869, aqi: 308, pm25: 182, pm10: 315, zone: 'South Delhi', type: 'Urban Center' },
-  { id: 'jln-stadium', name: 'Jawaharlal Nehru Stadium', lat: 28.5802, lon: 77.2338, aqi: 240, pm25: 138, pm10: 245, zone: 'South Delhi', type: 'Sports-Urban' },
-  { id: 'siri-fort', name: 'Siri Fort Institutional', lat: 28.5504, lon: 77.2159, aqi: 250, pm25: 145, pm10: 255, zone: 'South Delhi', type: 'Institutional' },
-  { id: 'vasant-kunj', name: 'Vasant Kunj / JNU Eco Reserve', lat: 28.5380, lon: 77.1550, aqi: 210, pm25: 120, pm10: 215, zone: 'South West Delhi', type: 'Eco Buffer Zone' },
-  { id: 'aurobindo-marg', name: 'Sri Aurobindo Marg', lat: 28.5310, lon: 77.1900, aqi: 270, pm25: 160, pm10: 275, zone: 'South Delhi', type: 'Transit Arterial' },
-  { id: 'hauz-khas', name: 'Hauz Khas Enclave', lat: 28.5494, lon: 77.2001, aqi: 235, pm25: 132, pm10: 240, zone: 'South Delhi', type: 'Residential-Buffer' },
-  { id: 'nehru-nagar', name: 'Nehru Nagar (Ring Road)', lat: 28.5678, lon: 77.2505, aqi: 345, pm25: 210, pm10: 350, zone: 'South Delhi', type: 'Transit Arterial' },
-  { id: 'okhla', name: 'Okhla Phase II', lat: 28.5308, lon: 77.2713, aqi: 374, pm25: 232, pm10: 385, zone: 'South East Delhi', type: 'Industrial' },
-  { id: 'crri-mathura', name: 'CRRI Mathura Road', lat: 28.5512, lon: 77.2736, aqi: 360, pm25: 220, pm10: 370, zone: 'South East Delhi', type: 'Highway Corridor' },
-  { id: 'badarpur', name: 'Badarpur Thermal Border', lat: 28.5080, lon: 77.3050, aqi: 360, pm25: 220, pm10: 370, zone: 'South East Delhi', type: 'Transit Border' },
-  { id: 'karni-singh', name: 'Dr. Karni Singh Range', lat: 28.4983, lon: 77.2650, aqi: 195, pm25: 105, pm10: 190, zone: 'South Delhi', type: 'Eco Foothills' },
-  { id: 'asola-bhatti', name: 'Asola Bhatti (Wildlife Sanctuary)', lat: 28.4986, lon: 77.2648, aqi: 156, pm25: 72, pm10: 145, zone: 'South Delhi', type: 'Eco Buffer' },
-
-  // Strategic Border Inflow Stations
-  { id: 'noida-sec62', name: 'Sector 62 Noida (Delhi-East Border)', lat: 28.6258, lon: 77.3648, aqi: 380, pm25: 235, pm10: 390, zone: 'East NCR Border', type: 'NCR Inflow Corridor' },
-  { id: 'vasundhara', name: 'Vasundhara (Ghaziabad-East Border)', lat: 28.6603, lon: 77.3573, aqi: 415, pm25: 268, pm10: 425, zone: 'East NCR Border', type: 'NCR Inflow Corridor' },
-  { id: 'gurugram-sec51', name: 'Sector 51 Gurugram (South-West Border)', lat: 28.4280, lon: 77.0720, aqi: 280, pm25: 168, pm10: 290, zone: 'South West NCR Border', type: 'NCR Inflow Corridor' },
+// 4-Corner Coordinates clockwise from Top-Left (NW) as required by Mapbox image source
+const INDIA_RASTER_COORDINATES = [
+  [INDIA_RASTER_BOUNDS.minLon, INDIA_RASTER_BOUNDS.maxLat], // Top-Left (NW)
+  [INDIA_RASTER_BOUNDS.maxLon, INDIA_RASTER_BOUNDS.maxLat], // Top-Right (NE)
+  [INDIA_RASTER_BOUNDS.maxLon, INDIA_RASTER_BOUNDS.minLat], // Bottom-Right (SE)
+  [INDIA_RASTER_BOUNDS.minLon, INDIA_RASTER_BOUNDS.minLat], // Bottom-Left (SW)
 ];
 
 /**
- * Geographic Bounding Box tightly enclosing the official NCT Delhi border polygon
+ * Quick Gliding Regions across the Indian Subcontinent
+ * Smoothly flies the camera without segmenting or reloading the nationwide heatmap.
  */
-const DELHI_RASTER_BOUNDS = {
-  minLon: 76.80, // West of Najafgarh / Mundka / Haryana border
-  maxLon: 77.40, // East of Anand Vihar / Yamuna / UP border
-  minLat: 28.38, // South of Asola / Aya Nagar / Gurugram border
-  maxLat: 28.92, // North of Narela / Singhu / Alipur border
-};
-
-// 4-Corner Coordinates clockwise from Top-Left (NW) as required by Mapbox image source
-const DELHI_RASTER_COORDINATES = [
-  [DELHI_RASTER_BOUNDS.minLon, DELHI_RASTER_BOUNDS.maxLat], // Top-Left (NW)
-  [DELHI_RASTER_BOUNDS.maxLon, DELHI_RASTER_BOUNDS.maxLat], // Top-Right (NE)
-  [DELHI_RASTER_BOUNDS.maxLon, DELHI_RASTER_BOUNDS.minLat], // Bottom-Right (SE)
-  [DELHI_RASTER_BOUNDS.minLon, DELHI_RASTER_BOUNDS.minLat], // Bottom-Left (SW)
+const INDIA_REGION_PRESETS = [
+  { id: 'all-india', name: 'All India Overview', icon: '🇮🇳', center: [79.2, 22.8], zoom: 4.6, pitch: 15, state: 'National Subcontinent' },
+  { id: 'delhi-ncr', name: 'Delhi NCR & North', icon: '🏛️', center: [77.16, 28.66], zoom: 9.8, pitch: 26, state: 'National Capital Region' },
+  { id: 'mumbai', name: 'Mumbai MMR', icon: '🌊', center: [72.8777, 19.0760], zoom: 10.0, pitch: 26, state: 'Maharashtra' },
+  { id: 'bengaluru', name: 'Bengaluru Tech Belt', icon: '🌳', center: [77.5946, 12.9716], zoom: 10.0, pitch: 26, state: 'Karnataka' },
+  { id: 'gangetic', name: 'Indo-Gangetic Basin', icon: '🌾', center: [82.5, 26.0], zoom: 7.0, pitch: 22, state: 'UP & Bihar River Corridor' },
+  { id: 'kolkata', name: 'Kolkata & Bengal', icon: '🌉', center: [88.3639, 22.5726], zoom: 10.2, pitch: 26, state: 'West Bengal' },
+  { id: 'chennai', name: 'Chennai & South Coast', icon: '🏖️', center: [80.2707, 13.0827], zoom: 10.2, pitch: 26, state: 'Tamil Nadu' },
+  { id: 'hyderabad', name: 'Hyderabad & Deccan', icon: '💎', center: [78.4867, 17.3850], zoom: 10.0, pitch: 26, state: 'Telangana' },
+  { id: 'himalayas', name: 'Himalayas & Ladakh', icon: '🏔️', center: [76.5, 33.5], zoom: 6.8, pitch: 28, state: 'J&K / Ladakh' },
 ];
 
 // Distance helper (Haversine in km)
@@ -139,89 +110,292 @@ function calculateUncappedAqi(pm25) {
 }
 
 /**
- * High-Precision Scientific 15-Stop AQI Color Spectrum
- * Provides smooth, nuanced color transitions every 20-35 AQI points:
- * - 0 to 100: Pristine Forest Emerald → Pure Green → Fresh Lime
- * - 100 to 200: Chartreuse → Warm Yellow → Golden Amber
- * - 200 to 300: Vivid Tangerine → Burnt Ochre Orange
- * - 300 to 400: Rose Red → Intense Scarlet Red
- * - 400 to 500+: Crimson Maroon → Deep Toxic Purple / Violet
+ * Seamless Scientific Continuous AQI Color Spectrum
+ * Provides 100% continuous, seamless color transitions without any contour darkening or banded lines.
+ * Normalized t: 0.0 (Lowest / Cleanest) -> 1.0 (Highest / Most Polluted)
  */
-const PRECISE_AQI_STOPS = [
-  { aqi: 0,   rgb: [5, 150, 105],  hex: '#059669', label: 'Pristine Green' },
-  { aqi: 35,  rgb: [16, 185, 129], hex: '#10b981', label: 'Good Green' },
-  { aqi: 65,  rgb: [52, 211, 153], hex: '#34d399', label: 'Emerald Mint' },
-  { aqi: 95,  rgb: [132, 204, 22], hex: '#84cc16', label: 'Lime Green' },
-  { aqi: 125, rgb: [163, 230, 53], hex: '#a3e635', label: 'Chartreuse' },
-  { aqi: 155, rgb: [234, 179, 8],  hex: '#eab308', label: 'Warm Yellow' },
-  { aqi: 190, rgb: [245, 158, 11], hex: '#f59e0b', label: 'Amber Yellow' },
-  { aqi: 225, rgb: [249, 115, 22], hex: '#f97316', label: 'Vivid Orange' },
-  { aqi: 265, rgb: [234, 88, 12],  hex: '#ea580c', label: 'Burnt Orange' },
-  { aqi: 305, rgb: [225, 29, 72],  hex: '#e11d48', label: 'Rose Red' },
-  { aqi: 345, rgb: [220, 38, 38],  hex: '#dc2626', label: 'Scarlet Red' },
-  { aqi: 390, rgb: [185, 28, 28],  hex: '#b91c1c', label: 'Crimson Red' },
-  { aqi: 440, rgb: [153, 27, 27],  hex: '#991b1b', label: 'Deep Maroon' },
-  { aqi: 485, rgb: [112, 26, 117], hex: '#701a75', label: 'Hazardous Purple' },
-  { aqi: 500, rgb: [74, 4, 78],    hex: '#4a044e', label: 'Severe Toxic Violet' },
+const SEAMLESS_AQI_STOPS = [
+  { t: 0.00, rgb: [16, 185, 129],  hex: '#10b981', label: 'Pristine Green' },
+  { t: 0.15, rgb: [52, 211, 153],  hex: '#34d399', label: 'Emerald Mint' },
+  { t: 0.30, rgb: [132, 204, 22],  hex: '#84cc16', label: 'Vivid Lime' },
+  { t: 0.46, rgb: [234, 179, 8],   hex: '#eab308', label: 'Warm Yellow' },
+  { t: 0.62, rgb: [249, 115, 22],  hex: '#f97316', label: 'Vivid Orange' },
+  { t: 0.76, rgb: [234, 88, 12],   hex: '#ea580c', label: 'Burnt Ochre' },
+  { t: 0.90, rgb: [220, 38, 38],   hex: '#dc2626', label: 'Scarlet Red' },
+  { t: 1.00, rgb: [185, 28, 28],   hex: '#b91c1c', label: 'Deep Crimson' },
 ];
 
 /**
- * Evaluates exact RGB color at any floating-point AQI value via piecewise linear interpolation
- * across the 15 scientific anchors, with subtle 20-unit micro-contour isopleth rings.
+ * Piecewise continuous interpolation across seamless stops with zero contour darkening.
  */
-function getPreciseAqiRgb(rawAqi, withContourLines = true) {
-  const clampedAqi = Math.max(0, Math.min(500, rawAqi));
+function interpolateSeamlessRgb(normalizedT) {
+  const t = Math.max(0, Math.min(1, normalizedT));
+  let lower = SEAMLESS_AQI_STOPS[0];
+  let upper = SEAMLESS_AQI_STOPS[SEAMLESS_AQI_STOPS.length - 1];
 
-  let lower = PRECISE_AQI_STOPS[0];
-  let upper = PRECISE_AQI_STOPS[PRECISE_AQI_STOPS.length - 1];
-
-  for (let i = 0; i < PRECISE_AQI_STOPS.length - 1; i++) {
-    if (clampedAqi >= PRECISE_AQI_STOPS[i].aqi && clampedAqi <= PRECISE_AQI_STOPS[i + 1].aqi) {
-      lower = PRECISE_AQI_STOPS[i];
-      upper = PRECISE_AQI_STOPS[i + 1];
+  for (let i = 0; i < SEAMLESS_AQI_STOPS.length - 1; i++) {
+    if (t >= SEAMLESS_AQI_STOPS[i].t && t <= SEAMLESS_AQI_STOPS[i + 1].t) {
+      lower = SEAMLESS_AQI_STOPS[i];
+      upper = SEAMLESS_AQI_STOPS[i + 1];
       break;
     }
   }
 
-  const range = upper.aqi - lower.aqi || 1;
-  const t = (clampedAqi - lower.aqi) / range;
+  const range = upper.t - lower.t || 1;
+  const frac = (t - lower.t) / range;
 
-  let r = Math.round(lower.rgb[0] + t * (upper.rgb[0] - lower.rgb[0]));
-  let g = Math.round(lower.rgb[1] + t * (upper.rgb[1] - lower.rgb[1]));
-  let b = Math.round(lower.rgb[2] + t * (upper.rgb[2] - lower.rgb[2]));
-
-  // Micro-contour isopleth effect (every 20 AQI units, major line every 100 units)
-  if (withContourLines) {
-    const isMajor = Math.round(rawAqi / 20) % 5 === 0; // 0, 100, 200, 300, 400, 500
-    const rem = rawAqi % 20;
-    const minDist = Math.min(rem, 20 - rem);
-
-    if (minDist < 1.25) {
-      const intensity = isMajor ? 0.30 : 0.16;
-      const factor = 1 - (1 - minDist / 1.25) * intensity;
-      r = Math.round(r * factor);
-      g = Math.round(g * factor);
-      b = Math.round(b * factor);
-    }
-  }
+  const r = Math.round(lower.rgb[0] + frac * (upper.rgb[0] - lower.rgb[0]));
+  const g = Math.round(lower.rgb[1] + frac * (upper.rgb[1] - lower.rgb[1]));
+  const b = Math.round(lower.rgb[2] + frac * (upper.rgb[2] - lower.rgb[2]));
 
   return [r, g, b];
 }
 
 /**
- * Generates an Offscreen Continuous 2D IDW Raster Field:
- * 1. Cut EXACTLY according to Delhi's official state border (transparent outside)
- * 2. Hyper-localized adaptive spatial decay (p = 2.8) so micro-climates (green pockets vs red hotspots)
- *    remain sharp and authentic rather than blending into a generic wash
- * 3. High-definition 280x280 grid (~140m spatial resolution across Delhi NCT)
- * 4. Rich, saturated opacity (alpha 220 / 86%)
+ * Trace the MultiPolygon path of the official Indian national boundary
+ * onto an HTML5 2D canvas context using Web Mercator Projection for 100% exact alignment.
  */
-function generateDelhiPollutantRaster(stationsList, pollutantType = 'aqi') {
-  if (typeof document === 'undefined') return '';
-  const width = 280;
-  const height = 280;
+function drawIndiaBoundaryPath(ctx, width, height) {
+  ctx.beginPath();
+  const geom = indiaBoundaryGeoJson?.features?.[0]?.geometry;
+  if (!geom) return;
 
-  // Step 1: Compute raw IDW contour heatmap onto an offscreen canvas buffer
+  const polygons = geom.type === 'MultiPolygon' ? geom.coordinates : [geom.coordinates];
+
+  for (const polygon of polygons) {
+    for (const ring of polygon) {
+      for (let i = 0; i < ring.length; i++) {
+        const [lon, lat] = ring[i];
+        // Exact Web Mercator Coordinate Mapping:
+        const px = ((lon - INDIA_RASTER_BOUNDS.minLon) / LON_SPAN) * width;
+        const py = ((Y_MAX - latToMercatorY(lat)) / Y_SPAN) * height;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+    }
+  }
+}
+
+/**
+ * Cached binary mask for India national boundary at grid resolution (1 = inside India, 0 = outside)
+ */
+let cachedIndiaMask = null;
+function getIndiaBoundaryMask(width, height) {
+  if (cachedIndiaMask && cachedIndiaMask.length === width * height) {
+    return cachedIndiaMask;
+  }
+  if (typeof document === 'undefined') return new Uint8Array(width * height).fill(1);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return new Uint8Array(width * height).fill(1);
+
+  drawIndiaBoundaryPath(ctx, width, height);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+
+  const imgData = ctx.getImageData(0, 0, width, height);
+  const mask = new Uint8Array(width * height);
+  for (let i = 0; i < width * height; i++) {
+    mask[i] = imgData.data[i * 4 + 3] > 64 ? 1 : 0;
+  }
+  cachedIndiaMask = mask;
+  return mask;
+}
+
+/**
+ * Computes raw 2D continuous spatial IDW grid across all of India simultaneously once per telemetry update.
+ * Rows are distributed linearly in Web Mercator Y space to achieve 100% laser alignment with Mapbox.
+ */
+function computeRawSpatialGrid(stationsList, pollutantType = 'aqi', bounds = INDIA_RASTER_BOUNDS, width = 260, height = 260) {
+  const mask = getIndiaBoundaryMask(width, height);
+  const rawGrid = new Float32Array(width * height);
+
+  const stData = (stationsList || []).map((s) => ({
+    lat: s.lat,
+    lon: s.lon,
+    val: pollutantType === 'pm25' ? s.pm25 : pollutantType === 'pm10' ? s.pm10 : s.aqi,
+  }));
+
+  if (stData.length === 0) {
+    return { rawGrid, mask, nationalMin: 40, nationalMax: 260, width, height, bounds };
+  }
+
+  // Continental-scale IDW parameters:
+  // power = 2.0 (natural physical inverse-square dispersion over 3,000 km subcontinent)
+  // epsilonKm = 15.0 km (prevents sharp pinhole artifacts around individual ground stations)
+  const power = 2.0;
+  const epsilonKm = 15.0;
+
+  let nationalMin = Infinity;
+  let nationalMax = -Infinity;
+
+  for (let y = 0; y < height; y++) {
+    const v = y / (height - 1);
+    const mercY = (1 - v) * Y_MAX + v * Y_MIN;
+    const lat = mercatorYToLat(mercY);
+    const rowOffset = y * width;
+    const cosLat = Math.cos((lat * Math.PI) / 180);
+
+    for (let x = 0; x < width; x++) {
+      const idx = rowOffset + x;
+      const u = x / (width - 1);
+      const lon = INDIA_RASTER_BOUNDS.minLon + u * LON_SPAN;
+
+      let totalWeight = 0;
+      let weightedVal = 0;
+
+      for (let i = 0; i < stData.length; i++) {
+        const s = stData[i];
+        const dLat = (lat - s.lat) * 110.574;
+        const dLon = (lon - s.lon) * (111.32 * cosLat);
+        const distKm = Math.sqrt(dLat * dLat + dLon * dLon);
+        const w = 1 / Math.pow(Math.max(epsilonKm, distKm), power);
+        totalWeight += w;
+        weightedVal += s.val * w;
+      }
+
+      const interpolatedVal = weightedVal / (totalWeight || 1);
+      let effectiveAqi = interpolatedVal;
+      if (pollutantType === 'pm25') {
+        effectiveAqi = calculateUncappedAqi(interpolatedVal);
+      } else if (pollutantType === 'pm10') {
+        effectiveAqi = interpolatedVal * 0.9;
+      }
+
+      rawGrid[idx] = effectiveAqi;
+
+      if (mask[idx] === 1) {
+        if (effectiveAqi < nationalMin) nationalMin = effectiveAqi;
+        if (effectiveAqi > nationalMax) nationalMax = effectiveAqi;
+      }
+    }
+  }
+
+  if (!Number.isFinite(nationalMin)) nationalMin = 40;
+  if (!Number.isFinite(nationalMax)) nationalMax = 260;
+
+  return {
+    rawGrid,
+    mask,
+    nationalMin,
+    nationalMax,
+    width,
+    height,
+    bounds,
+  };
+}
+
+/**
+ * Calculates adaptive zoom-dependent min/max contrast range:
+ * - At national overview (zoom <= 5.5): nationwide spread (lowest in India = Green, highest in India = Bright Red)
+ * - As user zooms into ANY region (zoom 5.5 -> 10.0+): adapts to visible viewport min/max so local deviation is vivid!
+ */
+function calculateAdaptiveRange(gridObj, mapBounds, zoom, isAdaptiveMode = true) {
+  if (!gridObj) {
+    return {
+      effectiveMin: 40,
+      effectiveMax: 260,
+      localMin: 40,
+      localMax: 260,
+      nationalMin: 40,
+      nationalMax: 260,
+      zoomFactor: 0,
+    };
+  }
+
+  const { rawGrid, mask, nationalMin, nationalMax, width, height } = gridObj;
+
+  if (!isAdaptiveMode || !mapBounds) {
+    return {
+      effectiveMin: nationalMin,
+      effectiveMax: nationalMax,
+      localMin: nationalMin,
+      localMax: nationalMax,
+      nationalMin,
+      nationalMax,
+      zoomFactor: 0,
+    };
+  }
+
+  const mapWest = typeof mapBounds.getWest === 'function' ? mapBounds.getWest() : mapBounds.west;
+  const mapEast = typeof mapBounds.getEast === 'function' ? mapBounds.getEast() : mapBounds.east;
+  const mapSouth = typeof mapBounds.getSouth === 'function' ? mapBounds.getSouth() : mapBounds.south;
+  const mapNorth = typeof mapBounds.getNorth === 'function' ? mapBounds.getNorth() : mapBounds.north;
+
+  const rawX0 = Math.floor(((mapWest - INDIA_RASTER_BOUNDS.minLon) / LON_SPAN) * width);
+  const rawX1 = Math.ceil(((mapEast - INDIA_RASTER_BOUNDS.minLon) / LON_SPAN) * width);
+  const x0 = Math.max(0, Math.min(width - 1, Math.min(rawX0, rawX1)));
+  const x1 = Math.max(0, Math.min(width - 1, Math.max(rawX0, rawX1)));
+
+  const clampedNorth = Math.min(INDIA_RASTER_BOUNDS.maxLat, Math.max(INDIA_RASTER_BOUNDS.minLat, Math.max(mapNorth, mapSouth)));
+  const clampedSouth = Math.min(INDIA_RASTER_BOUNDS.maxLat, Math.max(INDIA_RASTER_BOUNDS.minLat, Math.min(mapNorth, mapSouth)));
+
+  const rawY0 = Math.floor(((Y_MAX - latToMercatorY(clampedNorth)) / Y_SPAN) * height);
+  const rawY1 = Math.ceil(((Y_MAX - latToMercatorY(clampedSouth)) / Y_SPAN) * height);
+  const y0 = Math.max(0, Math.min(height - 1, Math.min(rawY0, rawY1)));
+  const y1 = Math.max(0, Math.min(height - 1, Math.max(rawY0, rawY1)));
+
+  let localMin = Infinity;
+  let localMax = -Infinity;
+  let validCount = 0;
+
+  for (let y = y0; y <= y1; y++) {
+    const rowOffset = y * width;
+    for (let x = x0; x <= x1; x++) {
+      const idx = rowOffset + x;
+      if (mask[idx] === 1) {
+        const v = rawGrid[idx];
+        if (v < localMin) localMin = v;
+        if (v > localMax) localMax = v;
+        validCount++;
+      }
+    }
+  }
+
+  if (validCount === 0 || !Number.isFinite(localMin)) {
+    localMin = nationalMin;
+    localMax = nationalMax;
+  }
+
+  // Smooth cubic ease from nationwide overview (zoom 5.5) to deep regional zoom (9.5+)
+  const tZoom = Math.max(0, Math.min(1, (zoom - 5.5) / (9.5 - 5.5)));
+  const zoomFactor = tZoom * tZoom * (3 - 2 * tZoom);
+
+  let effectiveMin = (1 - zoomFactor) * nationalMin + zoomFactor * localMin;
+  let effectiveMax = (1 - zoomFactor) * nationalMax + zoomFactor * localMax;
+
+  // Enforce a minimum contrast span (20 AQI) so negligible 2-3 AQI noise isn't over-amplified
+  const minSpan = 20;
+  if (effectiveMax - effectiveMin < minSpan) {
+    const mid = (effectiveMax + effectiveMin) / 2;
+    effectiveMin = mid - minSpan / 2;
+    effectiveMax = mid + minSpan / 2;
+  }
+
+  return {
+    effectiveMin,
+    effectiveMax,
+    localMin: Math.round(localMin),
+    localMax: Math.round(localMax),
+    nationalMin: Math.round(nationalMin),
+    nationalMax: Math.round(nationalMax),
+    zoomFactor,
+  };
+}
+
+/**
+ * Renders the seamless continuous raster image with dynamic normalization and polygon clipping.
+ * ZERO black contour rings - pure, smooth, high-fidelity gradients clipped strictly to India's borders!
+ * Uses calibrated 175 base alpha (~68%) so underlying state borders, roads, and cities remain crisp and legible!
+ */
+function renderSeamlessRasterImage(gridObj, effectiveMin, effectiveMax) {
+  if (typeof document === 'undefined' || !gridObj) return '';
+  const { rawGrid, mask, width, height } = gridObj;
+
   const rawCanvas = document.createElement('canvas');
   rawCanvas.width = width;
   rawCanvas.height = height;
@@ -230,70 +404,28 @@ function generateDelhiPollutantRaster(stationsList, pollutantType = 'aqi') {
 
   const imgData = rawCtx.createImageData(width, height);
   const data = imgData.data;
+  const range = effectiveMax - effectiveMin || 1;
 
-  const { minLon, maxLon, minLat, maxLat } = DELHI_RASTER_BOUNDS;
-  const lonSpan = maxLon - minLon;
-  const latSpan = maxLat - minLat;
-
-  const stData = stationsList.map((s) => ({
-    lat: s.lat,
-    lon: s.lon,
-    val: pollutantType === 'pm25' ? s.pm25 : pollutantType === 'pm10' ? s.pm10 : s.aqi,
-  }));
-
-  // Hyper-localized Adaptive Inverse Distance Weighting:
-  // p = 2.8 decay ensures localized micro-zones (e.g. Asola Bhatti green pocket vs Anand Vihar severe hotspot)
-  // are rendered with razor-sharp fidelity instead of washing out into a generic city-wide blend.
-  const power = 2.8;
-  const epsilonKm = 0.12; // Small smoothing buffer to avoid singularities right at the sensor post
-
-  for (let y = 0; y < height; y++) {
-    // Latitude decreases downwards from maxLat (North) to minLat (South)
-    const lat = maxLat - (y / (height - 1)) * latSpan;
-
-    for (let x = 0; x < width; x++) {
-      const lon = minLon + (x / (width - 1)) * lonSpan;
-
-      let totalWeight = 0;
-      let weightedVal = 0;
-
-      for (let i = 0; i < stData.length; i++) {
-        const s = stData[i];
-        // Exact distance in km: 1 deg lat ≈ 110.574 km, 1 deg lon ≈ 97.8 km at 28.6°N
-        const dLat = (lat - s.lat) * 110.574;
-        const dLon = (lon - s.lon) * 97.8;
-        const distKm = Math.sqrt(dLat * dLat + dLon * dLon);
-        const w = 1 / Math.pow(Math.max(epsilonKm, distKm), power);
-        totalWeight += w;
-        weightedVal += s.val * w;
-      }
-
-      const interpolatedVal = weightedVal / (totalWeight || 1);
-
-      let effectiveAqi = interpolatedVal;
-      if (pollutantType === 'pm25') {
-        effectiveAqi = calculateUncappedAqi(interpolatedVal);
-      } else if (pollutantType === 'pm10') {
-        effectiveAqi = interpolatedVal * 0.9;
-      }
-
-      const [r, g, b] = getPreciseAqiRgb(effectiveAqi, true);
-
-      // Strong, vivid alpha: 220 out of 255 (86% alpha)
-      // Solves user feedback "heat map is too light... do not make the heat map so light"
-      const alpha = 220;
-
-      const idx = (y * width + x) * 4;
-      data[idx] = r;
-      data[idx + 1] = g;
-      data[idx + 2] = b;
-      data[idx + 3] = alpha;
+  for (let i = 0; i < width * height; i++) {
+    if (mask[i] === 0) {
+      data[i * 4 + 3] = 0; // 100% transparent outside India
+      continue;
     }
+
+    const val = rawGrid[i];
+    const t = Math.max(0, Math.min(1, (val - effectiveMin) / range));
+    const [r, g, b] = interpolateSeamlessRgb(t);
+
+    const idx = i * 4;
+    data[idx] = r;
+    data[idx + 1] = g;
+    data[idx + 2] = b;
+    data[idx + 3] = 175; // Translucent 68% base alpha so terrain, cities and roads shine through clearly
   }
 
   rawCtx.putImageData(imgData, 0, 0);
 
-  // Step 2: Clip strictly to official Delhi state boundary polygon
+  // Clip strictly to official India national boundary with Web Mercator precision
   const clippedCanvas = document.createElement('canvas');
   clippedCanvas.width = width;
   clippedCanvas.height = height;
@@ -301,42 +433,36 @@ function generateDelhiPollutantRaster(stationsList, pollutantType = 'aqi') {
   if (!clippedCtx) return rawCanvas.toDataURL('image/png');
 
   clippedCtx.save();
-  clippedCtx.beginPath();
-  const borderCoords = delhiBoundaryGeoJson.features[0].geometry.coordinates[0];
-  for (let i = 0; i < borderCoords.length; i++) {
-    const [lon, lat] = borderCoords[i];
-    const px = ((lon - minLon) / lonSpan) * width;
-    const py = ((maxLat - lat) / latSpan) * height;
-    if (i === 0) clippedCtx.moveTo(px, py);
-    else clippedCtx.lineTo(px, py);
-  }
-  clippedCtx.closePath();
-  clippedCtx.clip(); // <-- CUT EXACTLY TO DELHI'S BORDER!
+  drawIndiaBoundaryPath(clippedCtx, width, height);
+  clippedCtx.clip();
 
-  // Draw the high-precision contour heatmap inside Delhi's border only
+  // Draw smooth gradient heatmap inside India's national border only
   clippedCtx.drawImage(rawCanvas, 0, 0);
-
-  // Draw a fine internal perimeter guide
-  clippedCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-  clippedCtx.lineWidth = 1;
-  clippedCtx.stroke();
-
   clippedCtx.restore();
 
   return clippedCanvas.toDataURL('image/png');
 }
 
-// AQI Color Palette synchronized directly with 15-stop scientific spectrum
-function getAqiColor(val) {
-  const [r, g, b] = getPreciseAqiRgb(val, false);
-  const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+/**
+ * AQI Color & Badge helper synchronized directly with the seamless gradient and active range
+ */
+function getAqiColor(val, activeRange) {
+  let hex = '#f97316';
+  if (activeRange && activeRange.max > activeRange.min) {
+    const t = Math.max(0, Math.min(1, (val - activeRange.min) / (activeRange.max - activeRange.min)));
+    const [r, g, b] = interpolateSeamlessRgb(t);
+    hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+  } else {
+    const [r, g, b] = interpolateSeamlessRgb(Math.max(0, Math.min(1, (val - 40) / 260)));
+    hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+  }
 
   let label = 'Good';
   let badgeBg = 'rgba(16, 185, 129, 0.2)';
   let textHex = '#34d399';
 
   if (val <= 50) {
-    label = 'Good';
+    label = 'Good / Pristine';
     badgeBg = 'rgba(16, 185, 129, 0.2)';
     textHex = '#34d399';
   } else if (val <= 100) {
@@ -357,8 +483,8 @@ function getAqiColor(val) {
     textHex = '#f87171';
   } else {
     label = 'Severe / Hazardous';
-    badgeBg = 'rgba(112, 26, 117, 0.3)';
-    textHex = '#f472b6';
+    badgeBg = 'rgba(153, 27, 27, 0.3)';
+    textHex = '#f87171';
   }
 
   return { hex, label, textHex, badgeBg };
@@ -371,97 +497,234 @@ export default function DelhiAqiHeatmap() {
   const userMarkerRef = useRef(null);
   const targetMarkerRef = useRef(null);
 
-  // Stations state (populated with live multi-source data)
-  const [stations, setStations] = useState(DELHI_STATIONS_INITIAL);
+  // 108 Nationwide stations state across all states and union territories
+  const [stations, setStations] = useState(initialIndiaStations);
   const [isLoadingLive, setIsLoadingLive] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState('Fetching live telemetry...');
+  const [lastUpdated, setLastUpdated] = useState('Fetching live national telemetry...');
 
-  // User location coordinates (defaults to DTU / Bawana area, or user's real GPS)
+  // User location coordinates (defaults to Central India, or user's live GPS)
   const [userLocation, setUserLocation] = useState({
-    lat: 28.7495,
-    lon: 77.1171,
-    label: 'Delhi (DTU / Bawana)',
+    lat: 28.6139,
+    lon: 77.2090,
+    label: 'New Delhi (National Capital)',
     isLiveGps: false,
     accuracy: null,
   });
 
-  // Pinpoint clicked location on the map for micro-zone analysis
+  // Pinpoint clicked location on the map for micro-zone analysis anywhere in India
   const [inspectedPoint, setInspectedPoint] = useState(null);
 
   const [activePollutant, setActivePollutant] = useState('aqi'); // 'aqi' | 'pm25' | 'pm10'
-  const [selectedStation, setSelectedStation] = useState(DELHI_STATIONS_INITIAL[1]); // Default to DTU
-  const [heatIntensity, setHeatIntensity] = useState(0.78);
+  const [selectedStation, setSelectedStation] = useState(initialIndiaStations[0]); // Default to first station
+
+  // DEFAULT OPACITY: Balanced translucent 0.45 so the map beneath (roads, cities, terrain) is clearly visible
+  const [heatIntensity, setHeatIntensity] = useState(0.45);
   const [showStationPins, setShowStationPins] = useState(true);
   const [showHeatmapLayer, setShowHeatmapLayer] = useState(true);
+  const [showStateBorders, setShowStateBorders] = useState(true);
   const [is3DBuildings, setIs3DBuildings] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
   const [gpsError, setGpsError] = useState(null);
+
+  // Dynamic Zoom-Adaptive Contrast Calibration State
+  const [isAdaptiveMode, setIsAdaptiveMode] = useState(true);
+  const [currentZoom, setCurrentZoom] = useState(4.6);
+  const [activeRange, setActiveRange] = useState({
+    min: 40,
+    max: 260,
+    localMin: 40,
+    localMax: 260,
+    nationalMin: 40,
+    nationalMax: 260,
+    zoomFactor: 0,
+    isZoomed: false,
+    zoom: 4.6,
+  });
+
+  // Active Region Focus preset
+  const [activePreset, setActivePreset] = useState(INDIA_REGION_PRESETS[0]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+
+  // Cached IDW grid and synchronization refs for high-speed 60fps viewport updates
+  const gridCacheRef = useRef(null);
+  const stationsRef = useRef(stations);
+  const activePollutantRef = useRef(activePollutant);
+  const isAdaptiveModeRef = useRef(isAdaptiveMode);
+
+  stationsRef.current = stations;
+  activePollutantRef.current = activePollutant;
+  isAdaptiveModeRef.current = isAdaptiveMode;
+
+  // High-performance continuous viewport recalibration
+  const updateRasterForViewport = useCallback(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    const source = map.getSource('india-aqi-raster');
+    if (!source || typeof source.updateImage !== 'function') return;
+
+    if (!gridCacheRef.current) {
+      gridCacheRef.current = computeRawSpatialGrid(
+        stationsRef.current,
+        activePollutantRef.current,
+        INDIA_RASTER_BOUNDS
+      );
+    }
+
+    const zoom = map.getZoom();
+    setCurrentZoom(Math.round(zoom * 10) / 10);
+    const bounds = map.getBounds();
+
+    let effectiveMin, effectiveMax;
+    if (isAdaptiveModeRef.current) {
+      const rangeResult = calculateAdaptiveRange(gridCacheRef.current, bounds, zoom);
+      effectiveMin = rangeResult.effectiveMin;
+      effectiveMax = rangeResult.effectiveMax;
+      setActiveRange({
+        min: Math.round(effectiveMin),
+        max: Math.round(effectiveMax),
+        localMin: rangeResult.localMin,
+        localMax: rangeResult.localMax,
+        nationalMin: rangeResult.nationalMin,
+        nationalMax: rangeResult.nationalMax,
+        zoomFactor: rangeResult.zoomFactor,
+        isZoomed: rangeResult.zoomFactor > 0.05,
+        zoom: Math.round(zoom * 10) / 10,
+      });
+    } else {
+      effectiveMin = gridCacheRef.current.nationalMin;
+      effectiveMax = gridCacheRef.current.nationalMax;
+      setActiveRange({
+        min: Math.round(effectiveMin),
+        max: Math.round(effectiveMax),
+        localMin: Math.round(effectiveMin),
+        localMax: Math.round(effectiveMax),
+        nationalMin: Math.round(effectiveMin),
+        nationalMax: Math.round(effectiveMax),
+        zoomFactor: 0,
+        isZoomed: false,
+        zoom: Math.round(zoom * 10) / 10,
+      });
+    }
+
+    const newRasterUrl = renderSeamlessRasterImage(gridCacheRef.current, effectiveMin, effectiveMax);
+    if (newRasterUrl) {
+      source.updateImage({
+        url: newRasterUrl,
+        coordinates: INDIA_RASTER_COORDINATES,
+      });
+    }
+  }, []);
 
   // Gemini AI Advisory State (Token-Optimized)
   const [geminiAdvisory, setGeminiAdvisory] = useState('');
   const [tokenStats, setTokenStats] = useState(null);
   const [isLoadingAdvisory, setIsLoadingAdvisory] = useState(false);
 
-  // Fetch live station data
-  const fetchLiveStationData = useCallback(async (lat, lon) => {
+  // Fetch live national station telemetry across all 108 stations
+  const fetchLiveNationalData = useCallback(async (userLat = 28.6139, userLon = 77.2090) => {
     setIsLoadingLive(true);
     try {
-      const res = await fetch(`/api/delhi-heatmap?lat=${lat}&lon=${lon}`);
+      const res = await fetch(`/api/india-heatmap?lat=${userLat}&lon=${userLon}`);
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.stations) && data.stations.length > 0) {
+          stationsRef.current = data.stations;
           setStations(data.stations);
+          gridCacheRef.current = computeRawSpatialGrid(data.stations, activePollutantRef.current, INDIA_RASTER_BOUNDS);
+          updateRasterForViewport();
           setLastUpdated(new Date().toLocaleTimeString());
           setIsLoadingLive(false);
           return;
         }
       }
 
-      // Direct Open-Meteo fallback
-      const lats = DELHI_STATIONS_INITIAL.map((s) => s.lat).join(',');
-      const lons = DELHI_STATIONS_INITIAL.map((s) => s.lon).join(',');
-      const fallbackUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lons}&current=us_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide&timezone=auto`;
-
-      const fbRes = await fetch(fallbackUrl);
-      const fbJson = await fbRes.json();
-      const dataList = Array.isArray(fbJson) ? fbJson : [fbJson];
-
-      const liveStations = DELHI_STATIONS_INITIAL.map((st, i) => {
-        const cur = dataList[i]?.current || {};
-        const pm25 = cur.pm2_5 ? Math.round(cur.pm2_5 * 10) / 10 : st.pm25;
-        const pm10 = cur.pm10 ? Math.round(cur.pm10 * 10) / 10 : st.pm10;
-        const aqi = calculateUncappedAqi(pm25);
-
-        return {
-          ...st,
-          aqi,
-          pm25,
-          pm10,
-          no2: cur.nitrogen_dioxide ? Math.round(cur.nitrogen_dioxide * 10) / 10 : 28,
-          co: cur.carbon_monoxide ? Math.round((cur.carbon_monoxide / 100) * 10) / 10 : 0.8,
-          source: 'Live Open-Meteo High-Res Grid',
-        };
-      });
-
-      setStations(liveStations);
+      // If backend offline, retain calibrated stations
+      gridCacheRef.current = computeRawSpatialGrid(initialIndiaStations, activePollutantRef.current, INDIA_RASTER_BOUNDS);
+      updateRasterForViewport();
       setLastUpdated(new Date().toLocaleTimeString());
     } catch (err) {
-      console.warn('Could not fetch live AQI data, retaining calibrated values:', err.message);
-      setLastUpdated('Calibrated Baseline (Live retry in 60s)');
+      console.warn('Could not fetch live India national data, retaining baseline:', err.message);
+      setLastUpdated('Calibrated Baseline (Auto-retry in 60s)');
     } finally {
       setIsLoadingLive(false);
     }
+  }, [updateRasterForViewport]);
+
+  // Smooth camera glide to any region of India without reloading the heatmap
+  const handleGlideToRegion = useCallback((preset) => {
+    if (!preset) return;
+    setActivePreset(preset);
+    setSearchQuery('');
+    setShowSearchDropdown(false);
+
+    const map = mapInstanceRef.current;
+    if (map) {
+      map.flyTo({
+        center: preset.center,
+        zoom: preset.zoom,
+        pitch: preset.pitch || 20,
+        speed: 1.25,
+        curve: 1.2,
+      });
+    }
   }, []);
+
+  // Geocoding search handler (supports cities, districts, and towns across India)
+  const handleSearchInput = async (val) => {
+    setSearchQuery(val);
+    if (!val || val.trim().length < 2) {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const token = mapboxgl.accessToken;
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(val)}.json?access_token=${token}&country=in&types=place,locality,region&limit=6`
+      );
+      if (res.ok) {
+        const json = await res.json();
+        if (json.features) {
+          setSearchResults(json.features);
+          setShowSearchDropdown(true);
+        }
+      }
+    } catch (err) {
+      console.warn('Geocoding search failed:', err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectSearchedPlace = (feature) => {
+    const [lon, lat] = feature.center;
+    const customPreset = {
+      id: feature.id || feature.text.toLowerCase().replace(/\s+/g, '-'),
+      name: feature.text,
+      icon: '📍',
+      center: [lon, lat],
+      zoom: 10.5,
+      pitch: 24,
+      state: feature.place_name,
+    };
+    handleGlideToRegion(customPreset);
+  };
 
   // Fetch token-optimized Gemini advisory
   const fetchGeminiAdvisory = useCallback(async (station) => {
+    if (!station) return;
     setIsLoadingAdvisory(true);
     try {
       const res = await fetch('/api/gemini-advisory', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          city: station.name,
+          city: `${station.name}, ${station.state || 'India'}`,
           aqi: station.aqi,
           pm25: station.pm25,
           dominantPollutant: 'PM2.5',
@@ -477,15 +740,19 @@ export default function DelhiAqiHeatmap() {
         }
       }
       setGeminiAdvisory(
-        station.aqi > 300
-          ? 'Critical pollution level. High risk of mucosal inflammation; wear an N95 mask outdoors and run HEPA purifiers indoors.'
-          : 'Elevated particulate smog. Sensitive groups should avoid morning exercise and close transit windows.'
+        station.aqi > 250
+          ? 'Elevated regional pollution. High risk of respiratory irritation; wear an N95 mask outdoors and run HEPA air filtration indoors.'
+          : station.aqi > 120
+          ? 'Moderate particulate haze. Sensitive individuals should avoid prolonged exertion during early morning and late evening.'
+          : 'Air quality is within favorable standards. Outdoor commutes and recreation are safe.'
       );
     } catch {
       setGeminiAdvisory(
-        station.aqi > 300
-          ? 'Critical pollution level. High risk of mucosal inflammation; wear an N95 mask outdoors and run HEPA purifiers indoors.'
-          : 'Elevated particulate smog. Sensitive groups should avoid morning exercise and close transit windows.'
+        station.aqi > 250
+          ? 'Elevated regional pollution. High risk of respiratory irritation; wear an N95 mask outdoors and run HEPA air filtration indoors.'
+          : station.aqi > 120
+          ? 'Moderate particulate haze. Sensitive individuals should avoid prolonged exertion during early morning and late evening.'
+          : 'Air quality is within favorable standards. Outdoor commutes and recreation are safe.'
       );
     } finally {
       setIsLoadingAdvisory(false);
@@ -493,8 +760,8 @@ export default function DelhiAqiHeatmap() {
   }, []);
 
   useEffect(() => {
-    fetchLiveStationData(userLocation.lat, userLocation.lon);
-  }, [userLocation.lat, userLocation.lon, fetchLiveStationData]);
+    fetchLiveNationalData(userLocation.lat, userLocation.lon);
+  }, [fetchLiveNationalData, userLocation.lat, userLocation.lon]);
 
   useEffect(() => {
     if (selectedStation) {
@@ -504,7 +771,7 @@ export default function DelhiAqiHeatmap() {
 
   // Nearest station calculation
   const nearestStation = useMemo(() => {
-    let nearest = stations[0];
+    let nearest = stations[0] || initialIndiaStations[0];
     let minDist = Infinity;
     stations.forEach((st) => {
       const d = calculateDistanceKm(userLocation.lat, userLocation.lon, st.lat, st.lon);
@@ -516,22 +783,22 @@ export default function DelhiAqiHeatmap() {
     return { station: nearest, distance: minDist };
   }, [stations, userLocation]);
 
-  // Interpolated AQI at user's current coordinates using Hyper-Local Adaptive IDW (p = 2.8)
+  // Interpolated AQI at user's current coordinates using nationwide IDW (p = 2.0)
   const userAqiEstimate = useMemo(() => {
     let totalWeight = 0;
     let weightedAqi = 0;
     stations.forEach((st) => {
       const d = calculateDistanceKm(userLocation.lat, userLocation.lon, st.lat, st.lon);
-      const w = 1 / Math.pow(Math.max(0.12, d), 2.8);
+      const w = 1 / Math.pow(Math.max(10.0, d), 2.0);
       totalWeight += w;
       weightedAqi += st.aqi * w;
     });
     return Math.round(weightedAqi / (totalWeight || 1));
   }, [stations, userLocation]);
 
-  const userColor = getAqiColor(userAqiEstimate);
+  const userColor = useMemo(() => getAqiColor(userAqiEstimate, activeRange), [userAqiEstimate, activeRange]);
 
-  // Browser Geolocation trigger
+  // Browser Geolocation trigger - locates user anywhere in India
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
       setGpsError('Geolocation is not supported by your browser');
@@ -541,30 +808,49 @@ export default function DelhiAqiHeatmap() {
     setGpsError(null);
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         setIsLocating(false);
         const { latitude, longitude, accuracy } = pos.coords;
+
+        let placeName = 'Your Live Location';
+        try {
+          const token = mapboxgl.accessToken;
+          const revRes = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${token}&country=in&types=place,locality,neighborhood&limit=1`
+          );
+          if (revRes.ok) {
+            const revJson = await revRes.json();
+            if (revJson.features?.[0]?.text) {
+              placeName = revJson.features[0].text;
+            }
+          }
+        } catch {
+          // ignore reverse geocode error
+        }
+
+        const gpsPreset = {
+          id: 'user-gps',
+          name: placeName,
+          icon: '🎯',
+          center: [longitude, latitude],
+          zoom: 11.5,
+          pitch: 24,
+          state: `Live GPS (±${Math.round(accuracy)}m)`,
+        };
+
         setUserLocation({
           lat: latitude,
           lon: longitude,
-          label: 'Your Current Live GPS',
+          label: placeName,
           isLiveGps: true,
           accuracy: Math.round(accuracy),
         });
 
-        // Pan map smoothly to user location
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.flyTo({
-            center: [longitude, latitude],
-            zoom: 12.8,
-            speed: 1.4,
-            curve: 1.2,
-          });
-        }
+        handleGlideToRegion(gpsPreset);
       },
       () => {
         setIsLocating(false);
-        setGpsError('Could not obtain live GPS. Showing Delhi DTU / Bawana.');
+        setGpsError('Could not obtain live GPS coordinates.');
       },
       { enableHighAccuracy: true, timeout: 8000 }
     );
@@ -587,6 +873,7 @@ export default function DelhiAqiHeatmap() {
           pm25: st.pm25,
           pm10: st.pm10,
           zone: st.zone,
+          state: st.state,
           type: st.type,
         },
       })),
@@ -594,7 +881,7 @@ export default function DelhiAqiHeatmap() {
   }, [stations]);
 
   // =========================================================================
-  // MAPBOX GL INITIALIZATION & WebGL HEATMAP ENGINE
+  // MAPBOX GL INITIALIZATION & WebGL HEATMAP ENGINE FOR ALL INDIA
   // =========================================================================
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -603,12 +890,12 @@ export default function DelhiAqiHeatmap() {
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: 'mapbox://styles/mapbox/navigation-night-v1', // High-contrast night navigation showing roads, highways and labels
-      center: [77.16, 28.66], // [longitude, latitude]
-      zoom: 10.4,
-      minZoom: 9.2,
+      center: [78.9629, 22.5937], // Center of India
+      zoom: 4.6,
+      minZoom: 3.8,
       maxZoom: 16.5,
-      pitch: 24, // Subtle 3D perspective
-      bearing: -3,
+      pitch: 16, // Gentle subcontinental perspective
+      bearing: 0,
       attributionControl: false,
     });
 
@@ -621,39 +908,71 @@ export default function DelhiAqiHeatmap() {
         data: stationsGeoJson,
       });
 
-      // Find label layer to insert raster overlay underneath road names & place labels
+      // 2. LAYER POSITIONING: Insert raster underneath roads, state borders, and labels
+      // This ensures roads, national highways, and state lines render crisply ON TOP of the heatmap!
       const layers = map.getStyle().layers;
-      const labelLayerId = layers.find(
-        (layer) => layer.type === 'symbol' && layer.layout['text-field']
-      )?.id;
+      const roadLayerId = layers.find((l) => l.id.startsWith('road-') && l.type === 'line')?.id;
+      const adminLayerId = layers.find((l) => l.id === 'admin-1-boundary-bg' || l.id === 'admin-1-boundary')?.id;
+      const symbolLayerId = layers.find((l) => l.type === 'symbol' && l.layout && l.layout['text-field'])?.id;
+      const beforeLayerId = roadLayerId || adminLayerId || symbolLayerId;
 
-      // 2. High-Performance Continuous 2D IDW Spatial Air Quality Raster Field
-      // - 100% complete blanket coverage across all 11 districts and borders of Delhi NCR (no gaps)
-      // - Low AQI is mathematically mapped to Pure Green
-      // - High AQI is mapped to Scarlet Red and Deep Maroon
-      // - Transparent alpha so roads, expressways, and neighborhoods below remain clearly visible
-      const initialRasterUrl = generateDelhiPollutantRaster(DELHI_STATIONS_INITIAL, 'aqi');
-      map.addSource('delhi-aqi-raster', {
+      // 3. High-Performance Continuous 2D IDW Spatial Air Quality Raster Field across all of India
+      // - Seamless continuous gradients with zero contour line darkening
+      // - Dynamically recalibrated to local min/max as user zooms in
+      // - Clipped strictly to official Indian national boundary with Web Mercator accuracy
+      const currentStations = stationsRef.current && stationsRef.current.length > 0 ? stationsRef.current : initialIndiaStations;
+      gridCacheRef.current = computeRawSpatialGrid(currentStations, activePollutantRef.current, INDIA_RASTER_BOUNDS);
+      const initialRasterUrl = renderSeamlessRasterImage(
+        gridCacheRef.current,
+        gridCacheRef.current.nationalMin,
+        gridCacheRef.current.nationalMax
+      );
+
+      map.addSource('india-aqi-raster', {
         type: 'image',
         url: initialRasterUrl,
-        coordinates: DELHI_RASTER_COORDINATES,
+        coordinates: INDIA_RASTER_COORDINATES,
       });
 
       map.addLayer(
         {
-          id: 'delhi-aqi-raster-layer',
+          id: 'india-aqi-raster-layer',
           type: 'raster',
-          source: 'delhi-aqi-raster',
+          source: 'india-aqi-raster',
           paint: {
             'raster-opacity': showHeatmapLayer ? heatIntensity : 0,
             'raster-fade-duration': 0,
             'raster-resampling': 'linear',
           },
         },
-        labelLayerId
+        beforeLayerId
       );
 
-      // 3. 3D Building Extrusion Layer (Shows Delhi urban architecture on zoom)
+      // 4. Boost State Boundaries Visibility (Crisp silver-cyan lines on dark backdrop)
+      if (map.getLayer('admin-1-boundary')) {
+        map.setPaintProperty('admin-1-boundary', 'line-color', '#93c5fd'); // Luminous sky-blue/slate state border
+        map.setPaintProperty('admin-1-boundary', 'line-width', [
+          'interpolate', ['linear'], ['zoom'],
+          3, 1.2,
+          6, 1.8,
+          10, 2.5
+        ]);
+        map.setPaintProperty('admin-1-boundary', 'line-opacity', 0.92);
+        map.setPaintProperty('admin-1-boundary', 'line-dasharray', [4, 2]);
+      }
+
+      if (map.getLayer('admin-1-boundary-bg')) {
+        map.setPaintProperty('admin-1-boundary-bg', 'line-color', '#070a13');
+        map.setPaintProperty('admin-1-boundary-bg', 'line-width', [
+          'interpolate', ['linear'], ['zoom'],
+          3, 2.2,
+          6, 3.0,
+          10, 4.0
+        ]);
+        map.setPaintProperty('admin-1-boundary-bg', 'line-opacity', 0.80);
+      }
+
+      // 5. 3D Building Extrusion Layer (Shows urban architecture on close zoom)
       map.addLayer(
         {
           id: '3d-buildings',
@@ -669,46 +988,47 @@ export default function DelhiAqiHeatmap() {
             'fill-extrusion-opacity': 0.65,
           },
         },
-        labelLayerId
+        symbolLayerId
       );
 
-      // 4. Official NCT Delhi State Perimeter Border Line
-      map.addSource('delhi-boundary-source', {
+      // 6. Official India National Perimeter Border Line
+      map.addSource('india-boundary-source', {
         type: 'geojson',
-        data: delhiBoundaryGeoJson,
+        data: indiaBoundaryGeoJson,
       });
 
       map.addLayer(
         {
-          id: 'delhi-boundary-line',
+          id: 'india-boundary-line',
           type: 'line',
-          source: 'delhi-boundary-source',
+          source: 'india-boundary-source',
           paint: {
             'line-color': '#38bdf8',
             'line-width': 2.2,
-            'line-opacity': 0.85,
+            'line-opacity': 0.95,
             'line-dasharray': [3, 1.5],
           },
         },
-        labelLayerId
+        symbolLayerId
       );
 
-      // 5. Click Anywhere to Pinpoint Inspect Micro-Zone AQI
+      // 7. Click Anywhere in India to Pinpoint Inspect Micro-Zone AQI
       map.on('click', (e) => {
         const { lng, lat } = e.lngLat;
         let totalW = 0;
         let weightedAqi = 0;
         let weightedPm25 = 0;
-        let nearest = stations[0];
+        const currentStations = stationsRef.current && stationsRef.current.length > 0 ? stationsRef.current : initialIndiaStations;
+        let nearest = currentStations[0];
         let minD = Infinity;
 
-        stations.forEach((st) => {
+        currentStations.forEach((st) => {
           const d = calculateDistanceKm(lat, lng, st.lat, st.lon);
           if (d < minD) {
             minD = d;
             nearest = st;
           }
-          const w = 1 / Math.pow(Math.max(0.12, d), 2.8);
+          const w = 1 / Math.pow(Math.max(10.0, d), 2.0);
           totalW += w;
           weightedAqi += st.aqi * w;
           weightedPm25 += st.pm25 * w;
@@ -722,20 +1042,44 @@ export default function DelhiAqiHeatmap() {
           lon: Math.round(lng * 10000) / 10000,
           aqi: pAqi,
           pm25: pPm25,
-          nearestStation: nearest.name,
+          nearestStation: nearest ? nearest.name : 'Indian Subcontinent Ground Station',
+          nearestState: nearest?.state || 'India',
           distanceKm: minD,
           label: `Pinpoint Inspection (${lat.toFixed(3)}°N, ${lng.toFixed(3)}°E)`,
         });
       });
 
       mapInstanceRef.current = map;
+
+      // Real-time Viewport & Zoom listener for continuous dynamic palette recalibration
+      let throttleTimer = null;
+      const handleViewportChange = () => {
+        if (throttleTimer) return;
+        throttleTimer = setTimeout(() => {
+          throttleTimer = null;
+          updateRasterForViewport();
+        }, 35);
+      };
+
+      map.on('move', handleViewportChange);
+      map.on('zoom', handleViewportChange);
+      map.on('moveend', () => {
+        if (throttleTimer) clearTimeout(throttleTimer);
+        throttleTimer = null;
+        updateRasterForViewport();
+      });
+      map.on('zoomend', () => {
+        if (throttleTimer) clearTimeout(throttleTimer);
+        throttleTimer = null;
+        updateRasterForViewport();
+      });
     });
 
     return () => {
       map.remove();
       mapInstanceRef.current = null;
     };
-  }, []);
+  }, [updateRasterForViewport]);
 
   // Update GeoJSON source when stations update
   useEffect(() => {
@@ -747,28 +1091,37 @@ export default function DelhiAqiHeatmap() {
     }
   }, [stationsGeoJson]);
 
-  // Update continuous 2D IDW raster overlay when live stations or active pollutant changes
+  // Recompute spatial field when live station telemetry or pollutant metric changes
   useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-    const source = map.getSource('delhi-aqi-raster');
-    if (source && typeof source.updateImage === 'function') {
-      const newRasterUrl = generateDelhiPollutantRaster(stations, activePollutant);
-      if (newRasterUrl) {
-        source.updateImage({
-          url: newRasterUrl,
-          coordinates: DELHI_RASTER_COORDINATES,
-        });
-      }
-    }
-  }, [stations, activePollutant]);
+    gridCacheRef.current = computeRawSpatialGrid(
+      stations,
+      activePollutant,
+      INDIA_RASTER_BOUNDS
+    );
+    updateRasterForViewport();
+  }, [stations, activePollutant, updateRasterForViewport]);
+
+  // Recalibrate raster when adaptive contrast mode is toggled
+  useEffect(() => {
+    updateRasterForViewport();
+  }, [isAdaptiveMode, updateRasterForViewport]);
 
   // Update heatmap raster layer opacity
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || !map.getLayer('delhi-aqi-raster-layer')) return;
-    map.setPaintProperty('delhi-aqi-raster-layer', 'raster-opacity', showHeatmapLayer ? heatIntensity : 0);
+    if (!map || !map.getLayer('india-aqi-raster-layer')) return;
+    map.setPaintProperty('india-aqi-raster-layer', 'raster-opacity', showHeatmapLayer ? heatIntensity : 0);
   }, [heatIntensity, showHeatmapLayer]);
+
+  // Toggle State Boundaries visibility
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !map.getLayer('admin-1-boundary')) return;
+    map.setLayoutProperty('admin-1-boundary', 'visibility', showStateBorders ? 'visible' : 'none');
+    if (map.getLayer('admin-1-boundary-bg')) {
+      map.setLayoutProperty('admin-1-boundary-bg', 'visibility', showStateBorders ? 'visible' : 'none');
+    }
+  }, [showStateBorders]);
 
   // Toggle 3D Buildings visibility
   useEffect(() => {
@@ -777,7 +1130,7 @@ export default function DelhiAqiHeatmap() {
     map.setLayoutProperty('3d-buildings', 'visibility', is3DBuildings ? 'visible' : 'none');
   }, [is3DBuildings]);
 
-  // Update HTML Station Markers (Pink Teardrop Pins with White Center Dot matching user's photo)
+  // Update HTML Station Markers across all of India
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -806,9 +1159,9 @@ export default function DelhiAqiHeatmap() {
           transform: ${isSelected ? 'scale(1.28)' : 'scale(1)'};
           transition: transform 0.2s ease;
         ">
-          <svg width="${isSelected ? '26' : '20'}" height="${isSelected ? '34' : '26'}" viewBox="0 0 24 32" fill="none">
-            <path d="M12 0C5.373 0 0 5.373 0 12c0 9.25 12 20 12 20s12-10.75 12-20c0-6.627-5.373-12-12-12z" fill="#f43f5e" stroke="#ffffff" stroke-width="${isSelected ? '1.8' : '1.3'}"/>
-            <circle cx="12" cy="11" r="${isSelected ? '4.8' : '3.6'}" fill="#ffffff"/>
+          <svg width="${isSelected ? '24' : '18'}" height="${isSelected ? '32' : '24'}" viewBox="0 0 24 32" fill="none">
+            <path d="M12 0C5.373 0 0 5.373 0 12c0 9.25 12 20 12 20s12-10.75 12-20c0-6.627-5.373-12-12-12z" fill="#f43f5e" stroke="#ffffff" stroke-width="${isSelected ? '1.8' : '1.2'}"/>
+            <circle cx="12" cy="11" r="${isSelected ? '4.8' : '3.4'}" fill="#ffffff"/>
           </svg>
         </div>
         ${isSelected ? `
@@ -826,7 +1179,7 @@ export default function DelhiAqiHeatmap() {
             box-shadow: 0 4px 16px rgba(244, 63, 94, 0.45);
             pointer-events: none;
           ">
-            ${st.name.split('(')[0].trim()}: <span style="color: #f43f5e; font-weight: 800;">${st.aqi} AQI</span>
+            ${st.name.split(',')[0].trim()}: <span style="color: #f43f5e; font-weight: 800;">${st.aqi} AQI</span>
           </div>
         ` : ''}
       `;
@@ -869,7 +1222,7 @@ export default function DelhiAqiHeatmap() {
     targetEl.style.alignItems = 'center';
     targetEl.style.pointerEvents = 'none';
 
-    const color = getAqiColor(inspectedPoint.aqi);
+    const color = getAqiColor(inspectedPoint.aqi, activeRange);
 
     targetEl.innerHTML = `
       <div style="
@@ -880,62 +1233,62 @@ export default function DelhiAqiHeatmap() {
         align-items: center;
         justify-content: center;
       ">
-        <div style="
+        <span style="
           position: absolute;
-          width: 36px;
-          height: 36px;
+          width: 30px;
+          height: 30px;
           border-radius: 50%;
-          border: 2px dashed ${color.hex};
-          animation: spin 5s linear infinite;
-        "></div>
-        <div style="
+          border: 2px solid ${color.hex};
+          animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+          opacity: 0.8;
+        "></span>
+        <span style="
           position: absolute;
-          width: 18px;
-          height: 18px;
+          width: 14px;
+          height: 14px;
           border-radius: 50%;
           background: ${color.hex};
-          box-shadow: 0 0 20px ${color.hex};
-        "></div>
-        <div style="
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: #ffffff;
-        "></div>
+          box-shadow: 0 0 12px ${color.hex};
+          border: 2px solid #ffffff;
+        "></span>
       </div>
       <div style="
         margin-top: 4px;
-        background: rgba(8, 14, 26, 0.96);
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(8px);
         border: 1px solid ${color.hex};
-        padding: 3px 8px;
-        border-radius: 6px;
+        padding: 4px 10px;
+        border-radius: 8px;
         font-size: 11px;
-        font-weight: 800;
+        font-weight: 700;
         color: #ffffff;
         white-space: nowrap;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+        display: flex;
+        align-items: center;
+        gap: 6px;
       ">
-        📍 Pinpoint: <span style="color: ${color.hex};">${inspectedPoint.aqi} AQI</span>
+        <span style="width: 7px; height: 7px; border-radius: 50%; background: ${color.hex};"></span>
+        <span>Pinpoint AQI: <strong style="color: ${color.hex}">${inspectedPoint.aqi}</strong></span>
       </div>
     `;
 
     targetMarkerRef.current = new mapboxgl.Marker({ element: targetEl, anchor: 'center' })
       .setLngLat([inspectedPoint.lon, inspectedPoint.lat])
       .addTo(map);
-  }, [inspectedPoint]);
+  }, [inspectedPoint, activeRange]);
 
-  // Update User GPS Radar Marker on Mapbox
+  // Update User Location Live Beacon Marker
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
     if (userMarkerRef.current) {
       userMarkerRef.current.remove();
+      userMarkerRef.current = null;
     }
 
     const userEl = document.createElement('div');
-    userEl.className = 'mapbox-user-marker';
-    userEl.style.position = 'relative';
     userEl.style.display = 'flex';
     userEl.style.flexDirection = 'column';
     userEl.style.alignItems = 'center';
@@ -943,36 +1296,44 @@ export default function DelhiAqiHeatmap() {
 
     userEl.innerHTML = `
       <div style="
-        position: absolute;
-        width: 58px;
-        height: 58px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(56, 189, 248, 0.45) 0%, transparent 70%);
-        animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-        transform: translate(0, -6px);
-      "></div>
+        position: relative;
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <span style="
+          position: absolute;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: rgba(56, 189, 248, 0.25);
+          border: 2px solid #38bdf8;
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        "></span>
+        <span style="
+          position: absolute;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #38bdf8;
+          box-shadow: 0 0 16px #38bdf8;
+          border: 2.5px solid #ffffff;
+        "></span>
+      </div>
       <div style="
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: #38bdf8;
-        border: 3px solid #ffffff;
-        box-shadow: 0 0 25px #38bdf8, 0 0 50px rgba(56, 189, 248, 0.9);
-        z-index: 2;
-      "></div>
-      <div style="
-        margin-top: 6px;
-        background: rgba(8, 14, 26, 0.95);
+        margin-top: 4px;
+        background: rgba(15, 23, 42, 0.94);
         backdrop-filter: blur(8px);
         border: 1px solid #38bdf8;
-        padding: 3px 10px;
-        border-radius: 9999px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.8), 0 0 15px rgba(56, 189, 248, 0.3);
-        font-size: 10px;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 11px;
         font-weight: 800;
         color: #ffffff;
-        letter-spacing: 0.04em;
         white-space: nowrap;
+        box-shadow: 0 4px 18px rgba(56, 189, 248, 0.35);
         display: flex;
         align-items: center;
         gap: 5px;
@@ -1027,7 +1388,7 @@ export default function DelhiAqiHeatmap() {
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: '20px',
-            marginBottom: '28px',
+            marginBottom: '24px',
             paddingBottom: '20px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
           }}
@@ -1044,7 +1405,7 @@ export default function DelhiAqiHeatmap() {
                 }}
               />
               <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', color: '#38bdf8', textTransform: 'uppercase' }}>
-                Mapbox GL Vector Engine · Delhi NCR
+                Mapbox GL National Subcontinent Engine · India-Wide Real-Time Grid
               </span>
               <span style={{ fontSize: '0.75rem', color: '#64748b' }}>•</span>
               <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{lastUpdated}</span>
@@ -1059,10 +1420,10 @@ export default function DelhiAqiHeatmap() {
                 margin: 0,
               }}
             >
-              Delhi Region Multi-Point AQI Heatmap
+              India National Multi-Point AQI Heatmap
             </h2>
             <p style={{ fontSize: '0.88rem', color: '#94a3b8', margin: '6px 0 0' }}>
-              Precision micro-zone AQI plot · 15-stop scientific gradient · 20-AQI topographic isopleths · Clipped to Delhi NCT border
+              Subcontinental 2D spatial AQI plot · Web Mercator precision border lock · Translucent atmospheric layer revealing state borders, highways & topography beneath
             </p>
           </div>
 
@@ -1105,7 +1466,7 @@ export default function DelhiAqiHeatmap() {
 
             {/* Refresh Live Button */}
             <button
-              onClick={() => fetchLiveStationData(userLocation.lat, userLocation.lon)}
+              onClick={() => fetchLiveNationalData(userLocation.lat, userLocation.lon)}
               disabled={isLoadingLive}
               style={{
                 display: 'inline-flex',
@@ -1122,7 +1483,7 @@ export default function DelhiAqiHeatmap() {
               }}
             >
               <RefreshCw size={13} className={isLoadingLive ? 'animate-spin' : ''} />
-              <span>{isLoadingLive ? 'Refreshing...' : 'Refresh'}</span>
+              <span>{isLoadingLive ? 'Refreshing...' : 'Refresh Telemetry'}</span>
             </button>
 
             {/* GPS Locator Button */}
@@ -1151,6 +1512,141 @@ export default function DelhiAqiHeatmap() {
         </div>
 
         {/* ============================================================== */}
+        {/* NATIONWIDE REGION GLIDING BAR + PLACE SEARCH BAR              */}
+        {/* ============================================================== */}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '14px',
+            marginBottom: '22px',
+            padding: '12px 18px',
+            borderRadius: '16px',
+            background: 'rgba(15, 23, 42, 0.82)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)',
+          }}
+        >
+          {/* Quick Glide Region Shortcuts */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <Globe size={14} color="#38bdf8" /> Quick Glide:
+            </span>
+            {INDIA_REGION_PRESETS.map((preset) => {
+              const isActive = activePreset.id === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  onClick={() => handleGlideToRegion(preset)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 12px',
+                    borderRadius: '9999px',
+                    fontSize: '0.75rem',
+                    fontWeight: isActive ? 700 : 500,
+                    background: isActive ? 'rgba(56, 189, 248, 0.22)' : 'rgba(255, 255, 255, 0.04)',
+                    color: isActive ? '#38bdf8' : '#cbd5e1',
+                    border: isActive ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease',
+                    boxShadow: isActive ? '0 0 12px rgba(56, 189, 248, 0.3)' : 'none',
+                  }}
+                >
+                  <span>{preset.icon}</span>
+                  <span>{preset.name}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Place Search Bar with Autocomplete across India */}
+          <div style={{ position: 'relative', minWidth: '280px', flex: '1 1 300px', maxWidth: '380px' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'rgba(2, 6, 23, 0.85)',
+                border: '1px solid rgba(255, 255, 255, 0.14)',
+                borderRadius: '9999px',
+                padding: '6px 14px',
+              }}
+            >
+              <Search size={14} color="#94a3b8" />
+              <input
+                type="text"
+                placeholder="Search any Indian city, district, or town..."
+                value={searchQuery}
+                onChange={(e) => handleSearchInput(e.target.value)}
+                onFocus={() => {
+                  if (searchResults.length > 0) setShowSearchDropdown(true);
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: '#ffffff',
+                  fontSize: '0.78rem',
+                  width: '100%',
+                }}
+              />
+              {isSearching && <RefreshCw size={13} className="animate-spin" color="#38bdf8" />}
+            </div>
+
+            {/* Dropdown Suggestions */}
+            {showSearchDropdown && searchResults.length > 0 && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  left: 0,
+                  right: 0,
+                  zIndex: 60,
+                  background: '#090d1a',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  borderRadius: '12px',
+                  boxShadow: '0 15px 35px rgba(0,0,0,0.85)',
+                  overflow: 'hidden',
+                }}
+              >
+                {searchResults.map((f) => (
+                  <div
+                    key={f.id}
+                    onClick={() => handleSelectSearchedPlace(f)}
+                    style={{
+                      padding: '10px 14px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                      fontSize: '0.78rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      color: '#e2e8f0',
+                      transition: 'background 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.15)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <MapPin size={13} color="#38bdf8" />
+                    <div>
+                      <strong style={{ color: '#ffffff' }}>{f.text}</strong>
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block' }}>
+                        {f.place_name}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ============================================================== */}
         {/* MAIN SPLIT: HIGH-DETAIL MAPBOX (LEFT) + VITALS SIDEBAR (RIGHT) */}
         {/* ============================================================== */}
         <div
@@ -1173,7 +1669,7 @@ export default function DelhiAqiHeatmap() {
               background: '#040711',
               border: '1px solid rgba(255, 255, 255, 0.12)',
               boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px rgba(56, 189, 248, 0.05)',
-              height: '680px',
+              height: '720px',
             }}
           >
             {/* The Actual Mapbox GL Map Container */}
@@ -1206,11 +1702,12 @@ export default function DelhiAqiHeatmap() {
             >
               <Crosshair size={13} color="#f43f5e" />
               <span style={{ fontSize: '0.74rem', color: '#cbd5e1', fontWeight: 600 }}>
-                Click anywhere on Delhi for <strong style={{ color: '#f43f5e' }}>pinpoint micro-zone AQI</strong>
+                Click anywhere on India for <strong style={{ color: '#f43f5e' }}>pinpoint micro-zone AQI</strong>
               </span>
             </div>
 
-            {/* Bottom-left Map Floating Controls Bar */}
+            {/* Bottom-left Map Floating Controls Bar with Opacity Presets & State Borders */}
+            {/* Bottom-left Map Floating Controls Bar (Clean 2-Tier HUD Deck) */}
             <div
               style={{
                 position: 'absolute',
@@ -1219,29 +1716,87 @@ export default function DelhiAqiHeatmap() {
                 zIndex: 10,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
-                background: 'rgba(15, 23, 42, 0.88)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
+                gap: '8px',
+                background: 'rgba(15, 23, 42, 0.92)',
+                backdropFilter: 'blur(14px)',
+                border: '1px solid rgba(255, 255, 255, 0.14)',
                 padding: '8px 14px',
                 borderRadius: '12px',
                 fontSize: '0.74rem',
-                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.7)',
+                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.8)',
+                flexWrap: 'wrap',
+                maxWidth: 'calc(100% - 32px)',
               }}
             >
-              <span style={{ color: '#94a3b8' }}>Heat Opacity:</span>
-              <input
-                type="range"
-                min="0.30"
-                max="1.0"
-                step="0.05"
-                value={heatIntensity}
-                onChange={(e) => setHeatIntensity(parseFloat(e.target.value))}
-                style={{ width: '75px', accentColor: '#38bdf8', cursor: 'pointer' }}
-              />
-              <span style={{ color: '#38bdf8', fontWeight: 600 }}>{Math.round(heatIntensity * 100)}%</span>
+              {/* Opacity Control & Quick Presets */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Sliders size={13} color="#38bdf8" />
+                <span style={{ color: '#cbd5e1', fontWeight: 600 }}>Heat Opacity:</span>
+                <input
+                  type="range"
+                  min="0.10"
+                  max="0.85"
+                  step="0.02"
+                  value={heatIntensity}
+                  onChange={(e) => setHeatIntensity(parseFloat(e.target.value))}
+                  style={{ width: '65px', accentColor: '#38bdf8', cursor: 'pointer' }}
+                />
+                <span style={{ color: '#38bdf8', fontWeight: 700, minWidth: '32px' }}>
+                  {Math.round(heatIntensity * 100)}%
+                </span>
+
+                {/* Quick Opacity Presets */}
+                <div style={{ display: 'flex', gap: '3px', marginLeft: '2px' }}>
+                  {[
+                    { label: 'Subtle', val: 0.28 },
+                    { label: 'Balanced', val: 0.45 },
+                    { label: 'Vivid', val: 0.68 },
+                  ].map((p) => {
+                    const isSelected = Math.abs(heatIntensity - p.val) < 0.05;
+                    return (
+                      <button
+                        key={p.label}
+                        onClick={() => setHeatIntensity(p.val)}
+                        style={{
+                          background: isSelected ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                          color: isSelected ? '#38bdf8' : '#94a3b8',
+                          border: isSelected ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          fontSize: '0.68rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               <div style={{ width: '1px', height: '14px', background: 'rgba(255, 255, 255, 0.15)', margin: '0 4px' }} />
+
+              {/* State Borders Toggle */}
+              <button
+                onClick={() => setShowStateBorders((v) => !v)}
+                style={{
+                  background: showStateBorders ? 'rgba(96, 165, 250, 0.22)' : 'transparent',
+                  color: showStateBorders ? '#93c5fd' : '#94a3b8',
+                  border: showStateBorders ? '1px solid rgba(96, 165, 250, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <MapIcon size={12} color={showStateBorders ? '#93c5fd' : '#94a3b8'} />
+                <span>State Borders: {showStateBorders ? 'ON' : 'OFF'}</span>
+              </button>
 
               <button
                 onClick={() => setShowStationPins((v) => !v)}
@@ -1259,7 +1814,7 @@ export default function DelhiAqiHeatmap() {
                 }}
               >
                 {showStationPins ? <Eye size={12} /> : <EyeOff size={12} />}
-                <span>Pins</span>
+                <span>108 Pins</span>
               </button>
 
               <button
@@ -1278,7 +1833,7 @@ export default function DelhiAqiHeatmap() {
                 }}
               >
                 <Layers size={12} />
-                <span>Heat</span>
+                <span>Heat Layer</span>
               </button>
 
               <button
@@ -1293,7 +1848,44 @@ export default function DelhiAqiHeatmap() {
                   cursor: 'pointer',
                 }}
               >
-                3D Buildings
+                3D Urban
+              </button>
+
+              <button
+                onClick={() => setIsAdaptiveMode((v) => !v)}
+                title="Dynamically recalibrate palette: lowest visible AQI becomes green, highest becomes bright red as you zoom in"
+                style={{
+                  background: isAdaptiveMode ? 'rgba(16, 185, 129, 0.22)' : 'transparent',
+                  color: isAdaptiveMode ? '#34d399' : '#94a3b8',
+                  border: isAdaptiveMode ? '1px solid rgba(16, 185, 129, 0.45)' : '1px solid rgba(255, 255, 255, 0.1)',
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  fontSize: '0.72rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontWeight: 600,
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <Sparkles size={12} color={isAdaptiveMode ? '#34d399' : '#94a3b8'} />
+                <span>Adaptive Contrast: {isAdaptiveMode ? 'ON' : 'OFF'}</span>
+                {isAdaptiveMode && activeRange.isZoomed && (
+                  <span
+                    style={{
+                      background: '#10b981',
+                      color: '#040711',
+                      fontSize: '9px',
+                      fontWeight: 800,
+                      padding: '1px 5px',
+                      borderRadius: '4px',
+                      marginLeft: '2px',
+                    }}
+                  >
+                    ZOOMED
+                  </span>
+                )}
               </button>
             </div>
 
@@ -1319,7 +1911,7 @@ export default function DelhiAqiHeatmap() {
               }}
             >
               <Compass size={15} color="#38bdf8" />
-              <span>MAPBOX VECTOR DARK 3D</span>
+              <span>MAPBOX VECTOR DARK · ALL INDIA</span>
             </div>
           </div>
 
@@ -1370,18 +1962,20 @@ export default function DelhiAqiHeatmap() {
                       fontSize: '3.6rem',
                       fontWeight: 900,
                       lineHeight: 1,
-                      color: getAqiColor(inspectedPoint.aqi).hex,
-                      textShadow: `0 0 25px ${getAqiColor(inspectedPoint.aqi).hex}66`,
+                      color: getAqiColor(inspectedPoint.aqi, activeRange).hex,
+                      textShadow: `0 0 25px ${getAqiColor(inspectedPoint.aqi, activeRange).hex}66`,
                     }}
                   >
                     {inspectedPoint.aqi}
                   </span>
                   <div>
-                    <span style={{ fontSize: '1rem', fontWeight: 700, color: getAqiColor(inspectedPoint.aqi).textHex }}>
-                      AQI · {getAqiColor(inspectedPoint.aqi).label}
+                    <span style={{ fontSize: '1rem', fontWeight: 700, color: getAqiColor(inspectedPoint.aqi, activeRange).textHex }}>
+                      AQI · {getAqiColor(inspectedPoint.aqi, activeRange).label}
                     </span>
                     <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0 }}>
-                      Spatial IDW interpolation at clicked coordinate
+                      {activeRange.isZoomed
+                        ? `Calibrated to local zoom viewport (${activeRange.min} → ${activeRange.max} AQI)`
+                        : 'Subcontinental spatial IDW estimate at clicked point'}
                     </p>
                   </div>
                 </div>
@@ -1410,7 +2004,7 @@ export default function DelhiAqiHeatmap() {
                     <strong style={{ color: '#f87171' }}>{inspectedPoint.pm25} µg/m³</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
-                    <span>Nearest Station Reference:</span>
+                    <span>Nearest Ground Station:</span>
                     <span style={{ color: '#38bdf8', fontWeight: 600 }}>
                       {inspectedPoint.nearestStation.split('(')[0]} ({inspectedPoint.distanceKm} km)
                     </span>
@@ -1498,7 +2092,7 @@ export default function DelhiAqiHeatmap() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>Nearest CAAQMS Sensor:</span>
                     <span style={{ color: '#38bdf8', fontWeight: 600 }}>
-                      {nearestStation.station.name.split('(')[0]} ({nearestStation.distance} km)
+                      {nearestStation.station.name.split(',')[0]} ({nearestStation.distance} km)
                     </span>
                   </div>
                 </div>
@@ -1528,14 +2122,14 @@ export default function DelhiAqiHeatmap() {
                 <span
                   style={{
                     fontSize: '0.72rem',
-                    color: getAqiColor(selectedStation.aqi).hex,
-                    background: `${getAqiColor(selectedStation.aqi).hex}22`,
+                    color: getAqiColor(selectedStation.aqi, activeRange).hex,
+                    background: `${getAqiColor(selectedStation.aqi, activeRange).hex}22`,
                     padding: '3px 8px',
                     borderRadius: '6px',
                     fontWeight: 700,
                   }}
                 >
-                  {selectedStation.type}
+                  {selectedStation.type || 'CAAQMS Node'}
                 </span>
               </div>
 
@@ -1543,14 +2137,14 @@ export default function DelhiAqiHeatmap() {
                 {selectedStation.name}
               </h3>
               <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '0 0 16px' }}>
-                {selectedStation.zone} · 45-Station High Density Grid
+                {selectedStation.zone || selectedStation.state || 'India'} · Multi-Source Ground & Satellite Grid
               </p>
 
               {/* Station metrics grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '16px' }}>
                 <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '12px 10px', borderRadius: '10px', textAlign: 'center' }}>
                   <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>AQI Index</span>
-                  <strong style={{ fontSize: '1.3rem', color: getAqiColor(selectedStation.aqi).hex }}>
+                  <strong style={{ fontSize: '1.3rem', color: getAqiColor(selectedStation.aqi, activeRange).hex }}>
                     {selectedStation.aqi}
                   </strong>
                 </div>
@@ -1605,45 +2199,77 @@ export default function DelhiAqiHeatmap() {
               </div>
             </div>
 
-            {/* 3. CALIBRATED AIR QUALITY SPECTRUM LEGEND */}
+            {/* 3. CALIBRATED SEAMLESS ZOOM-ADAPTIVE SPECTRUM LEGEND */}
             <div
               className="glass-panel"
               style={{
                 padding: '16px 20px',
                 borderRadius: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                background: 'rgba(15, 23, 42, 0.75)',
+                border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(15, 23, 42, 0.85)',
+                transition: 'border-color 0.3s ease',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: '#94a3b8', marginBottom: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
-                  <span style={{ fontWeight: 700, color: '#e2e8f0' }}>High-Precision 15-Stop AQI Spectrum</span>
+                  <span style={{ fontWeight: 700, color: '#e2e8f0' }}>Seamless Continuous Spectrum</span>
                 </div>
-                <span style={{ color: '#38bdf8', fontWeight: 600 }}>20-AQI Topographic Isopleths</span>
+                <span
+                  style={{
+                    color: isAdaptiveMode && activeRange.isZoomed ? '#34d399' : '#38bdf8',
+                    fontWeight: 700,
+                    fontSize: '0.7rem',
+                    background: isAdaptiveMode && activeRange.isZoomed ? 'rgba(16, 185, 129, 0.18)' : 'rgba(56, 189, 248, 0.12)',
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(56, 189, 248, 0.25)',
+                  }}
+                >
+                  {isAdaptiveMode && activeRange.isZoomed
+                    ? `Zoom ${activeRange.zoom}x · Viewport (${activeRange.min} → ${activeRange.max} AQI)`
+                    : `India Nationwide (${activeRange.nationalMin || 40} → ${activeRange.nationalMax || 260} AQI)`}
+                </span>
               </div>
+
+              {/* Seamless continuous gradient bar - ZERO black contour lines */}
               <div
                 style={{
                   height: '14px',
                   borderRadius: '7px',
                   background:
-                    'linear-gradient(90deg, #059669 0%, #10b981 7%, #34d399 13%, #84cc16 19%, #a3e635 25%, #eab308 31%, #f59e0b 38%, #f97316 45%, #ea580c 53%, #e11d48 61%, #dc2626 69%, #b91c1c 78%, #991b1b 88%, #701a75 96%, #4a044e 100%)',
+                    'linear-gradient(90deg, #10b981 0%, #34d399 14%, #a3e635 28%, #eab308 42%, #f97316 58%, #ea580c 72%, #dc2626 86%, #b91c1c 100%)',
                   marginBottom: '10px',
                   boxShadow: '0 2px 14px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2)',
                   border: '1px solid rgba(255, 255, 255, 0.15)',
                 }}
               />
+
+              {/* Dynamic tick labels synchronized with viewport AQI range */}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#cbd5e1', fontWeight: 700 }}>
-                <span style={{ color: '#10b981' }}>0 Good</span>
-                <span style={{ color: '#84cc16' }}>100 Sat.</span>
-                <span style={{ color: '#eab308' }}>200 Mod.</span>
-                <span style={{ color: '#f97316' }}>300 Poor</span>
-                <span style={{ color: '#dc2626' }}>400 V.Poor</span>
-                <span style={{ color: '#c084fc' }}>500+ Severe</span>
+                <span style={{ color: '#10b981' }}>{activeRange.min} (Min)</span>
+                <span style={{ color: '#a3e635' }}>
+                  {Math.round(activeRange.min + (activeRange.max - activeRange.min) * 0.33)}
+                </span>
+                <span style={{ color: '#fb923c' }}>
+                  {Math.round(activeRange.min + (activeRange.max - activeRange.min) * 0.66)}
+                </span>
+                <span style={{ color: '#f87171' }}>{activeRange.max} (Max)</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.06)', fontSize: '0.68rem', color: '#64748b' }}>
-                <span>Clipped to Delhi NCT Border</span>
-                <span>Power decay p=2.8 · 140m grid</span>
+
+              <div
+                style={{
+                  marginTop: '10px',
+                  paddingTop: '8px',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                  fontSize: '0.71rem',
+                  lineHeight: 1.45,
+                  color: isAdaptiveMode && activeRange.isZoomed ? '#34d399' : '#94a3b8',
+                }}
+              >
+                {isAdaptiveMode && activeRange.isZoomed
+                  ? `✦ Zoom Dynamic Contrast: Local ${activeRange.min} AQI maps to Green and ${activeRange.max} AQI to Bright Red so subtle localized variations stand out clearly.`
+                  : `✦ Seamless Continuous Gradient: Nationwide lowest AQI is Green and highest is Bright Red. Zoom into any region to recalibrate local contrast.`}
               </div>
             </div>
           </div>
