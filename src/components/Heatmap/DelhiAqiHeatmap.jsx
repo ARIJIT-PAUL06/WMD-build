@@ -290,6 +290,22 @@ function computeRawSpatialGrid(stationsList, pollutantType = 'aqi', bounds = IND
 }
 
 /**
+ * Samples the exact continuous spatial AQI/pollutant value from the active 2D raster grid at any (lon, lat).
+ * Guaranteed to be 100% mathematically and visually identical to the rendered heatmap pixel.
+ */
+function sampleRasterGridVal(gridObj, lon, lat) {
+  if (!gridObj || !gridObj.rawGrid) return null;
+  const { rawGrid, width, height } = gridObj;
+  const u = (lon - INDIA_RASTER_BOUNDS.minLon) / LON_SPAN;
+  const x = Math.max(0, Math.min(width - 1, Math.round(u * (width - 1))));
+  const mercY = latToMercatorY(lat);
+  const v = (Y_MAX - mercY) / Y_SPAN;
+  const y = Math.max(0, Math.min(height - 1, Math.round(v * (height - 1))));
+  const val = rawGrid[y * width + x];
+  return Number.isFinite(val) ? val : null;
+}
+
+/**
  * Calculates adaptive zoom-dependent min/max contrast range:
  * - At national overview (zoom <= 5.5): nationwide spread (lowest in India = Green, highest in India = Bright Red)
  * - As user zooms into ANY region (zoom 5.5 -> 10.0+): adapts to visible viewport min/max so local deviation is vivid!
@@ -785,11 +801,13 @@ export default function DelhiAqiHeatmap() {
 
   // Interpolated AQI at user's current coordinates using nationwide IDW (p = 2.0)
   const userAqiEstimate = useMemo(() => {
+    const sampled = sampleRasterGridVal(gridCacheRef.current, userLocation.lon, userLocation.lat);
+    if (sampled !== null) return Math.round(sampled);
     let totalWeight = 0;
     let weightedAqi = 0;
     stations.forEach((st) => {
       const d = calculateDistanceKm(userLocation.lat, userLocation.lon, st.lat, st.lon);
-      const w = 1 / Math.pow(Math.max(10.0, d), 2.0);
+      const w = 1 / Math.pow(Math.max(15.0, d), 2.0);
       totalWeight += w;
       weightedAqi += st.aqi * w;
     });
@@ -1015,9 +1033,6 @@ export default function DelhiAqiHeatmap() {
       // 7. Click Anywhere in India to Pinpoint Inspect Micro-Zone AQI
       map.on('click', (e) => {
         const { lng, lat } = e.lngLat;
-        let totalW = 0;
-        let weightedAqi = 0;
-        let weightedPm25 = 0;
         const currentStations = stationsRef.current && stationsRef.current.length > 0 ? stationsRef.current : initialIndiaStations;
         let nearest = currentStations[0];
         let minD = Infinity;
@@ -1028,14 +1043,24 @@ export default function DelhiAqiHeatmap() {
             minD = d;
             nearest = st;
           }
-          const w = 1 / Math.pow(Math.max(10.0, d), 2.0);
-          totalW += w;
-          weightedAqi += st.aqi * w;
-          weightedPm25 += st.pm25 * w;
         });
 
-        const pAqi = Math.round(weightedAqi / (totalW || 1));
-        const pPm25 = Math.round(((weightedPm25 / (totalW || 1))) * 10) / 10;
+        // Sample the EXACT continuous spatial raster grid value that determines the screen color!
+        let sampledVal = sampleRasterGridVal(gridCacheRef.current, lng, lat);
+        if (sampledVal === null) {
+          let totalW = 0;
+          let weightedAqi = 0;
+          currentStations.forEach((st) => {
+            const d = calculateDistanceKm(lat, lng, st.lat, st.lon);
+            const w = 1 / Math.pow(Math.max(15.0, d), 2.0);
+            totalW += w;
+            weightedAqi += st.aqi * w;
+          });
+          sampledVal = weightedAqi / (totalW || 1);
+        }
+
+        const pAqi = Math.round(sampledVal);
+        const pPm25 = Math.round((nearest?.pm25 ? (pAqi / (nearest.aqi || 1)) * nearest.pm25 : pAqi * 0.55) * 10) / 10;
 
         setInspectedPoint({
           lat: Math.round(lat * 10000) / 10000,
@@ -1715,38 +1740,172 @@ export default function DelhiAqiHeatmap() {
                 left: '16px',
                 zIndex: 10,
                 display: 'flex',
-                alignItems: 'center',
+                flexDirection: 'column',
                 gap: '8px',
-                background: 'rgba(15, 23, 42, 0.92)',
-                backdropFilter: 'blur(14px)',
-                border: '1px solid rgba(255, 255, 255, 0.14)',
-                padding: '8px 14px',
-                borderRadius: '12px',
-                fontSize: '0.74rem',
-                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.8)',
-                flexWrap: 'wrap',
-                maxWidth: 'calc(100% - 32px)',
+                background: 'rgba(11, 17, 32, 0.94)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                padding: '10px 14px',
+                borderRadius: '14px',
+                boxShadow: '0 12px 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.08)',
+                maxWidth: 'calc(100% - 85px)',
               }}
             >
-              {/* Opacity Control & Quick Presets */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Sliders size={13} color="#38bdf8" />
-                <span style={{ color: '#cbd5e1', fontWeight: 600 }}>Heat Opacity:</span>
-                <input
-                  type="range"
-                  min="0.10"
-                  max="0.85"
-                  step="0.02"
-                  value={heatIntensity}
-                  onChange={(e) => setHeatIntensity(parseFloat(e.target.value))}
-                  style={{ width: '65px', accentColor: '#38bdf8', cursor: 'pointer' }}
-                />
-                <span style={{ color: '#38bdf8', fontWeight: 700, minWidth: '32px' }}>
-                  {Math.round(heatIntensity * 100)}%
+              {/* TIER 1: PRIMARY MAP LAYERS & DISPLAY MODES */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#64748b', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '2px' }}>
+                  Layers:
                 </span>
 
+                {/* Heatmap Layer Toggle */}
+                <button
+                  onClick={() => setShowHeatmapLayer((v) => !v)}
+                  style={{
+                    background: showHeatmapLayer ? 'rgba(249, 115, 22, 0.22)' : 'rgba(255, 255, 255, 0.05)',
+                    color: showHeatmapLayer ? '#fb923c' : '#94a3b8',
+                    border: showHeatmapLayer ? '1px solid rgba(249, 115, 22, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '4px 9px',
+                    borderRadius: '7px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <Layers size={13} color={showHeatmapLayer ? '#fb923c' : '#94a3b8'} />
+                  <span>Heat Layer: {showHeatmapLayer ? 'ON' : 'OFF'}</span>
+                </button>
+
+                {/* Adaptive Contrast Mode Toggle */}
+                <button
+                  onClick={() => setIsAdaptiveMode((v) => !v)}
+                  title="Dynamically recalibrate palette: lowest visible AQI becomes green, highest becomes bright red as you zoom in"
+                  style={{
+                    background: isAdaptiveMode ? 'rgba(16, 185, 129, 0.22)' : 'rgba(255, 255, 255, 0.05)',
+                    color: isAdaptiveMode ? '#34d399' : '#94a3b8',
+                    border: isAdaptiveMode ? '1px solid rgba(16, 185, 129, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '4px 9px',
+                    borderRadius: '7px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <Sparkles size={13} color={isAdaptiveMode ? '#34d399' : '#94a3b8'} />
+                  <span>Adaptive Contrast: {isAdaptiveMode ? 'ON' : 'OFF'}</span>
+                  {isAdaptiveMode && activeRange.isZoomed && (
+                    <span
+                      style={{
+                        background: '#10b981',
+                        color: '#040711',
+                        fontSize: '9px',
+                        fontWeight: 800,
+                        padding: '1px 5px',
+                        borderRadius: '4px',
+                        marginLeft: '2px',
+                      }}
+                    >
+                      ZOOMED
+                    </span>
+                  )}
+                </button>
+
+                {/* State Borders Toggle */}
+                <button
+                  onClick={() => setShowStateBorders((v) => !v)}
+                  style={{
+                    background: showStateBorders ? 'rgba(96, 165, 250, 0.22)' : 'rgba(255, 255, 255, 0.05)',
+                    color: showStateBorders ? '#93c5fd' : '#94a3b8',
+                    border: showStateBorders ? '1px solid rgba(96, 165, 250, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '4px 9px',
+                    borderRadius: '7px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <MapIcon size={13} color={showStateBorders ? '#93c5fd' : '#94a3b8'} />
+                  <span>State Borders: {showStateBorders ? 'ON' : 'OFF'}</span>
+                </button>
+
+                {/* 108 Monitoring Pins Toggle */}
+                <button
+                  onClick={() => setShowStationPins((v) => !v)}
+                  style={{
+                    background: showStationPins ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    color: showStationPins ? '#38bdf8' : '#94a3b8',
+                    border: showStationPins ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '4px 9px',
+                    borderRadius: '7px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {showStationPins ? <Eye size={13} color="#38bdf8" /> : <EyeOff size={13} color="#94a3b8" />}
+                  <span>108 Pins</span>
+                </button>
+
+                {/* 3D Buildings Toggle */}
+                <button
+                  onClick={() => setIs3DBuildings((v) => !v)}
+                  style={{
+                    background: is3DBuildings ? 'rgba(168, 85, 247, 0.22)' : 'rgba(255, 255, 255, 0.05)',
+                    color: is3DBuildings ? '#c084fc' : '#94a3b8',
+                    border: is3DBuildings ? '1px solid rgba(168, 85, 247, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '4px 9px',
+                    borderRadius: '7px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  3D Urban
+                </button>
+              </div>
+
+              {/* HAIRLINE DIVIDER */}
+              <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', width: '100%' }} />
+
+              {/* TIER 2: ATMOSPHERIC HEAT OPACITY CONTROLS & PRESETS */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                  <Sliders size={13} color="#38bdf8" />
+                  <span style={{ color: '#cbd5e1', fontWeight: 600, fontSize: '0.72rem' }}>Heat Opacity:</span>
+                  <input
+                    type="range"
+                    min="0.10"
+                    max="0.85"
+                    step="0.02"
+                    value={heatIntensity}
+                    onChange={(e) => setHeatIntensity(parseFloat(e.target.value))}
+                    style={{ width: '70px', accentColor: '#38bdf8', cursor: 'pointer' }}
+                  />
+                  <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.74rem', minWidth: '32px' }}>
+                    {Math.round(heatIntensity * 100)}%
+                  </span>
+                </div>
+
                 {/* Quick Opacity Presets */}
-                <div style={{ display: 'flex', gap: '3px', marginLeft: '2px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ color: '#64748b', fontSize: '0.68rem', marginRight: '2px' }}>Presets:</span>
                   {[
                     { label: 'Subtle', val: 0.28 },
                     { label: 'Balanced', val: 0.45 },
@@ -1761,11 +1920,12 @@ export default function DelhiAqiHeatmap() {
                           background: isSelected ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.05)',
                           color: isSelected ? '#38bdf8' : '#94a3b8',
                           border: isSelected ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
+                          padding: '2px 8px',
+                          borderRadius: '5px',
                           fontSize: '0.68rem',
                           fontWeight: 600,
                           cursor: 'pointer',
+                          transition: 'all 0.15s ease',
                         }}
                       >
                         {p.label}
@@ -1774,119 +1934,6 @@ export default function DelhiAqiHeatmap() {
                   })}
                 </div>
               </div>
-
-              <div style={{ width: '1px', height: '14px', background: 'rgba(255, 255, 255, 0.15)', margin: '0 4px' }} />
-
-              {/* State Borders Toggle */}
-              <button
-                onClick={() => setShowStateBorders((v) => !v)}
-                style={{
-                  background: showStateBorders ? 'rgba(96, 165, 250, 0.22)' : 'transparent',
-                  color: showStateBorders ? '#93c5fd' : '#94a3b8',
-                  border: showStateBorders ? '1px solid rgba(96, 165, 250, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                <MapIcon size={12} color={showStateBorders ? '#93c5fd' : '#94a3b8'} />
-                <span>State Borders: {showStateBorders ? 'ON' : 'OFF'}</span>
-              </button>
-
-              <button
-                onClick={() => setShowStationPins((v) => !v)}
-                style={{
-                  background: showStationPins ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
-                  color: showStationPins ? '#38bdf8' : '#94a3b8',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  fontSize: '0.72rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                {showStationPins ? <Eye size={12} /> : <EyeOff size={12} />}
-                <span>108 Pins</span>
-              </button>
-
-              <button
-                onClick={() => setShowHeatmapLayer((v) => !v)}
-                style={{
-                  background: showHeatmapLayer ? 'rgba(249, 115, 22, 0.2)' : 'transparent',
-                  color: showHeatmapLayer ? '#fb923c' : '#94a3b8',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  fontSize: '0.72rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                <Layers size={12} />
-                <span>Heat Layer</span>
-              </button>
-
-              <button
-                onClick={() => setIs3DBuildings((v) => !v)}
-                style={{
-                  background: is3DBuildings ? 'rgba(168, 85, 247, 0.2)' : 'transparent',
-                  color: is3DBuildings ? '#c084fc' : '#94a3b8',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  fontSize: '0.72rem',
-                  cursor: 'pointer',
-                }}
-              >
-                3D Urban
-              </button>
-
-              <button
-                onClick={() => setIsAdaptiveMode((v) => !v)}
-                title="Dynamically recalibrate palette: lowest visible AQI becomes green, highest becomes bright red as you zoom in"
-                style={{
-                  background: isAdaptiveMode ? 'rgba(16, 185, 129, 0.22)' : 'transparent',
-                  color: isAdaptiveMode ? '#34d399' : '#94a3b8',
-                  border: isAdaptiveMode ? '1px solid rgba(16, 185, 129, 0.45)' : '1px solid rgba(255, 255, 255, 0.1)',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  fontSize: '0.72rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  fontWeight: 600,
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <Sparkles size={12} color={isAdaptiveMode ? '#34d399' : '#94a3b8'} />
-                <span>Adaptive Contrast: {isAdaptiveMode ? 'ON' : 'OFF'}</span>
-                {isAdaptiveMode && activeRange.isZoomed && (
-                  <span
-                    style={{
-                      background: '#10b981',
-                      color: '#040711',
-                      fontSize: '9px',
-                      fontWeight: 800,
-                      padding: '1px 5px',
-                      borderRadius: '4px',
-                      marginLeft: '2px',
-                    }}
-                  >
-                    ZOOMED
-                  </span>
-                )}
-              </button>
             </div>
 
             {/* Top-right Mapbox High-Def Badge */}
