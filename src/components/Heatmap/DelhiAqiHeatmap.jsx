@@ -79,15 +79,15 @@ const INDIA_RASTER_COORDINATES = [
  * Smoothly flies the camera without segmenting or reloading the nationwide heatmap.
  */
 const INDIA_REGION_PRESETS = [
-  { id: 'all-india', name: 'All India Overview', icon: '🇮🇳', center: [79.2, 22.8], zoom: 4.6, pitch: 15, state: 'National Subcontinent' },
-  { id: 'delhi-ncr', name: 'Delhi NCR & North', icon: '🏛️', center: [77.16, 28.66], zoom: 9.8, pitch: 26, state: 'National Capital Region' },
-  { id: 'mumbai', name: 'Mumbai MMR', icon: '🌊', center: [72.8777, 19.0760], zoom: 10.0, pitch: 26, state: 'Maharashtra' },
-  { id: 'bengaluru', name: 'Bengaluru Tech Belt', icon: '🌳', center: [77.5946, 12.9716], zoom: 10.0, pitch: 26, state: 'Karnataka' },
-  { id: 'gangetic', name: 'Indo-Gangetic Basin', icon: '🌾', center: [82.5, 26.0], zoom: 7.0, pitch: 22, state: 'UP & Bihar River Corridor' },
-  { id: 'kolkata', name: 'Kolkata & Bengal', icon: '🌉', center: [88.3639, 22.5726], zoom: 10.2, pitch: 26, state: 'West Bengal' },
-  { id: 'chennai', name: 'Chennai & South Coast', icon: '🏖️', center: [80.2707, 13.0827], zoom: 10.2, pitch: 26, state: 'Tamil Nadu' },
-  { id: 'hyderabad', name: 'Hyderabad & Deccan', icon: '💎', center: [78.4867, 17.3850], zoom: 10.0, pitch: 26, state: 'Telangana' },
-  { id: 'himalayas', name: 'Himalayas & Ladakh', icon: '🏔️', center: [76.5, 33.5], zoom: 6.8, pitch: 28, state: 'J&K / Ladakh' },
+  { id: 'all-india', name: 'ALL INDIA', center: [79.2, 22.8], zoom: 4.6, pitch: 15, state: 'National Subcontinent' },
+  { id: 'delhi-ncr', name: 'DELHI NCR', center: [77.16, 28.66], zoom: 9.8, pitch: 26, state: 'National Capital Region' },
+  { id: 'mumbai', name: 'MUMBAI', center: [72.8777, 19.0760], zoom: 10.0, pitch: 26, state: 'Maharashtra' },
+  { id: 'bengaluru', name: 'BENGALURU', center: [77.5946, 12.9716], zoom: 10.0, pitch: 26, state: 'Karnataka' },
+  { id: 'gangetic', name: 'INDO-GANGETIC', center: [82.5, 26.0], zoom: 7.0, pitch: 22, state: 'UP & Bihar River Corridor' },
+  { id: 'kolkata', name: 'KOLKATA', center: [88.3639, 22.5726], zoom: 10.2, pitch: 26, state: 'West Bengal' },
+  { id: 'chennai', name: 'CHENNAI', center: [80.2707, 13.0827], zoom: 10.2, pitch: 26, state: 'Tamil Nadu' },
+  { id: 'hyderabad', name: 'HYDERABAD', center: [78.4867, 17.3850], zoom: 10.0, pitch: 26, state: 'Telangana' },
+  { id: 'himalayas', name: 'HIMALAYAS', center: [76.5, 33.5], zoom: 6.8, pitch: 28, state: 'J&K / Ladakh' },
 ];
 
 // Distance helper (Haversine in km)
@@ -1841,7 +1841,7 @@ export default function DelhiAqiHeatmap() {
     }
   }, [userLocation, userAqiEstimate]);
 
-    return (
+return (
     <section
       ref={sectionContainerRef}
       id="delhi-aqi-heatmap"
@@ -1928,7 +1928,7 @@ export default function DelhiAqiHeatmap() {
       />
 
       {/* ============================================================== */}
-      {/* 3. TOP FLOATING COMMAND DECK (BRANDING, GLIDE & SEARCH)         */}
+      {/* 3. TOP FLOATING COMMAND DECK (TRANSLUCENT & STREAMLINED)       */}
       {/* ============================================================== */}
       <div
         style={{
@@ -1940,54 +1940,53 @@ export default function DelhiAqiHeatmap() {
           transition: 'right 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '10px',
+          gap: '8px',
           pointerEvents: 'none',
         }}
       >
-        {/* Tier 1: Branding, Telemetry Switcher & GPS Trigger */}
+        {/* Tier 1: Branding, Telemetry Switcher, GPS Tracker & Telemetry Toggle */}
         <div
           style={{
             pointerEvents: 'auto',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '14px',
+            gap: '12px',
             flexWrap: 'wrap',
-            padding: '10px 18px',
-            borderRadius: '16px',
-            background: 'rgba(11, 17, 32, 0.82)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.05)',
+            padding: '8px 16px',
+            borderRadius: '14px',
+            background: 'rgba(11, 17, 32, 0.58)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.45), 0 0 20px rgba(56, 189, 248, 0.04)',
           }}
         >
           {/* Engine Title & Last Updated */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: '#38bdf8',
-                  boxShadow: '0 0 10px #38bdf8',
-                }}
-              />
-              <span style={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.04em', color: '#f8fafc' }}>
-                INDIA AQI ENGINE
-              </span>
-              <span style={{ fontSize: '0.7rem', color: '#64748b' }}>•</span>
-              <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{lastUpdated}</span>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span
+              style={{
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                background: '#38bdf8',
+                boxShadow: '0 0 10px #38bdf8',
+              }}
+            />
+            <span style={{ fontSize: '0.76rem', fontWeight: 800, letterSpacing: '0.04em', color: '#f8fafc' }}>
+              INDIA AQI ENGINE
+            </span>
+            <span style={{ fontSize: '0.68rem', color: '#64748b' }}>•</span>
+            <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{lastUpdated}</span>
           </div>
 
-          {/* Metric Selector Tabs & Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {/* Action Buttons: Metrics, Refresh, GPS & Integrated Telemetry Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {/* Metric Selector Tabs */}
             <div
               style={{
                 display: 'flex',
-                background: 'rgba(2, 6, 23, 0.8)',
+                background: 'rgba(2, 6, 23, 0.55)',
                 padding: '3px',
                 borderRadius: '9999px',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
@@ -2005,9 +2004,9 @@ export default function DelhiAqiHeatmap() {
                     background: activePollutant === m.id ? 'rgba(56, 189, 248, 0.22)' : 'transparent',
                     color: activePollutant === m.id ? '#38bdf8' : '#94a3b8',
                     border: activePollutant === m.id ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent',
-                    padding: '4px 12px',
+                    padding: '3px 11px',
                     borderRadius: '9999px',
-                    fontSize: '0.72rem',
+                    fontSize: '0.7rem',
                     fontWeight: 600,
                     cursor: 'pointer',
                     transition: 'all 0.18s ease',
@@ -2026,12 +2025,12 @@ export default function DelhiAqiHeatmap() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '5px',
-                background: 'rgba(15, 23, 42, 0.8)',
+                background: 'rgba(15, 23, 42, 0.55)',
                 color: '#cbd5e1',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                padding: '6px 12px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                padding: '5px 11px',
                 borderRadius: '9999px',
-                fontSize: '0.72rem',
+                fontSize: '0.7rem',
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
@@ -2048,16 +2047,16 @@ export default function DelhiAqiHeatmap() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                background: userLocation.isLiveGps ? 'rgba(16, 185, 129, 0.2)' : 'rgba(56, 189, 248, 0.15)',
+                background: userLocation.isLiveGps ? 'rgba(16, 185, 129, 0.2)' : 'rgba(56, 189, 248, 0.14)',
                 color: userLocation.isLiveGps ? '#34d399' : '#38bdf8',
                 border: `1px solid ${userLocation.isLiveGps ? 'rgba(16, 185, 129, 0.45)' : 'rgba(56, 189, 248, 0.3)'}`,
-                padding: '6px 14px',
+                padding: '5px 12px',
                 borderRadius: '9999px',
-                fontSize: '0.74rem',
+                fontSize: '0.72rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: userLocation.isLiveGps ? '0 0 14px rgba(16, 185, 129, 0.25)' : 'none',
+                boxShadow: userLocation.isLiveGps ? '0 0 14px rgba(16, 185, 129, 0.2)' : 'none',
               }}
             >
               {isLocating ? (
@@ -2084,12 +2083,12 @@ export default function DelhiAqiHeatmap() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px',
-                  background: isFollowingUser ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                  background: isFollowingUser ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.04)',
                   color: isFollowingUser ? '#38bdf8' : '#94a3b8',
-                  border: isFollowingUser ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
-                  padding: '6px 10px',
+                  border: isFollowingUser ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                  padding: '5px 9px',
                   borderRadius: '9999px',
-                  fontSize: '0.7rem',
+                  fontSize: '0.68rem',
                   fontWeight: 600,
                   cursor: 'pointer',
                 }}
@@ -2098,31 +2097,57 @@ export default function DelhiAqiHeatmap() {
                 <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
               </button>
             )}
+
+            {/* Seamless Telemetry Toggle Button - Integrated into action bar to eliminate any overlap */}
+            <button
+              onClick={() => setIsSidebarOpen((v) => !v)}
+              title={isSidebarOpen ? 'Hide telemetry panel to maximize map' : 'Show telemetry & advisory HUD'}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: isSidebarOpen ? 'rgba(255, 255, 255, 0.06)' : 'rgba(56, 189, 248, 0.18)',
+                color: isSidebarOpen ? '#cbd5e1' : '#38bdf8',
+                border: `1px solid ${isSidebarOpen ? 'rgba(255, 255, 255, 0.12)' : 'rgba(56, 189, 248, 0.45)'}`,
+                padding: '5px 12px',
+                borderRadius: '9999px',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: !isSidebarOpen ? '0 0 14px rgba(56, 189, 248, 0.25)' : 'none',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {isSidebarOpen ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+              <span>{isSidebarOpen ? 'Hide Telemetry' : 'Show Telemetry'}</span>
+              <Activity size={13} color={isSidebarOpen ? '#94a3b8' : '#10b981'} />
+            </button>
           </div>
         </div>
 
-        {/* Tier 2: Nationwide Region Shortcuts + Autocomplete Search Bar */}
+        {/* Tier 2: Capital City Shortcuts (NO icons, decluttered) + Autocomplete Search Bar */}
         <div
           style={{
             pointerEvents: 'auto',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '12px',
+            gap: '10px',
             flexWrap: 'wrap',
-            padding: '8px 14px',
-            borderRadius: '14px',
-            background: 'rgba(11, 17, 32, 0.82)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
+            padding: '6px 12px',
+            borderRadius: '12px',
+            background: 'rgba(11, 17, 32, 0.58)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
           }}
         >
-          {/* Quick Glide Region Shortcuts */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Globe size={12} color="#38bdf8" /> Glide:
+          {/* Quick Glide Capital City Shortcuts */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.67rem', fontWeight: 800, color: '#64748b', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '3px' }}>
+              GLIDE:
             </span>
             {INDIA_REGION_PRESETS.map((preset) => {
               const isActive = activePreset.id === preset.id;
@@ -2133,19 +2158,20 @@ export default function DelhiAqiHeatmap() {
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '4px',
-                    padding: '4px 9px',
+                    padding: '3px 8px',
                     borderRadius: '9999px',
-                    fontSize: '0.7rem',
-                    fontWeight: isActive ? 700 : 500,
-                    background: isActive ? 'rgba(56, 189, 248, 0.22)' : 'rgba(255, 255, 255, 0.04)',
+                    fontSize: '0.67rem',
+                    fontWeight: isActive ? 700 : 600,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    background: isActive ? 'rgba(56, 189, 248, 0.22)' : 'rgba(255, 255, 255, 0.03)',
                     color: isActive ? '#38bdf8' : '#cbd5e1',
-                    border: isActive ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                    border: isActive ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.06)',
                     cursor: 'pointer',
                     transition: 'all 0.18s ease',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  <span>{preset.icon}</span>
                   <span>{preset.name}</span>
                 </button>
               );
@@ -2158,9 +2184,9 @@ export default function DelhiAqiHeatmap() {
             style={{
               position: 'relative',
               zIndex: 110,
-              minWidth: '240px',
-              flex: '1 1 240px',
-              maxWidth: '340px',
+              minWidth: '220px',
+              flex: '1 1 220px',
+              maxWidth: '320px',
             }}
           >
             <div
@@ -2168,14 +2194,14 @@ export default function DelhiAqiHeatmap() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                background: 'rgba(2, 6, 23, 0.94)',
-                border: '1px solid rgba(255, 255, 255, 0.16)',
+                background: 'rgba(2, 6, 23, 0.65)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
                 borderRadius: '9999px',
-                padding: '5px 12px',
-                boxShadow: showSearchDropdown ? '0 0 15px rgba(56, 189, 248, 0.25)' : 'none',
+                padding: '4px 11px',
+                boxShadow: showSearchDropdown ? '0 0 15px rgba(56, 189, 248, 0.2)' : 'none',
               }}
             >
-              <Search size={13} color="#94a3b8" />
+              <Search size={12} color="#94a3b8" />
               <input
                 type="text"
                 placeholder="Search city, district, or town..."
@@ -2189,11 +2215,11 @@ export default function DelhiAqiHeatmap() {
                   border: 'none',
                   outline: 'none',
                   color: '#ffffff',
-                  fontSize: '0.75rem',
+                  fontSize: '0.73rem',
                   width: '100%',
                 }}
               />
-              {isSearching && <RefreshCw size={12} className="animate-spin" color="#38bdf8" />}
+              {isSearching && <RefreshCw size={11} className="animate-spin" color="#38bdf8" />}
               {searchQuery && !isSearching && (
                 <button
                   onClick={() => {
@@ -2207,7 +2233,7 @@ export default function DelhiAqiHeatmap() {
                     color: '#94a3b8',
                     cursor: 'pointer',
                     padding: '2px 4px',
-                    fontSize: '0.8rem',
+                    fontSize: '0.75rem',
                     lineHeight: 1,
                   }}
                 >
@@ -2224,7 +2250,7 @@ export default function DelhiAqiHeatmap() {
                   top: 'calc(100% + 6px)',
                   left: 0,
                   right: 0,
-                  background: 'rgba(11, 17, 32, 0.98)',
+                  background: 'rgba(11, 17, 32, 0.88)',
                   backdropFilter: 'blur(20px)',
                   WebkitBackdropFilter: 'blur(20px)',
                   border: '1px solid rgba(56, 189, 248, 0.35)',
@@ -2276,16 +2302,16 @@ export default function DelhiAqiHeatmap() {
             left: isSidebarOpen ? 'calc((100% - 420px) / 2)' : '50%',
             transform: 'translateX(-50%)',
             zIndex: 25,
-            background: 'rgba(11, 17, 32, 0.94)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
+            background: 'rgba(11, 17, 32, 0.68)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
             border: '1px solid rgba(56, 189, 248, 0.45)',
             padding: '7px 16px',
             borderRadius: '9999px',
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.25)',
+            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(56, 189, 248, 0.25)',
             transition: 'left 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
@@ -2324,13 +2350,13 @@ export default function DelhiAqiHeatmap() {
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
-          background: 'rgba(11, 17, 32, 0.92)',
-          backdropFilter: 'blur(18px)',
-          WebkitBackdropFilter: 'blur(18px)',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
+          background: 'rgba(11, 17, 32, 0.58)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
           padding: '10px 14px',
           borderRadius: '16px',
-          boxShadow: '0 12px 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.08)',
+          boxShadow: '0 12px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.06)',
           maxWidth: 'calc(100% - 40px)',
         }}
       >
@@ -2556,38 +2582,6 @@ export default function DelhiAqiHeatmap() {
         </div>
       </div>
 
-      {/* Floating Toggle Button when Sidebar is Collapsed */}
-      {!isSidebarOpen && (
-        <button
-          onClick={() => setIsSidebarOpen(true)}
-          style={{
-            position: 'absolute',
-            top: '20px',
-            right: '20px',
-            zIndex: 25,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'rgba(11, 17, 32, 0.92)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid rgba(56, 189, 248, 0.4)',
-            color: '#38bdf8',
-            padding: '9px 16px',
-            borderRadius: '9999px',
-            fontSize: '0.78rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.2)',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <ChevronLeft size={16} />
-          <span>Show Telemetry</span>
-          <Activity size={14} color="#10b981" />
-        </button>
-      )}
-
       {/* ============================================================== */}
       {/* 5. FLOATING RIGHT-SIDE TELEMETRY HUD (COLLAPSIBLE OVERLAY)     */}
       {/* ============================================================== */}
@@ -2610,12 +2604,12 @@ export default function DelhiAqiHeatmap() {
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
-            background: 'rgba(11, 17, 32, 0.88)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
+            background: 'rgba(11, 17, 32, 0.58)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
             borderRadius: '20px',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.08)',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.65), 0 0 30px rgba(56, 189, 248, 0.06)',
             overflow: 'hidden',
           }}
         >
@@ -2627,7 +2621,7 @@ export default function DelhiAqiHeatmap() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: 'rgba(2, 6, 23, 0.5)',
+              background: 'rgba(2, 6, 23, 0.35)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2678,8 +2672,8 @@ export default function DelhiAqiHeatmap() {
                   padding: '20px',
                   borderRadius: '16px',
                   border: '1px solid rgba(244, 63, 94, 0.45)',
-                  background: 'linear-gradient(145deg, rgba(30, 15, 25, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
-                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(244, 63, 94, 0.12)',
+                  background: 'linear-gradient(145deg, rgba(30, 15, 25, 0.65) 0%, rgba(15, 23, 42, 0.72) 100%)',
+                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(244, 63, 94, 0.1)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
@@ -2771,8 +2765,8 @@ export default function DelhiAqiHeatmap() {
                   padding: '20px',
                   borderRadius: '16px',
                   border: '1px solid rgba(16, 185, 129, 0.45)',
-                  background: 'linear-gradient(145deg, rgba(6, 28, 22, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
-                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(16, 185, 129, 0.12)',
+                  background: 'linear-gradient(145deg, rgba(6, 28, 22, 0.65) 0%, rgba(15, 23, 42, 0.72) 100%)',
+                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(16, 185, 129, 0.1)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
@@ -2922,8 +2916,8 @@ export default function DelhiAqiHeatmap() {
                   padding: '20px',
                   borderRadius: '16px',
                   border: '1px solid rgba(56, 189, 248, 0.3)',
-                  background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.9) 0%, rgba(9, 13, 24, 0.95) 100%)',
-                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.6)',
+                  background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.65) 0%, rgba(9, 13, 24, 0.7) 100%)',
+                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5)',
                   textAlign: 'center',
                 }}
               >
@@ -2995,8 +2989,8 @@ export default function DelhiAqiHeatmap() {
               style={{
                 padding: '20px',
                 borderRadius: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                background: 'rgba(15, 23, 42, 0.75)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'rgba(15, 23, 42, 0.48)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
@@ -3051,7 +3045,7 @@ export default function DelhiAqiHeatmap() {
                 style={{
                   padding: '12px 14px',
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%)',
+                  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(15, 23, 42, 0.45) 100%)',
                   border: '1px solid rgba(56, 189, 248, 0.25)',
                   fontSize: '0.78rem',
                   lineHeight: 1.5,
@@ -3088,8 +3082,8 @@ export default function DelhiAqiHeatmap() {
               style={{
                 padding: '16px 18px',
                 borderRadius: '16px',
-                border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
-                background: 'rgba(15, 23, 42, 0.85)',
+                border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'rgba(15, 23, 42, 0.52)',
                 transition: 'border-color 0.3s ease',
               }}
             >
