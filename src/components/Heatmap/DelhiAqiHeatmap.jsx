@@ -565,7 +565,7 @@ export default function DelhiAqiHeatmap() {
     timestamp: null,
   });
   const [gpsStatus, setGpsStatus] = useState('requesting'); // 'requesting' | 'active' | 'denied' | 'unavailable' | 'unsupported' | 'error'
-  const [isFollowingUser, setIsFollowingUser] = useState(true);
+  const [isFollowingUser, setIsFollowingUser] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [gpsError, setGpsError] = useState(null);
 
@@ -600,6 +600,14 @@ export default function DelhiAqiHeatmap() {
   const [showHeatmapLayer, setShowHeatmapLayer] = useState(true);
   const [showStateBorders, setShowStateBorders] = useState(true);
   const [is3DBuildings, setIs3DBuildings] = useState(true);
+
+  const showStateBordersRef = useRef(showStateBorders);
+  showStateBordersRef.current = showStateBorders;
+
+  const updateRasterForViewportRef = useRef(null);
+  const cancelCinematic360TourRef = useRef(null);
+  const playCinematic360TourRef = useRef(null);
+  const getCameraPaddingRef = useRef(null);
 
   // Dynamic Zoom-Adaptive Contrast Calibration State
   const [isAdaptiveMode, setIsAdaptiveMode] = useState(true);
@@ -704,6 +712,7 @@ export default function DelhiAqiHeatmap() {
       });
     }
   }, []);
+  updateRasterForViewportRef.current = updateRasterForViewport;
 
   // Gemini AI Advisory State (Token-Optimized)
   const [geminiAdvisory, setGeminiAdvisory] = useState('');
@@ -754,6 +763,7 @@ export default function DelhiAqiHeatmap() {
       bottom: 80,
     };
   }, [isSidebarOpen]);
+  getCameraPaddingRef.current = getCameraPadding;
 
   // Smooth camera glide to any region of India without reloading the heatmap
   const handleGlideToRegion = useCallback((preset) => {
@@ -872,15 +882,16 @@ export default function DelhiAqiHeatmap() {
     const map = mapInstanceRef.current;
     if (map) {
       map.stop();
-      if (showStateBorders && map.getLayer('admin-1-boundary')) {
+      if (showStateBordersRef.current && map.getLayer('admin-1-boundary')) {
         map.setLayoutProperty('admin-1-boundary', 'visibility', 'visible');
       }
-      if (showStateBorders && map.getLayer('admin-1-boundary-bg')) {
+      if (showStateBordersRef.current && map.getLayer('admin-1-boundary-bg')) {
         map.setLayoutProperty('admin-1-boundary-bg', 'visibility', 'visible');
       }
     }
     setIsOrbiting360(false);
-  }, [showStateBorders]);
+  }, []);
+  cancelCinematic360TourRef.current = cancelCinematic360Tour;
 
   // Cinematic 360° 3D slanted orbital flyaround and seamless GPS zoom-in
   // Render-optimized: zoomed out to 4.85 so local streets and complex boundaries are not rendered,
@@ -911,6 +922,8 @@ export default function DelhiAqiHeatmap() {
       map.setLayoutProperty('admin-1-boundary-bg', 'visibility', 'none');
     }
 
+    const currentPadding = getCameraPaddingRef.current ? getCameraPaddingRef.current() : { right: 0, left: 0, top: 0, bottom: 0 };
+
     // Phase 1: Set 3D slanted perspective zoomed out to 4.85 so streets & granular vector geometry aren't rendered
     map.stop();
     map.jumpTo({
@@ -918,7 +931,7 @@ export default function DelhiAqiHeatmap() {
       zoom: 4.85,
       pitch: 58,
       bearing: 0,
-      padding: getCameraPadding(),
+      padding: currentPadding,
     });
 
     const orbitDuration = 6800; // 6.8s fluid, cinematic 360° orbital revolution
@@ -942,7 +955,7 @@ export default function DelhiAqiHeatmap() {
         zoom: 4.85,
         pitch: 58,
         bearing: currentBearing,
-        padding: getCameraPadding(),
+        padding: getCameraPaddingRef.current ? getCameraPaddingRef.current() : { right: 0, left: 0, top: 0, bottom: 0 },
       });
 
       if (progress < 1) {
@@ -952,14 +965,14 @@ export default function DelhiAqiHeatmap() {
         isOrbitingRef.current = false;
 
         // Restore boundaries as camera swoops down
-        if (showStateBorders && map.getLayer('admin-1-boundary')) {
+        if (showStateBordersRef.current && map.getLayer('admin-1-boundary')) {
           map.setLayoutProperty('admin-1-boundary', 'visibility', 'visible');
         }
-        if (showStateBorders && map.getLayer('admin-1-boundary-bg')) {
+        if (showStateBordersRef.current && map.getLayer('admin-1-boundary-bg')) {
           map.setLayoutProperty('admin-1-boundary-bg', 'visibility', 'visible');
         }
 
-        // Phase 2: Seamlessly zoom down into the user's live GPS coordinates!
+        // Phase 2: Seamlessly zoom down into the target coordinates (user can freely take over anytime)
         map.flyTo({
           center: targetCenter,
           zoom: 12.8,
@@ -967,23 +980,23 @@ export default function DelhiAqiHeatmap() {
           bearing: 0,
           speed: 0.82,
           curve: 1.35,
-          padding: getCameraPadding(),
-          essential: true,
+          padding: getCameraPaddingRef.current ? getCameraPaddingRef.current() : { right: 0, left: 0, top: 0, bottom: 0 },
+          essential: false,
         });
 
-        // When zoom flyTo finishes, release orbiting state, enable tracking and calibrate viewport
+        // When zoom flyTo finishes, release orbiting state and calibrate viewport
         const handleZoomEnd = () => {
           map.off('moveend', handleZoomEnd);
           setIsOrbiting360(false);
-          setIsFollowingUser(true);
-          updateRasterForViewport();
+          updateRasterForViewportRef.current?.();
         };
         map.on('moveend', handleZoomEnd);
       }
     };
 
     orbitAnimIdRef.current = requestAnimationFrame(orbitStep);
-  }, [showStateBorders, updateRasterForViewport, getCameraPadding]);
+  }, []);
+  playCinematic360TourRef.current = playCinematic360Tour;
 
   // Start continuous, high-accuracy live GPS satellite tracking
   const startLiveGpsTracking = useCallback(() => {
@@ -1256,7 +1269,20 @@ export default function DelhiAqiHeatmap() {
       maxPitch: 85, // Allows high-pitch 3D slanted perspective
       bearing: 0,
       attributionControl: false,
+      interactive: true,
+      dragPan: true,
+      dragRotate: true,
+      scrollZoom: true,
+      touchZoomRotate: true,
+      doubleClickZoom: true,
     });
+
+    // Explicitly guarantee all interactive manipulation controls are active
+    map.dragPan.enable();
+    map.dragRotate.enable();
+    map.scrollZoom.enable();
+    map.touchZoomRotate.enable();
+    map.doubleClickZoom.enable();
 
     map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'bottom-right');
 
@@ -1478,29 +1504,42 @@ export default function DelhiAqiHeatmap() {
         updateRasterForViewport();
       });
 
-      // Pause follow-mode and stop 360 tour when user manually drags, scrolls, or pinches the map
-      map.on('dragstart', () => {
-        cancelCinematic360Tour();
+      // Immediately halt any camera animation (tour, flyTo, easeTo) and unlock manual drag on ANY user interaction
+      const handleUserInteractionStart = () => {
+        if (isOrbitingRef.current || orbitAnimIdRef.current) {
+          cancelCinematic360TourRef.current?.();
+        }
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.stop();
+        }
         setIsFollowingUser(false);
+      };
+
+      map.on('mousedown', handleUserInteractionStart);
+      map.on('dragstart', handleUserInteractionStart);
+      map.on('movestart', (e) => {
+        if (e.originalEvent) {
+          handleUserInteractionStart();
+        }
       });
-      map.on('wheel', cancelCinematic360Tour);
-      map.on('touchstart', cancelCinematic360Tour);
+      map.on('wheel', handleUserInteractionStart);
+      map.on('touchstart', handleUserInteractionStart);
 
       if (pendingOrbitOnScrollRef.current && !hasPlayedIntroOrbitRef.current) {
         pendingOrbitOnScrollRef.current = false;
         setTimeout(() => {
-          playCinematic360Tour();
+          playCinematic360TourRef.current?.();
         }, 300);
       }
     });
 
     return () => {
-      cancelCinematic360Tour();
+      cancelCinematic360TourRef.current?.();
       map.remove();
       mapInstanceRef.current = null;
       mapLoadedRef.current = false;
     };
-  }, [updateRasterForViewport, cancelCinematic360Tour, playCinematic360Tour]);
+  }, []);
 
   // Trigger 360° slanted orbital flyaround when user scrolls down from hero into map section
   useEffect(() => {
@@ -1510,7 +1549,7 @@ export default function DelhiAqiHeatmap() {
         const [entry] = entries;
         if (entry.isIntersecting && !hasPlayedIntroOrbitRef.current) {
           if (mapLoadedRef.current && mapInstanceRef.current) {
-            playCinematic360Tour();
+            playCinematic360TourRef.current?.();
           } else {
             pendingOrbitOnScrollRef.current = true;
           }
@@ -1523,7 +1562,7 @@ export default function DelhiAqiHeatmap() {
 
     observer.observe(sectionContainerRef.current);
     return () => observer.disconnect();
-  }, [playCinematic360Tour]);
+  }, []);
 
   // Update GeoJSON source when stations update
   useEffect(() => {
@@ -1868,6 +1907,8 @@ return (
           height: '100%',
           background: '#040711',
           zIndex: 1,
+          cursor: 'grab',
+          pointerEvents: 'auto',
         }}
       />
 

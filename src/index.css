@@ -231,3 +231,18 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .animate-float {
   animation: floatMote 4s infinite ease-in-out;
 }
+
+/* Explicit Grab & Grabbing cursors for Mapbox canvas and map container */
+#delhi-aqi-heatmap,
+#delhi-aqi-heatmap .mapboxgl-canvas-container,
+#delhi-aqi-heatmap .mapboxgl-canvas-container.mapboxgl-interactive,
+#delhi-aqi-heatmap canvas.mapboxgl-canvas {
+  cursor: grab !important;
+}
+
+#delhi-aqi-heatmap:active,
+#delhi-aqi-heatmap .mapboxgl-canvas-container:active,
+#delhi-aqi-heatmap .mapboxgl-canvas-container.mapboxgl-interactive:active,
+#delhi-aqi-heatmap canvas.mapboxgl-canvas:active {
+  cursor: grabbing !important;
+}
