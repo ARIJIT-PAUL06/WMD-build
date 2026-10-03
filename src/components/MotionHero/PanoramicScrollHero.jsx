@@ -70,107 +70,17 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
           justifyContent: 'center',
         }}
       >
-        {/* Dynamic Vignette & Lighting Filter Overlay */}
+        {/* Hybrid Depth Vignette & Seamless Bottom Gradient Fade */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
             zIndex: 10,
             pointerEvents: 'none',
-            background: `radial-gradient(circle at center, transparent 35%, rgba(7, 10, 18, 0.85) 90%), ${ambientBg}`,
+            background: `radial-gradient(ellipse 90% 80% at center, transparent 45%, rgba(7, 10, 18, 0.55) 80%, rgba(7, 10, 18, 0.88) 100%), linear-gradient(to bottom, rgba(7, 10, 18, 0.35) 0%, transparent 15%, transparent 60%, rgba(7, 10, 18, 0.8) 85%, #070a12 100%), ${ambientBg}`,
             transition: 'background 0.5s ease',
           }}
         />
-
-        {/* Top Floating Glass Navigation Header */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 30,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '24px',
-            padding: '8px 24px',
-            background: 'rgba(15, 23, 42, 0.65)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            borderRadius: '9999px',
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span
-              style={{
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                background: isLeftPhase ? '#ef4444' : isMidPhase ? '#f59e0b' : '#10b981',
-                boxShadow: `0 0 10px ${isLeftPhase ? '#ef4444' : isMidPhase ? '#f59e0b' : '#10b981'}`,
-                transition: 'all 0.3s ease',
-              }}
-            />
-            <span style={{ fontWeight: 700, fontSize: '0.85rem', letterSpacing: '-0.01em' }}>
-              VayuVitals
-            </span>
-          </div>
-
-          <div style={{ width: '1px', height: '18px', background: 'rgba(255, 255, 255, 0.15)' }} />
-
-          {/* Interactive Scrub Timeline Bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.75rem' }}>
-            <span style={{ color: isLeftPhase ? '#ef4444' : 'var(--text-muted)', fontWeight: isLeftPhase ? 700 : 400 }}>
-              01 Smog Crisis
-            </span>
-            <div
-              style={{
-                width: '100px',
-                height: '4px',
-                background: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '2px',
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  width: `${scrollProgress * 100}%`,
-                  height: '100%',
-                  background: isLeftPhase ? '#ef4444' : isMidPhase ? '#f59e0b' : '#10b981',
-                  transition: 'background 0.3s ease',
-                }}
-              />
-            </div>
-            <span style={{ color: isRightPhase ? '#10b981' : 'var(--text-muted)', fontWeight: isRightPhase ? 700 : 400 }}>
-              02 Clean Canopy
-            </span>
-          </div>
-
-          <button
-            onClick={onExploreTwin}
-            style={{
-              background: isRightPhase
-                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-              color: '#ffffff',
-              border: 'none',
-              padding: '6px 14px',
-              borderRadius: '9999px',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.4)',
-              transition: 'all 0.3s ease',
-            }}
-          >
-            <span>India AQI Heatmap</span>
-            <ChevronRight size={14} />
-          </button>
-        </div>
 
         {/* ============================================================== */}
         {/* ULTRA-WIDE PANORAMIC 32:9 STRIP (Spanning two 16:9 viewports)   */}
