@@ -550,6 +550,8 @@ export default function DelhiAqiHeatmap() {
   const markersRef = useRef([]);
   const userMarkerRef = useRef(null);
   const targetMarkerRef = useRef(null);
+  const pendingSearchTargetRef = useRef(null);
+  const handleSelectSearchedPlaceRef = useRef(null);
 
   // 108 Nationwide stations state across all states and union territories
   const [stations, setStations] = useState(initialIndiaStations);
@@ -793,82 +795,62 @@ export default function DelhiAqiHeatmap() {
 
   const debounceTimerRef = useRef(null);
 
-  // Debounced Remote Geocoding Worker (Mapbox Live or Standby OSM)
+  // Debounced Remote Geocoding Worker (High-Accuracy OpenStreetMap Photon + Nominatim Engine)
   const executeRemoteGeocode = useCallback(async (normalizedQuery, seenNames, currentCombined) => {
     setIsSearching(true);
     try {
       const remoteMatches = [];
 
-      // 1. Mapbox Live Geocoding (when Mapbox mode is active)
-      if (mapboxgl.accessToken) {
-        const token = mapboxgl.accessToken;
-        // Search POIs, addresses, neighborhoods, and places with Delhi proximity bias
-        const mbUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(normalizedQuery)}.json?access_token=${token}&country=in&proximity=77.2090,28.6139&limit=8`;
-        const res = await fetch(mbUrl);
-        if (res.ok) {
-          const json = await res.json();
-          if (json.features) {
-            json.features.forEach((f) => {
-              const nameKey = f.text.toLowerCase();
-              if (!seenNames.has(nameKey)) {
-                seenNames.add(nameKey);
-                remoteMatches.push(f);
-              }
-            });
-          }
+      // 1. High-Accuracy OpenStreetMap Photon Engine with Delhi Proximity Bias
+      const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(normalizedQuery)}&lat=28.6139&lon=77.2090&limit=8`;
+      const res = await fetch(photonUrl);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.features) {
+          json.features.forEach((f) => {
+            const p = f.properties;
+            const title = p.name || normalizedQuery;
+            const nameKey = title.toLowerCase();
+            if (!seenNames.has(nameKey)) {
+              seenNames.add(nameKey);
+              const subtitle = [p.name, p.street, p.district, p.city, p.state, p.country].filter(Boolean).join(', ');
+              remoteMatches.push({
+                id: p.osm_id || Math.random().toString(),
+                text: title,
+                place_name: subtitle,
+                center: f.geometry.coordinates,
+              });
+            }
+          });
         }
-      } else {
-        // 2. Standby Mode: Free High-Accuracy Geocoding via Photon with India/Delhi proximity bias
-        const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(normalizedQuery)}&lat=28.6139&lon=77.2090&limit=8`;
-        const res = await fetch(photonUrl);
-        if (res.ok) {
-          const json = await res.json();
-          if (json.features) {
-            json.features.forEach((f) => {
-              const p = f.properties;
-              const title = p.name || normalizedQuery;
+      }
+
+      // 2. OpenStreetMap Nominatim Deep Search (Campus polygons, institutions, and landmarks)
+      if (remoteMatches.length + currentCombined.length < 5) {
+        try {
+          const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(normalizedQuery)}&format=json&polygon_geojson=1&countrycodes=in&viewbox=76.8,28.9,77.4,28.4&bounded=0&limit=6`;
+          const nomRes = await fetch(nomUrl, { headers: { 'User-Agent': 'WMD-AQI-App/1.0' } });
+          if (nomRes.ok) {
+            const nomJson = await nomRes.json();
+            nomJson.forEach((n) => {
+              const parts = n.display_name.split(',');
+              const title = parts[0]?.trim() || normalizedQuery;
               const nameKey = title.toLowerCase();
               if (!seenNames.has(nameKey)) {
-                seenNames.add(nameKey);
-                const subtitle = [p.name, p.street, p.district, p.city, p.state, p.country].filter(Boolean).join(', ');
+                const pGeo = n.geojson || (n.geometry && n.geometry.type !== 'Point' ? n.geometry : null);
                 remoteMatches.push({
-                  id: p.osm_id || Math.random().toString(),
+                  id: n.osm_id || Math.random().toString(),
                   text: title,
-                  place_name: subtitle,
-                  center: f.geometry.coordinates,
+                  place_name: n.display_name,
+                  center: [parseFloat(n.lon), parseFloat(n.lat)],
+                  bbox: n.boundingbox ? [parseFloat(n.boundingbox[2]), parseFloat(n.boundingbox[0]), parseFloat(n.boundingbox[3]), parseFloat(n.boundingbox[1])] : null,
+                  boundaryGeo: pGeo,
                 });
               }
             });
           }
-        }
-
-        // Secondary fallback: if Photon gave no results for an institutional query, try Nominatim
-        if (remoteMatches.length + currentCombined.length < 2) {
-          try {
-            const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(normalizedQuery)}&format=json&countrycodes=in&viewbox=76.8,28.9,77.4,28.4&bounded=0&limit=5`;
-            const nomRes = await fetch(nomUrl, { headers: { 'User-Agent': 'WMD-AQI-App/1.0' } });
-            if (nomRes.ok) {
-              const nomJson = await nomRes.json();
-              nomJson.forEach((n) => {
-                const parts = n.display_name.split(',');
-                const title = parts[0]?.trim() || normalizedQuery;
-                const nameKey = title.toLowerCase();
-                if (!seenNames.has(nameKey)) {
-                  const pGeo = n.geojson || (n.geometry && n.geometry.type !== 'Point' ? n.geometry : null);
-                  remoteMatches.push({
-                    id: n.osm_id || Math.random().toString(),
-                    text: title,
-                    place_name: n.display_name,
-                    center: [parseFloat(n.lon), parseFloat(n.lat)],
-                    bbox: n.boundingbox ? [parseFloat(n.boundingbox[2]), parseFloat(n.boundingbox[0]), parseFloat(n.boundingbox[3]), parseFloat(n.boundingbox[1])] : null,
-                    boundaryGeo: pGeo,
-                  });
-                }
-              });
-            }
-          } catch (ne) {
-            // Ignore Nominatim fallback error
-          }
+        } catch (ne) {
+          // Ignore Nominatim fallback error
         }
       }
 
@@ -906,10 +888,24 @@ export default function DelhiAqiHeatmap() {
     const cleanQuery = val.trim();
     const queryLower = cleanQuery.toLowerCase();
 
-    // Map common aliases (e.g., "technical" -> "technological" for DTU, "iit" -> "Indian Institute of Technology")
+    // Comprehensive alias resolution for Delhi universities, institutes, hospitals, and landmarks
     let normalizedQuery = cleanQuery;
-    if (/\bdelhi technical university\b/i.test(normalizedQuery)) {
-      normalizedQuery = normalizedQuery.replace(/\bdelhi technical university\b/gi, 'Delhi Technological University');
+    if (/^\s*dtu\s*$/i.test(normalizedQuery) || /\bdelhi technical university\b/i.test(normalizedQuery) || /\btechnical university\b/i.test(normalizedQuery)) {
+      normalizedQuery = 'Delhi Technological University';
+    } else if (/^\s*nsut\s*$/i.test(normalizedQuery) || /^\s*nsit\s*$/i.test(normalizedQuery) || /\bnetaji subhas\b/i.test(normalizedQuery)) {
+      normalizedQuery = 'Netaji Subhas University of Technology';
+    } else if (/^\s*iit\s*d(elhi)?\s*$/i.test(normalizedQuery) || /^\s*iit\s*$/i.test(normalizedQuery)) {
+      normalizedQuery = 'IIT Delhi';
+    } else if (/^\s*aiims\s*$/i.test(normalizedQuery) || /\baiims delhi\b/i.test(normalizedQuery)) {
+      normalizedQuery = 'AIIMS Delhi';
+    } else if (/^\s*jnu\s*$/i.test(normalizedQuery) || /\bjawaharlal nehru\b/i.test(normalizedQuery)) {
+      normalizedQuery = 'Jawaharlal Nehru University';
+    } else if (/^\s*igdtuw\s*$/i.test(normalizedQuery)) {
+      normalizedQuery = 'Indira Gandhi Delhi Technical University for Women';
+    } else if (/^\s*jamia\s*$/i.test(normalizedQuery) || /\bjamia millia\b/i.test(normalizedQuery)) {
+      normalizedQuery = 'Jamia Millia Islamia';
+    } else if (/^\s*du\s*$/i.test(normalizedQuery) || /\bdelhi university\b/i.test(normalizedQuery)) {
+      normalizedQuery = 'University of Delhi';
     }
 
     const combinedResults = [];
@@ -987,16 +983,36 @@ export default function DelhiAqiHeatmap() {
   };
 
   const handleSelectSearchedPlace = async (feature) => {
+    if (!feature || !feature.center) return;
     const [lon, lat] = feature.center;
     setSearchQuery('');
     setShowSearchDropdown(false);
+
+    // If map was paused/hidden in dev mode, auto-show the map immediately
+    if (!showMap) {
+      setShowMap(true);
+    }
 
     if (feature.isStation && feature.station) {
       handleSelectStation(feature.station);
     }
 
+    // Drop pinpoint target marker with live estimated AQI on the searched location
+    const sampledAqi = sampleRasterGridVal(gridCacheRef.current, lon, lat);
+    const estAqi = sampledAqi !== null ? Math.round(sampledAqi) : 175;
+    setInspectedPoint({
+      lat,
+      lon,
+      aqi: estAqi,
+      label: feature.text || feature.place_name,
+    });
+
     const map = mapInstanceRef.current;
-    if (!map) return;
+    if (!map) {
+      // Map not yet mounted: queue target so map.on('load') flies directly to it
+      pendingSearchTargetRef.current = feature;
+      return;
+    }
 
     // 1. Immediately turn ON the air quality heatmap layer if it was turned off
     setShowHeatmapLayer(true);
@@ -1029,7 +1045,7 @@ export default function DelhiAqiHeatmap() {
 
     // If still no polygon, create an elegant soft campus perimeter
     if (!boundaryGeo) {
-      boundaryGeo = createSoftPerimeterGeoJson(lon, lat, 500);
+      boundaryGeo = createSoftPerimeterGeoJson(lon, lat, 450);
     }
 
     // 3. Step 1: Smooth Glide & Zoom into the selected institution/zone
@@ -1045,7 +1061,7 @@ export default function DelhiAqiHeatmap() {
       essential: true,
     });
 
-    // 4. Step 2 & 3: Once arrived (or after smooth arrival flight), inject faded boundary + align heatmap
+    // 4. Step 2 & 3: Once arrived, inject delicate faded boundary + calibrate heatmap
     const onArrival = () => {
       map.off('moveend', onArrival);
       const bSource = map.getSource('selected-place-boundary-source');
@@ -1055,7 +1071,6 @@ export default function DelhiAqiHeatmap() {
       updateRasterForViewportRef.current?.();
     };
 
-    // If map is already close to location, trigger boundary shortly; otherwise wait for camera arrival
     setTimeout(() => {
       const bSource = map.getSource('selected-place-boundary-source');
       if (bSource) {
@@ -1065,6 +1080,7 @@ export default function DelhiAqiHeatmap() {
 
     map.on('moveend', onArrival);
   };
+  handleSelectSearchedPlaceRef.current = handleSelectSearchedPlace;
   const handleSelectSearchResult = handleSelectSearchedPlace;
 
   // Fetch token-optimized Gemini advisory
@@ -1273,30 +1289,15 @@ export default function DelhiAqiHeatmap() {
         if (shouldRev) {
           lastGeocodedCoordRef.current = { lat: latitude, lon: longitude };
           try {
-            if (mapboxgl.accessToken) {
-              const token = mapboxgl.accessToken;
-              const revRes = await fetch(
-                `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${token}&country=in&types=neighborhood,locality,place,district&limit=1`
-              );
-              if (revRes.ok) {
-                const revJson = await revRes.json();
-                if (revJson.features?.[0]?.place_name) {
-                  placeName = revJson.features[0].place_name;
-                } else if (revJson.features?.[0]?.text) {
-                  placeName = revJson.features[0].text;
-                }
-              }
-            } else {
-              // Free Zero-Credit reverse geocoding via OpenStreetMap Nominatim
-              const revRes = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-                { headers: { 'User-Agent': 'WMD-AQI-App/1.0' } }
-              );
-              if (revRes.ok) {
-                const revJson = await revRes.json();
-                if (revJson.display_name) {
-                  placeName = revJson.display_name.split(',').slice(0, 3).join(', ').trim();
-                }
+            // High-Accuracy reverse geocoding via OpenStreetMap Nominatim (exact neighborhood / locality)
+            const revRes = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+              { headers: { 'User-Agent': 'WMD-AQI-App/1.0' } }
+            );
+            if (revRes.ok) {
+              const revJson = await revRes.json();
+              if (revJson.display_name) {
+                placeName = revJson.display_name.split(',').slice(0, 3).join(', ').trim();
               }
             }
           } catch (e) {
@@ -1912,7 +1913,13 @@ export default function DelhiAqiHeatmap() {
       map.on('wheel', handleUserGesture);
       map.on('touchstart', handleUserGesture);
 
-      if (pendingOrbitOnScrollRef.current && !hasPlayedIntroOrbitRef.current) {
+      if (pendingSearchTargetRef.current) {
+        const queuedTarget = pendingSearchTargetRef.current;
+        pendingSearchTargetRef.current = null;
+        setTimeout(() => {
+          handleSelectSearchedPlaceRef.current?.(queuedTarget);
+        }, 400);
+      } else if (pendingOrbitOnScrollRef.current && !hasPlayedIntroOrbitRef.current) {
         pendingOrbitOnScrollRef.current = false;
         setTimeout(() => {
           playCinematic360TourRef.current?.();
