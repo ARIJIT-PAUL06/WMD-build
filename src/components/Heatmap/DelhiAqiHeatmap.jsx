@@ -1220,59 +1220,15 @@ export default function DelhiAqiHeatmap() {
     }
   }, [getCameraPadding]);
 
-  // Geocoding & landmark search handler (supports institutions, universities, POIs, cities, and towns)
-  const handleSearchInput = async (val) => {
-    setSearchQuery(val);
-    if (!val || val.trim().length < 2) {
-      setSearchResults([]);
-      setShowSearchDropdown(false);
-      return;
-    }
+  const debounceTimerRef = useRef(null);
 
+  // Debounced Remote Geocoding Worker (Mapbox Live or Standby OSM)
+  const executeRemoteGeocode = useCallback(async (normalizedQuery, seenNames, currentCombined) => {
     setIsSearching(true);
-    const cleanQuery = val.trim();
-    const queryLower = cleanQuery.toLowerCase();
-
-    // Map common aliases (e.g., "technical" -> "technological" for DTU, "iit" -> "Indian Institute of Technology")
-    let normalizedQuery = cleanQuery;
-    if (/\bdelhi technical university\b/i.test(normalizedQuery)) {
-      normalizedQuery = normalizedQuery.replace(/\bdelhi technical university\b/gi, 'Delhi Technological University');
-    }
-
     try {
-      const combinedResults = [];
-      const seenNames = new Set();
+      const remoteMatches = [];
 
-      // 1. Instant Internal Station & Landmark Match (Zero network latency)
-      const internalMatches = stations
-        .filter((st) => {
-          const name = st.name.toLowerCase();
-          const zone = (st.zone || '').toLowerCase();
-          const state = (st.state || '').toLowerCase();
-          return (
-            name.includes(queryLower) ||
-            zone.includes(queryLower) ||
-            state.includes(queryLower) ||
-            (queryLower === 'dtu' && (name.includes('dtu') || name.includes('technological'))) ||
-            (queryLower.includes('technical') && name.includes('dtu'))
-          );
-        })
-        .slice(0, 3)
-        .map((st) => ({
-          id: `station-${st.id}`,
-          text: st.name,
-          place_name: `${st.name} (Monitoring Station, AQI: ${st.aqi})`,
-          center: [st.lon, st.lat],
-          isStation: true,
-          station: st,
-        }));
-
-      internalMatches.forEach((m) => {
-        seenNames.add(m.text.toLowerCase());
-        combinedResults.push(m);
-      });
-
-      // 2. Mapbox Live Geocoding (when Mapbox mode is active)
+      // 1. Mapbox Live Geocoding (when Mapbox mode is active)
       if (isMapboxMode && mapboxgl.accessToken) {
         const token = mapboxgl.accessToken;
         // Search POIs, addresses, neighborhoods, and places with Delhi proximity bias
@@ -1285,13 +1241,13 @@ export default function DelhiAqiHeatmap() {
               const nameKey = f.text.toLowerCase();
               if (!seenNames.has(nameKey)) {
                 seenNames.add(nameKey);
-                combinedResults.push(f);
+                remoteMatches.push(f);
               }
             });
           }
         }
       } else {
-        // 3. Standby Mode: Free High-Accuracy Geocoding via Photon with India/Delhi proximity bias
+        // 2. Standby Mode: Free High-Accuracy Geocoding via Photon with India/Delhi proximity bias
         const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(normalizedQuery)}&lat=28.6139&lon=77.2090&limit=8`;
         const res = await fetch(photonUrl);
         if (res.ok) {
@@ -1299,12 +1255,12 @@ export default function DelhiAqiHeatmap() {
           if (json.features) {
             json.features.forEach((f) => {
               const p = f.properties;
-              const title = p.name || cleanQuery;
+              const title = p.name || normalizedQuery;
               const nameKey = title.toLowerCase();
               if (!seenNames.has(nameKey)) {
                 seenNames.add(nameKey);
                 const subtitle = [p.name, p.street, p.district, p.city, p.state, p.country].filter(Boolean).join(', ');
-                combinedResults.push({
+                remoteMatches.push({
                   id: p.osm_id || Math.random().toString(),
                   text: title,
                   place_name: subtitle,
@@ -1316,7 +1272,7 @@ export default function DelhiAqiHeatmap() {
         }
 
         // Secondary fallback: if Photon gave no results for an institutional query, try Nominatim
-        if (combinedResults.length < 2) {
+        if (remoteMatches.length + currentCombined.length < 2) {
           try {
             const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(normalizedQuery)}&format=json&countrycodes=in&viewbox=76.8,28.9,77.4,28.4&bounded=0&limit=5`;
             const nomRes = await fetch(nomUrl, { headers: { 'User-Agent': 'WMD-AQI-App/1.0' } });
@@ -1324,11 +1280,11 @@ export default function DelhiAqiHeatmap() {
               const nomJson = await nomRes.json();
               nomJson.forEach((n) => {
                 const parts = n.display_name.split(',');
-                const title = parts[0]?.trim() || cleanQuery;
+                const title = parts[0]?.trim() || normalizedQuery;
                 const nameKey = title.toLowerCase();
                 if (!seenNames.has(nameKey)) {
                   const pGeo = n.geojson || (n.geometry && n.geometry.type !== 'Point' ? n.geometry : null);
-                  combinedResults.push({
+                  remoteMatches.push({
                     id: n.osm_id || Math.random().toString(),
                     text: title,
                     place_name: n.display_name,
@@ -1345,13 +1301,89 @@ export default function DelhiAqiHeatmap() {
         }
       }
 
-      setSearchResults(combinedResults.slice(0, 8));
-      setShowSearchDropdown(combinedResults.length > 0);
+      setSearchResults([...currentCombined, ...remoteMatches].slice(0, 8));
+      setShowSearchDropdown(currentCombined.length > 0 || remoteMatches.length > 0);
     } catch (err) {
       console.warn('Geocoding search failed:', err);
     } finally {
       setIsSearching(false);
     }
+  }, [isMapboxMode]);
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
+
+  // Geocoding & landmark search handler: Immediate local match (0 credits) + Debounced remote query (protects 10K quota)
+  const handleSearchInput = (val) => {
+    setSearchQuery(val);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+
+    if (!val || val.trim().length < 2) {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      setIsSearching(false);
+      return;
+    }
+
+    const cleanQuery = val.trim();
+    const queryLower = cleanQuery.toLowerCase();
+
+    // Map common aliases (e.g., "technical" -> "technological" for DTU, "iit" -> "Indian Institute of Technology")
+    let normalizedQuery = cleanQuery;
+    if (/\bdelhi technical university\b/i.test(normalizedQuery)) {
+      normalizedQuery = normalizedQuery.replace(/\bdelhi technical university\b/gi, 'Delhi Technological University');
+    }
+
+    const combinedResults = [];
+    const seenNames = new Set();
+
+    // 1. Instant Internal Station & Landmark Match (Zero network latency & 0 Mapbox credits)
+    const internalMatches = stations
+      .filter((st) => {
+        const name = st.name.toLowerCase();
+        const zone = (st.zone || '').toLowerCase();
+        const state = (st.state || '').toLowerCase();
+        return (
+          name.includes(queryLower) ||
+          zone.includes(queryLower) ||
+          state.includes(queryLower) ||
+          (queryLower === 'dtu' && (name.includes('dtu') || name.includes('technological'))) ||
+          (queryLower.includes('technical') && name.includes('dtu'))
+        );
+      })
+      .slice(0, 3)
+      .map((st) => ({
+        id: `station-${st.id}`,
+        text: st.name,
+        place_name: `${st.name} (Monitoring Station, AQI: ${st.aqi})`,
+        center: [st.lon, st.lat],
+        isStation: true,
+        station: st,
+      }));
+
+    internalMatches.forEach((m) => {
+      seenNames.add(m.text.toLowerCase());
+      combinedResults.push(m);
+    });
+
+    // Show instant local results right away
+    if (combinedResults.length > 0) {
+      setSearchResults(combinedResults);
+      setShowSearchDropdown(true);
+    }
+
+    // 2. Debounce remote Mapbox/OSM geocoding call by 350ms (Drastically saves Mapbox 10K quota)
+    setIsSearching(true);
+    debounceTimerRef.current = setTimeout(() => {
+      executeRemoteGeocode(normalizedQuery, seenNames, combinedResults);
+    }, 350);
   };
 
   // Helper to generate a soft circular polygon boundary if an institution does not have a formal OSM polygon
