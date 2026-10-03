@@ -16,7 +16,9 @@ import {
   getFacilityById,
   getFacilitiesInGrid,
   generate630Advisory,
-  testDispatch630Advisory
+  testDispatch630Advisory,
+  evaluateMorningAdvisories,
+  craftAndDispatchMidDayEmergency
 } from './advisoryDispatchService.js';
 
 dotenv.config();
@@ -538,6 +540,46 @@ app.post('/api/advisory/test-dispatch', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('[API /api/advisory/test-dispatch Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Threshold-gated 6:30 AM Advisory check (suppressed on clean summer/monsoon days)
+ */
+app.post('/api/advisory/evaluate-morning', async (req, res) => {
+  try {
+    const { facilityId = 'dps_rk_puram', thresholdPm25 = 120, basePm25, testEmail, isSandbox = true } = req.body;
+    const result = await evaluateMorningAdvisories({
+      facilityId,
+      thresholdPm25: Number(thresholdPm25),
+      basePm25: basePm25 ? Number(basePm25) : null,
+      testEmail,
+      isSandbox
+    });
+    res.json({ success: true, ...result });
+  } catch (err) {
+    console.error('[API /api/advisory/evaluate-morning Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Gemini-Crafted 12:00 PM Mid-Day Emergency Flash Alert (for sudden unexpected spikes)
+ */
+app.post('/api/advisory/emergency-midday', async (req, res) => {
+  try {
+    const { facilityId = 'dps_rk_puram', currentPm25 = 295, anomalyType, testEmail, isSandbox = true } = req.body;
+    const result = await craftAndDispatchMidDayEmergency({
+      facilityId,
+      currentPm25: Number(currentPm25),
+      anomalyType: anomalyType || 'Sudden Mid-Day Dust & Local Thermal Stagnation',
+      testEmail,
+      isSandbox
+    });
+    res.json(result);
+  } catch (err) {
+    console.error('[API /api/advisory/emergency-midday Error]:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

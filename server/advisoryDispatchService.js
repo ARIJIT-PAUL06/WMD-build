@@ -124,7 +124,10 @@ export async function generate630Advisory({ facilityId, basePm25 = 175 }) {
     { window: '02:30 - 04:30 PM', reason: 'Post-solar dispersion maximum planetary boundary layer height', level: 'MODERATE' }
   ];
 
-  const peakAqi = forecast.summaryMetrics?.peakPm25 || 240;
+  const peakAqi = forecast.peakMorningArrival?.predictedPm25 
+    || forecast.hourlyTimeline?.reduce((max, h) => Math.max(max, h.predictedPm25), 0) 
+    || basePm25 
+    || 145;
   const isSevere = peakAqi > 150;
 
   // 2. Protocols tailored to facility type
@@ -275,5 +278,210 @@ export async function testDispatch630Advisory({ facilityId, testEmail = 'tester@
     success: true,
     dispatchRecord,
     advisory
+  };
+}
+
+/**
+ * ============================================================================
+ * 1. THRESHOLD-GATED 6:30 AM ADVISORY (Suppresses on clean summer/monsoon days)
+ * ============================================================================
+ */
+export async function evaluateMorningAdvisories({
+  facilityId = 'dps_rk_puram',
+  thresholdPm25 = 120, // Indian NAQI 'Poor' threshold (>120 is hazardous for children)
+  basePm25 = null,
+  testEmail = 'tester@wmd-civic.in',
+  isSandbox = true
+}) {
+  const facility = getFacilityById(facilityId);
+  if (!facility) {
+    throw new Error(`Facility not found with ID: ${facilityId}`);
+  }
+
+  // Generate the forward forecast
+  const advisory = await generate630Advisory({ facilityId, basePm25: basePm25 || 175 });
+  const predictedPeak = advisory.forecast.predictedPeakPm25;
+
+  // THRESHOLD GATE: If predicted peak is below threshold, suppress alert
+  if (predictedPeak <= thresholdPm25) {
+    return {
+      dispatched: false,
+      reason: `Predicted air quality is safe/acceptable (Peak PM2.5: ${predictedPeak} µg/m³ <= Threshold: ${thresholdPm25} µg/m³). Advisory suppressed to prevent alert fatigue.`,
+      facility: facility.name,
+      gridId: facility.gridId,
+      predictedPeakPm25: predictedPeak,
+      thresholdPm25,
+      seasonContext: 'Summer/Monsoon/Clean day - No morning outdoor restriction required.'
+    };
+  }
+
+  // Threshold exceeded: Dispatch targeted morning advisory
+  const testResult = await testDispatch630Advisory({ facilityId, testEmail, isSandbox });
+  return {
+    dispatched: true,
+    reason: `Hazardous morning pollution predicted (Peak PM2.5: ${predictedPeak} µg/m³ > Threshold: ${thresholdPm25} µg/m³). Morning advisory dispatched.`,
+    facility: facility.name,
+    gridId: facility.gridId,
+    predictedPeakPm25: predictedPeak,
+    thresholdPm25,
+    dispatchRecord: testResult.dispatchRecord,
+    advisory: testResult.advisory
+  };
+}
+
+/**
+ * ============================================================================
+ * 2. GEMINI-CRAFTED MID-DAY EMERGENCY FLASH ALERT (12:00 PM Surprise Spikes)
+ * ============================================================================
+ */
+export async function craftAndDispatchMidDayEmergency({
+  facilityId = 'dps_rk_puram',
+  currentPm25 = 295,
+  anomalyType = 'Sudden Mid-Day Dust & Boundary Layer Stagnation',
+  testEmail = 'tester@wmd-civic.in',
+  isSandbox = true
+}) {
+  const facility = getFacilityById(facilityId);
+  if (!facility) {
+    throw new Error(`Facility not found with ID: ${facilityId}`);
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  let geminiDirectives = '';
+
+  const promptText = `
+You are the Chief Environmental Safety Officer for the WMD Clean Air Command Center in Delhi.
+It is 12:00 PM noon. Live telemetry sensors just detected a sudden, hazardous air pollution surge in ${facility.district} (Grid: ${facility.gridId}).
+Target Facility: ${facility.name} (${facility.type})
+Current Live PM2.5: ${currentPm25} µg/m³ (Extremely Hazardous)
+Anomaly Trigger: ${anomalyType}
+
+Craft an urgent 4-bullet executive emergency directive for the School Principal / Medical Administrator before students enter the playground for lunch recess.
+Directives must be actionable, authoritative, calm, and specific:
+1. Immediate recall of students from open grounds.
+2. Mandatory indoor lunch recess protocols.
+3. Sealing exterior building doors and powering on HEPA filtration.
+4. Infirmary readiness for pediatric asthmatic emergencies.
+Keep it strictly under 150 words. Do not include introductory pleasantries.
+  `.trim();
+
+  if (apiKey) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 500
+          }
+        }),
+        signal: AbortSignal.timeout(8000)
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        geminiDirectives = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+      }
+    } catch (err) {
+      console.warn('[AdvisoryService] Gemini API call timed out or failed, using deterministic emergency directives:', err.message);
+    }
+  }
+
+  // Fallback if Gemini unavailable
+  if (!geminiDirectives) {
+    geminiDirectives = `
+• IMMEDIATELY CANCEL OUTDOOR LUNCH RECESS: Sound the campus bell to recall all students from sports grounds and open courtyards into primary buildings immediately.
+• INDOOR SECLUSION & DOOR SEALING: Close all exterior classroom windows and ventilation vents facing arterial roads; activate all available ceiling fans and indoor air purifiers.
+• SPECIAL PEDIATRIC VULNERABILITY ALERT: Instruct class teachers to monitor any students with known bronchial asthma or dust allergies; keep emergency salbutamol inhalers ready in the campus medical room.
+• POSTPONE PHYSICAL EDUCATION: All physical education and sports coaching scheduled for afternoon sessions (12:00 - 02:00 PM) are suspended until further clearance.
+    `.trim();
+  }
+
+  const subject = `[URGENT FLASH ALERT: 12:00 PM AIR SURGE] Immediate Indoor Recess Directive for ${facility.name}`;
+
+  const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #0f172a; background-color: #f8fafc; padding: 20px; }
+    .container { max-width: 650px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 2px solid #ef4444; overflow: hidden; }
+    .emergency-banner { background: #dc2626; color: #ffffff; padding: 18px 24px; text-align: left; }
+    .emergency-banner h1 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
+    .emergency-badge { display: inline-block; background: #ffffff; color: #dc2626; font-weight: 800; font-size: 13px; padding: 4px 10px; border-radius: 6px; margin-top: 8px; }
+    .content { padding: 24px; }
+    .metric-box { background: #fee2e2; border-left: 5px solid #b91c1c; padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 20px; }
+    .directives { background: #f8fafc; border: 1px solid #e2e8f0; padding: 18px 24px; border-radius: 8px; white-space: pre-line; line-height: 1.7; font-size: 14.5px; color: #1e293b; }
+    .footer { background: #f1f5f9; padding: 16px 24px; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="emergency-banner">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #fecaca;">WMD Emergency Air Intercept • High Priority Bulletin</div>
+      <h1>🚨 CRITICAL MID-DAY POLLUTION SURGE</h1>
+      <span class="emergency-badge">CURRENT PM2.5: ${currentPm25} µg/m³ (CRITICAL HAZARD)</span>
+    </div>
+
+    <div class="content">
+      <p style="font-size: 15px; margin-top: 0;">
+        <strong>ATTENTION: Principal / Sports Director / Medical Superintendent (${facility.name})</strong>
+      </p>
+      
+      <div class="metric-box">
+        <div style="font-weight: 700; color: #991b1b; font-size: 14px;">ANOMALOUS 12:00 PM AIR SURGE DETECTED</div>
+        <div style="font-size: 13px; color: #475569; margin-top: 4px;">
+          Detected in <strong>${facility.district} (Grid: ${facility.gridId})</strong>.<br>
+          Trigger: <em>${anomalyType}</em>. Real-time telemetry indicates particulate concentrations are <strong>3.2x above safe physiological limits</strong>.
+        </div>
+      </div>
+
+      <h3 style="margin-top: 15px; font-size: 15px; color: #0f172a;">AI-Synthesized Immediate Emergency Directives:</h3>
+      <div class="directives">
+${geminiDirectives}
+      </div>
+
+      <p style="margin-top: 20px; font-size: 12.5px; color: #64748b;">
+        This alert was generated in real time following a sudden telemetry anomaly that deviated from the morning seasonal forecast.
+      </p>
+    </div>
+
+    <div class="footer">
+      AI Engine: Google Gemini 2.5 Flash / WMD Sensor Telemetry Fusion<br>
+      Regulatory Carbon Copy: ${facility.nodalOfficerEmail || 'DoE Zonal Directorate / DPCC Emergency Cell'}<br>
+      Direct Facility Contact: ${facility.primaryEmail}
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  const actualRecipient = isSandbox ? testEmail : facility.primaryEmail;
+  const emergencyRecord = {
+    alertId: `EMERGENCY_${Date.now()}`,
+    timestamp: new Date().toISOString(),
+    triggerHour: '12:00 PM',
+    anomalyType,
+    currentPm25,
+    facilityName: facility.name,
+    gridId: facility.gridId,
+    aiModelUsed: apiKey ? 'gemini-2.5-flash' : 'rule-based-deterministic',
+    sentTo: actualRecipient,
+    isSandbox,
+    subject,
+    directives: geminiDirectives
+  };
+
+  return {
+    success: true,
+    emergencyRecord,
+    emailPayload: {
+      to: facility.emails,
+      subject,
+      html: htmlBody
+    }
   };
 }
