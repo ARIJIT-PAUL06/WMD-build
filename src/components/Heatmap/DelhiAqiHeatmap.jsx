@@ -596,6 +596,75 @@ function applyNavigationNightPalette(map) {
   // 1. Background / Land: Mapbox night navigation dark slate-charcoal (#1a2332)
   safePaint('background', 'background-color', '#1a2332');
 
+  // 1.1 Natural Shaded Relief & Elevation Hillshade (Recreates Mapbox terrain look in Standby mode)
+  const firstAboveBackground = style.layers.find((l) => l.id !== 'background')?.id || 'water';
+
+  // A. Low-zoom Natural Earth Shaded Relief (Continental relief, zooms 0 to 6)
+  if (map.getSource('ne2_shaded') && !map.getLayer('standby-natural-earth-relief')) {
+    try {
+      map.addLayer(
+        {
+          id: 'standby-natural-earth-relief',
+          type: 'raster',
+          source: 'ne2_shaded',
+          maxzoom: 7,
+          paint: {
+            'raster-opacity': [
+              'interpolate', ['linear'], ['zoom'],
+              1, 0.40,
+              3.5, 0.35,
+              5.5, 0.20,
+              7, 0.0
+            ],
+            'raster-contrast': 0.18,
+          },
+        },
+        firstAboveBackground
+      );
+    } catch {}
+  }
+
+  // B. High-Resolution Terrarium DEM Elevation Hillshade (Mountain ridges, valleys, high peaks across all zooms)
+  if (!map.getSource('standby-terrain-dem')) {
+    try {
+      map.addSource('standby-terrain-dem', {
+        type: 'raster-dem',
+        tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+        encoding: 'terrarium',
+        tileSize: 256,
+        maxzoom: 12,
+      });
+    } catch {}
+  }
+
+  if (map.getSource('standby-terrain-dem') && !map.getLayer('standby-terrain-hillshade')) {
+    try {
+      map.addLayer(
+        {
+          id: 'standby-terrain-hillshade',
+          type: 'hillshade',
+          source: 'standby-terrain-dem',
+          layout: { visibility: 'visible' },
+          paint: {
+            'hillshade-shadow-color': '#080e18',
+            'hillshade-highlight-color': '#334861',
+            'hillshade-accent-color': '#162333',
+            'hillshade-illumination-direction': 315,
+            'hillshade-illumination-anchor': 'viewport',
+            'hillshade-exaggeration': [
+              'interpolate', ['linear'], ['zoom'],
+              3, 0.55,
+              6, 0.75,
+              9, 0.88,
+              12, 0.95
+            ],
+          },
+        },
+        firstAboveBackground
+      );
+    } catch {}
+  }
+
   // 2. Configure Zoom Ranges - Unlock dense road and street network earlier so standby map has rich detail
   const safeZoomRange = (id, min, max) => {
     try {
@@ -635,6 +704,30 @@ function applyNavigationNightPalette(map) {
         map.setPaintProperty(id, 'fill-color', '#0f1826');
       } else if (type === 'line') {
         map.setPaintProperty(id, 'line-color', '#162438');
+      }
+    }
+
+    // Glaciers, Permanent Snowfields & Mountain Ice Shelves (Crucial for Himalayan relief matching Mapbox)
+    if (id.includes('glacier') || id.includes('ice_shelf') || id.includes('snow')) {
+      if (type === 'fill') {
+        safeZoomRange(id, 0, 24);
+        map.setPaintProperty(id, 'fill-color', [
+          'interpolate', ['linear'], ['zoom'],
+          3, '#576c82',
+          6, '#687f99',
+          9, '#7c94b0',
+          13, '#90a8c4'
+        ]);
+        map.setPaintProperty(id, 'fill-opacity', [
+          'interpolate', ['linear'], ['zoom'],
+          3, 0.55,
+          6, 0.72,
+          9, 0.85,
+          13, 0.92
+        ]);
+        try {
+          map.setPaintProperty(id, 'fill-outline-color', '#43586e');
+        } catch {}
       }
     }
 
