@@ -30,6 +30,11 @@ if (accessKeyId && secretAccessKey) {
   }
 }
 
+// Rate limiting & quota safety guards
+let lastSendTimestamp = 0;
+const MIN_SEND_INTERVAL_MS = 1200; // Enforces < 1 email per second (AWS SES Sandbox maxSendRate = 1.0/sec)
+const DAILY_SAFETY_BUFFER = 15;    // Keep 15 emails in reserve for emergency flash alerts
+
 /**
  * Send an email via Amazon SES
  */
@@ -44,6 +49,36 @@ export async function sendEmailViaSES({
   if (!sesClient) {
     throw new Error('AWS SES Client is not initialized. Please verify AWS credentials in .env.');
   }
+
+  // 1. Quota Safety Guard: Check remaining daily quota before sending
+  try {
+    const quotaCmd = new GetSendQuotaCommand({});
+    const quota = await sesClient.send(quotaCmd);
+    const maxSend = quota.Max24HourSend || 200;
+    const sentCount = quota.SentLast24Hours || 0;
+    const remaining = maxSend - sentCount;
+
+    if (remaining <= DAILY_SAFETY_BUFFER) {
+      console.warn(`[SES Service] Daily safety buffer reached (${sentCount}/${maxSend} used). Suppressing non-critical dispatch.`);
+      return {
+        success: false,
+        error: 'SES_DAILY_SAFETY_CAP_REACHED',
+        diagnosticHint: `SES free-tier daily cap is ${maxSend} emails. ${sentCount} emails already sent in the last 24h. Dispatch paused to protect quota.`,
+        quota
+      };
+    }
+  } catch (quotaErr) {
+    console.warn('[SES Service] Could not verify send quota, proceeding with rate limiter:', quotaErr.message);
+  }
+
+  // 2. Per-Second Rate Limiter: Enforce at least 1.2s delay between sends
+  const now = Date.now();
+  const elapsed = now - lastSendTimestamp;
+  if (elapsed < MIN_SEND_INTERVAL_MS) {
+    const waitTime = MIN_SEND_INTERVAL_MS - elapsed;
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  lastSendTimestamp = Date.now();
 
   const toAddresses = Array.isArray(to) ? to : [to];
   const ccAddresses = Array.isArray(cc) ? cc : (cc ? [cc] : []);
