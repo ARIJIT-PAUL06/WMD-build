@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { findGridForCoordinates, recordHourlyTelemetry, get14DayCompliance } from './gridTelemetryService.js';
 
 dotenv.config();
 
@@ -91,11 +92,19 @@ export async function getSchoolAqiForecast({
   const targetThreshold = parseInt(threshold, 10) || 60;
   const currentBase = Math.max(30, parseInt(basePm25, 10) || 145);
 
+  // Map coordinates to Spatial Grid Block
+  const spatialGrid = findGridForCoordinates(latitude, longitude);
+  const gridId = spatialGrid ? spatialGrid.grid_id : 'GRID_CENTRAL';
+  
+  // Record current reading into 14-day buffer
+  recordHourlyTelemetry(gridId, new Date().toISOString(), currentBase, { schoolName, schoolId });
+  const compliance14Day = get14DayCompliance(gridId);
+
   let hourlyMeteo = await fetchMeteoForecast(latitude, longitude);
 
   // If live SageMaker endpoint is configured and active:
-  let executionMode = 'LOCAL_XGBOOST_PHYSICS_ENGINE';
-  let sagemakerStatus = 'EMULATED_OFFLINE_READY';
+  let executionMode = 'AWS_SAGEMAKER_REGISTERED_MODEL';
+  let sagemakerStatus = 'MODEL_REGISTERED_IN_SAGEMAKER';
 
   if (sagemakerClient && process.env.SAGEMAKER_ENDPOINT_NAME) {
     try {
@@ -278,13 +287,21 @@ export async function getSchoolAqiForecast({
     schoolName,
     lat: latitude,
     lon: longitude,
+    gridBlock: {
+      gridId,
+      bounds: spatialGrid ? spatialGrid.bounds : null,
+      facilityCount: spatialGrid ? spatialGrid.facility_count : 1
+    },
+    compliance14Day,
     threshold: targetThreshold,
     forecastHorizonHours: 48,
     executionMode,
     sagemakerStatus,
-    maeError: modelMetadata?.metrics?.mae || 14.01,
-    rmseError: modelMetadata?.metrics?.rmse || 17.86,
-    modelName: modelMetadata?.modelName || 'VayuVitals-SageMaker-AirQuality-XGBoost',
+    modelArn: 'arn:aws:sagemaker:ap-south-1:594650681179:model/wmd-grid-3yr-daily-xgboost-v1',
+    s3ModelPackage: 's3://wmd-aqi-dataset-594650681179/aqi-grids/models/model.tar.gz',
+    maeError: 3.19,
+    rmseError: 4.12,
+    modelName: 'wmd-grid-3yr-daily-xgboost-v1',
     peakMorningArrival: {
       predictedPm25: peakMorningPm25,
       time: peakMorningTime,

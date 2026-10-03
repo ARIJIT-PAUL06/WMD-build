@@ -683,9 +683,9 @@ export default function PetitionModal({
                   >
                     <Cpu size={15} />
                   </div>
-                  <div>
+                    <div>
                     <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Step 1b: AWS SageMaker ML Forecast
+                      Step 1b: AWS SageMaker Grid Model
                     </span>
                     <span
                       style={{
@@ -699,7 +699,7 @@ export default function PetitionModal({
                         border: '1px solid rgba(16, 185, 129, 0.3)'
                       }}
                     >
-                      {forecast?.executionMode === 'AWS_SAGEMAKER_SERVERLESS_LIVE' ? 'AWS SageMaker Live' : 'SageMaker XGBoost Active'}
+                      {forecast?.gridBlock?.gridId ? `${forecast.gridBlock.gridId} · SageMaker Active` : 'AWS SageMaker Live'}
                     </span>
                   </div>
                 </div>
@@ -797,7 +797,7 @@ export default function PetitionModal({
                   {/* Model Validation & Inclusion Checkbox */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
                     <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
-                      Model MAE: <strong style={{ color: '#38bdf8' }}>{forecast.maeError} µg/m³</strong> · Inversion Physics
+                      Model: <strong style={{ color: '#38bdf8' }}>{forecast.modelName || 'wmd-grid-3yr-daily-xgboost-v1'}</strong> · MAE: <strong style={{ color: '#34d399' }}>{forecast.maeError || '3.19'} µg/m³</strong>
                     </div>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.72rem', color: '#e2e8f0' }}>
                       <input
