@@ -1220,7 +1220,7 @@ export default function DelhiAqiHeatmap() {
     }
   }, [getCameraPadding]);
 
-  // Geocoding search handler (supports cities, districts, and towns across India)
+  // Geocoding & landmark search handler (supports institutions, universities, POIs, cities, and towns)
   const handleSearchInput = async (val) => {
     setSearchQuery(val);
     if (!val || val.trim().length < 2) {
@@ -1230,40 +1230,123 @@ export default function DelhiAqiHeatmap() {
     }
 
     setIsSearching(true);
+    const cleanQuery = val.trim();
+    const queryLower = cleanQuery.toLowerCase();
+
+    // Map common aliases (e.g., "technical" -> "technological" for DTU, "iit" -> "Indian Institute of Technology")
+    let normalizedQuery = cleanQuery;
+    if (/\bdelhi technical university\b/i.test(normalizedQuery)) {
+      normalizedQuery = normalizedQuery.replace(/\bdelhi technical university\b/gi, 'Delhi Technological University');
+    }
+
     try {
+      const combinedResults = [];
+      const seenNames = new Set();
+
+      // 1. Instant Internal Station & Landmark Match (Zero network latency)
+      const internalMatches = stations
+        .filter((st) => {
+          const name = st.name.toLowerCase();
+          const zone = (st.zone || '').toLowerCase();
+          const state = (st.state || '').toLowerCase();
+          return (
+            name.includes(queryLower) ||
+            zone.includes(queryLower) ||
+            state.includes(queryLower) ||
+            (queryLower === 'dtu' && (name.includes('dtu') || name.includes('technological'))) ||
+            (queryLower.includes('technical') && name.includes('dtu'))
+          );
+        })
+        .slice(0, 3)
+        .map((st) => ({
+          id: `station-${st.id}`,
+          text: st.name,
+          place_name: `${st.name} (Monitoring Station, AQI: ${st.aqi})`,
+          center: [st.lon, st.lat],
+          isStation: true,
+          station: st,
+        }));
+
+      internalMatches.forEach((m) => {
+        seenNames.add(m.text.toLowerCase());
+        combinedResults.push(m);
+      });
+
+      // 2. Mapbox Live Geocoding (when Mapbox mode is active)
       if (isMapboxMode && mapboxgl.accessToken) {
         const token = mapboxgl.accessToken;
-        const res = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(val)}.json?access_token=${token}&country=in&types=place,locality,region&limit=6`
-        );
+        // Search POIs, addresses, neighborhoods, and places with Delhi proximity bias
+        const mbUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(normalizedQuery)}.json?access_token=${token}&country=in&proximity=77.2090,28.6139&limit=8`;
+        const res = await fetch(mbUrl);
         if (res.ok) {
           const json = await res.json();
           if (json.features) {
-            setSearchResults(json.features);
-            setShowSearchDropdown(true);
-            return;
+            json.features.forEach((f) => {
+              const nameKey = f.text.toLowerCase();
+              if (!seenNames.has(nameKey)) {
+                seenNames.add(nameKey);
+                combinedResults.push(f);
+              }
+            });
+          }
+        }
+      } else {
+        // 3. Standby Mode: Free High-Accuracy Geocoding via Photon with India/Delhi proximity bias
+        const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(normalizedQuery)}&lat=28.6139&lon=77.2090&limit=8`;
+        const res = await fetch(photonUrl);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.features) {
+            json.features.forEach((f) => {
+              const p = f.properties;
+              const title = p.name || cleanQuery;
+              const nameKey = title.toLowerCase();
+              if (!seenNames.has(nameKey)) {
+                seenNames.add(nameKey);
+                const subtitle = [p.name, p.street, p.district, p.city, p.state, p.country].filter(Boolean).join(', ');
+                combinedResults.push({
+                  id: p.osm_id || Math.random().toString(),
+                  text: title,
+                  place_name: subtitle,
+                  center: f.geometry.coordinates,
+                });
+              }
+            });
+          }
+        }
+
+        // Secondary fallback: if Photon gave no results for an institutional query, try Nominatim
+        if (combinedResults.length < 2) {
+          try {
+            const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(normalizedQuery)}&format=json&countrycodes=in&viewbox=76.8,28.9,77.4,28.4&bounded=0&limit=5`;
+            const nomRes = await fetch(nomUrl, { headers: { 'User-Agent': 'WMD-AQI-App/1.0' } });
+            if (nomRes.ok) {
+              const nomJson = await nomRes.json();
+              nomJson.forEach((n) => {
+                const parts = n.display_name.split(',');
+                const title = parts[0]?.trim() || cleanQuery;
+                const nameKey = title.toLowerCase();
+                if (!seenNames.has(nameKey)) {
+                  const pGeo = n.geojson || (n.geometry && n.geometry.type !== 'Point' ? n.geometry : null);
+                  combinedResults.push({
+                    id: n.osm_id || Math.random().toString(),
+                    text: title,
+                    place_name: n.display_name,
+                    center: [parseFloat(n.lon), parseFloat(n.lat)],
+                    bbox: n.boundingbox ? [parseFloat(n.boundingbox[2]), parseFloat(n.boundingbox[0]), parseFloat(n.boundingbox[3]), parseFloat(n.boundingbox[1])] : null,
+                    boundaryGeo: pGeo,
+                  });
+                }
+              });
+            }
+          } catch (ne) {
+            // Ignore Nominatim fallback error
           }
         }
       }
 
-      // Free Zero-Credit Geocoding via Photon / OpenStreetMap (0 Mapbox credits used)
-      const res = await fetch(
-        `https://photon.komoot.io/api/?q=${encodeURIComponent(val)}&limit=6`
-      );
-      if (res.ok) {
-        const json = await res.json();
-        if (json.features) {
-          const mapped = json.features.map((f) => ({
-            id: f.properties.osm_id || Math.random().toString(),
-            text: f.properties.name || val,
-            place_name: [f.properties.name, f.properties.city, f.properties.state, f.properties.country].filter(Boolean).join(', '),
-            center: f.geometry.coordinates,
-          }));
-          setSearchResults(mapped);
-          setShowSearchDropdown(true);
-          return;
-        }
-      }
+      setSearchResults(combinedResults.slice(0, 8));
+      setShowSearchDropdown(combinedResults.length > 0);
     } catch (err) {
       console.warn('Geocoding search failed:', err);
     } finally {
@@ -1271,18 +1354,113 @@ export default function DelhiAqiHeatmap() {
     }
   };
 
-  const handleSelectSearchedPlace = (feature) => {
-    const [lon, lat] = feature.center;
-    const customPreset = {
-      id: feature.id || feature.text.toLowerCase().replace(/\s+/g, '-'),
-      name: feature.text,
-      icon: '📍',
-      center: [lon, lat],
-      zoom: 10.5,
-      pitch: 24,
-      state: feature.place_name,
+  // Helper to generate a soft circular polygon boundary if an institution does not have a formal OSM polygon
+  const createSoftPerimeterGeoJson = (centerLng, centerLat, radiusMeters = 550) => {
+    const points = 64;
+    const coords = [];
+    const earthRadius = 6378137;
+    const dLat = (radiusMeters / earthRadius) * (180 / Math.PI);
+    const dLon = dLat / Math.cos((centerLat * Math.PI) / 180);
+
+    for (let i = 0; i <= points; i++) {
+      const theta = (i / points) * (2 * Math.PI);
+      const lon = centerLng + dLon * Math.cos(theta);
+      const lat = centerLat + dLat * Math.sin(theta);
+      coords.push([lon, lat]);
+    }
+    return {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [coords],
+          },
+          properties: {},
+        },
+      ],
     };
-    handleGlideToRegion(customPreset);
+  };
+
+  const handleSelectSearchedPlace = async (feature) => {
+    const [lon, lat] = feature.center;
+    setSearchQuery('');
+    setShowSearchDropdown(false);
+
+    if (feature.isStation && feature.station) {
+      handleSelectStation(feature.station);
+    }
+
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    // 1. Immediately turn ON the air quality heatmap layer if it was turned off
+    setShowHeatmapLayer(true);
+
+    // 2. Fetch polygon boundary in background if not already attached
+    let boundaryGeo = feature.boundaryGeo || null;
+    let targetBbox = feature.bbox || null;
+
+    if (!boundaryGeo) {
+      try {
+        const queryTerm = feature.text || feature.name || searchQuery;
+        const nomGeoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queryTerm)}&format=geojson&polygon_geojson=1&countrycodes=in&limit=1`;
+        const nRes = await fetch(nomGeoUrl, { headers: { 'User-Agent': 'WMD-AQI-App/1.0' } });
+        if (nRes.ok) {
+          const nJson = await nRes.json();
+          if (nJson.features?.[0]?.geometry?.type?.includes('Polygon')) {
+            boundaryGeo = {
+              type: 'FeatureCollection',
+              features: [nJson.features[0]],
+            };
+            if (nJson.features[0].bbox) {
+              targetBbox = nJson.features[0].bbox;
+            }
+          }
+        }
+      } catch (err) {
+        // Fallback to soft perimeter
+      }
+    }
+
+    // If still no polygon, create an elegant soft campus perimeter
+    if (!boundaryGeo) {
+      boundaryGeo = createSoftPerimeterGeoJson(lon, lat, 500);
+    }
+
+    // 3. Step 1: Smooth Glide & Zoom into the selected institution/zone
+    const targetZoom = targetBbox ? 14.8 : 15.2;
+    map.flyTo({
+      center: [lon, lat],
+      zoom: targetZoom,
+      pitch: 34,
+      bearing: 12,
+      speed: 1.15,
+      curve: 1.3,
+      padding: getCameraPadding(),
+      essential: true,
+    });
+
+    // 4. Step 2 & 3: Once arrived (or after smooth arrival flight), inject faded boundary + align heatmap
+    const onArrival = () => {
+      map.off('moveend', onArrival);
+      const bSource = map.getSource('selected-place-boundary-source');
+      if (bSource) {
+        bSource.setData(boundaryGeo);
+      }
+      updateRasterForViewportRef.current?.();
+    };
+
+    // If map is already close to location, trigger boundary shortly; otherwise wait for camera arrival
+    setTimeout(() => {
+      const bSource = map.getSource('selected-place-boundary-source');
+      if (bSource) {
+        bSource.setData(boundaryGeo);
+      }
+    }, 600);
+
+    map.on('moveend', onArrival);
   };
   const handleSelectSearchResult = handleSelectSearchedPlace;
 
@@ -1979,6 +2157,65 @@ export default function DelhiAqiHeatmap() {
             'line-width': 2.2,
             'line-opacity': 0.95,
             'line-dasharray': [3, 1.5],
+          },
+        },
+        labelLayerId || symbolLayerId
+      );
+
+      // 6.5 Soft Faded Selected Place / Institution Boundary
+      // Appears automatically when an institution or locality is searched/selected
+      // Opacity fades to 0 as you zoom out (vanishes on zoom-out <= 11, persists when zoomed in >= 12.5)
+      map.addSource('selected-place-boundary-source', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+
+      map.addLayer(
+        {
+          id: 'selected-place-boundary-fill',
+          type: 'fill',
+          source: 'selected-place-boundary-source',
+          paint: {
+            'fill-color': '#38bdf8',
+            'fill-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              10.8, 0,
+              11.8, 0.04,
+              13.5, 0.12,
+              16.0, 0.15,
+            ],
+          },
+        },
+        labelLayerId || symbolLayerId
+      );
+
+      map.addLayer(
+        {
+          id: 'selected-place-boundary-outline',
+          type: 'line',
+          source: 'selected-place-boundary-source',
+          paint: {
+            'line-color': '#38bdf8',
+            'line-width': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              11.0, 0.8,
+              13.5, 1.8,
+              16.0, 2.4,
+            ],
+            'line-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              11.0, 0,
+              12.0, 0.25,
+              13.5, 0.65,
+              15.5, 0.75,
+            ],
+            'line-dasharray': [3, 2],
           },
         },
         labelLayerId || symbolLayerId
