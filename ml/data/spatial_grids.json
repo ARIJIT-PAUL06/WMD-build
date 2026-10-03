@@ -11,7 +11,7 @@
       77.4
     ],
     "total_grids": 99,
-    "populated_grids_count": 8
+    "populated_grids_count": 23
   },
   "grids": {
     "GRID_R00_C00": {
@@ -433,15 +433,102 @@
       },
       "enclosed_facilities": [
         {
+          "id": "dps_vasant_kunj",
+          "name": "Delhi Public School, Vasant Kunj",
+          "lat": 28.5283,
+          "lon": 77.1524,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "South West Delhi",
+          "locality": "Sector C, Pocket 5, Vasant Kunj",
+          "emails": [
+            "principal@dpsvasantkunj.com",
+            "office@dpsvasantkunj.com"
+          ],
+          "primaryEmail": "principal@dpsvasantkunj.com",
+          "nodalOfficerEmail": "ddezone20@edudel.nic.in",
+          "phone": "+91-11-43261200",
+          "enrollmentOrBeds": 3900
+        },
+        {
+          "id": "mothers_international",
+          "name": "The Mother's International School",
+          "lat": 28.5398,
+          "lon": 77.1991,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "South Delhi",
+          "locality": "Sri Aurobindo Ashram, Sri Aurobindo Marg",
+          "emails": [
+            "info@themis.in",
+            "principal@themis.in"
+          ],
+          "primaryEmail": "principal@themis.in",
+          "nodalOfficerEmail": "ddezone23@edudel.nic.in",
+          "phone": "+91-11-26524817",
+          "enrollmentOrBeds": 2600
+        },
+        {
+          "id": "dav_vasant_kunj",
+          "name": "DAV Public School, Vasant Kunj",
+          "lat": 28.5271,
+          "lon": 77.1582,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "South West Delhi",
+          "locality": "Sector B, Pocket 1, Vasant Kunj",
+          "emails": [
+            "davschool@davvasantkunj.org",
+            "principal@davvasantkunj.org"
+          ],
+          "primaryEmail": "principal@davvasantkunj.org",
+          "nodalOfficerEmail": "ddezone20@edudel.nic.in",
+          "phone": "+91-11-26892800",
+          "enrollmentOrBeds": 2800
+        },
+        {
           "id": "iit_delhi",
           "name": "Indian Institute of Technology (IIT) Delhi",
           "lat": 28.545,
           "lon": 77.1926,
-          "type": "educational_institution",
-          "enrollment": 1500
+          "type": "University / Institute of Eminence",
+          "facilityClass": "school_or_university",
+          "category": "higher_education_central",
+          "district": "South Delhi",
+          "locality": "Hauz Khas",
+          "emails": [
+            "director@admin.iitd.ac.in",
+            "registrar@admin.iitd.ac.in"
+          ],
+          "primaryEmail": "director@admin.iitd.ac.in",
+          "nodalOfficerEmail": "dmsouth@nic.in",
+          "phone": "+91-11-26591000",
+          "enrollmentOrBeds": 11500
+        },
+        {
+          "id": "jnu_campus",
+          "name": "Jawaharlal Nehru University (JNU)",
+          "lat": 28.5398,
+          "lon": 77.1664,
+          "type": "Central University",
+          "facilityClass": "school_or_university",
+          "category": "higher_education_central",
+          "district": "South West Delhi",
+          "locality": "New Mehrauli Road, Near Munirka",
+          "emails": [
+            "registrar@mail.jnu.ac.in",
+            "vc@mail.jnu.ac.in"
+          ],
+          "primaryEmail": "registrar@mail.jnu.ac.in",
+          "nodalOfficerEmail": "dmsw@nic.in",
+          "phone": "+91-11-26704000",
+          "enrollmentOrBeds": 8500
         }
       ],
-      "facility_count": 1
+      "facility_count": 5
     },
     "GRID_R02_C06": {
       "grid_id": "GRID_R02_C06",
@@ -455,8 +542,66 @@
         "east": 77.25,
         "west": 77.2
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "apeejay_saket",
+          "name": "Apeejay School, Saket",
+          "lat": 28.5244,
+          "lon": 77.2118,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "South Delhi",
+          "locality": "Gurudwara Road, J-Block, Saket",
+          "emails": [
+            "skool.saket.del@apj.edu",
+            "principal.saket@apj.edu"
+          ],
+          "primaryEmail": "principal.saket@apj.edu",
+          "nodalOfficerEmail": "ddezone23@edudel.nic.in",
+          "phone": "+91-11-29555208",
+          "enrollmentOrBeds": 2400
+        },
+        {
+          "id": "amity_pushp_vihar",
+          "name": "Amity International School, Pushp Vihar",
+          "lat": 28.5289,
+          "lon": 77.2234,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "South Delhi",
+          "locality": "Sector 7, Pushp Vihar, Saket",
+          "emails": [
+            "ais_pushpvihar@amity.edu",
+            "principal@aispv.amity.edu"
+          ],
+          "primaryEmail": "principal@aispv.amity.edu",
+          "nodalOfficerEmail": "ddezone23@edudel.nic.in",
+          "phone": "+91-11-29561561",
+          "enrollmentOrBeds": 3200
+        },
+        {
+          "id": "max_saket",
+          "name": "Max Super Speciality Hospital, Saket",
+          "lat": 28.5275,
+          "lon": 77.2125,
+          "type": "Super Speciality Tertiary Hospital",
+          "facilityClass": "healthcare_facility",
+          "category": "healthcare_private",
+          "district": "South Delhi",
+          "locality": "1, 2, Press Enclave Marg, Saket",
+          "emails": [
+            "customercare.saket@maxhealthcare.com",
+            "medsuper.saket@maxhealthcare.com"
+          ],
+          "primaryEmail": "medsuper.saket@maxhealthcare.com",
+          "nodalOfficerEmail": "dmsouth@nic.in",
+          "phone": "+91-11-26515050",
+          "enrollmentOrBeds": 530
+        }
+      ],
+      "facility_count": 3
     },
     "GRID_R02_C07": {
       "grid_id": "GRID_R02_C07",
@@ -470,8 +615,47 @@
         "east": 77.3,
         "west": 77.25
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "iiit_delhi",
+          "name": "Indraprastha Institute of Information Technology (IIIT-Delhi)",
+          "lat": 28.5445,
+          "lon": 77.2725,
+          "type": "State Autonomous Institute",
+          "facilityClass": "school_or_university",
+          "category": "higher_education_state",
+          "district": "South East Delhi",
+          "locality": "Okhla Industrial Estate, Phase III",
+          "emails": [
+            "admin@iiitd.ac.in",
+            "director@iiitd.ac.in"
+          ],
+          "primaryEmail": "director@iiitd.ac.in",
+          "nodalOfficerEmail": "dmse@nic.in",
+          "phone": "+91-11-26907400",
+          "enrollmentOrBeds": 3200
+        },
+        {
+          "id": "apollo_sarita_vihar",
+          "name": "Indraprastha Apollo Hospitals",
+          "lat": 28.5368,
+          "lon": 77.2942,
+          "type": "Multi-Speciality Tertiary Hospital",
+          "facilityClass": "healthcare_facility",
+          "category": "healthcare_private",
+          "district": "South East Delhi",
+          "locality": "Delhi-Mathura Road, Sarita Vihar",
+          "emails": [
+            "assistance@apollohospitalsdelhi.com",
+            "ms.delhi@apollohospitals.com"
+          ],
+          "primaryEmail": "ms.delhi@apollohospitals.com",
+          "nodalOfficerEmail": "dmse@nic.in",
+          "phone": "+91-11-26925858",
+          "enrollmentOrBeds": 710
+        }
+      ],
+      "facility_count": 2
     },
     "GRID_R02_C08": {
       "grid_id": "GRID_R02_C08",
@@ -485,17 +669,8 @@
         "east": 77.35,
         "west": 77.3
       },
-      "enclosed_facilities": [
-        {
-          "id": "amity_noida",
-          "name": "Amity International School & University",
-          "lat": 28.544,
-          "lon": 77.3331,
-          "type": "educational_institution",
-          "enrollment": 1500
-        }
-      ],
-      "facility_count": 1
+      "enclosed_facilities": [],
+      "facility_count": 0
     },
     "GRID_R02_C09": {
       "grid_id": "GRID_R02_C09",
@@ -569,8 +744,47 @@
         "east": 77.05,
         "west": 77.0
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "venkateshwar_dwarka",
+          "name": "Venkateshwar International School, Dwarka",
+          "lat": 28.5862,
+          "lon": 77.0418,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "South West Delhi",
+          "locality": "Sector 18, Dwarka",
+          "emails": [
+            "info@vis18.com",
+            "principal@vis18.com"
+          ],
+          "primaryEmail": "principal@vis18.com",
+          "nodalOfficerEmail": "ddezone21@edudel.nic.in",
+          "phone": "+91-11-28081996",
+          "enrollmentOrBeds": 3100
+        },
+        {
+          "id": "ggsipu_dwarka",
+          "name": "Guru Gobind Singh Indraprastha University (GGSIPU)",
+          "lat": 28.595,
+          "lon": 77.0195,
+          "type": "State University",
+          "facilityClass": "school_or_university",
+          "category": "higher_education_state",
+          "district": "South West Delhi",
+          "locality": "Sector 16C, Dwarka",
+          "emails": [
+            "registrar@ipu.ac.in",
+            "vc@ipu.ac.in"
+          ],
+          "primaryEmail": "registrar@ipu.ac.in",
+          "nodalOfficerEmail": "dmsw@nic.in",
+          "phone": "+91-11-25302170",
+          "enrollmentOrBeds": 16000
+        }
+      ],
+      "facility_count": 2
     },
     "GRID_R03_C03": {
       "grid_id": "GRID_R03_C03",
@@ -584,8 +798,28 @@
         "east": 77.1,
         "west": 77.05
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "rpvv_dwarka_sec10",
+          "name": "RPVV, Sector 10 Dwarka",
+          "lat": 28.5812,
+          "lon": 77.0545,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "government_doe",
+          "district": "South West Delhi",
+          "locality": "Sector 10, Dwarka",
+          "emails": [
+            "rpvvdwarka@gmail.com",
+            "school.1821137@edudel.nic.in"
+          ],
+          "primaryEmail": "school.1821137@edudel.nic.in",
+          "nodalOfficerEmail": "ddezone21@edudel.nic.in",
+          "phone": "+91-11-28080277",
+          "enrollmentOrBeds": 1400
+        }
+      ],
+      "facility_count": 1
     },
     "GRID_R03_C04": {
       "grid_id": "GRID_R03_C04",
@@ -599,8 +833,47 @@
         "east": 77.15,
         "west": 77.1
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "mount_st_marys",
+          "name": "Mount St. Mary's School, Delhi Cantt",
+          "lat": 28.5886,
+          "lon": 77.1325,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "South West Delhi",
+          "locality": "75, Parade Road, Delhi Cantonment",
+          "emails": [
+            "msmschool@gmail.com",
+            "principal@msmschool.net"
+          ],
+          "primaryEmail": "principal@msmschool.net",
+          "nodalOfficerEmail": "ddezone20@edudel.nic.in",
+          "phone": "+91-11-25692002",
+          "enrollmentOrBeds": 2700
+        },
+        {
+          "id": "kendriya_vidyalaya_cantt_1",
+          "name": "Kendriya Vidyalaya No. 1, Delhi Cantt",
+          "lat": 28.5982,
+          "lon": 77.1264,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "government_kv",
+          "district": "South West Delhi",
+          "locality": "Sadhu Vaswani Marg, Delhi Cantonment",
+          "emails": [
+            "kv1cantt@gmail.com",
+            "principalkv1dc@gmail.com"
+          ],
+          "primaryEmail": "kv1cantt@gmail.com",
+          "nodalOfficerEmail": "ddezone20@edudel.nic.in",
+          "phone": "+91-11-25692258",
+          "enrollmentOrBeds": 3100
+        }
+      ],
+      "facility_count": 2
     },
     "GRID_R03_C05": {
       "grid_id": "GRID_R03_C05",
@@ -620,11 +893,136 @@
           "name": "Delhi Public School, R.K. Puram",
           "lat": 28.5684,
           "lon": 77.1788,
-          "type": "educational_institution",
-          "enrollment": 1500
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "South West Delhi",
+          "locality": "Sector 12, R.K. Puram",
+          "emails": [
+            "principal@dpsrkp.net",
+            "admin@dpsrkp.net"
+          ],
+          "primaryEmail": "principal@dpsrkp.net",
+          "nodalOfficerEmail": "ddezone20@edudel.nic.in",
+          "phone": "+91-11-49115555",
+          "enrollmentOrBeds": 4200
+        },
+        {
+          "id": "modern_vasant_vihar",
+          "name": "Modern School, Vasant Vihar",
+          "lat": 28.5562,
+          "lon": 77.1597,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "South West Delhi",
+          "locality": "Poorvi Marg, Vasant Vihar",
+          "emails": [
+            "msvv@modernschool.net",
+            "principal@msvv.net"
+          ],
+          "primaryEmail": "msvv@modernschool.net",
+          "nodalOfficerEmail": "ddezone20@edudel.nic.in",
+          "phone": "+91-11-26144822",
+          "enrollmentOrBeds": 2400
+        },
+        {
+          "id": "sanskriti_school",
+          "name": "Sanskriti School, Chanakyapuri",
+          "lat": 28.5912,
+          "lon": 77.1783,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "New Delhi",
+          "locality": "Dr. S. Radhakrishnan Marg, Chanakyapuri",
+          "emails": [
+            "school@sanskritischool.edu.in",
+            "principal@sanskritischool.edu.in"
+          ],
+          "primaryEmail": "principal@sanskritischool.edu.in",
+          "nodalOfficerEmail": "ddezone26@edudel.nic.in",
+          "phone": "+91-11-26883335",
+          "enrollmentOrBeds": 2700
+        },
+        {
+          "id": "springdales_dhaula_kuan",
+          "name": "Springdales School, Dhaula Kuan",
+          "lat": 28.5833,
+          "lon": 77.1652,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "South West Delhi",
+          "locality": "Benito Juarez Marg, Dhaula Kuan",
+          "emails": [
+            "springdales@springdales.com",
+            "principal@springdales.com"
+          ],
+          "primaryEmail": "principal@springdales.com",
+          "nodalOfficerEmail": "ddezone20@edudel.nic.in",
+          "phone": "+91-11-24116657",
+          "enrollmentOrBeds": 2900
+        },
+        {
+          "id": "tagore_vasant_vihar",
+          "name": "Tagore International School, Vasant Vihar",
+          "lat": 28.5588,
+          "lon": 77.1512,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "South West Delhi",
+          "locality": "Paschimi Marg, Vasant Vihar",
+          "emails": [
+            "info@tagoreint.com",
+            "principalvv@tagoreint.com"
+          ],
+          "primaryEmail": "principalvv@tagoreint.com",
+          "nodalOfficerEmail": "ddezone20@edudel.nic.in",
+          "phone": "+91-11-26142966",
+          "enrollmentOrBeds": 2100
+        },
+        {
+          "id": "air_force_golden_jubilee",
+          "name": "Air Force Golden Jubilee Institute",
+          "lat": 28.5794,
+          "lon": 77.1542,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "South West Delhi",
+          "locality": "Subroto Park, Near Dhaula Kuan",
+          "emails": [
+            "afgji@yahoo.co.in",
+            "principal@afgji.in"
+          ],
+          "primaryEmail": "principal@afgji.in",
+          "nodalOfficerEmail": "ddezone20@edudel.nic.in",
+          "phone": "+91-11-25693158",
+          "enrollmentOrBeds": 2800
+        },
+        {
+          "id": "delhi_university_south",
+          "name": "University of Delhi (South Campus)",
+          "lat": 28.5842,
+          "lon": 77.1614,
+          "type": "Central University",
+          "facilityClass": "school_or_university",
+          "category": "higher_education_central",
+          "district": "South West Delhi",
+          "locality": "Benito Juarez Marg, Dhaula Kuan",
+          "emails": [
+            "dir_udsc@du.ac.in",
+            "jointregistrar_udsc@du.ac.in"
+          ],
+          "primaryEmail": "dir_udsc@du.ac.in",
+          "nodalOfficerEmail": "dmsw@nic.in",
+          "phone": "+91-11-24111955",
+          "enrollmentOrBeds": 18000
         }
       ],
-      "facility_count": 1
+      "facility_count": 7
     },
     "GRID_R03_C06": {
       "grid_id": "GRID_R03_C06",
@@ -640,15 +1038,121 @@
       },
       "enclosed_facilities": [
         {
+          "id": "sardar_patel_vidyalaya",
+          "name": "Sardar Patel Vidyalaya, Lodi Estate",
+          "lat": 28.5968,
+          "lon": 77.2274,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "New Delhi",
+          "locality": "Lodi Estate, Near Khan Market",
+          "emails": [
+            "admin@spvdelhi.org",
+            "principal@spvdelhi.org"
+          ],
+          "primaryEmail": "principal@spvdelhi.org",
+          "nodalOfficerEmail": "ddezone26@edudel.nic.in",
+          "phone": "+91-11-24627347",
+          "enrollmentOrBeds": 2200
+        },
+        {
+          "id": "father_agnel",
+          "name": "Father Agnel School, Gautam Nagar",
+          "lat": 28.5662,
+          "lon": 77.2185,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "South Delhi",
+          "locality": "Gautam Nagar, Near AIIMS",
+          "emails": [
+            "info@agneldelhi.org",
+            "principal@agneldelhi.org"
+          ],
+          "primaryEmail": "principal@agneldelhi.org",
+          "nodalOfficerEmail": "ddezone23@edudel.nic.in",
+          "phone": "+91-11-26567540",
+          "enrollmentOrBeds": 2500
+        },
+        {
           "id": "kendriya_vidyalaya_ina",
           "name": "Kendriya Vidyalaya, INA Colony",
           "lat": 28.5772,
           "lon": 77.2114,
-          "type": "educational_institution",
-          "enrollment": 1500
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "government_kv",
+          "district": "South Delhi",
+          "locality": "INA Colony, Near AIIMS Metro",
+          "emails": [
+            "kv_ina@yahoo.co.in",
+            "principal.kvina@gmail.com"
+          ],
+          "primaryEmail": "principal.kvina@gmail.com",
+          "nodalOfficerEmail": "ddezone23@edudel.nic.in",
+          "phone": "+91-11-24623190",
+          "enrollmentOrBeds": 2600
+        },
+        {
+          "id": "kendriya_vidyalaya_andrews_ganj",
+          "name": "Kendriya Vidyalaya, Andrews Ganj",
+          "lat": 28.5668,
+          "lon": 77.2341,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "government_kv",
+          "district": "South Delhi",
+          "locality": "Andrews Ganj, Near Moolchand",
+          "emails": [
+            "kvaganj@gmail.com",
+            "principalkvag@gmail.com"
+          ],
+          "primaryEmail": "kvaganj@gmail.com",
+          "nodalOfficerEmail": "ddezone23@edudel.nic.in",
+          "phone": "+91-11-26252994",
+          "enrollmentOrBeds": 2700
+        },
+        {
+          "id": "aiims_delhi",
+          "name": "All India Institute of Medical Sciences (AIIMS)",
+          "lat": 28.5672,
+          "lon": 77.21,
+          "type": "Apex Autonomous Healthcare & Research Institute",
+          "facilityClass": "healthcare_facility",
+          "category": "healthcare_apex_govt",
+          "district": "South Delhi",
+          "locality": "Ansari Nagar, Sri Aurobindo Marg",
+          "emails": [
+            "director@aiims.edu",
+            "ms@aiims.edu"
+          ],
+          "primaryEmail": "director@aiims.edu",
+          "nodalOfficerEmail": "dmsouth@nic.in",
+          "phone": "+91-11-26588500",
+          "enrollmentOrBeds": 2500
+        },
+        {
+          "id": "safdarjung_hospital",
+          "name": "Safdarjung Hospital & VMMC",
+          "lat": 28.5702,
+          "lon": 77.2075,
+          "type": "Central Government Hospital",
+          "facilityClass": "healthcare_facility",
+          "category": "healthcare_central_govt",
+          "district": "South Delhi",
+          "locality": "Ring Road, Opposite AIIMS",
+          "emails": [
+            "ms.safdarjung@nic.in",
+            "safdarjung.hospital@gov.in"
+          ],
+          "primaryEmail": "ms.safdarjung@nic.in",
+          "nodalOfficerEmail": "dmsouth@nic.in",
+          "phone": "+91-11-26707444",
+          "enrollmentOrBeds": 2900
         }
       ],
-      "facility_count": 1
+      "facility_count": 6
     },
     "GRID_R03_C07": {
       "grid_id": "GRID_R03_C07",
@@ -662,8 +1166,47 @@
         "east": 77.3,
         "west": 77.25
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "jamia_millia_islamia",
+          "name": "Jamia Millia Islamia",
+          "lat": 28.5616,
+          "lon": 77.2802,
+          "type": "Central University",
+          "facilityClass": "school_or_university",
+          "category": "higher_education_central",
+          "district": "South East Delhi",
+          "locality": "Jamia Nagar, Okhla",
+          "emails": [
+            "registrar@jmi.ac.in",
+            "vc@jmi.ac.in"
+          ],
+          "primaryEmail": "registrar@jmi.ac.in",
+          "nodalOfficerEmail": "dmse@nic.in",
+          "phone": "+91-11-26981717",
+          "enrollmentOrBeds": 21000
+        },
+        {
+          "id": "fortis_escorts_okhla",
+          "name": "Fortis Escorts Heart Institute",
+          "lat": 28.5605,
+          "lon": 77.2785,
+          "type": "Cardiac & Multi-Speciality Hospital",
+          "facilityClass": "healthcare_facility",
+          "category": "healthcare_private",
+          "district": "South East Delhi",
+          "locality": "Okhla Road, Sukhdev Vihar Metro",
+          "emails": [
+            "contactus.fehi@fortishealthcare.com",
+            "ms.fehi@fortishealthcare.com"
+          ],
+          "primaryEmail": "contactus.fehi@fortishealthcare.com",
+          "nodalOfficerEmail": "dmse@nic.in",
+          "phone": "+91-11-47135000",
+          "enrollmentOrBeds": 310
+        }
+      ],
+      "facility_count": 2
     },
     "GRID_R03_C08": {
       "grid_id": "GRID_R03_C08",
@@ -677,8 +1220,28 @@
         "east": 77.35,
         "west": 77.3
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "amity_mayur_vihar",
+          "name": "Amity International School, Mayur Vihar",
+          "lat": 28.5982,
+          "lon": 77.3012,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "East Delhi",
+          "locality": "Mayur Vihar Phase 1, Near Chilla Sports Complex",
+          "emails": [
+            "ais_mayurvihar@amity.edu",
+            "principal@aismv.amity.edu"
+          ],
+          "primaryEmail": "principal@aismv.amity.edu",
+          "nodalOfficerEmail": "ddezone02@edudel.nic.in",
+          "phone": "+91-11-22717261",
+          "enrollmentOrBeds": 2600
+        }
+      ],
+      "facility_count": 1
     },
     "GRID_R03_C09": {
       "grid_id": "GRID_R03_C09",
@@ -752,8 +1315,47 @@
         "east": 77.05,
         "west": 77.0
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "dps_dwarka_sec3",
+          "name": "Delhi Public School, Dwarka",
+          "lat": 28.6044,
+          "lon": 77.0425,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "South West Delhi",
+          "locality": "Sector 3, Phase 1, Dwarka",
+          "emails": [
+            "dpsdwarka@gmail.com",
+            "principal@dpsdwarka.com"
+          ],
+          "primaryEmail": "principal@dpsdwarka.com",
+          "nodalOfficerEmail": "ddezone21@edudel.nic.in",
+          "phone": "+91-11-25074472",
+          "enrollmentOrBeds": 3600
+        },
+        {
+          "id": "nsut_dwarka",
+          "name": "Netaji Subhas University of Technology (NSUT)",
+          "lat": 28.6075,
+          "lon": 77.0345,
+          "type": "State Technological University",
+          "facilityClass": "school_or_university",
+          "category": "higher_education_state",
+          "district": "South West Delhi",
+          "locality": "Sector 3, Dwarka",
+          "emails": [
+            "registrar@nsut.ac.in",
+            "vc@nsut.ac.in"
+          ],
+          "primaryEmail": "registrar@nsut.ac.in",
+          "nodalOfficerEmail": "dmsw@nic.in",
+          "phone": "+91-11-25000000",
+          "enrollmentOrBeds": 9200
+        }
+      ],
+      "facility_count": 2
     },
     "GRID_R04_C03": {
       "grid_id": "GRID_R04_C03",
@@ -767,8 +1369,28 @@
         "east": 77.1,
         "west": 77.05
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "mira_model_janakpuri",
+          "name": "Mira Model School, Janakpuri",
+          "lat": 28.6256,
+          "lon": 77.0864,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "West Delhi",
+          "locality": "B-Block, Janakpuri",
+          "emails": [
+            "miramodelschool@gmail.com",
+            "principal@miramodel.com"
+          ],
+          "primaryEmail": "miramodelschool@gmail.com",
+          "nodalOfficerEmail": "ddezone18@edudel.nic.in",
+          "phone": "+91-11-25500966",
+          "enrollmentOrBeds": 2400
+        }
+      ],
+      "facility_count": 1
     },
     "GRID_R04_C04": {
       "grid_id": "GRID_R04_C04",
@@ -782,8 +1404,28 @@
         "east": 77.15,
         "west": 77.1
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "kendriya_vidyalaya_tagore_garden",
+          "name": "Kendriya Vidyalaya, Tagore Garden",
+          "lat": 28.6472,
+          "lon": 77.1128,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "government_kv",
+          "district": "West Delhi",
+          "locality": "Near Metro Station, Tagore Garden",
+          "emails": [
+            "kvtagoregarden@gmail.com",
+            "principalkvtg@gmail.com"
+          ],
+          "primaryEmail": "kvtagoregarden@gmail.com",
+          "nodalOfficerEmail": "ddezone17@edudel.nic.in",
+          "phone": "+91-11-25442588",
+          "enrollmentOrBeds": 2500
+        }
+      ],
+      "facility_count": 1
     },
     "GRID_R04_C05": {
       "grid_id": "GRID_R04_C05",
@@ -797,8 +1439,85 @@
         "east": 77.2,
         "west": 77.15
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "springdales_pusa_road",
+          "name": "Springdales School, Pusa Road",
+          "lat": 28.6433,
+          "lon": 77.1822,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "Central Delhi",
+          "locality": "Upper Ridge Road, Pusa Road Junction",
+          "emails": [
+            "springdales@springdalespusa.com",
+            "principal@springdalespusa.com"
+          ],
+          "primaryEmail": "principal@springdalespusa.com",
+          "nodalOfficerEmail": "ddezone27@edudel.nic.in",
+          "phone": "+91-11-25743248",
+          "enrollmentOrBeds": 2800
+        },
+        {
+          "id": "bal_bharati_ganga_ram",
+          "name": "Bal Bharati Public School, GRH Marg",
+          "lat": 28.6418,
+          "lon": 77.1912,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "Central Delhi",
+          "locality": "Sir Ganga Ram Hospital Marg, Rajinder Nagar",
+          "emails": [
+            "bbpsgrh@balbharati.org",
+            "principal@balbharati.org"
+          ],
+          "primaryEmail": "principal@balbharati.org",
+          "nodalOfficerEmail": "ddezone27@edudel.nic.in",
+          "phone": "+91-11-25786897",
+          "enrollmentOrBeds": 3500
+        },
+        {
+          "id": "rml_hospital",
+          "name": "Dr. Ram Manohar Lohia (RML) Hospital & ABVIMS",
+          "lat": 28.6252,
+          "lon": 77.1995,
+          "type": "Central Government Hospital",
+          "facilityClass": "healthcare_facility",
+          "category": "healthcare_central_govt",
+          "district": "New Delhi",
+          "locality": "Baba Kharak Singh Marg, Near Connaught Place",
+          "emails": [
+            "director-rmlh@nic.in",
+            "ms-rmlh@nic.in"
+          ],
+          "primaryEmail": "director-rmlh@nic.in",
+          "nodalOfficerEmail": "dmnewdelhi@nic.in",
+          "phone": "+91-11-23365525",
+          "enrollmentOrBeds": 1500
+        },
+        {
+          "id": "sir_ganga_ram_hospital",
+          "name": "Sir Ganga Ram Hospital",
+          "lat": 28.6385,
+          "lon": 77.1895,
+          "type": "Multi-Speciality Tertiary Hospital",
+          "facilityClass": "healthcare_facility",
+          "category": "healthcare_private_trust",
+          "district": "Central Delhi",
+          "locality": "Rajinder Nagar",
+          "emails": [
+            "gangaram@sgrh.com",
+            "chairman@sgrh.com"
+          ],
+          "primaryEmail": "gangaram@sgrh.com",
+          "nodalOfficerEmail": "dmcentral@nic.in",
+          "phone": "+91-11-25750000",
+          "enrollmentOrBeds": 675
+        }
+      ],
+      "facility_count": 4
     },
     "GRID_R04_C06": {
       "grid_id": "GRID_R04_C06",
@@ -818,11 +1537,98 @@
           "name": "Modern School, Barakhamba Road",
           "lat": 28.6315,
           "lon": 77.2284,
-          "type": "educational_institution",
-          "enrollment": 1500
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "New Delhi",
+          "locality": "Barakhamba Road, Connaught Place",
+          "emails": [
+            "principal@modernschool.net",
+            "office@modernschool.net"
+          ],
+          "primaryEmail": "principal@modernschool.net",
+          "nodalOfficerEmail": "ddezone26@edudel.nic.in",
+          "phone": "+91-11-23311618",
+          "enrollmentOrBeds": 2900
+        },
+        {
+          "id": "dps_mathura_road",
+          "name": "Delhi Public School, Mathura Road",
+          "lat": 28.6041,
+          "lon": 77.2435,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "South East Delhi",
+          "locality": "Mathura Road, Near Delhi Zoo",
+          "emails": [
+            "mainoffice@dpsmathuraroad.org",
+            "principal@dpsmathuraroad.org"
+          ],
+          "primaryEmail": "principal@dpsmathuraroad.org",
+          "nodalOfficerEmail": "ddezone25@edudel.nic.in",
+          "phone": "+91-11-43399200",
+          "enrollmentOrBeds": 4500
+        },
+        {
+          "id": "st_columbas",
+          "name": "St. Columba's School, Ashok Place",
+          "lat": 28.6253,
+          "lon": 77.2081,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "New Delhi",
+          "locality": "1, Ashok Place, Near Gol Dak Khana",
+          "emails": [
+            "admin@stcolumbas.net",
+            "principal@stcolumbas.net"
+          ],
+          "primaryEmail": "principal@stcolumbas.net",
+          "nodalOfficerEmail": "ddezone26@edudel.nic.in",
+          "phone": "+91-11-23363462",
+          "enrollmentOrBeds": 3100
+        },
+        {
+          "id": "convent_jesus_mary",
+          "name": "Convent of Jesus and Mary, New Delhi",
+          "lat": 28.6268,
+          "lon": 77.2096,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "New Delhi",
+          "locality": "Bangla Sahib Marg, Connaught Place Area",
+          "emails": [
+            "cjmnewdelhi@gmail.com",
+            "principal@cjmnewdelhi.in"
+          ],
+          "primaryEmail": "cjmnewdelhi@gmail.com",
+          "nodalOfficerEmail": "ddezone26@edudel.nic.in",
+          "phone": "+91-11-23366762",
+          "enrollmentOrBeds": 2300
+        },
+        {
+          "id": "lnjp_hospital",
+          "name": "Lok Nayak Jai Prakash Narayan (LNJP) Hospital",
+          "lat": 28.638,
+          "lon": 77.2405,
+          "type": "Delhi Government Tertiary Hospital",
+          "facilityClass": "healthcare_facility",
+          "category": "healthcare_state_govt",
+          "district": "Central Delhi",
+          "locality": "Jawaharlal Nehru Marg, Delhi Gate",
+          "emails": [
+            "mslnjp@delhi.gov.in",
+            "mamc_lnjp@yahoo.co.in"
+          ],
+          "primaryEmail": "mslnjp@delhi.gov.in",
+          "nodalOfficerEmail": "dmcentral@nic.in",
+          "phone": "+91-11-23233000",
+          "enrollmentOrBeds": 2000
         }
       ],
-      "facility_count": 1
+      "facility_count": 5
     },
     "GRID_R04_C07": {
       "grid_id": "GRID_R04_C07",
@@ -836,8 +1642,28 @@
         "east": 77.3,
         "west": 77.25
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "ahlcon_international",
+          "name": "Ahlcon International School, Mayur Vihar",
+          "lat": 28.6015,
+          "lon": 77.2974,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "East Delhi",
+          "locality": "Mayur Vihar Phase 1",
+          "emails": [
+            "contact@ahlconinternational.com",
+            "principal@ahlconinternational.com"
+          ],
+          "primaryEmail": "principal@ahlconinternational.com",
+          "nodalOfficerEmail": "ddezone02@edudel.nic.in",
+          "phone": "+91-11-47770777",
+          "enrollmentOrBeds": 2700
+        }
+      ],
+      "facility_count": 1
     },
     "GRID_R04_C08": {
       "grid_id": "GRID_R04_C08",
@@ -851,8 +1677,28 @@
         "east": 77.35,
         "west": 77.3
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "skv_anand_vihar",
+          "name": "Sarvodaya Kanya Vidyalaya, Anand Vihar",
+          "lat": 28.6492,
+          "lon": 77.3142,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "government_doe",
+          "district": "East Delhi",
+          "locality": "Near Railway Station, Anand Vihar",
+          "emails": [
+            "skvanandvihar@edudel.nic.in",
+            "school.1001004@edudel.nic.in"
+          ],
+          "primaryEmail": "school.1001004@edudel.nic.in",
+          "nodalOfficerEmail": "ddezone01@edudel.nic.in",
+          "phone": "+91-11-22143522",
+          "enrollmentOrBeds": 2100
+        }
+      ],
+      "facility_count": 1
     },
     "GRID_R04_C09": {
       "grid_id": "GRID_R04_C09",
@@ -956,8 +1802,47 @@
         "east": 77.15,
         "west": 77.1
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "bal_bharati_pitampura",
+          "name": "Bal Bharati Public School, Pitampura",
+          "lat": 28.6975,
+          "lon": 77.1324,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "North West Delhi",
+          "locality": "Parwana Road, Pitampura",
+          "emails": [
+            "bbpspp@balbharati.org",
+            "principal@bbpspp.balbharati.org"
+          ],
+          "primaryEmail": "principal@bbpspp.balbharati.org",
+          "nodalOfficerEmail": "ddezone09@edudel.nic.in",
+          "phone": "+91-11-27028600",
+          "enrollmentOrBeds": 3300
+        },
+        {
+          "id": "apeejay_pitampura",
+          "name": "Apeejay School, Pitampura",
+          "lat": 28.6882,
+          "lon": 77.1265,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "North West Delhi",
+          "locality": "Plot 10, Road 42, Sainik Vihar, Pitampura",
+          "emails": [
+            "skool.pp.del@apj.edu",
+            "principal.pp@apj.edu"
+          ],
+          "primaryEmail": "principal.pp@apj.edu",
+          "nodalOfficerEmail": "ddezone09@edudel.nic.in",
+          "phone": "+91-11-27022140",
+          "enrollmentOrBeds": 2600
+        }
+      ],
+      "facility_count": 2
     },
     "GRID_R05_C05": {
       "grid_id": "GRID_R05_C05",
@@ -988,15 +1873,45 @@
       },
       "enclosed_facilities": [
         {
+          "id": "rpvv_civil_lines",
+          "name": "RPVV, Civil Lines",
+          "lat": 28.6756,
+          "lon": 77.2218,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "government_doe",
+          "district": "North Delhi",
+          "locality": "Raj Niwas Marg, Ludlow Castle, Civil Lines",
+          "emails": [
+            "rpvvcivillines@gmail.com",
+            "school.1207113@edudel.nic.in"
+          ],
+          "primaryEmail": "school.1207113@edudel.nic.in",
+          "nodalOfficerEmail": "ddezone07@edudel.nic.in",
+          "phone": "+91-11-23981146",
+          "enrollmentOrBeds": 1300
+        },
+        {
           "id": "delhi_university_north",
           "name": "University of Delhi (North Campus)",
-          "lat": 28.6892,
-          "lon": 77.2104,
-          "type": "educational_institution",
-          "enrollment": 1500
+          "lat": 28.689,
+          "lon": 77.21,
+          "type": "Central University",
+          "facilityClass": "school_or_university",
+          "category": "higher_education_central",
+          "district": "North Delhi",
+          "locality": "Vishwavidyalaya Marg, North Delhi",
+          "emails": [
+            "registrar@du.ac.in",
+            "vc@du.ac.in"
+          ],
+          "primaryEmail": "registrar@du.ac.in",
+          "nodalOfficerEmail": "dmnorth@nic.in",
+          "phone": "+91-11-27006900",
+          "enrollmentOrBeds": 35000
         }
       ],
-      "facility_count": 1
+      "facility_count": 2
     },
     "GRID_R05_C07": {
       "grid_id": "GRID_R05_C07",
@@ -1031,11 +1946,60 @@
           "name": "DAV Public School, Shreshtha Vihar",
           "lat": 28.6534,
           "lon": 77.3082,
-          "type": "educational_institution",
-          "enrollment": 1500
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "East Delhi",
+          "locality": "Shreshtha Vihar, Anand Vihar",
+          "emails": [
+            "davsv@davsvdelhi.org",
+            "principal@davsvdelhi.org"
+          ],
+          "primaryEmail": "principal@davsvdelhi.org",
+          "nodalOfficerEmail": "ddezone02@edudel.nic.in",
+          "phone": "+91-11-22153874",
+          "enrollmentOrBeds": 3400
+        },
+        {
+          "id": "gtb_hospital",
+          "name": "Guru Teg Bahadur (GTB) Hospital & UCMS",
+          "lat": 28.6845,
+          "lon": 77.3115,
+          "type": "Delhi Government Hospital",
+          "facilityClass": "healthcare_facility",
+          "category": "healthcare_state_govt",
+          "district": "Shahdara",
+          "locality": "Dilshad Garden, East Delhi",
+          "emails": [
+            "msgtbh@delhi.gov.in",
+            "gtbhhospital@gmail.com"
+          ],
+          "primaryEmail": "msgtbh@delhi.gov.in",
+          "nodalOfficerEmail": "dmshahdara@nic.in",
+          "phone": "+91-11-22586262",
+          "enrollmentOrBeds": 1500
+        },
+        {
+          "id": "rajiv_gandhi_super_speciality",
+          "name": "Rajiv Gandhi Super Speciality Hospital",
+          "lat": 28.6854,
+          "lon": 77.3245,
+          "type": "Delhi Government Super Speciality Hospital",
+          "facilityClass": "healthcare_facility",
+          "category": "healthcare_state_govt",
+          "district": "East Delhi",
+          "locality": "Taharpur, Dilshad Garden",
+          "emails": [
+            "rgssh.delhi@gmail.com",
+            "msrgssh@delhi.gov.in"
+          ],
+          "primaryEmail": "msrgssh@delhi.gov.in",
+          "nodalOfficerEmail": "dmeast@nic.in",
+          "phone": "+91-11-22890604",
+          "enrollmentOrBeds": 650
         }
       ],
-      "facility_count": 1
+      "facility_count": 3
     },
     "GRID_R05_C09": {
       "grid_id": "GRID_R05_C09",
@@ -1145,11 +2109,79 @@
           "name": "Delhi Public School, Rohini",
           "lat": 28.7188,
           "lon": 77.1064,
-          "type": "educational_institution",
-          "enrollment": 1500
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "North West Delhi",
+          "locality": "Sector 24, Phase III, Rohini",
+          "emails": [
+            "principal@dpsrohini.com",
+            "contactus@dpsrohini.com"
+          ],
+          "primaryEmail": "principal@dpsrohini.com",
+          "nodalOfficerEmail": "ddezone10@edudel.nic.in",
+          "phone": "+91-11-27055942",
+          "enrollmentOrBeds": 3800
+        },
+        {
+          "id": "dav_rohini_sec7",
+          "name": "DAV Public School, Rohini Sector 7",
+          "lat": 28.7062,
+          "lon": 77.1189,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "private_cbse",
+          "district": "North West Delhi",
+          "locality": "Sector 7, Rohini",
+          "emails": [
+            "info@davrohinisector7.org",
+            "davsec7rohini@yahoo.co.in"
+          ],
+          "primaryEmail": "davsec7rohini@yahoo.co.in",
+          "nodalOfficerEmail": "ddezone09@edudel.nic.in",
+          "phone": "+91-11-27041443",
+          "enrollmentOrBeds": 3100
+        },
+        {
+          "id": "dtu_delhi",
+          "name": "Delhi Technological University (DTU)",
+          "lat": 28.7495,
+          "lon": 77.1171,
+          "type": "State Technological University",
+          "facilityClass": "school_or_university",
+          "category": "higher_education_state",
+          "district": "North West Delhi",
+          "locality": "Shahbad Daulatpur, Main Bawana Road",
+          "emails": [
+            "vcdtu@dtu.ac.in",
+            "registrar@dtu.ac.in"
+          ],
+          "primaryEmail": "vcdtu@dtu.ac.in",
+          "nodalOfficerEmail": "dmnw@nic.in",
+          "phone": "+91-11-27871018",
+          "enrollmentOrBeds": 14000
+        },
+        {
+          "id": "ambedkar_hospital_rohini",
+          "name": "Dr. Baba Saheb Ambedkar Hospital",
+          "lat": 28.7088,
+          "lon": 77.1154,
+          "type": "Delhi Government Medical College & Hospital",
+          "facilityClass": "healthcare_facility",
+          "category": "healthcare_state_govt",
+          "district": "North West Delhi",
+          "locality": "Sector 6, Rohini",
+          "emails": [
+            "dr.bsamcrohini@delhi.gov.in",
+            "msbsah@gmail.com"
+          ],
+          "primaryEmail": "dr.bsamcrohini@delhi.gov.in",
+          "nodalOfficerEmail": "dmnw@nic.in",
+          "phone": "+91-11-27931475",
+          "enrollmentOrBeds": 540
         }
       ],
-      "facility_count": 1
+      "facility_count": 4
     },
     "GRID_R06_C05": {
       "grid_id": "GRID_R06_C05",
@@ -1163,8 +2195,47 @@
         "east": 77.2,
         "west": 77.15
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "rpvv_shalimar_bagh",
+          "name": "RPVV, Shalimar Bagh",
+          "lat": 28.7145,
+          "lon": 77.1582,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "government_doe",
+          "district": "North West Delhi",
+          "locality": "Block BT, Shalimar Bagh",
+          "emails": [
+            "rpvvshalimarbagh@gmail.com",
+            "school.1309124@edudel.nic.in"
+          ],
+          "primaryEmail": "school.1309124@edudel.nic.in",
+          "nodalOfficerEmail": "ddezone10@edudel.nic.in",
+          "phone": "+91-11-27481177",
+          "enrollmentOrBeds": 1350
+        },
+        {
+          "id": "burari_hospital",
+          "name": "Burari Hospital",
+          "lat": 28.742,
+          "lon": 77.1985,
+          "type": "Delhi Government Hospital",
+          "facilityClass": "healthcare_facility",
+          "category": "healthcare_state_govt",
+          "district": "Central / North Delhi",
+          "locality": "Kaushik Enclave, Burari",
+          "emails": [
+            "burarihospital@gmail.com",
+            "msburari@delhi.gov.in"
+          ],
+          "primaryEmail": "burarihospital@gmail.com",
+          "nodalOfficerEmail": "dmnorth@nic.in",
+          "phone": "+91-11-27612345",
+          "enrollmentOrBeds": 800
+        }
+      ],
+      "facility_count": 2
     },
     "GRID_R06_C06": {
       "grid_id": "GRID_R06_C06",
@@ -1283,8 +2354,28 @@
         "east": 77.05,
         "west": 77.0
       },
-      "enclosed_facilities": [],
-      "facility_count": 0
+      "enclosed_facilities": [
+        {
+          "id": "gbsss_bawana",
+          "name": "Govt Boys Sr Sec School, Bawana",
+          "lat": 28.7995,
+          "lon": 77.0345,
+          "type": "Senior Secondary School",
+          "facilityClass": "school_or_university",
+          "category": "government_doe",
+          "district": "North West Delhi",
+          "locality": "Bawana Village Main Road",
+          "emails": [
+            "gbsssbawana@edudel.nic.in",
+            "school.1310019@edudel.nic.in"
+          ],
+          "primaryEmail": "school.1310019@edudel.nic.in",
+          "nodalOfficerEmail": "ddezone10@edudel.nic.in",
+          "phone": "+91-11-27751240",
+          "enrollmentOrBeds": 2400
+        }
+      ],
+      "facility_count": 1
     },
     "GRID_R07_C03": {
       "grid_id": "GRID_R07_C03",

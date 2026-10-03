@@ -11,6 +11,13 @@ import { getDelhiHeatmapData, getUniversalHeatmapData, getIndiaNationalHeatmapDa
 import { generateGeminiAdvisory } from './geminiService.js';
 import { aggregateSchoolEvidence, generateDraftPetition } from './evidenceService.js';
 import { getSchoolAqiForecast } from './sagemakerService.js';
+import {
+  getAllDirectoryFacilities,
+  getFacilityById,
+  getFacilitiesInGrid,
+  generate630Advisory,
+  testDispatch630Advisory
+} from './advisoryDispatchService.js';
 
 dotenv.config();
 
@@ -459,6 +466,78 @@ Strict Guardrails (DO NOT VIOLATE):
     });
   } catch (err) {
     console.error('[API /api/petition/polish-draft Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * ============================================================================
+ * 6:30 AM Advisory & Institutional Directory Endpoints
+ * ============================================================================
+ */
+
+/**
+ * Get all Delhi schools, universities, and hospitals with verified emails & grid blocks
+ */
+app.get('/api/directory/facilities', (req, res) => {
+  try {
+    const { district, facilityClass, gridId } = req.query;
+    let data = getAllDirectoryFacilities();
+    let facilities = data.facilities;
+
+    if (district) {
+      facilities = facilities.filter(f => f.district && f.district.toLowerCase().includes(district.toLowerCase()));
+    }
+    if (facilityClass) {
+      facilities = facilities.filter(f => f.facilityClass === facilityClass);
+    }
+    if (gridId) {
+      facilities = facilities.filter(f => f.gridId === gridId);
+    }
+
+    res.json({
+      success: true,
+      totalCount: facilities.length,
+      nodalAuthorities: data.nodalAuthorities,
+      facilities
+    });
+  } catch (err) {
+    console.error('[API /api/directory/facilities Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Preview 6:30 AM Advisory bulletin for any facility
+ */
+app.get('/api/advisory/preview-630', async (req, res) => {
+  try {
+    const { facilityId = 'dps_rk_puram', basePm25 } = req.query;
+    const advisory = await generate630Advisory({
+      facilityId,
+      basePm25: basePm25 ? parseInt(basePm25, 10) : 175
+    });
+    res.json({ success: true, advisory });
+  } catch (err) {
+    console.error('[API /api/advisory/preview-630 Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Test or simulate dispatching the 6:30 AM bulletin
+ */
+app.post('/api/advisory/test-dispatch', async (req, res) => {
+  try {
+    const { facilityId = 'dps_rk_puram', testEmail = 'tester@wmd-civic.in', isSandbox = true } = req.body;
+    const result = await testDispatch630Advisory({
+      facilityId,
+      testEmail,
+      isSandbox: isSandbox !== false
+    });
+    res.json(result);
+  } catch (err) {
+    console.error('[API /api/advisory/test-dispatch Error]:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

@@ -25,12 +25,27 @@ def generate_spatial_grids():
     os.makedirs(DATA_DIR, exist_ok=True)
 
     # 1. Load schools and institutional directory
-    institutions = []
+    educational = []
+    healthcare = []
+    nodal_authorities = {}
     if os.path.exists(SCHOOLS_FILE):
         with open(SCHOOLS_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            institutions = data.get('educationalInstitutions', [])
+            educational = data.get('educationalInstitutions', [])
+            healthcare = data.get('healthcareFacilities', [])
+            nodal_authorities = data.get('nodalAuthorities', {})
 
+    all_facilities = []
+    for inst in educational:
+        item = dict(inst)
+        item['facilityClass'] = 'school_or_university'
+        all_facilities.append(item)
+    for hosp in healthcare:
+        item = dict(hosp)
+        item['facilityClass'] = 'healthcare_facility'
+        all_facilities.append(item)
+
+    print(f"[*] Loaded {len(educational)} educational institutions and {len(healthcare)} healthcare facilities.")
     print(f"[*] Generating uniform spatial grid blocks across NCR [{LAT_MIN}, {LON_MIN}] to [{LAT_MAX}, {LON_MAX}]...")
     
     grids = {}
@@ -50,7 +65,7 @@ def generate_spatial_grids():
 
             # Match any institution located inside this bounding box
             enclosed_facilities = []
-            for inst in institutions:
+            for inst in all_facilities:
                 i_lat = inst.get('lat', 0)
                 i_lon = inst.get('lon', 0)
                 if lat_south <= i_lat < lat_north and lon_west <= i_lon < lon_east:
@@ -59,8 +74,16 @@ def generate_spatial_grids():
                         "name": inst['name'],
                         "lat": i_lat,
                         "lon": i_lon,
-                        "type": "educational_institution",
-                        "enrollment": inst.get('enrollment', 1500)
+                        "type": inst.get('type', 'Institutional Facility'),
+                        "facilityClass": inst.get('facilityClass', 'school_or_university'),
+                        "category": inst.get('category', 'general'),
+                        "district": inst.get('district', 'Delhi'),
+                        "locality": inst.get('locality', ''),
+                        "emails": inst.get('emails', []),
+                        "primaryEmail": inst.get('primaryEmail', inst.get('emails', [''])[0] if inst.get('emails') else ''),
+                        "nodalOfficerEmail": inst.get('nodalOfficerEmail', ''),
+                        "phone": inst.get('phone', ''),
+                        "enrollmentOrBeds": inst.get('studentCount', inst.get('bedCount', 1500))
                     })
 
             grids[grid_id] = {
