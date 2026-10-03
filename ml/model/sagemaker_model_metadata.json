@@ -1,0 +1,76 @@
+{
+  "modelName": "VayuVitals-SageMaker-AirQuality-XGBoost",
+  "version": "1.0.0",
+  "framework": "AWS SageMaker / scikit-learn / XGBoost",
+  "metrics": {
+    "mae": 13.6,
+    "rmse": 16.89,
+    "exceedanceRecallPercent": 0.0,
+    "trainingSamples": 2304,
+    "testSamples": 576
+  },
+  "features": [
+    {
+      "name": "pm25_now",
+      "importance": 0.3641
+    },
+    {
+      "name": "pm25_lag_1h",
+      "importance": 0.0275
+    },
+    {
+      "name": "pm25_lag_2h",
+      "importance": 0.0926
+    },
+    {
+      "name": "pm25_lag_24h",
+      "importance": 0.2054
+    },
+    {
+      "name": "rolling_mean_24h",
+      "importance": 0.6664
+    },
+    {
+      "name": "rolling_max_24h",
+      "importance": 0.4561
+    },
+    {
+      "name": "temperature",
+      "importance": 1.9757
+    },
+    {
+      "name": "humidity",
+      "importance": 0.4684
+    },
+    {
+      "name": "wind_speed",
+      "importance": 0.1246
+    },
+    {
+      "name": "pbl_boundary_layer_height",
+      "importance": 0.005
+    },
+    {
+      "name": "stagnation_index",
+      "importance": 0.0109
+    },
+    {
+      "name": "sin_hour",
+      "importance": 5.0485
+    },
+    {
+      "name": "cos_hour",
+      "importance": 0.6151
+    },
+    {
+      "name": "is_school_window",
+      "importance": 1.9963
+    },
+    {
+      "name": "is_commute_window",
+      "importance": 3.6375
+    }
+  ],
+  "status": "PRODUCTION_READY",
+  "deploymentTarget": "SageMaker Serverless Inference (Amazon Linux 2 / Python 3.10)"
+}

@@ -1,0 +1,108 @@
+{
+  "educationalInstitutions": [
+    {
+      "id": "dps_rohini",
+      "name": "Delhi Public School, Rohini",
+      "type": "Senior Secondary School",
+      "city": "Delhi",
+      "locality": "Sector 24, Phase III, Rohini, North West Delhi",
+      "lat": 28.7188,
+      "lon": 77.1064,
+      "nearestStation": "DTU (Delhi Technological University)",
+      "stationDistanceKm": 1.8,
+      "studentCount": 3800,
+      "schoolHours": "07:30 - 13:45"
+    },
+    {
+      "id": "modern_barakhamba",
+      "name": "Modern School, Barakhamba Road",
+      "type": "Senior Secondary School",
+      "city": "Delhi",
+      "locality": "Barakhamba Road, Connaught Place, Central Delhi",
+      "lat": 28.6315,
+      "lon": 77.2284,
+      "nearestStation": "Mandir Marg",
+      "stationDistanceKm": 2.1,
+      "studentCount": 2900,
+      "schoolHours": "07:45 - 14:00"
+    },
+    {
+      "id": "dav_shreshtha_vihar",
+      "name": "DAV Public School, Shreshtha Vihar",
+      "type": "Senior Secondary School",
+      "city": "Delhi",
+      "locality": "Shreshtha Vihar, Anand Vihar, East Delhi",
+      "lat": 28.6534,
+      "lon": 77.3082,
+      "nearestStation": "Anand Vihar CAAQMS",
+      "stationDistanceKm": 1.2,
+      "studentCount": 3400,
+      "schoolHours": "07:30 - 13:30"
+    },
+    {
+      "id": "iit_delhi",
+      "name": "Indian Institute of Technology (IIT) Delhi",
+      "type": "University / Institute of Eminence",
+      "city": "Delhi",
+      "locality": "Hauz Khas, South Delhi",
+      "lat": 28.5450,
+      "lon": 77.1926,
+      "nearestStation": "Sri Aurobindo Marg / R.K. Puram",
+      "stationDistanceKm": 1.5,
+      "studentCount": 11500,
+      "schoolHours": "08:30 - 17:30"
+    },
+    {
+      "id": "delhi_university_north",
+      "name": "University of Delhi (North Campus)",
+      "type": "Central University",
+      "city": "Delhi",
+      "locality": "Vishwavidyalaya Marg, North Delhi",
+      "lat": 28.6892,
+      "lon": 77.2104,
+      "nearestStation": "Civil Lines / Jahangirpuri",
+      "stationDistanceKm": 2.4,
+      "studentCount": 35000,
+      "schoolHours": "08:30 - 17:00"
+    },
+    {
+      "id": "amity_noida",
+      "name": "Amity International School & University",
+      "type": "School & University Campus",
+      "city": "Noida (NCR)",
+      "locality": "Sector 44 & Sector 125, Noida",
+      "lat": 28.5440,
+      "lon": 77.3331,
+      "nearestStation": "Sector 62 / Sector 125 Noida",
+      "stationDistanceKm": 1.9,
+      "studentCount": 18000,
+      "schoolHours": "08:00 - 15:30"
+    },
+    {
+      "id": "dps_rk_puram",
+      "name": "Delhi Public School, R.K. Puram",
+      "type": "Senior Secondary School",
+      "city": "Delhi",
+      "locality": "Sector 12, R.K. Puram, South West Delhi",
+      "lat": 28.5684,
+      "lon": 77.1788,
+      "nearestStation": "R.K. Puram CAAQMS",
+      "stationDistanceKm": 0.8,
+      "studentCount": 4200,
+      "schoolHours": "07:30 - 13:45"
+    },
+    {
+      "id": "kendriya_vidyalaya_ina",
+      "name": "Kendriya Vidyalaya, INA Colony",
+      "type": "Government School",
+      "city": "Delhi",
+      "locality": "INA Colony, Near AIIMS, South Delhi",
+      "lat": 28.5772,
+      "lon": 77.2114,
+      "nearestStation": "Jawaharlal Nehru Stadium",
+      "stationDistanceKm": 1.6,
+      "studentCount": 2600,
+      "schoolHours": "07:15 - 13:15"
+    }
+  ]
+}

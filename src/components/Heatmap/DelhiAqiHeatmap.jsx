@@ -28,8 +28,10 @@ import {
   RotateCw,
   ChevronRight,
   ChevronLeft,
-  Activity
+  Activity,
+  FileText
 } from 'lucide-react';
+import PetitionModal from '../Petition/PetitionModal';
 
 // Import official India national boundary GeoJSON (MultiPolygon covering mainland + islands)
 import indiaBoundaryGeoJson from '../../data/indiaBoundary.json';
@@ -601,6 +603,12 @@ export default function DelhiAqiHeatmap() {
 
   const [activePollutant, setActivePollutant] = useState('aqi'); // 'aqi' | 'pm25' | 'pm10'
   const [selectedStation, setSelectedStation] = useState(null);
+
+  // Section 10: Petition and Action Module State
+  const [isPetitionModalOpen, setIsPetitionModalOpen] = useState(false);
+  const [petitionStation, setPetitionStation] = useState('DTU (Delhi Technological University)');
+  const [petitionLocality, setPetitionLocality] = useState('Rohini Sector 16, North Delhi');
+  const [petitionPm25, setPetitionPm25] = useState(142);
 
   // DEFAULT OPACITY: Balanced translucent 0.45 so the map beneath (roads, cities, terrain) is clearly visible
   const [heatIntensity, setHeatIntensity] = useState(0.45);
@@ -2646,6 +2654,46 @@ export default function DelhiAqiHeatmap() {
               <span>{isSidebarOpen ? 'Hide Telemetry' : 'Show Telemetry'}</span>
               <Activity size={13} color={isSidebarOpen ? '#94a3b8' : '#10b981'} />
             </button>
+
+            {/* Section 10: Civic Action & Formal Petition Generator */}
+            <button
+              onClick={() => {
+                setPetitionStation(displayStation?.name || 'DTU (Delhi Technological University)');
+                setPetitionLocality(displayStation?.zone ? `${displayStation.name}, ${displayStation.zone}` : 'Rohini Sector 16, North Delhi');
+                setPetitionPm25(displayStation?.pm25 || displayStation?.aqi || 142);
+                setIsPetitionModalOpen(true);
+              }}
+              id="petition-action-deck-btn"
+              title="Transform air quality telemetry into a formal civic complaint or school petition"
+              className="glass-pill"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                color: '#34d399',
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(6, 182, 212, 0.22) 100%)',
+                border: '1px solid rgba(52, 211, 153, 0.45)',
+                padding: '5px 13px',
+                borderRadius: '9999px',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 0 14px rgba(16, 185, 129, 0.25)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 0 18px rgba(16, 185, 129, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 0 14px rgba(16, 185, 129, 0.25)';
+              }}
+            >
+              <FileText size={13} color="#34d399" />
+              <span>Petition & Action</span>
+            </button>
           </div>
         </div>
 
@@ -3546,6 +3594,46 @@ export default function DelhiAqiHeatmap() {
                   {isLoadingAdvisory ? 'Generating localized medical & commute advisory...' : geminiAdvisory}
                 </p>
               </div>
+
+              {/* Section 10: Launch Petition & Action from selected station */}
+              <button
+                onClick={() => {
+                  setPetitionStation(displayStation.name);
+                  setPetitionLocality(`${displayStation.name}, ${displayStation.zone || displayStation.state || 'Delhi'}`);
+                  setPetitionPm25(displayStation.pm25 || displayStation.aqi || 142);
+                  setIsPetitionModalOpen(true);
+                }}
+                id="station-card-petition-btn"
+                style={{
+                  marginTop: '12px',
+                  width: '100%',
+                  padding: '9px 14px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%)',
+                  border: '1px solid rgba(52, 211, 153, 0.4)',
+                  color: '#34d399',
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.15)',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.35) 0%, rgba(6, 182, 212, 0.35) 100%)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <FileText size={14} />
+                <span>Draft Civic Petition for this Station</span>
+              </button>
             </div>
 
             {/* 3. CALIBRATED SEAMLESS ZOOM-ADAPTIVE SPECTRUM LEGEND */}
@@ -3621,6 +3709,15 @@ export default function DelhiAqiHeatmap() {
           </div>
         </div>
       </aside>
+
+      {/* Section 10: Civic Petition & Action Modal */}
+      <PetitionModal
+        isOpen={isPetitionModalOpen}
+        onClose={() => setIsPetitionModalOpen(false)}
+        initialStation={petitionStation}
+        initialLocality={petitionLocality}
+        initialPm25={petitionPm25}
+      />
     </section>
   );
 
