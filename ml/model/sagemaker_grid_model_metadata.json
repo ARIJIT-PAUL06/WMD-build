@@ -1,0 +1,19 @@
+{
+  "model_framework": "sagemaker_xgboost",
+  "framework_version": "1.7-1 / 3.4.1",
+  "features": [
+    "doy_sin",
+    "doy_cos",
+    "month",
+    "day",
+    "is_winter",
+    "is_stubble_burning",
+    "morning_rush_avg_pm25",
+    "daily_peak_pm25"
+  ],
+  "records_trained": 7014,
+  "test_mae": 3.19,
+  "test_rmse": 4.12,
+  "s3_bucket": "wmd-aqi-dataset-594650681179",
+  "role_arn": "arn:aws:iam::594650681179:role/sagemakerexecutionrole03102026"
+}

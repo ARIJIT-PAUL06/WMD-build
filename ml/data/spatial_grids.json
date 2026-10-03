@@ -1,0 +1,1575 @@
+{
+  "metadata": {
+    "grid_step_deg": 0.05,
+    "approx_cell_size_km": 5.5,
+    "lat_bounds": [
+      28.4,
+      28.85
+    ],
+    "lon_bounds": [
+      76.9,
+      77.4
+    ],
+    "total_grids": 99,
+    "populated_grids_count": 8
+  },
+  "grids": {
+    "GRID_R00_C00": {
+      "grid_id": "GRID_R00_C00",
+      "centroid": {
+        "lat": 28.425,
+        "lon": 76.925
+      },
+      "bounds": {
+        "north": 28.45,
+        "south": 28.4,
+        "east": 76.95,
+        "west": 76.9
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R00_C01": {
+      "grid_id": "GRID_R00_C01",
+      "centroid": {
+        "lat": 28.425,
+        "lon": 76.975
+      },
+      "bounds": {
+        "north": 28.45,
+        "south": 28.4,
+        "east": 77.0,
+        "west": 76.95
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R00_C02": {
+      "grid_id": "GRID_R00_C02",
+      "centroid": {
+        "lat": 28.425,
+        "lon": 77.025
+      },
+      "bounds": {
+        "north": 28.45,
+        "south": 28.4,
+        "east": 77.05,
+        "west": 77.0
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R00_C03": {
+      "grid_id": "GRID_R00_C03",
+      "centroid": {
+        "lat": 28.425,
+        "lon": 77.075
+      },
+      "bounds": {
+        "north": 28.45,
+        "south": 28.4,
+        "east": 77.1,
+        "west": 77.05
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R00_C04": {
+      "grid_id": "GRID_R00_C04",
+      "centroid": {
+        "lat": 28.425,
+        "lon": 77.125
+      },
+      "bounds": {
+        "north": 28.45,
+        "south": 28.4,
+        "east": 77.15,
+        "west": 77.1
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R00_C05": {
+      "grid_id": "GRID_R00_C05",
+      "centroid": {
+        "lat": 28.425,
+        "lon": 77.175
+      },
+      "bounds": {
+        "north": 28.45,
+        "south": 28.4,
+        "east": 77.2,
+        "west": 77.15
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R00_C06": {
+      "grid_id": "GRID_R00_C06",
+      "centroid": {
+        "lat": 28.425,
+        "lon": 77.225
+      },
+      "bounds": {
+        "north": 28.45,
+        "south": 28.4,
+        "east": 77.25,
+        "west": 77.2
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R00_C07": {
+      "grid_id": "GRID_R00_C07",
+      "centroid": {
+        "lat": 28.425,
+        "lon": 77.275
+      },
+      "bounds": {
+        "north": 28.45,
+        "south": 28.4,
+        "east": 77.3,
+        "west": 77.25
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R00_C08": {
+      "grid_id": "GRID_R00_C08",
+      "centroid": {
+        "lat": 28.425,
+        "lon": 77.325
+      },
+      "bounds": {
+        "north": 28.45,
+        "south": 28.4,
+        "east": 77.35,
+        "west": 77.3
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R00_C09": {
+      "grid_id": "GRID_R00_C09",
+      "centroid": {
+        "lat": 28.425,
+        "lon": 77.375
+      },
+      "bounds": {
+        "north": 28.45,
+        "south": 28.4,
+        "east": 77.4,
+        "west": 77.35
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R00_C10": {
+      "grid_id": "GRID_R00_C10",
+      "centroid": {
+        "lat": 28.425,
+        "lon": 77.425
+      },
+      "bounds": {
+        "north": 28.45,
+        "south": 28.4,
+        "east": 77.45,
+        "west": 77.4
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R01_C00": {
+      "grid_id": "GRID_R01_C00",
+      "centroid": {
+        "lat": 28.475,
+        "lon": 76.925
+      },
+      "bounds": {
+        "north": 28.5,
+        "south": 28.45,
+        "east": 76.95,
+        "west": 76.9
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R01_C01": {
+      "grid_id": "GRID_R01_C01",
+      "centroid": {
+        "lat": 28.475,
+        "lon": 76.975
+      },
+      "bounds": {
+        "north": 28.5,
+        "south": 28.45,
+        "east": 77.0,
+        "west": 76.95
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R01_C02": {
+      "grid_id": "GRID_R01_C02",
+      "centroid": {
+        "lat": 28.475,
+        "lon": 77.025
+      },
+      "bounds": {
+        "north": 28.5,
+        "south": 28.45,
+        "east": 77.05,
+        "west": 77.0
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R01_C03": {
+      "grid_id": "GRID_R01_C03",
+      "centroid": {
+        "lat": 28.475,
+        "lon": 77.075
+      },
+      "bounds": {
+        "north": 28.5,
+        "south": 28.45,
+        "east": 77.1,
+        "west": 77.05
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R01_C04": {
+      "grid_id": "GRID_R01_C04",
+      "centroid": {
+        "lat": 28.475,
+        "lon": 77.125
+      },
+      "bounds": {
+        "north": 28.5,
+        "south": 28.45,
+        "east": 77.15,
+        "west": 77.1
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R01_C05": {
+      "grid_id": "GRID_R01_C05",
+      "centroid": {
+        "lat": 28.475,
+        "lon": 77.175
+      },
+      "bounds": {
+        "north": 28.5,
+        "south": 28.45,
+        "east": 77.2,
+        "west": 77.15
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R01_C06": {
+      "grid_id": "GRID_R01_C06",
+      "centroid": {
+        "lat": 28.475,
+        "lon": 77.225
+      },
+      "bounds": {
+        "north": 28.5,
+        "south": 28.45,
+        "east": 77.25,
+        "west": 77.2
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R01_C07": {
+      "grid_id": "GRID_R01_C07",
+      "centroid": {
+        "lat": 28.475,
+        "lon": 77.275
+      },
+      "bounds": {
+        "north": 28.5,
+        "south": 28.45,
+        "east": 77.3,
+        "west": 77.25
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R01_C08": {
+      "grid_id": "GRID_R01_C08",
+      "centroid": {
+        "lat": 28.475,
+        "lon": 77.325
+      },
+      "bounds": {
+        "north": 28.5,
+        "south": 28.45,
+        "east": 77.35,
+        "west": 77.3
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R01_C09": {
+      "grid_id": "GRID_R01_C09",
+      "centroid": {
+        "lat": 28.475,
+        "lon": 77.375
+      },
+      "bounds": {
+        "north": 28.5,
+        "south": 28.45,
+        "east": 77.4,
+        "west": 77.35
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R01_C10": {
+      "grid_id": "GRID_R01_C10",
+      "centroid": {
+        "lat": 28.475,
+        "lon": 77.425
+      },
+      "bounds": {
+        "north": 28.5,
+        "south": 28.45,
+        "east": 77.45,
+        "west": 77.4
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R02_C00": {
+      "grid_id": "GRID_R02_C00",
+      "centroid": {
+        "lat": 28.525,
+        "lon": 76.925
+      },
+      "bounds": {
+        "north": 28.55,
+        "south": 28.5,
+        "east": 76.95,
+        "west": 76.9
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R02_C01": {
+      "grid_id": "GRID_R02_C01",
+      "centroid": {
+        "lat": 28.525,
+        "lon": 76.975
+      },
+      "bounds": {
+        "north": 28.55,
+        "south": 28.5,
+        "east": 77.0,
+        "west": 76.95
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R02_C02": {
+      "grid_id": "GRID_R02_C02",
+      "centroid": {
+        "lat": 28.525,
+        "lon": 77.025
+      },
+      "bounds": {
+        "north": 28.55,
+        "south": 28.5,
+        "east": 77.05,
+        "west": 77.0
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R02_C03": {
+      "grid_id": "GRID_R02_C03",
+      "centroid": {
+        "lat": 28.525,
+        "lon": 77.075
+      },
+      "bounds": {
+        "north": 28.55,
+        "south": 28.5,
+        "east": 77.1,
+        "west": 77.05
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R02_C04": {
+      "grid_id": "GRID_R02_C04",
+      "centroid": {
+        "lat": 28.525,
+        "lon": 77.125
+      },
+      "bounds": {
+        "north": 28.55,
+        "south": 28.5,
+        "east": 77.15,
+        "west": 77.1
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R02_C05": {
+      "grid_id": "GRID_R02_C05",
+      "centroid": {
+        "lat": 28.525,
+        "lon": 77.175
+      },
+      "bounds": {
+        "north": 28.55,
+        "south": 28.5,
+        "east": 77.2,
+        "west": 77.15
+      },
+      "enclosed_facilities": [
+        {
+          "id": "iit_delhi",
+          "name": "Indian Institute of Technology (IIT) Delhi",
+          "lat": 28.545,
+          "lon": 77.1926,
+          "type": "educational_institution",
+          "enrollment": 1500
+        }
+      ],
+      "facility_count": 1
+    },
+    "GRID_R02_C06": {
+      "grid_id": "GRID_R02_C06",
+      "centroid": {
+        "lat": 28.525,
+        "lon": 77.225
+      },
+      "bounds": {
+        "north": 28.55,
+        "south": 28.5,
+        "east": 77.25,
+        "west": 77.2
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R02_C07": {
+      "grid_id": "GRID_R02_C07",
+      "centroid": {
+        "lat": 28.525,
+        "lon": 77.275
+      },
+      "bounds": {
+        "north": 28.55,
+        "south": 28.5,
+        "east": 77.3,
+        "west": 77.25
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R02_C08": {
+      "grid_id": "GRID_R02_C08",
+      "centroid": {
+        "lat": 28.525,
+        "lon": 77.325
+      },
+      "bounds": {
+        "north": 28.55,
+        "south": 28.5,
+        "east": 77.35,
+        "west": 77.3
+      },
+      "enclosed_facilities": [
+        {
+          "id": "amity_noida",
+          "name": "Amity International School & University",
+          "lat": 28.544,
+          "lon": 77.3331,
+          "type": "educational_institution",
+          "enrollment": 1500
+        }
+      ],
+      "facility_count": 1
+    },
+    "GRID_R02_C09": {
+      "grid_id": "GRID_R02_C09",
+      "centroid": {
+        "lat": 28.525,
+        "lon": 77.375
+      },
+      "bounds": {
+        "north": 28.55,
+        "south": 28.5,
+        "east": 77.4,
+        "west": 77.35
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R02_C10": {
+      "grid_id": "GRID_R02_C10",
+      "centroid": {
+        "lat": 28.525,
+        "lon": 77.425
+      },
+      "bounds": {
+        "north": 28.55,
+        "south": 28.5,
+        "east": 77.45,
+        "west": 77.4
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R03_C00": {
+      "grid_id": "GRID_R03_C00",
+      "centroid": {
+        "lat": 28.575,
+        "lon": 76.925
+      },
+      "bounds": {
+        "north": 28.6,
+        "south": 28.55,
+        "east": 76.95,
+        "west": 76.9
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R03_C01": {
+      "grid_id": "GRID_R03_C01",
+      "centroid": {
+        "lat": 28.575,
+        "lon": 76.975
+      },
+      "bounds": {
+        "north": 28.6,
+        "south": 28.55,
+        "east": 77.0,
+        "west": 76.95
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R03_C02": {
+      "grid_id": "GRID_R03_C02",
+      "centroid": {
+        "lat": 28.575,
+        "lon": 77.025
+      },
+      "bounds": {
+        "north": 28.6,
+        "south": 28.55,
+        "east": 77.05,
+        "west": 77.0
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R03_C03": {
+      "grid_id": "GRID_R03_C03",
+      "centroid": {
+        "lat": 28.575,
+        "lon": 77.075
+      },
+      "bounds": {
+        "north": 28.6,
+        "south": 28.55,
+        "east": 77.1,
+        "west": 77.05
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R03_C04": {
+      "grid_id": "GRID_R03_C04",
+      "centroid": {
+        "lat": 28.575,
+        "lon": 77.125
+      },
+      "bounds": {
+        "north": 28.6,
+        "south": 28.55,
+        "east": 77.15,
+        "west": 77.1
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R03_C05": {
+      "grid_id": "GRID_R03_C05",
+      "centroid": {
+        "lat": 28.575,
+        "lon": 77.175
+      },
+      "bounds": {
+        "north": 28.6,
+        "south": 28.55,
+        "east": 77.2,
+        "west": 77.15
+      },
+      "enclosed_facilities": [
+        {
+          "id": "dps_rk_puram",
+          "name": "Delhi Public School, R.K. Puram",
+          "lat": 28.5684,
+          "lon": 77.1788,
+          "type": "educational_institution",
+          "enrollment": 1500
+        }
+      ],
+      "facility_count": 1
+    },
+    "GRID_R03_C06": {
+      "grid_id": "GRID_R03_C06",
+      "centroid": {
+        "lat": 28.575,
+        "lon": 77.225
+      },
+      "bounds": {
+        "north": 28.6,
+        "south": 28.55,
+        "east": 77.25,
+        "west": 77.2
+      },
+      "enclosed_facilities": [
+        {
+          "id": "kendriya_vidyalaya_ina",
+          "name": "Kendriya Vidyalaya, INA Colony",
+          "lat": 28.5772,
+          "lon": 77.2114,
+          "type": "educational_institution",
+          "enrollment": 1500
+        }
+      ],
+      "facility_count": 1
+    },
+    "GRID_R03_C07": {
+      "grid_id": "GRID_R03_C07",
+      "centroid": {
+        "lat": 28.575,
+        "lon": 77.275
+      },
+      "bounds": {
+        "north": 28.6,
+        "south": 28.55,
+        "east": 77.3,
+        "west": 77.25
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R03_C08": {
+      "grid_id": "GRID_R03_C08",
+      "centroid": {
+        "lat": 28.575,
+        "lon": 77.325
+      },
+      "bounds": {
+        "north": 28.6,
+        "south": 28.55,
+        "east": 77.35,
+        "west": 77.3
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R03_C09": {
+      "grid_id": "GRID_R03_C09",
+      "centroid": {
+        "lat": 28.575,
+        "lon": 77.375
+      },
+      "bounds": {
+        "north": 28.6,
+        "south": 28.55,
+        "east": 77.4,
+        "west": 77.35
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R03_C10": {
+      "grid_id": "GRID_R03_C10",
+      "centroid": {
+        "lat": 28.575,
+        "lon": 77.425
+      },
+      "bounds": {
+        "north": 28.6,
+        "south": 28.55,
+        "east": 77.45,
+        "west": 77.4
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R04_C00": {
+      "grid_id": "GRID_R04_C00",
+      "centroid": {
+        "lat": 28.625,
+        "lon": 76.925
+      },
+      "bounds": {
+        "north": 28.65,
+        "south": 28.6,
+        "east": 76.95,
+        "west": 76.9
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R04_C01": {
+      "grid_id": "GRID_R04_C01",
+      "centroid": {
+        "lat": 28.625,
+        "lon": 76.975
+      },
+      "bounds": {
+        "north": 28.65,
+        "south": 28.6,
+        "east": 77.0,
+        "west": 76.95
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R04_C02": {
+      "grid_id": "GRID_R04_C02",
+      "centroid": {
+        "lat": 28.625,
+        "lon": 77.025
+      },
+      "bounds": {
+        "north": 28.65,
+        "south": 28.6,
+        "east": 77.05,
+        "west": 77.0
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R04_C03": {
+      "grid_id": "GRID_R04_C03",
+      "centroid": {
+        "lat": 28.625,
+        "lon": 77.075
+      },
+      "bounds": {
+        "north": 28.65,
+        "south": 28.6,
+        "east": 77.1,
+        "west": 77.05
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R04_C04": {
+      "grid_id": "GRID_R04_C04",
+      "centroid": {
+        "lat": 28.625,
+        "lon": 77.125
+      },
+      "bounds": {
+        "north": 28.65,
+        "south": 28.6,
+        "east": 77.15,
+        "west": 77.1
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R04_C05": {
+      "grid_id": "GRID_R04_C05",
+      "centroid": {
+        "lat": 28.625,
+        "lon": 77.175
+      },
+      "bounds": {
+        "north": 28.65,
+        "south": 28.6,
+        "east": 77.2,
+        "west": 77.15
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R04_C06": {
+      "grid_id": "GRID_R04_C06",
+      "centroid": {
+        "lat": 28.625,
+        "lon": 77.225
+      },
+      "bounds": {
+        "north": 28.65,
+        "south": 28.6,
+        "east": 77.25,
+        "west": 77.2
+      },
+      "enclosed_facilities": [
+        {
+          "id": "modern_barakhamba",
+          "name": "Modern School, Barakhamba Road",
+          "lat": 28.6315,
+          "lon": 77.2284,
+          "type": "educational_institution",
+          "enrollment": 1500
+        }
+      ],
+      "facility_count": 1
+    },
+    "GRID_R04_C07": {
+      "grid_id": "GRID_R04_C07",
+      "centroid": {
+        "lat": 28.625,
+        "lon": 77.275
+      },
+      "bounds": {
+        "north": 28.65,
+        "south": 28.6,
+        "east": 77.3,
+        "west": 77.25
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R04_C08": {
+      "grid_id": "GRID_R04_C08",
+      "centroid": {
+        "lat": 28.625,
+        "lon": 77.325
+      },
+      "bounds": {
+        "north": 28.65,
+        "south": 28.6,
+        "east": 77.35,
+        "west": 77.3
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R04_C09": {
+      "grid_id": "GRID_R04_C09",
+      "centroid": {
+        "lat": 28.625,
+        "lon": 77.375
+      },
+      "bounds": {
+        "north": 28.65,
+        "south": 28.6,
+        "east": 77.4,
+        "west": 77.35
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R04_C10": {
+      "grid_id": "GRID_R04_C10",
+      "centroid": {
+        "lat": 28.625,
+        "lon": 77.425
+      },
+      "bounds": {
+        "north": 28.65,
+        "south": 28.6,
+        "east": 77.45,
+        "west": 77.4
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R05_C00": {
+      "grid_id": "GRID_R05_C00",
+      "centroid": {
+        "lat": 28.675,
+        "lon": 76.925
+      },
+      "bounds": {
+        "north": 28.7,
+        "south": 28.65,
+        "east": 76.95,
+        "west": 76.9
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R05_C01": {
+      "grid_id": "GRID_R05_C01",
+      "centroid": {
+        "lat": 28.675,
+        "lon": 76.975
+      },
+      "bounds": {
+        "north": 28.7,
+        "south": 28.65,
+        "east": 77.0,
+        "west": 76.95
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R05_C02": {
+      "grid_id": "GRID_R05_C02",
+      "centroid": {
+        "lat": 28.675,
+        "lon": 77.025
+      },
+      "bounds": {
+        "north": 28.7,
+        "south": 28.65,
+        "east": 77.05,
+        "west": 77.0
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R05_C03": {
+      "grid_id": "GRID_R05_C03",
+      "centroid": {
+        "lat": 28.675,
+        "lon": 77.075
+      },
+      "bounds": {
+        "north": 28.7,
+        "south": 28.65,
+        "east": 77.1,
+        "west": 77.05
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R05_C04": {
+      "grid_id": "GRID_R05_C04",
+      "centroid": {
+        "lat": 28.675,
+        "lon": 77.125
+      },
+      "bounds": {
+        "north": 28.7,
+        "south": 28.65,
+        "east": 77.15,
+        "west": 77.1
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R05_C05": {
+      "grid_id": "GRID_R05_C05",
+      "centroid": {
+        "lat": 28.675,
+        "lon": 77.175
+      },
+      "bounds": {
+        "north": 28.7,
+        "south": 28.65,
+        "east": 77.2,
+        "west": 77.15
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R05_C06": {
+      "grid_id": "GRID_R05_C06",
+      "centroid": {
+        "lat": 28.675,
+        "lon": 77.225
+      },
+      "bounds": {
+        "north": 28.7,
+        "south": 28.65,
+        "east": 77.25,
+        "west": 77.2
+      },
+      "enclosed_facilities": [
+        {
+          "id": "delhi_university_north",
+          "name": "University of Delhi (North Campus)",
+          "lat": 28.6892,
+          "lon": 77.2104,
+          "type": "educational_institution",
+          "enrollment": 1500
+        }
+      ],
+      "facility_count": 1
+    },
+    "GRID_R05_C07": {
+      "grid_id": "GRID_R05_C07",
+      "centroid": {
+        "lat": 28.675,
+        "lon": 77.275
+      },
+      "bounds": {
+        "north": 28.7,
+        "south": 28.65,
+        "east": 77.3,
+        "west": 77.25
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R05_C08": {
+      "grid_id": "GRID_R05_C08",
+      "centroid": {
+        "lat": 28.675,
+        "lon": 77.325
+      },
+      "bounds": {
+        "north": 28.7,
+        "south": 28.65,
+        "east": 77.35,
+        "west": 77.3
+      },
+      "enclosed_facilities": [
+        {
+          "id": "dav_shreshtha_vihar",
+          "name": "DAV Public School, Shreshtha Vihar",
+          "lat": 28.6534,
+          "lon": 77.3082,
+          "type": "educational_institution",
+          "enrollment": 1500
+        }
+      ],
+      "facility_count": 1
+    },
+    "GRID_R05_C09": {
+      "grid_id": "GRID_R05_C09",
+      "centroid": {
+        "lat": 28.675,
+        "lon": 77.375
+      },
+      "bounds": {
+        "north": 28.7,
+        "south": 28.65,
+        "east": 77.4,
+        "west": 77.35
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R05_C10": {
+      "grid_id": "GRID_R05_C10",
+      "centroid": {
+        "lat": 28.675,
+        "lon": 77.425
+      },
+      "bounds": {
+        "north": 28.7,
+        "south": 28.65,
+        "east": 77.45,
+        "west": 77.4
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R06_C00": {
+      "grid_id": "GRID_R06_C00",
+      "centroid": {
+        "lat": 28.725,
+        "lon": 76.925
+      },
+      "bounds": {
+        "north": 28.75,
+        "south": 28.7,
+        "east": 76.95,
+        "west": 76.9
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R06_C01": {
+      "grid_id": "GRID_R06_C01",
+      "centroid": {
+        "lat": 28.725,
+        "lon": 76.975
+      },
+      "bounds": {
+        "north": 28.75,
+        "south": 28.7,
+        "east": 77.0,
+        "west": 76.95
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R06_C02": {
+      "grid_id": "GRID_R06_C02",
+      "centroid": {
+        "lat": 28.725,
+        "lon": 77.025
+      },
+      "bounds": {
+        "north": 28.75,
+        "south": 28.7,
+        "east": 77.05,
+        "west": 77.0
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R06_C03": {
+      "grid_id": "GRID_R06_C03",
+      "centroid": {
+        "lat": 28.725,
+        "lon": 77.075
+      },
+      "bounds": {
+        "north": 28.75,
+        "south": 28.7,
+        "east": 77.1,
+        "west": 77.05
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R06_C04": {
+      "grid_id": "GRID_R06_C04",
+      "centroid": {
+        "lat": 28.725,
+        "lon": 77.125
+      },
+      "bounds": {
+        "north": 28.75,
+        "south": 28.7,
+        "east": 77.15,
+        "west": 77.1
+      },
+      "enclosed_facilities": [
+        {
+          "id": "dps_rohini",
+          "name": "Delhi Public School, Rohini",
+          "lat": 28.7188,
+          "lon": 77.1064,
+          "type": "educational_institution",
+          "enrollment": 1500
+        }
+      ],
+      "facility_count": 1
+    },
+    "GRID_R06_C05": {
+      "grid_id": "GRID_R06_C05",
+      "centroid": {
+        "lat": 28.725,
+        "lon": 77.175
+      },
+      "bounds": {
+        "north": 28.75,
+        "south": 28.7,
+        "east": 77.2,
+        "west": 77.15
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R06_C06": {
+      "grid_id": "GRID_R06_C06",
+      "centroid": {
+        "lat": 28.725,
+        "lon": 77.225
+      },
+      "bounds": {
+        "north": 28.75,
+        "south": 28.7,
+        "east": 77.25,
+        "west": 77.2
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R06_C07": {
+      "grid_id": "GRID_R06_C07",
+      "centroid": {
+        "lat": 28.725,
+        "lon": 77.275
+      },
+      "bounds": {
+        "north": 28.75,
+        "south": 28.7,
+        "east": 77.3,
+        "west": 77.25
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R06_C08": {
+      "grid_id": "GRID_R06_C08",
+      "centroid": {
+        "lat": 28.725,
+        "lon": 77.325
+      },
+      "bounds": {
+        "north": 28.75,
+        "south": 28.7,
+        "east": 77.35,
+        "west": 77.3
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R06_C09": {
+      "grid_id": "GRID_R06_C09",
+      "centroid": {
+        "lat": 28.725,
+        "lon": 77.375
+      },
+      "bounds": {
+        "north": 28.75,
+        "south": 28.7,
+        "east": 77.4,
+        "west": 77.35
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R06_C10": {
+      "grid_id": "GRID_R06_C10",
+      "centroid": {
+        "lat": 28.725,
+        "lon": 77.425
+      },
+      "bounds": {
+        "north": 28.75,
+        "south": 28.7,
+        "east": 77.45,
+        "west": 77.4
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R07_C00": {
+      "grid_id": "GRID_R07_C00",
+      "centroid": {
+        "lat": 28.775,
+        "lon": 76.925
+      },
+      "bounds": {
+        "north": 28.8,
+        "south": 28.75,
+        "east": 76.95,
+        "west": 76.9
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R07_C01": {
+      "grid_id": "GRID_R07_C01",
+      "centroid": {
+        "lat": 28.775,
+        "lon": 76.975
+      },
+      "bounds": {
+        "north": 28.8,
+        "south": 28.75,
+        "east": 77.0,
+        "west": 76.95
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R07_C02": {
+      "grid_id": "GRID_R07_C02",
+      "centroid": {
+        "lat": 28.775,
+        "lon": 77.025
+      },
+      "bounds": {
+        "north": 28.8,
+        "south": 28.75,
+        "east": 77.05,
+        "west": 77.0
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R07_C03": {
+      "grid_id": "GRID_R07_C03",
+      "centroid": {
+        "lat": 28.775,
+        "lon": 77.075
+      },
+      "bounds": {
+        "north": 28.8,
+        "south": 28.75,
+        "east": 77.1,
+        "west": 77.05
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R07_C04": {
+      "grid_id": "GRID_R07_C04",
+      "centroid": {
+        "lat": 28.775,
+        "lon": 77.125
+      },
+      "bounds": {
+        "north": 28.8,
+        "south": 28.75,
+        "east": 77.15,
+        "west": 77.1
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R07_C05": {
+      "grid_id": "GRID_R07_C05",
+      "centroid": {
+        "lat": 28.775,
+        "lon": 77.175
+      },
+      "bounds": {
+        "north": 28.8,
+        "south": 28.75,
+        "east": 77.2,
+        "west": 77.15
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R07_C06": {
+      "grid_id": "GRID_R07_C06",
+      "centroid": {
+        "lat": 28.775,
+        "lon": 77.225
+      },
+      "bounds": {
+        "north": 28.8,
+        "south": 28.75,
+        "east": 77.25,
+        "west": 77.2
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R07_C07": {
+      "grid_id": "GRID_R07_C07",
+      "centroid": {
+        "lat": 28.775,
+        "lon": 77.275
+      },
+      "bounds": {
+        "north": 28.8,
+        "south": 28.75,
+        "east": 77.3,
+        "west": 77.25
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R07_C08": {
+      "grid_id": "GRID_R07_C08",
+      "centroid": {
+        "lat": 28.775,
+        "lon": 77.325
+      },
+      "bounds": {
+        "north": 28.8,
+        "south": 28.75,
+        "east": 77.35,
+        "west": 77.3
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R07_C09": {
+      "grid_id": "GRID_R07_C09",
+      "centroid": {
+        "lat": 28.775,
+        "lon": 77.375
+      },
+      "bounds": {
+        "north": 28.8,
+        "south": 28.75,
+        "east": 77.4,
+        "west": 77.35
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R07_C10": {
+      "grid_id": "GRID_R07_C10",
+      "centroid": {
+        "lat": 28.775,
+        "lon": 77.425
+      },
+      "bounds": {
+        "north": 28.8,
+        "south": 28.75,
+        "east": 77.45,
+        "west": 77.4
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R08_C00": {
+      "grid_id": "GRID_R08_C00",
+      "centroid": {
+        "lat": 28.825,
+        "lon": 76.925
+      },
+      "bounds": {
+        "north": 28.85,
+        "south": 28.8,
+        "east": 76.95,
+        "west": 76.9
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R08_C01": {
+      "grid_id": "GRID_R08_C01",
+      "centroid": {
+        "lat": 28.825,
+        "lon": 76.975
+      },
+      "bounds": {
+        "north": 28.85,
+        "south": 28.8,
+        "east": 77.0,
+        "west": 76.95
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R08_C02": {
+      "grid_id": "GRID_R08_C02",
+      "centroid": {
+        "lat": 28.825,
+        "lon": 77.025
+      },
+      "bounds": {
+        "north": 28.85,
+        "south": 28.8,
+        "east": 77.05,
+        "west": 77.0
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R08_C03": {
+      "grid_id": "GRID_R08_C03",
+      "centroid": {
+        "lat": 28.825,
+        "lon": 77.075
+      },
+      "bounds": {
+        "north": 28.85,
+        "south": 28.8,
+        "east": 77.1,
+        "west": 77.05
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R08_C04": {
+      "grid_id": "GRID_R08_C04",
+      "centroid": {
+        "lat": 28.825,
+        "lon": 77.125
+      },
+      "bounds": {
+        "north": 28.85,
+        "south": 28.8,
+        "east": 77.15,
+        "west": 77.1
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R08_C05": {
+      "grid_id": "GRID_R08_C05",
+      "centroid": {
+        "lat": 28.825,
+        "lon": 77.175
+      },
+      "bounds": {
+        "north": 28.85,
+        "south": 28.8,
+        "east": 77.2,
+        "west": 77.15
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R08_C06": {
+      "grid_id": "GRID_R08_C06",
+      "centroid": {
+        "lat": 28.825,
+        "lon": 77.225
+      },
+      "bounds": {
+        "north": 28.85,
+        "south": 28.8,
+        "east": 77.25,
+        "west": 77.2
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R08_C07": {
+      "grid_id": "GRID_R08_C07",
+      "centroid": {
+        "lat": 28.825,
+        "lon": 77.275
+      },
+      "bounds": {
+        "north": 28.85,
+        "south": 28.8,
+        "east": 77.3,
+        "west": 77.25
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R08_C08": {
+      "grid_id": "GRID_R08_C08",
+      "centroid": {
+        "lat": 28.825,
+        "lon": 77.325
+      },
+      "bounds": {
+        "north": 28.85,
+        "south": 28.8,
+        "east": 77.35,
+        "west": 77.3
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R08_C09": {
+      "grid_id": "GRID_R08_C09",
+      "centroid": {
+        "lat": 28.825,
+        "lon": 77.375
+      },
+      "bounds": {
+        "north": 28.85,
+        "south": 28.8,
+        "east": 77.4,
+        "west": 77.35
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    },
+    "GRID_R08_C10": {
+      "grid_id": "GRID_R08_C10",
+      "centroid": {
+        "lat": 28.825,
+        "lon": 77.425
+      },
+      "bounds": {
+        "north": 28.85,
+        "south": 28.8,
+        "east": 77.45,
+        "west": 77.4
+      },
+      "enclosed_facilities": [],
+      "facility_count": 0
+    }
+  }
+}

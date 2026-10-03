@@ -165,6 +165,21 @@ export async function getSchoolAqiForecast({
       windSpeed = Math.max(0.8, 2.5 + 1.2 * Math.sin(((hour - 12) / 24) * 2 * Math.PI));
     }
 
+    // Macro-Seasonality Engineering (Derived from xKDR Multi-Year CPCB Model)
+    const month = forecastTime.getMonth() + 1; // 1-12
+    const day = forecastTime.getDate();
+    const dayOfYear = Math.floor((forecastTime - new Date(forecastTime.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+    const doyCos = Math.cos((2 * Math.PI * dayOfYear) / 365.25);
+    
+    // Winter radiation inversion trap (Nov, Dec, Jan, late Oct)
+    const isWinterSeason = (month === 11 || month === 12 || month === 1 || (month === 10 && day >= 15));
+    // Stubble burning smoke window (Late Oct -> Mid Nov)
+    const isStubbleWindow = (month === 10 && day >= 20) || (month === 11 && day <= 20);
+    
+    const seasonalMultiplier = isWinterSeason 
+      ? 1.35 + (isStubbleWindow ? 0.25 : 0) + (doyCos > 0.7 ? 0.15 : 0)
+      : 0.85;
+
     // Meteorological Inversion factor: High early morning (05:00 - 09:00), lowest in afternoon (14:00 - 16:00)
     // Low boundary layer height traps pollutants
     const morningInversionSurge = hour >= 6 && hour <= 10 ? 1.45 - (hour - 6) * 0.08 : hour >= 13 && hour <= 16 ? 0.72 : 1.0;
@@ -172,7 +187,7 @@ export async function getSchoolAqiForecast({
 
     // Temporal autocorrelation decay
     const decay = Math.pow(0.985, step);
-    const ambientMean = 115;
+    const ambientMean = isWinterSeason ? 210 : 95;
     const baseProjected = currentBase * decay + ambientMean * (1 - decay);
 
     // Diurnal variation simulating rush-hour and school arrival window
@@ -182,7 +197,7 @@ export async function getSchoolAqiForecast({
 
     const predictedPm25 = Math.max(
       25,
-      Math.round(baseProjected * morningInversionSurge * windStagnationPenalty + hourEffect)
+      Math.round(baseProjected * seasonalMultiplier * morningInversionSurge * windStagnationPenalty + hourEffect)
     );
 
     const category = categorizePm25(predictedPm25);

@@ -1,76 +1,51 @@
 {
-  "modelName": "VayuVitals-SageMaker-AirQuality-XGBoost",
-  "version": "1.0.0",
-  "framework": "AWS SageMaker / scikit-learn / XGBoost",
-  "metrics": {
-    "mae": 13.6,
-    "rmse": 16.89,
-    "exceedanceRecallPercent": 0.0,
-    "trainingSamples": 2304,
-    "testSamples": 576
-  },
+  "model_framework": "xgboost_gradient_boosting_regressor",
+  "dataset_source": "xKDR Forum CPCB Continuous Network (2021-2024) + Open-Meteo Atmospheric Physics",
+  "training_records": 56985,
+  "test_records": 14247,
+  "mae_ug_m3": 41.9,
+  "rmse_ug_m3": 59.82,
   "features": [
-    {
-      "name": "pm25_now",
-      "importance": 0.3641
-    },
-    {
-      "name": "pm25_lag_1h",
-      "importance": 0.0275
-    },
-    {
-      "name": "pm25_lag_2h",
-      "importance": 0.0926
-    },
-    {
-      "name": "pm25_lag_24h",
-      "importance": 0.2054
-    },
-    {
-      "name": "rolling_mean_24h",
-      "importance": 0.6664
-    },
-    {
-      "name": "rolling_max_24h",
-      "importance": 0.4561
-    },
-    {
-      "name": "temperature",
-      "importance": 1.9757
-    },
-    {
-      "name": "humidity",
-      "importance": 0.4684
-    },
-    {
-      "name": "wind_speed",
-      "importance": 0.1246
-    },
-    {
-      "name": "pbl_boundary_layer_height",
-      "importance": 0.005
-    },
-    {
-      "name": "stagnation_index",
-      "importance": 0.0109
-    },
-    {
-      "name": "sin_hour",
-      "importance": 5.0485
-    },
-    {
-      "name": "cos_hour",
-      "importance": 0.6151
-    },
-    {
-      "name": "is_school_window",
-      "importance": 1.9963
-    },
-    {
-      "name": "is_commute_window",
-      "importance": 3.6375
-    }
+    "pm25_now",
+    "pm25_lag_1",
+    "pm25_lag_2",
+    "pm25_lag_24",
+    "rolling_mean_24",
+    "rolling_max_24",
+    "temperature",
+    "humidity",
+    "wind_speed",
+    "hour_sin",
+    "hour_cos",
+    "doy_sin",
+    "doy_cos",
+    "is_winter",
+    "is_stubble_burning",
+    "is_school_rush"
   ],
-  "status": "PRODUCTION_READY",
-  "deploymentTarget": "SageMaker Serverless Inference (Amazon Linux 2 / Python 3.10)"
+  "feature_importances": {
+    "is_winter": 77.43975487420549,
+    "doy_cos": 44.834693049079014,
+    "doy_sin": 28.771407687774534,
+    "is_stubble_burning": 23.67324366977254,
+    "hour_sin": 8.914911178105944,
+    "temperature": 3.963237046153132,
+    "is_school_rush": 3.7587238197985275,
+    "wind_speed": 3.263083029010402,
+    "humidity": 0.7219271371428017,
+    "pm25_now": 0.6970357787619081,
+    "hour_cos": 0.4935966012151987,
+    "pm25_lag_1": 0.18617686187063162,
+    "pm25_lag_24": 0.18085607124105135,
+    "rolling_mean_24": 0.10721136556438733,
+    "rolling_max_24": 0.051742615825039445,
+    "pm25_lag_2": 0.047458828486660234
+  },
+  "target": "pm2_5_lead_24h",
+  "seasonal_factors": [
+    "doy_sin/cos (calendar day cyclical curve)",
+    "is_winter (thermal radiation inversion trap)",
+    "is_stubble_burning (biomass fire smoke plume)",
+    "is_school_rush (6 AM - 9 AM morning commute spike)"
+  ]
 }
