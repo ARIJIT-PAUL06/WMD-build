@@ -646,17 +646,18 @@ function applyNavigationNightPalette(map) {
           source: 'standby-terrain-dem',
           layout: { visibility: 'visible' },
           paint: {
-            'hillshade-shadow-color': '#080e18',
-            'hillshade-highlight-color': '#334861',
-            'hillshade-accent-color': '#162333',
+            // High-contrast razor-sharp terrain relief: deep pitch shadows with luminous slate-cyan ridge illumination
+            'hillshade-shadow-color': '#020408',
+            'hillshade-highlight-color': '#688db8',
+            'hillshade-accent-color': '#132030',
             'hillshade-illumination-direction': 315,
             'hillshade-illumination-anchor': 'viewport',
             'hillshade-exaggeration': [
               'interpolate', ['linear'], ['zoom'],
-              3, 0.55,
-              6, 0.75,
-              9, 0.88,
-              12, 0.95
+              3, 0.65,
+              6, 0.85,
+              9, 0.95,
+              12, 1.0
             ],
           },
         },
@@ -665,7 +666,30 @@ function applyNavigationNightPalette(map) {
     } catch {}
   }
 
-  // 2. Configure Zoom Ranges - Unlock dense road and street network earlier so standby map has rich detail
+  // C. True 3D Digital Elevation Mesh (DEM) in MapLibre (Physically elevates mountains and ridges in 3D perspective)
+  if (typeof map.setTerrain === 'function' && map.getSource('standby-terrain-dem')) {
+    try {
+      map.setTerrain({
+        source: 'standby-terrain-dem',
+        exaggeration: 1.45,
+      });
+    } catch (e) {
+      console.warn('Could not set 3D terrain:', e);
+    }
+  }
+
+  // D. Atmospheric Horizon Sky
+  if (typeof map.setSky === 'function') {
+    try {
+      map.setSky({
+        'sky-color': '#070b12',
+        'sky-horizon-blend': 0.6,
+        'horizon-color': '#131e2e',
+      });
+    } catch {}
+  }
+
+  // 2. Configure Zoom Ranges - Unlock dense road, street network, and building footprints earlier
   const safeZoomRange = (id, min, max) => {
     try {
       if (map.getLayer(id) && typeof map.setLayerZoomRange === 'function') {
@@ -674,11 +698,15 @@ function applyNavigationNightPalette(map) {
     } catch {}
   };
 
-  // Unlock street details earlier (minor streets visible from zoom 6.5 instead of 8)
-  safeZoomRange('highway_minor', 6.5, 24);
-  safeZoomRange('highway_major_casing', 8.0, 24);
-  safeZoomRange('highway_major_inner', 8.0, 24);
+  // Unlock street details and urban architecture earlier
+  safeZoomRange('highway_minor', 6.0, 24);
+  safeZoomRange('highway_major_casing', 7.5, 24);
+  safeZoomRange('highway_major_inner', 7.5, 24);
   safeZoomRange('building', 11.5, 24);
+  safeZoomRange('landuse_residential', 7.0, 24);
+  safeZoomRange('landuse_commercial', 7.0, 24);
+  safeZoomRange('landuse_industrial', 7.0, 24);
+  safeZoomRange('waterway', 4.0, 24);
 
   // Progressive Level of Detail for text
   safeZoomRange('place_city', 5.0, 15);
@@ -698,8 +726,24 @@ function applyNavigationNightPalette(map) {
       const id = l.id;
       const type = l.type;
 
-    // Waterways & Water Bodies (Deep Marine Navy #0f1826, canals/streams #162438)
-    if (id.includes('water') || id.includes('ocean')) {
+    // Waterways & Water Bodies: Deep marine lakes and razor-sharp alpine valley rivers
+    if (id.includes('waterway')) {
+      if (type === 'line') {
+        map.setPaintProperty(id, 'line-color', [
+          'interpolate', ['linear'], ['zoom'],
+          4, '#1b324d',
+          8, '#27527f',
+          12, '#3c7ab8'
+        ]);
+        map.setPaintProperty(id, 'line-width', [
+          'interpolate', ['linear'], ['zoom'],
+          4, 0.8,
+          8, 1.5,
+          12, 2.4
+        ]);
+        map.setPaintProperty(id, 'line-opacity', 0.85);
+      }
+    } else if (id.includes('water') || id.includes('ocean')) {
       if (type === 'fill') {
         map.setPaintProperty(id, 'fill-color', '#0f1826');
       } else if (type === 'line') {
@@ -707,63 +751,70 @@ function applyNavigationNightPalette(map) {
       }
     }
 
-    // Glaciers, Permanent Snowfields & Mountain Ice Shelves (Crucial for Himalayan relief matching Mapbox)
+    // Glaciers, Permanent Snowfields & Mountain Ice Shelves (Sharp razor edges on Himalayan peaks)
     if (id.includes('glacier') || id.includes('ice_shelf') || id.includes('snow')) {
       if (type === 'fill') {
         safeZoomRange(id, 0, 24);
         map.setPaintProperty(id, 'fill-color', [
           'interpolate', ['linear'], ['zoom'],
-          3, '#576c82',
-          6, '#687f99',
-          9, '#7c94b0',
-          13, '#90a8c4'
+          3, '#5e758e',
+          6, '#718aa6',
+          9, '#85a2c2',
+          13, '#9ec0e6'
         ]);
-        map.setPaintProperty(id, 'fill-opacity', [
-          'interpolate', ['linear'], ['zoom'],
-          3, 0.55,
-          6, 0.72,
-          9, 0.85,
-          13, 0.92
-        ]);
+        map.setPaintProperty(id, 'fill-opacity', 0.85);
         try {
-          map.setPaintProperty(id, 'fill-outline-color', '#43586e');
+          map.setPaintProperty(id, 'fill-outline-color', '#b4d4f7');
         } catch {}
       }
     }
 
-    // Landuse, Forests, Parks & Residential (Soft muted terrain tints)
+    // Dense Urban Fabrics & Neighborhoods (Shows dense built-up city blocks even from regional zoom 7+)
     if (id.includes('wood') || id.includes('forest') || id.includes('park') || id.includes('grass')) {
       if (type === 'fill') {
         map.setPaintProperty(id, 'fill-color', '#162635');
-        map.setPaintProperty(id, 'fill-opacity', 0.45);
-      }
-    } else if (id.includes('residential') || id.includes('commercial') || id.includes('industrial') || id.includes('landuse')) {
-      if (type === 'fill') {
-        map.setPaintProperty(id, 'fill-color', '#1a2738');
         map.setPaintProperty(id, 'fill-opacity', 0.50);
+      }
+    } else if (id.includes('residential')) {
+      if (type === 'fill') {
+        map.setPaintProperty(id, 'fill-color', '#1c293a');
+        map.setPaintProperty(id, 'fill-opacity', 0.72);
+        try { map.setPaintProperty(id, 'fill-outline-color', '#26374d'); } catch {}
+      }
+    } else if (id.includes('commercial')) {
+      if (type === 'fill') {
+        map.setPaintProperty(id, 'fill-color', '#213247');
+        map.setPaintProperty(id, 'fill-opacity', 0.78);
+        try { map.setPaintProperty(id, 'fill-outline-color', '#2f4663'); } catch {}
+      }
+    } else if (id.includes('industrial') || id.includes('landuse')) {
+      if (type === 'fill') {
+        map.setPaintProperty(id, 'fill-color', '#1e2b3c');
+        map.setPaintProperty(id, 'fill-opacity', 0.68);
+        try { map.setPaintProperty(id, 'fill-outline-color', '#2b3d54'); } catch {}
       }
     }
 
-    // Buildings Footprints: Crisp architectural footprints with visible contrast (#162232 with outline #25364e)
+    // Building Footprints: High-contrast architectural slate with luminous perimeter outlines
     if (id.includes('building')) {
       if (type === 'fill') {
         map.setPaintProperty(id, 'fill-color', [
           'interpolate', ['linear'], ['zoom'],
-          11.5, '#131b26',
-          13.5, '#182433',
-          16, '#1f2e42'
+          11.5, '#223245',
+          13.5, '#2c405a',
+          16.0, '#385273'
         ]);
         map.setPaintProperty(id, 'fill-outline-color', [
           'interpolate', ['linear'], ['zoom'],
-          11.5, '#1f2d3d',
-          13.5, '#2e435c',
-          16, '#415e80'
+          11.5, '#394f6c',
+          13.5, '#4f719b',
+          16.0, '#6692c7'
         ]);
         map.setPaintProperty(id, 'fill-opacity', [
           'interpolate', ['linear'], ['zoom'],
-          11.5, 0.4,
-          13.5, 0.75,
-          16, 0.95
+          11.5, 0.75,
+          13.5, 0.92,
+          16.0, 0.98
         ]);
       }
     }
@@ -1049,6 +1100,97 @@ function applyNavigationNightPalette(map) {
     }
   } catch {}
   });
+
+  // 3. Add Mountain Peaks & Elevation Markers across Himalayas, Ghats, and mountain ranges
+  if (map.getSource('openmaptiles') && !map.getLayer('standby-mountain-peaks')) {
+    try {
+      map.addLayer(
+        {
+          id: 'standby-mountain-peaks',
+          type: 'symbol',
+          source: 'openmaptiles',
+          'source-layer': 'mountain_peak',
+          minzoom: 6.5,
+          layout: {
+            'text-field': [
+              'concat',
+              '▲ ',
+              ['coalesce', ['get', 'name_en'], ['get', 'name:latin'], ['get', 'name']],
+              ' ',
+              ['to-string', ['get', 'ele']],
+              'm'
+            ],
+            'text-size': [
+              'interpolate', ['linear'], ['zoom'],
+              6.5, 9.0,
+              9.0, 11.0,
+              12.0, 12.5
+            ],
+            'text-letter-spacing': 0.08,
+            'text-optional': true,
+          },
+          paint: {
+            'text-color': '#e2e8f0',
+            'text-halo-color': 'rgba(6, 10, 18, 0.95)',
+            'text-halo-width': 1.4,
+            'text-halo-blur': 0.2,
+            'text-opacity': [
+              'interpolate', ['linear'], ['zoom'],
+              6.5, 0.0,
+              7.2, 0.85,
+              12.0, 1.0
+            ],
+          },
+        }
+      );
+    } catch {}
+  }
+
+  // 4. Add Civic Landmarks & POIs (Universities, Hospitals, Stations, Colleges, Civic Buildings)
+  if (map.getSource('openmaptiles') && !map.getLayer('standby-poi-landmarks')) {
+    try {
+      map.addLayer(
+        {
+          id: 'standby-poi-landmarks',
+          type: 'symbol',
+          source: 'openmaptiles',
+          'source-layer': 'poi',
+          minzoom: 12.5,
+          filter: [
+            'match',
+            ['get', 'class'],
+            ['hospital', 'university', 'college', 'school', 'railway', 'bus', 'police', 'townhall', 'library', 'stadium', 'bank'],
+            true,
+            false
+          ],
+          layout: {
+            'text-field': singleLineField,
+            'text-size': [
+              'interpolate', ['linear'], ['zoom'],
+              12.5, 9.5,
+              14.5, 11.0,
+              16.0, 12.5
+            ],
+            'text-letter-spacing': 0.04,
+            'text-max-width': 8,
+            'text-optional': true,
+          },
+          paint: {
+            'text-color': '#93c5fd',
+            'text-halo-color': 'rgba(8, 14, 24, 0.92)',
+            'text-halo-width': 1.2,
+            'text-halo-blur': 0.2,
+            'text-opacity': [
+              'interpolate', ['linear'], ['zoom'],
+              12.5, 0.0,
+              13.2, 0.85,
+              15.0, 1.0
+            ],
+          },
+        }
+      );
+    } catch {}
+  }
 }
 
 export default function DelhiAqiHeatmap() {
@@ -2209,34 +2351,40 @@ export default function DelhiAqiHeatmap() {
             source: buildingSource,
             'source-layer': 'building',
             type: 'fill-extrusion',
-            minzoom: 12.5,
+            minzoom: 12.0,
             paint: {
               'fill-extrusion-color': [
                 'interpolate', ['linear'],
-                ['coalesce', ['get', 'render_height'], ['get', 'height'], 14],
-                0, '#1c293c',
-                15, '#22354e',
-                35, '#2b4465',
-                70, '#38577f',
-                120, '#446999'
+                ['coalesce', ['get', 'render_height'], ['get', 'height'], 16],
+                0, '#273b52',
+                12, '#324b69',
+                25, '#3f5e84',
+                50, '#5077a5',
+                90, '#6493cd',
+                150, '#79b0f2'
               ],
               'fill-extrusion-height': [
                 'interpolate', ['linear'], ['zoom'],
-                12.5, 0,
-                14, [
+                12.0, 0,
+                13.0, [
                   'max',
-                  ['coalesce', ['get', 'render_height'], ['get', 'height'], 14],
-                  6
+                  ['coalesce', ['get', 'render_height'], ['get', 'height'], 16],
+                  10
+                ],
+                15.0, [
+                  'max',
+                  ['*', ['coalesce', ['get', 'render_height'], ['get', 'height'], 16], 1.25],
+                  14
                 ]
               ],
               'fill-extrusion-base': [
                 'interpolate', ['linear'], ['zoom'],
-                12.5, 0,
-                14, [
+                12.0, 0,
+                13.5, [
                   'coalesce', ['get', 'render_min_height'], ['get', 'min_height'], 0
                 ]
               ],
-              'fill-extrusion-opacity': 0.88,
+              'fill-extrusion-opacity': 0.95,
             },
           };
           if (buildingSource === 'composite') {
@@ -2253,9 +2401,9 @@ export default function DelhiAqiHeatmap() {
         if (typeof map.setLight === 'function') {
           map.setLight({
             anchor: 'viewport',
-            color: '#cbd5e1',
-            intensity: 0.55,
-            position: [1.15, 215, 35]
+            color: '#e2e8f0',
+            intensity: 0.75,
+            position: [1.3, 215, 42]
           });
         }
       } catch {}
