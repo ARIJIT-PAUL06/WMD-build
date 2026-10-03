@@ -794,6 +794,39 @@ export default function PetitionModal({
                     </div>
                   </div>
 
+                  {/* Outdoor Activities Timing & Regional Pattern Guidance */}
+                  {forecast.outdoorActivityGuidance && (
+                    <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.2)', marginBottom: '12px' }}>
+                      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#38bdf8', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Clock size={12} />
+                        <span>PREDICTED OUTDOOR SAFETY WINDOWS (TODAY)</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.68rem', color: '#cbd5e1' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ color: '#ef4444', fontWeight: 700 }}>⛔ AVOID OUTDOORS:</span>
+                          <span><strong>{forecast.outdoorActivityGuidance.morningArrivalRisk?.window}</strong> (Arrival Inversion Trap)</span>
+                        </div>
+                        {forecast.outdoorActivityGuidance.noonRecessRisk?.alertRequired && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ color: '#f59e0b', fontWeight: 700 }}>⚠️ AVOID FIELD SPORTS:</span>
+                            <span><strong>{forecast.outdoorActivityGuidance.noonRecessRisk?.window}</strong> (Recess Accumulation)</span>
+                          </div>
+                        )}
+                        {forecast.outdoorActivityGuidance.safeWindows?.length > 0 && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ color: '#10b981', fontWeight: 700 }}>✅ SAFEST VENTILATION:</span>
+                            <span><strong>{forecast.outdoorActivityGuidance.safeWindows[0]?.start} - {forecast.outdoorActivityGuidance.safeWindows[0]?.end}</strong> (Solar Dispersion)</span>
+                          </div>
+                        )}
+                      </div>
+                      {forecast.regionalHistoricalInsight && (
+                        <div style={{ marginTop: '8px', paddingTop: '6px', borderTop: '1px dashed rgba(255, 255, 255, 0.1)', fontSize: '0.65rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                          {forecast.regionalHistoricalInsight}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Model Validation & Inclusion Checkbox */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
                     <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
