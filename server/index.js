@@ -20,6 +20,7 @@ import {
   evaluateMorningAdvisories,
   craftAndDispatchMidDayEmergency
 } from './advisoryDispatchService.js';
+import { getSesHealth, sendEmailViaSES, triggerEmailVerification } from './sesService.js';
 
 dotenv.config();
 
@@ -580,6 +581,47 @@ app.post('/api/advisory/emergency-midday', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('[API /api/advisory/emergency-midday Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * ============================================================================
+ * Amazon SES (Simple Email Service) Endpoints
+ * ============================================================================
+ */
+app.get('/api/ses/health', async (req, res) => {
+  const health = await getSesHealth();
+  res.json(health);
+});
+
+app.post('/api/ses/send-test', async (req, res) => {
+  try {
+    const { to, subject = 'WMD Environmental Alert Test', htmlBody, fromEmail } = req.body;
+    if (!to) {
+      return res.status(400).json({ success: false, error: 'Recipient email "to" is required' });
+    }
+    const result = await sendEmailViaSES({
+      to,
+      subject,
+      htmlBody: htmlBody || '<p>This is a test notification from WMD Air Intelligence via Amazon SES.</p>',
+      fromEmail
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/ses/verify-identity', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, error: 'Email address is required' });
+    }
+    const result = await triggerEmailVerification(email);
+    res.json(result);
+  } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });

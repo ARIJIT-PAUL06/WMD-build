@@ -12,6 +12,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { findGridForCoordinates } from './gridTelemetryService.js';
 import { getSchoolAqiForecast } from './sagemakerService.js';
+import { sendEmailViaSES } from './sesService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -251,11 +252,25 @@ export async function generate630Advisory({ facilityId, basePm25 = 175 }) {
 /**
  * Simulate or test dispatching the 6:30 AM advisory
  */
-export async function testDispatch630Advisory({ facilityId, testEmail = 'tester@wmd-civic.in', isSandbox = true }) {
+export async function testDispatch630Advisory({ facilityId, testEmail = 'tester@wmd-civic.in', isSandbox = true, dispatchViaSes = false }) {
   const advisory = await generate630Advisory({ facilityId });
 
   // In test/sandbox mode, we replace the recipient with the tester's email
   const actualRecipient = isSandbox ? testEmail : advisory.facility.primaryEmail;
+  
+  let sesResponse = null;
+  if (!isSandbox || dispatchViaSes) {
+    try {
+      sesResponse = await sendEmailViaSES({
+        to: actualRecipient,
+        subject: advisory.emailPayload.subject,
+        htmlBody: advisory.emailPayload.html
+      });
+    } catch (err) {
+      sesResponse = { success: false, error: err.message };
+    }
+  }
+
   const dispatchRecord = {
     dispatchId: `DISPATCH_${Date.now()}`,
     timestamp: new Date().toISOString(),
@@ -268,10 +283,13 @@ export async function testDispatch630Advisory({ facilityId, testEmail = 'tester@
     subject: advisory.emailPayload.subject,
     dangerWindows: advisory.forecast.dangerWindows,
     safeWindows: advisory.forecast.safeWindows,
-    status: 'DELIVERED_TO_SANDBOX',
-    deliveryNote: isSandbox
-      ? `Sandbox mode active: Delivered safely to tester (${actualRecipient}) without spamming real school administrator.`
-      : `Live production dispatch sent to institutional inbox (${actualRecipient}).`
+    sesResponse,
+    status: sesResponse?.success ? 'DELIVERED_VIA_AWS_SES' : (isSandbox ? 'DELIVERED_TO_SANDBOX' : 'SES_ATTEMPTED'),
+    deliveryNote: sesResponse?.success
+      ? `Live email successfully delivered via AWS SES to ${actualRecipient}. MessageId: ${sesResponse.messageId}`
+      : (isSandbox
+          ? `Sandbox mode active: Delivered safely to tester (${actualRecipient}) without spamming real school administrator.`
+          : `Live production dispatch sent via SES: ${sesResponse?.diagnosticHint || sesResponse?.error}`)
   };
 
   return {
