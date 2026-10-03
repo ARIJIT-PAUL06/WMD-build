@@ -994,17 +994,50 @@ export default function DelhiAqiHeatmap() {
     }
 
     if (feature.isStation && feature.station) {
-      handleSelectStation(feature.station);
+      setSelectedStation(feature.station);
     }
 
+    // Determine nearest station and distance for complete telemetry & UI safety
+    const currentStations = stationsRef.current && stationsRef.current.length > 0 ? stationsRef.current : initialIndiaStations;
+    let nearestSt = feature.isStation && feature.station ? feature.station : currentStations[0];
+    let minDist = feature.isStation ? 0 : 999999;
+    if (!feature.isStation) {
+      currentStations.forEach((st) => {
+        const d = calculateDistanceKm(lat, lon, st.lat, st.lon);
+        if (d < minDist) {
+          minDist = d;
+          nearestSt = st;
+        }
+      });
+    }
+    minDist = Math.round(minDist * 10) / 10;
+
     // Drop pinpoint target marker with live estimated AQI on the searched location
-    const sampledAqi = sampleRasterGridVal(gridCacheRef.current, lon, lat);
-    const estAqi = sampledAqi !== null ? Math.round(sampledAqi) : 175;
+    let sampledAqi = sampleRasterGridVal(gridCacheRef.current, lon, lat);
+    if (sampledAqi === null) {
+      let totalW = 0;
+      let weightedAqi = 0;
+      currentStations.forEach((st) => {
+        const d = calculateDistanceKm(lat, lon, st.lat, st.lon);
+        const w = 1 / Math.pow(Math.max(15.0, d), 2.0);
+        totalW += w;
+        weightedAqi += st.aqi * w;
+      });
+      sampledAqi = weightedAqi / (totalW || 1);
+    }
+
+    const estAqi = Math.round(sampledAqi);
+    const estPm25 = Math.round((nearestSt?.pm25 ? (estAqi / (nearestSt.aqi || 1)) * nearestSt.pm25 : estAqi * 0.55) * 10) / 10;
+
     setInspectedPoint({
-      lat,
-      lon,
+      lat: Math.round(lat * 10000) / 10000,
+      lon: Math.round(lon * 10000) / 10000,
       aqi: estAqi,
-      label: feature.text || feature.place_name,
+      pm25: estPm25,
+      nearestStation: nearestSt ? nearestSt.name : 'Indian Subcontinent Ground Station',
+      nearestState: nearestSt?.state || 'India',
+      distanceKm: minDist,
+      label: feature.text || feature.place_name || feature.name || 'Searched Location',
     });
 
     const map = mapInstanceRef.current;
@@ -1046,6 +1079,17 @@ export default function DelhiAqiHeatmap() {
     // If still no polygon, create an elegant soft campus perimeter
     if (!boundaryGeo) {
       boundaryGeo = createSoftPerimeterGeoJson(lon, lat, 450);
+    } else if (boundaryGeo.type !== 'FeatureCollection' && boundaryGeo.type !== 'Feature') {
+      boundaryGeo = {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            geometry: boundaryGeo,
+            properties: {},
+          },
+        ],
+      };
     }
 
     // 3. Step 1: Smooth Glide & Zoom into the selected institution/zone
@@ -3185,12 +3229,14 @@ export default function DelhiAqiHeatmap() {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>Estimated PM2.5:</span>
-                    <strong style={{ color: '#f87171' }}>{inspectedPoint.pm25} µg/m³</strong>
+                    <strong style={{ color: '#f87171' }}>{inspectedPoint.pm25 != null ? inspectedPoint.pm25 : '—'} µg/m³</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>Nearest Ground Station:</span>
                     <span style={{ color: '#38bdf8', fontWeight: 600 }}>
-                      {inspectedPoint.nearestStation.split('(')[0]} ({inspectedPoint.distanceKm} km)
+                      {inspectedPoint?.nearestStation
+                        ? `${(typeof inspectedPoint.nearestStation === 'string' ? inspectedPoint.nearestStation.split('(')[0]?.trim() : inspectedPoint.nearestStation) || 'Monitoring Node'} (${inspectedPoint.distanceKm ?? 0} km)`
+                        : 'Nearby Monitoring Station'}
                     </span>
                   </div>
                 </div>
@@ -3284,7 +3330,9 @@ export default function DelhiAqiHeatmap() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                       <span>Nearest CAAQMS Sensor:</span>
                       <span style={{ color: '#38bdf8', fontWeight: 600 }}>
-                        {nearestStation.station.name.split(',')[0]} ({nearestStation.distance} km)
+                        {nearestStation.station?.name
+                          ? `${nearestStation.station.name.split(',')[0]?.trim() || nearestStation.station.name} (${nearestStation.distance ?? 0} km)`
+                          : 'Nearby CAAQMS Sensor'}
                       </span>
                     </div>
                   )}
