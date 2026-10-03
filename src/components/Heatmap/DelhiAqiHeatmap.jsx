@@ -624,7 +624,7 @@ function applyNavigationNightPalette(map) {
     } catch {}
   }
 
-  // B. High-Resolution Terrarium DEM Elevation Hillshade (Mountain ridges, valleys, high peaks across all zooms)
+  // B. Lightweight High-Contrast Hillshade Relief (Fast WebGL shader, zero 3D mesh overhead)
   if (!map.getSource('standby-terrain-dem')) {
     try {
       map.addSource('standby-terrain-dem', {
@@ -632,7 +632,7 @@ function applyNavigationNightPalette(map) {
         tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
         encoding: 'terrarium',
         tileSize: 256,
-        maxzoom: 12,
+        maxzoom: 8, // Capped to zoom 8: smooth GPU overzooming with 0 tile network lag
       });
     } catch {}
   }
@@ -663,29 +663,6 @@ function applyNavigationNightPalette(map) {
         },
         firstAboveBackground
       );
-    } catch {}
-  }
-
-  // C. True 3D Digital Elevation Mesh (DEM) in MapLibre (Physically elevates mountains and ridges in 3D perspective)
-  if (typeof map.setTerrain === 'function' && map.getSource('standby-terrain-dem')) {
-    try {
-      map.setTerrain({
-        source: 'standby-terrain-dem',
-        exaggeration: 1.45,
-      });
-    } catch (e) {
-      console.warn('Could not set 3D terrain:', e);
-    }
-  }
-
-  // D. Atmospheric Horizon Sky
-  if (typeof map.setSky === 'function') {
-    try {
-      map.setSky({
-        'sky-color': '#070b12',
-        'sky-horizon-blend': 0.6,
-        'horizon-color': '#131e2e',
-      });
     } catch {}
   }
 
@@ -1101,7 +1078,7 @@ function applyNavigationNightPalette(map) {
   } catch {}
   });
 
-  // 3. Add Mountain Peaks & Elevation Markers across Himalayas, Ghats, and mountain ranges
+  // 3. Add Prominent Mountain Peaks & Elevation Markers across Himalayas & Mountain Ranges
   if (map.getSource('openmaptiles') && !map.getLayer('standby-mountain-peaks')) {
     try {
       map.addLayer(
@@ -1110,7 +1087,8 @@ function applyNavigationNightPalette(map) {
           type: 'symbol',
           source: 'openmaptiles',
           'source-layer': 'mountain_peak',
-          minzoom: 6.5,
+          minzoom: 8.0,
+          filter: ['<=', ['coalesce', ['get', 'rank'], 1], 2],
           layout: {
             'text-field': [
               'concat',
@@ -1122,9 +1100,9 @@ function applyNavigationNightPalette(map) {
             ],
             'text-size': [
               'interpolate', ['linear'], ['zoom'],
-              6.5, 9.0,
-              9.0, 11.0,
-              12.0, 12.5
+              8.0, 9.5,
+              11.0, 11.5,
+              13.0, 13.0
             ],
             'text-letter-spacing': 0.08,
             'text-optional': true,
@@ -1136,55 +1114,9 @@ function applyNavigationNightPalette(map) {
             'text-halo-blur': 0.2,
             'text-opacity': [
               'interpolate', ['linear'], ['zoom'],
-              6.5, 0.0,
-              7.2, 0.85,
+              8.0, 0.0,
+              8.6, 0.85,
               12.0, 1.0
-            ],
-          },
-        }
-      );
-    } catch {}
-  }
-
-  // 4. Add Civic Landmarks & POIs (Universities, Hospitals, Stations, Colleges, Civic Buildings)
-  if (map.getSource('openmaptiles') && !map.getLayer('standby-poi-landmarks')) {
-    try {
-      map.addLayer(
-        {
-          id: 'standby-poi-landmarks',
-          type: 'symbol',
-          source: 'openmaptiles',
-          'source-layer': 'poi',
-          minzoom: 12.5,
-          filter: [
-            'match',
-            ['get', 'class'],
-            ['hospital', 'university', 'college', 'school', 'railway', 'bus', 'police', 'townhall', 'library', 'stadium', 'bank'],
-            true,
-            false
-          ],
-          layout: {
-            'text-field': singleLineField,
-            'text-size': [
-              'interpolate', ['linear'], ['zoom'],
-              12.5, 9.5,
-              14.5, 11.0,
-              16.0, 12.5
-            ],
-            'text-letter-spacing': 0.04,
-            'text-max-width': 8,
-            'text-optional': true,
-          },
-          paint: {
-            'text-color': '#93c5fd',
-            'text-halo-color': 'rgba(8, 14, 24, 0.92)',
-            'text-halo-width': 1.2,
-            'text-halo-blur': 0.2,
-            'text-opacity': [
-              'interpolate', ['linear'], ['zoom'],
-              12.5, 0.0,
-              13.2, 0.85,
-              15.0, 1.0
             ],
           },
         }
@@ -2351,11 +2283,11 @@ export default function DelhiAqiHeatmap() {
             source: buildingSource,
             'source-layer': 'building',
             type: 'fill-extrusion',
-            minzoom: 12.0,
+            minzoom: 13.5,
             paint: {
               'fill-extrusion-color': [
                 'interpolate', ['linear'],
-                ['coalesce', ['get', 'render_height'], ['get', 'height'], 16],
+                ['coalesce', ['get', 'render_height'], ['get', 'height'], 14],
                 0, '#273b52',
                 12, '#324b69',
                 25, '#3f5e84',
@@ -2365,22 +2297,22 @@ export default function DelhiAqiHeatmap() {
               ],
               'fill-extrusion-height': [
                 'interpolate', ['linear'], ['zoom'],
-                12.0, 0,
-                13.0, [
+                13.5, 0,
+                14.2, [
                   'max',
-                  ['coalesce', ['get', 'render_height'], ['get', 'height'], 16],
-                  10
+                  ['coalesce', ['get', 'render_height'], ['get', 'height'], 14],
+                  8
                 ],
-                15.0, [
+                16.0, [
                   'max',
-                  ['*', ['coalesce', ['get', 'render_height'], ['get', 'height'], 16], 1.25],
-                  14
+                  ['*', ['coalesce', ['get', 'render_height'], ['get', 'height'], 14], 1.2],
+                  12
                 ]
               ],
               'fill-extrusion-base': [
                 'interpolate', ['linear'], ['zoom'],
-                12.0, 0,
-                13.5, [
+                13.5, 0,
+                14.2, [
                   'coalesce', ['get', 'render_min_height'], ['get', 'min_height'], 0
                 ]
               ],
