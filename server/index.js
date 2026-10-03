@@ -532,11 +532,12 @@ app.get('/api/advisory/preview-630', async (req, res) => {
  */
 app.post('/api/advisory/test-dispatch', async (req, res) => {
   try {
-    const { facilityId = 'dps_rk_puram', testEmail = 'tester@wmd-civic.in', isSandbox = true } = req.body;
+    const { facilityId = 'dps_rk_puram', testEmail = 'tester@wmd-civic.in', isSandbox = true, dispatchViaSes = false } = req.body;
     const result = await testDispatch630Advisory({
       facilityId,
       testEmail,
-      isSandbox: isSandbox !== false
+      isSandbox: isSandbox !== false,
+      dispatchViaSes: Boolean(dispatchViaSes)
     });
     res.json(result);
   } catch (err) {
@@ -570,13 +571,14 @@ app.post('/api/advisory/evaluate-morning', async (req, res) => {
  */
 app.post('/api/advisory/emergency-midday', async (req, res) => {
   try {
-    const { facilityId = 'dps_rk_puram', currentPm25 = 295, anomalyType, testEmail, isSandbox = true } = req.body;
+    const { facilityId = 'dps_rk_puram', currentPm25 = 295, anomalyType, testEmail, isSandbox = true, dispatchViaSes = false } = req.body;
     const result = await craftAndDispatchMidDayEmergency({
       facilityId,
       currentPm25: Number(currentPm25),
       anomalyType: anomalyType || 'Sudden Mid-Day Dust & Local Thermal Stagnation',
       testEmail,
-      isSandbox
+      isSandbox,
+      dispatchViaSes: Boolean(dispatchViaSes)
     });
     res.json(result);
   } catch (err) {

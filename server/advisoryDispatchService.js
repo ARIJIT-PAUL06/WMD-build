@@ -255,8 +255,8 @@ export async function generate630Advisory({ facilityId, basePm25 = 175 }) {
 export async function testDispatch630Advisory({ facilityId, testEmail = 'tester@wmd-civic.in', isSandbox = true, dispatchViaSes = false }) {
   const advisory = await generate630Advisory({ facilityId });
 
-  // In test/sandbox mode, we replace the recipient with the tester's email
-  const actualRecipient = isSandbox ? testEmail : advisory.facility.primaryEmail;
+  // Use specified testEmail or fallback to facility primary email
+  const actualRecipient = testEmail || advisory.facility.primaryEmail;
   
   let sesResponse = null;
   if (!isSandbox || dispatchViaSes) {
@@ -477,7 +477,21 @@ ${geminiDirectives}
 </html>
   `.trim();
 
-  const actualRecipient = isSandbox ? testEmail : facility.primaryEmail;
+  const actualRecipient = testEmail || facility.primaryEmail;
+
+  let sesResponse = null;
+  if (!isSandbox || dispatchViaSes) {
+    try {
+      sesResponse = await sendEmailViaSES({
+        to: actualRecipient,
+        subject,
+        htmlBody
+      });
+    } catch (err) {
+      sesResponse = { success: false, error: err.message };
+    }
+  }
+
   const emergencyRecord = {
     alertId: `EMERGENCY_${Date.now()}`,
     timestamp: new Date().toISOString(),
@@ -489,6 +503,7 @@ ${geminiDirectives}
     aiModelUsed: apiKey ? 'gemini-2.5-flash' : 'rule-based-deterministic',
     sentTo: actualRecipient,
     isSandbox,
+    sesResponse,
     subject,
     directives: geminiDirectives
   };

@@ -9,10 +9,10 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const region = process.env.AWS_REGION || 'ap-south-1';
+const region = process.env.AWS_SES_REGION || 'us-east-1';
 const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
 const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-const defaultSender = process.env.SES_SENDER_EMAIL || 'alerts@wmd-civic.in';
+const defaultSender = process.env.SES_SENDER_EMAIL || 'vayuvitals@gmail.com';
 
 let sesClient = null;
 
