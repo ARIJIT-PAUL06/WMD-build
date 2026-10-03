@@ -232,13 +232,10 @@ input[type="range"]::-webkit-slider-thumb:hover {
   animation: floatMote 4s infinite ease-in-out;
 }
 
-/* Explicit Grab & Grabbing cursors for Mapbox & MapLibre canvas */
+/* Explicit Grab & Grabbing cursors for Mapbox canvas */
 #delhi-aqi-heatmap .mapboxgl-canvas-container,
 #delhi-aqi-heatmap .mapboxgl-canvas-container.mapboxgl-interactive,
-#delhi-aqi-heatmap canvas.mapboxgl-canvas,
-#delhi-aqi-heatmap .maplibregl-canvas-container,
-#delhi-aqi-heatmap .maplibregl-canvas-container.maplibregl-interactive,
-#delhi-aqi-heatmap canvas.maplibregl-canvas {
+#delhi-aqi-heatmap canvas.mapboxgl-canvas {
   cursor: grab !important;
   user-select: none;
   -webkit-user-select: none;
@@ -246,33 +243,27 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 #delhi-aqi-heatmap .mapboxgl-canvas-container:active,
 #delhi-aqi-heatmap .mapboxgl-canvas-container.mapboxgl-interactive:active,
-#delhi-aqi-heatmap canvas.mapboxgl-canvas:active,
-#delhi-aqi-heatmap .maplibregl-canvas-container:active,
-#delhi-aqi-heatmap .maplibregl-canvas-container.maplibregl-interactive:active,
-#delhi-aqi-heatmap canvas.maplibregl-canvas:active {
+#delhi-aqi-heatmap canvas.mapboxgl-canvas:active {
   cursor: grabbing !important;
 }
 
 
-/* Elevate Mapbox & MapLibre navigation controls (+, -, compass) above edge fade with sleek glass styling */
-.mapboxgl-control-container,
-.maplibregl-control-container {
+/* Elevate Mapbox navigation controls (+, -, compass) above edge fade with sleek glass styling */
+.mapboxgl-control-container {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 25 !important;
 }
 
-.mapboxgl-ctrl-bottom-right,
-.maplibregl-ctrl-bottom-right {
+.mapboxgl-ctrl-bottom-right {
   margin-right: 24px !important;
   margin-bottom: 24px !important;
   pointer-events: auto !important;
   z-index: 25 !important;
 }
 
-.mapboxgl-ctrl-group,
-.maplibregl-ctrl-group {
+.mapboxgl-ctrl-group {
   background: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.09) 0%,
@@ -290,8 +281,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   overflow: hidden !important;
 }
 
-.mapboxgl-ctrl-group button,
-.maplibregl-ctrl-group button {
+.mapboxgl-ctrl-group button {
   width: 36px !important;
   height: 36px !important;
   background-color: transparent !important;
@@ -299,18 +289,15 @@ input[type="range"]::-webkit-slider-thumb:hover {
   transition: all 0.18s ease !important;
 }
 
-.mapboxgl-ctrl-group button:last-child,
-.maplibregl-ctrl-group button:last-child {
+.mapboxgl-ctrl-group button:last-child {
   border-bottom: none !important;
 }
 
-.mapboxgl-ctrl-group button .mapboxgl-ctrl-icon,
-.maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+.mapboxgl-ctrl-group button .mapboxgl-ctrl-icon {
   filter: invert(1) brightness(1.2) contrast(1.1) !important;
 }
 
-.mapboxgl-ctrl-group button:hover,
-.maplibregl-ctrl-group button:hover {
+.mapboxgl-ctrl-group button:hover {
   background-color: rgba(56, 189, 248, 0.22) !important;
 }
 

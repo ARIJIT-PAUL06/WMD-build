@@ -1,14 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
-import * as maplibregl from 'maplibre-gl';
-import maplibreglWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import 'maplibre-gl/dist/maplibre-gl.css';
 
-// Configure MapLibre Web Worker URL for Vite environment
-if (typeof maplibregl.setWorkerUrl === 'function') {
-  maplibregl.setWorkerUrl(maplibreglWorkerUrl);
-}
+// Set public Mapbox access token
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
+
 import {
   Navigation,
   Crosshair,
@@ -40,27 +36,6 @@ import indiaBoundaryGeoJson from '../../data/indiaBoundary.json';
 // Import 108 nationwide ground/CAAQMS monitoring stations across all Indian states
 import initialIndiaStations from '../../data/indiaStations.json';
 
-// Provider mode helper: 'free' (zero Mapbox API calls/credits, OpenFreeMap vector style via MapLibre) | 'mapbox' (official Mapbox style)
-export const getActiveMapProvider = () => {
-  if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem('wmd_map_provider');
-    if (saved === 'free' || saved === 'mapbox') return saved;
-  }
-  return import.meta.env.VITE_MAP_PROVIDER || 'free';
-};
-
-export const getMapEngine = () => {
-  const provider = getActiveMapProvider();
-  if (provider === 'mapbox') {
-    if (typeof mapboxgl !== 'undefined' && !mapboxgl.accessToken) {
-      mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
-    }
-    return mapboxgl;
-  }
-  return maplibregl;
-};
-
-export const OPENFREEMAP_DARK_STYLE = 'https://tiles.openfreemap.org/styles/dark';
 export const MAPBOX_DARK_STYLE = 'mapbox://styles/mapbox/navigation-night-v1';
 
 /**
@@ -569,562 +544,6 @@ function getAqiColor(val, activeRange) {
   return { hex, label, textHex, badgeBg };
 }
 
-/**
- * Applies the signature Mapbox 'navigation-night-v1' color palette & progressive Level of Detail (LOD)
- * to vector tile layers:
- * 1. Muted slate-navy land (#1c2638) and deep marine water (#121e30).
- * 2. Roads in an elegant, faded shade of blue (#334e68 / #486581) with zoom-progressive reveal
- *    (barely visible ghost hairlines at country view, smoothly fading in as you zoom closer).
- * 3. Decluttered typography with single-line labels (no bilingual multi-line clutter).
- * 4. Progressive label loading: from high above, only show major countries, states, and top metropolises;
- *    secondary cities, towns, villages, and streets fade in gracefully only as you zoom in.
- */
-function applyNavigationNightPalette(map) {
-  if (!map || typeof map.getStyle !== 'function') return;
-  const style = map.getStyle();
-  if (!style || !style.layers) return;
-
-  // Helper to safely set paint properties without crashing if layer/property is unsupported
-  const safePaint = (layerId, prop, val) => {
-    try {
-      if (map.getLayer(layerId)) {
-        map.setPaintProperty(layerId, prop, val);
-      }
-    } catch {}
-  };
-
-  // 1. Background / Land: Mapbox night navigation dark slate-charcoal (#1a2332)
-  safePaint('background', 'background-color', '#1a2332');
-
-  // 1.1 Natural Shaded Relief & Elevation Hillshade (Recreates Mapbox terrain look in Standby mode)
-  const firstAboveBackground = style.layers.find((l) => l.id !== 'background')?.id || 'water';
-
-  // A. Low-zoom Natural Earth Shaded Relief (Continental relief, zooms 0 to 6)
-  if (map.getSource('ne2_shaded') && !map.getLayer('standby-natural-earth-relief')) {
-    try {
-      map.addLayer(
-        {
-          id: 'standby-natural-earth-relief',
-          type: 'raster',
-          source: 'ne2_shaded',
-          maxzoom: 7,
-          paint: {
-            'raster-opacity': [
-              'interpolate', ['linear'], ['zoom'],
-              1, 0.40,
-              3.5, 0.35,
-              5.5, 0.20,
-              7, 0.0
-            ],
-            'raster-contrast': 0.18,
-          },
-        },
-        firstAboveBackground
-      );
-    } catch {}
-  }
-
-  // B. Lightweight High-Contrast Hillshade Relief (Fast WebGL shader, zero 3D mesh overhead)
-  if (!map.getSource('standby-terrain-dem')) {
-    try {
-      map.addSource('standby-terrain-dem', {
-        type: 'raster-dem',
-        tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
-        encoding: 'terrarium',
-        tileSize: 256,
-        maxzoom: 8, // Capped to zoom 8: smooth GPU overzooming with 0 tile network lag
-      });
-    } catch {}
-  }
-
-  if (map.getSource('standby-terrain-dem') && !map.getLayer('standby-terrain-hillshade')) {
-    try {
-      map.addLayer(
-        {
-          id: 'standby-terrain-hillshade',
-          type: 'hillshade',
-          source: 'standby-terrain-dem',
-          layout: { visibility: 'visible' },
-          paint: {
-            // High-contrast razor-sharp terrain relief: deep pitch shadows with luminous slate-cyan ridge illumination
-            'hillshade-shadow-color': '#020408',
-            'hillshade-highlight-color': '#688db8',
-            'hillshade-accent-color': '#132030',
-            'hillshade-illumination-direction': 315,
-            'hillshade-illumination-anchor': 'viewport',
-            'hillshade-exaggeration': [
-              'interpolate', ['linear'], ['zoom'],
-              3, 0.65,
-              6, 0.85,
-              9, 0.95,
-              12, 1.0
-            ],
-          },
-        },
-        firstAboveBackground
-      );
-    } catch {}
-  }
-
-  // 2. Configure Zoom Ranges - Unlock dense road, street network, and building footprints earlier
-  const safeZoomRange = (id, min, max) => {
-    try {
-      if (map.getLayer(id) && typeof map.setLayerZoomRange === 'function') {
-        map.setLayerZoomRange(id, min, max);
-      }
-    } catch {}
-  };
-
-  // Unlock street details and urban architecture earlier
-  safeZoomRange('highway_minor', 6.0, 24);
-  safeZoomRange('highway_major_casing', 7.5, 24);
-  safeZoomRange('highway_major_inner', 7.5, 24);
-  safeZoomRange('building', 11.5, 24);
-  safeZoomRange('landuse_residential', 7.0, 24);
-  safeZoomRange('landuse_commercial', 7.0, 24);
-  safeZoomRange('landuse_industrial', 7.0, 24);
-  safeZoomRange('waterway', 4.0, 24);
-
-  // Progressive Level of Detail for text
-  safeZoomRange('place_city', 5.0, 15);
-  safeZoomRange('place_town', 6.5, 16);
-  safeZoomRange('place_village', 8.0, 16);
-  safeZoomRange('place_suburb', 8.5, 17);
-  safeZoomRange('place_other', 9.2, 17);
-  safeZoomRange('water_name', 5.8, 20);
-  safeZoomRange('highway_name_motorway', 6.5, 20);
-  safeZoomRange('highway_name_other', 7.5, 20);
-
-  // Single-line text layout: eliminates the noisy 2-line nonlatin script concatenation
-  const singleLineField = ['coalesce', ['get', 'name_en'], ['get', 'name:latin'], ['get', 'name']];
-
-  style.layers.forEach((l) => {
-    try {
-      const id = l.id;
-      const type = l.type;
-
-    // Waterways & Water Bodies: Deep marine lakes and razor-sharp alpine valley rivers
-    if (id.includes('waterway')) {
-      if (type === 'line') {
-        map.setPaintProperty(id, 'line-color', [
-          'interpolate', ['linear'], ['zoom'],
-          4, '#1b324d',
-          8, '#27527f',
-          12, '#3c7ab8'
-        ]);
-        map.setPaintProperty(id, 'line-width', [
-          'interpolate', ['linear'], ['zoom'],
-          4, 0.8,
-          8, 1.5,
-          12, 2.4
-        ]);
-        map.setPaintProperty(id, 'line-opacity', 0.85);
-      }
-    } else if (id.includes('water') || id.includes('ocean')) {
-      if (type === 'fill') {
-        map.setPaintProperty(id, 'fill-color', '#0f1826');
-      } else if (type === 'line') {
-        map.setPaintProperty(id, 'line-color', '#162438');
-      }
-    }
-
-    // Glaciers, Permanent Snowfields & Mountain Ice Shelves (Sharp razor edges on Himalayan peaks)
-    if (id.includes('glacier') || id.includes('ice_shelf') || id.includes('snow')) {
-      if (type === 'fill') {
-        safeZoomRange(id, 0, 24);
-        map.setPaintProperty(id, 'fill-color', [
-          'interpolate', ['linear'], ['zoom'],
-          3, '#5e758e',
-          6, '#718aa6',
-          9, '#85a2c2',
-          13, '#9ec0e6'
-        ]);
-        map.setPaintProperty(id, 'fill-opacity', 0.85);
-        try {
-          map.setPaintProperty(id, 'fill-outline-color', '#b4d4f7');
-        } catch {}
-      }
-    }
-
-    // Dense Urban Fabrics & Neighborhoods (Shows dense built-up city blocks even from regional zoom 7+)
-    if (id.includes('wood') || id.includes('forest') || id.includes('park') || id.includes('grass')) {
-      if (type === 'fill') {
-        map.setPaintProperty(id, 'fill-color', '#162635');
-        map.setPaintProperty(id, 'fill-opacity', 0.50);
-      }
-    } else if (id.includes('residential')) {
-      if (type === 'fill') {
-        map.setPaintProperty(id, 'fill-color', '#1c293a');
-        map.setPaintProperty(id, 'fill-opacity', 0.72);
-        try { map.setPaintProperty(id, 'fill-outline-color', '#26374d'); } catch {}
-      }
-    } else if (id.includes('commercial')) {
-      if (type === 'fill') {
-        map.setPaintProperty(id, 'fill-color', '#213247');
-        map.setPaintProperty(id, 'fill-opacity', 0.78);
-        try { map.setPaintProperty(id, 'fill-outline-color', '#2f4663'); } catch {}
-      }
-    } else if (id.includes('industrial') || id.includes('landuse')) {
-      if (type === 'fill') {
-        map.setPaintProperty(id, 'fill-color', '#1e2b3c');
-        map.setPaintProperty(id, 'fill-opacity', 0.68);
-        try { map.setPaintProperty(id, 'fill-outline-color', '#2b3d54'); } catch {}
-      }
-    }
-
-    // Building Footprints: High-contrast architectural slate with luminous perimeter outlines
-    if (id.includes('building')) {
-      if (type === 'fill') {
-        map.setPaintProperty(id, 'fill-color', [
-          'interpolate', ['linear'], ['zoom'],
-          11.5, '#223245',
-          13.5, '#2c405a',
-          16.0, '#385273'
-        ]);
-        map.setPaintProperty(id, 'fill-outline-color', [
-          'interpolate', ['linear'], ['zoom'],
-          11.5, '#394f6c',
-          13.5, '#4f719b',
-          16.0, '#6692c7'
-        ]);
-        map.setPaintProperty(id, 'fill-opacity', [
-          'interpolate', ['linear'], ['zoom'],
-          11.5, 0.75,
-          13.5, 0.92,
-          16.0, 0.98
-        ]);
-      }
-    }
-
-    // Roads & Highways: High-altitude dark charcoal/slate -> Zoomed-in calm Mapbox steel-blue (matching navigation-night)
-    if (type === 'line') {
-      if (id === 'highway_motorway_subtle') {
-        // High-altitude motorway preview (zoom < 6): soft charcoal slate
-        map.setPaintProperty(id, 'line-color', '#222d3d');
-        map.setPaintProperty(id, 'line-opacity', [
-          'interpolate', ['linear'], ['zoom'],
-          3.5, 0.2,
-          5.0, 0.45,
-          6.5, 0.75
-        ]);
-        map.setPaintProperty(id, 'line-width', [
-          'interpolate', ['linear'], ['zoom'],
-          3.5, 0.6,
-          6.5, 1.4
-        ]);
-      } else if (id.includes('motorway') || id.includes('freeway')) {
-        if (id.includes('casing')) {
-          map.setPaintProperty(id, 'line-color', '#0a1017');
-          map.setPaintProperty(id, 'line-opacity', 0.92);
-          map.setPaintProperty(id, 'line-width', [
-            'interpolate', ['exponential', 1.35], ['zoom'],
-            6, 1.8,
-            8, 3.2,
-            11, 5.0,
-            14, 8.5,
-            16, 14.0
-          ]);
-        } else {
-          // Motorway inner: dark charcoal high up -> refined Mapbox steel-blue (#52759e to #6792c4) on zoom
-          map.setPaintProperty(id, 'line-color', [
-            'interpolate', ['linear'], ['zoom'],
-            5.5, '#243040',
-            7.5, '#3b526d',
-            9.5, '#4b698c',
-            11.5, '#567aa3',
-            14.0, '#6894c7'
-          ]);
-          map.setPaintProperty(id, 'line-opacity', 0.98);
-          map.setPaintProperty(id, 'line-width', [
-            'interpolate', ['exponential', 1.35], ['zoom'],
-            5.5, 1.0,
-            8, 2.0,
-            11, 3.6,
-            14, 6.2,
-            16, 11.0
-          ]);
-        }
-      } else if (id === 'highway_major_subtle') {
-        // Major / Trunk corridors connecting districts (active zoom 6 to 11):
-        map.setPaintProperty(id, 'line-color', [
-          'interpolate', ['linear'], ['zoom'],
-          6.0, '#1c2635',
-          7.5, '#2a3b4f',
-          9.0, '#3a516d',
-          11.0, '#4a688c'
-        ]);
-        map.setPaintProperty(id, 'line-opacity', [
-          'interpolate', ['linear'], ['zoom'],
-          5.5, 0.35,
-          7.0, 0.75,
-          9.5, 0.95
-        ]);
-        map.setPaintProperty(id, 'line-width', [
-          'interpolate', ['linear'], ['zoom'],
-          6, 0.8,
-          8, 1.6,
-          10, 2.4,
-          11, 3.0
-        ]);
-      } else if (id.includes('major') || id.includes('trunk') || id.includes('primary')) {
-        if (id.includes('casing')) {
-          map.setPaintProperty(id, 'line-color', '#0b111a');
-          map.setPaintProperty(id, 'line-opacity', 0.90);
-          map.setPaintProperty(id, 'line-width', [
-            'interpolate', ['exponential', 1.3], ['zoom'],
-            8, 2.0,
-            11, 3.8,
-            13, 5.8,
-            16, 11.0
-          ]);
-        } else {
-          // Major roads at zoom: starts as dark slate street, transitions to gentle non-blinding steel blue (#486b94)
-          map.setPaintProperty(id, 'line-color', [
-            'interpolate', ['linear'], ['zoom'],
-            8, '#202b3a',
-            10, '#2e3e54',
-            12, '#3f5878',
-            14, '#51749e'
-          ]);
-          map.setPaintProperty(id, 'line-opacity', 0.95);
-          map.setPaintProperty(id, 'line-width', [
-            'interpolate', ['exponential', 1.3], ['zoom'],
-            8, 1.2,
-            11, 2.4,
-            13, 4.0,
-            16, 8.0
-          ]);
-        }
-      } else if (id.includes('minor') || id.includes('tertiary') || id.includes('secondary') || id.includes('service')) {
-        // Minor & urban local streets: Dark charcoal base, smooth transition to deep slate-blue on close zoom (zoom >= 11)
-        map.setPaintProperty(id, 'line-color', [
-          'interpolate', ['linear'], ['zoom'],
-          6.5, '#151c26',
-          9.0, '#1c2635',
-          11.5, '#243245',
-          13.5, '#31445e',
-          15.5, '#3d5678'
-        ]);
-        map.setPaintProperty(id, 'line-opacity', [
-          'interpolate', ['linear'], ['zoom'],
-          6.5, 0.40,
-          8.0, 0.65,
-          10.0, 0.85,
-          12.0, 0.95
-        ]);
-        map.setPaintProperty(id, 'line-width', [
-          'interpolate', ['exponential', 1.35], ['zoom'],
-          6.5, 0.4,
-          8.5, 0.8,
-          11, 1.4,
-          13, 2.4,
-          15, 4.2,
-          17, 7.5
-        ]);
-      } else if (id.includes('path') || id.includes('track') || id.includes('pedestrian')) {
-        map.setPaintProperty(id, 'line-color', '#1a2330');
-        map.setPaintProperty(id, 'line-opacity', [
-          'interpolate', ['linear'], ['zoom'],
-          10.5, 0.0,
-          12.5, 0.65
-        ]);
-        map.setPaintProperty(id, 'line-width', 0.8);
-      }
-    }
-
-    // Boundaries: Refined slate-dashed lines (not glaring white slashes)
-    if (id.includes('boundary')) {
-      if (id.includes('state')) {
-        map.setPaintProperty(id, 'line-color', '#94a3b8');
-        map.setPaintProperty(id, 'line-opacity', [
-          'interpolate', ['linear'], ['zoom'],
-          3.8, 0.35,
-          6, 0.65,
-          9, 0.85
-        ]);
-        map.setPaintProperty(id, 'line-width', 1.0);
-        map.setPaintProperty(id, 'line-dasharray', [3, 2]);
-      } else if (id.includes('country')) {
-        map.setPaintProperty(id, 'line-color', '#3b597d');
-        map.setPaintProperty(id, 'line-opacity', 0.75);
-        map.setPaintProperty(id, 'line-width', 1.2);
-      }
-    }
-
-    // Typography and Labels: Clean, single-line, progressive Level of Detail
-    if (type === 'symbol') {
-      try {
-        // Apply clean single-line layout to avoid 2-line bilingual stacking
-        if (id.startsWith('place_') || id.startsWith('water_name') || id.startsWith('highway_name')) {
-          try {
-            map.setLayoutProperty(id, 'text-field', singleLineField);
-          } catch {}
-        }
-
-        if (id.includes('country')) {
-          map.setPaintProperty(id, 'text-color', '#ffffff');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.85)');
-          map.setPaintProperty(id, 'text-halo-width', 1.0);
-          map.setPaintProperty(id, 'text-halo-blur', 0);
-          map.setPaintProperty(id, 'text-opacity', 1.0);
-        } else if (id.includes('state') || id === 'place_state') {
-          // State names: Soft silver, visible from country zoom, elegant letter spacing
-          map.setPaintProperty(id, 'text-color', '#cbd5e1');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.8)');
-          map.setPaintProperty(id, 'text-halo-width', 1.0);
-          map.setPaintProperty(id, 'text-halo-blur', 0);
-          map.setPaintProperty(id, 'text-opacity', [
-            'interpolate', ['linear'], ['zoom'],
-            4.0, 0.5,
-            5.5, 0.85,
-            8, 0.4
-          ]);
-          try {
-            map.setLayoutProperty(id, 'text-size', [
-              'interpolate', ['linear'], ['zoom'],
-              4, 10,
-              6, 12,
-              9, 15
-            ]);
-            map.setLayoutProperty(id, 'text-letter-spacing', 0.14);
-          } catch {}
-        } else if (id === 'place_city_large') {
-          // Top Tier Megacities (Delhi, Mumbai, Bengaluru, etc.): Crisp white, clear halo
-          map.setPaintProperty(id, 'text-color', '#ffffff');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.9)');
-          map.setPaintProperty(id, 'text-halo-width', 1.1);
-          map.setPaintProperty(id, 'text-halo-blur', 0);
-          map.setPaintProperty(id, 'text-opacity', 1.0);
-          try {
-            map.setLayoutProperty(id, 'text-size', [
-              'interpolate', ['linear'], ['zoom'],
-              4, 11,
-              7, 13,
-              10, 16
-            ]);
-          } catch {}
-        } else if (id === 'place_city') {
-          // Tier-2 Cities (Jaipur, Agra, Kota, etc.): Smoothly fade in on regional zoom
-          map.setPaintProperty(id, 'text-color', '#e2e8f0');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.85)');
-          map.setPaintProperty(id, 'text-halo-width', 1.0);
-          map.setPaintProperty(id, 'text-halo-blur', 0);
-          map.setPaintProperty(id, 'text-opacity', [
-            'interpolate', ['linear'], ['zoom'],
-            5.5, 0.0,
-            6.2, 0.9,
-            8, 1.0
-          ]);
-          try {
-            map.setLayoutProperty(id, 'text-size', [
-              'interpolate', ['linear'], ['zoom'],
-              5.5, 10,
-              8, 12,
-              11, 15
-            ]);
-          } catch {}
-        } else if (id.includes('town')) {
-          // Towns: Fade in at zoom 7.0+
-          map.setPaintProperty(id, 'text-color', '#cbd5e1');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.85)');
-          map.setPaintProperty(id, 'text-halo-width', 1.0);
-          map.setPaintProperty(id, 'text-halo-blur', 0);
-          map.setPaintProperty(id, 'text-opacity', [
-            'interpolate', ['linear'], ['zoom'],
-            7.0, 0.0,
-            7.8, 0.85,
-            10, 1.0
-          ]);
-        } else if (id.includes('village') || id.includes('suburb') || id.includes('place_other')) {
-          // Villages / Suburbs: Only local zoom (zoom 8.8+)
-          map.setPaintProperty(id, 'text-color', '#cbd5e1');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.85)');
-          map.setPaintProperty(id, 'text-halo-width', 1.0);
-          map.setPaintProperty(id, 'text-halo-blur', 0);
-          map.setPaintProperty(id, 'text-opacity', 0.9);
-        } else if (id.includes('water_name')) {
-          map.setPaintProperty(id, 'text-color', '#5682a3');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.85)');
-          map.setPaintProperty(id, 'text-halo-width', 1.0);
-          map.setPaintProperty(id, 'text-halo-blur', 0);
-          map.setPaintProperty(id, 'text-opacity', 0.85);
-        } else if (id === 'highway_name_motorway') {
-          // Yellow highway shield badges with bold numerals (e.g. NH 48, NH 52 in Mapbox reference)
-          map.setPaintProperty(id, 'text-color', '#0f172a');
-          map.setPaintProperty(id, 'text-halo-color', '#f59e0b');
-          map.setPaintProperty(id, 'text-halo-width', 3.5);
-          map.setPaintProperty(id, 'text-halo-blur', 0.2);
-          map.setPaintProperty(id, 'text-opacity', [
-            'interpolate', ['linear'], ['zoom'],
-            6.5, 0.0,
-            7.2, 0.9,
-            12, 1.0
-          ]);
-        } else if (id.includes('highway_name')) {
-          map.setPaintProperty(id, 'text-color', '#94a3b8');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.85)');
-          map.setPaintProperty(id, 'text-halo-width', 1.0);
-          map.setPaintProperty(id, 'text-halo-blur', 0);
-          map.setPaintProperty(id, 'text-opacity', 0.9);
-        } else {
-          map.setPaintProperty(id, 'text-color', '#ffffff');
-          map.setPaintProperty(id, 'text-halo-color', 'rgba(10, 16, 28, 0.85)');
-          map.setPaintProperty(id, 'text-halo-width', 1.0);
-          map.setPaintProperty(id, 'text-halo-blur', 0);
-          map.setPaintProperty(id, 'text-opacity', 1.0);
-        }
-      } catch {}
-    }
-  } catch {}
-  });
-
-  // 3. Add Prominent Mountain Peaks & Elevation Markers across Himalayas & Mountain Ranges
-  if (map.getSource('openmaptiles') && !map.getLayer('standby-mountain-peaks')) {
-    try {
-      map.addLayer(
-        {
-          id: 'standby-mountain-peaks',
-          type: 'symbol',
-          source: 'openmaptiles',
-          'source-layer': 'mountain_peak',
-          minzoom: 8.0,
-          filter: ['<=', ['coalesce', ['get', 'rank'], 1], 2],
-          layout: {
-            'text-field': [
-              'concat',
-              '▲ ',
-              ['coalesce', ['get', 'name_en'], ['get', 'name:latin'], ['get', 'name']],
-              ' ',
-              ['to-string', ['get', 'ele']],
-              'm'
-            ],
-            'text-size': [
-              'interpolate', ['linear'], ['zoom'],
-              8.0, 9.5,
-              11.0, 11.5,
-              13.0, 13.0
-            ],
-            'text-letter-spacing': 0.08,
-            'text-optional': true,
-          },
-          paint: {
-            'text-color': '#e2e8f0',
-            'text-halo-color': 'rgba(6, 10, 18, 0.95)',
-            'text-halo-width': 1.4,
-            'text-halo-blur': 0.2,
-            'text-opacity': [
-              'interpolate', ['linear'], ['zoom'],
-              8.0, 0.0,
-              8.6, 0.85,
-              12.0, 1.0
-            ],
-          },
-        }
-      );
-    } catch {}
-  }
-}
-
 export default function DelhiAqiHeatmap() {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -1137,17 +556,8 @@ export default function DelhiAqiHeatmap() {
   const [isLoadingLive, setIsLoadingLive] = useState(false);
   const [lastUpdated, setLastUpdated] = useState('Fetching live national telemetry...');
 
-  // Map Provider Standby / Live Mode state
-  const [mapProvider, setMapProvider] = useState(getActiveMapProvider);
-  const isMapboxMode = mapProvider === 'mapbox';
-
-  const handleToggleMapProvider = useCallback(() => {
-    const nextProvider = mapProvider === 'free' ? 'mapbox' : 'free';
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('wmd_map_provider', nextProvider);
-      window.location.reload();
-    }
-  }, [mapProvider]);
+  // Development Token Saver Gate: defaults to false so page reloads consume 0 Mapbox credits
+  const [showMap, setShowMap] = useState(false);
 
   // User live GPS location coordinates (NO DEMO DATA - initialized null until real device GPS locks)
   const [userLocation, setUserLocation] = useState({
@@ -1390,7 +800,7 @@ export default function DelhiAqiHeatmap() {
       const remoteMatches = [];
 
       // 1. Mapbox Live Geocoding (when Mapbox mode is active)
-      if (isMapboxMode && mapboxgl.accessToken) {
+      if (mapboxgl.accessToken) {
         const token = mapboxgl.accessToken;
         // Search POIs, addresses, neighborhoods, and places with Delhi proximity bias
         const mbUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(normalizedQuery)}.json?access_token=${token}&country=in&proximity=77.2090,28.6139&limit=8`;
@@ -1469,7 +879,7 @@ export default function DelhiAqiHeatmap() {
     } finally {
       setIsSearching(false);
     }
-  }, [isMapboxMode]);
+  }, []);
 
   // Cleanup debounce on unmount
   useEffect(() => {
@@ -1863,7 +1273,7 @@ export default function DelhiAqiHeatmap() {
         if (shouldRev) {
           lastGeocodedCoordRef.current = { lat: latitude, lon: longitude };
           try {
-            if (isMapboxMode && mapboxgl.accessToken) {
+            if (mapboxgl.accessToken) {
               const token = mapboxgl.accessToken;
               const revRes = await fetch(
                 `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${token}&country=in&types=neighborhood,locality,place,district&limit=1`
@@ -1954,8 +1364,9 @@ export default function DelhiAqiHeatmap() {
     );
   }, [playCinematic360Tour]);
 
-  // Auto-start GPS tracking on mount
+  // Auto-start GPS tracking on mount (only when map is active)
   useEffect(() => {
+    if (!showMap) return;
     startLiveGpsTracking();
     return () => {
       if (watchIdRef.current !== null) {
@@ -1963,7 +1374,7 @@ export default function DelhiAqiHeatmap() {
         watchIdRef.current = null;
       }
     };
-  }, [startLiveGpsTracking]);
+  }, [showMap, startLiveGpsTracking]);
 
   // Center or re-center map on user's live position
   const handleCenterOnUser = useCallback(() => {
@@ -2007,8 +1418,9 @@ export default function DelhiAqiHeatmap() {
   }, [isSidebarOpen]);
 
   useEffect(() => {
+    if (!showMap) return;
     fetchLiveNationalData(userLocation.lat, userLocation.lon);
-  }, [fetchLiveNationalData, userLocation.lat, userLocation.lon]);
+  }, [showMap, fetchLiveNationalData, userLocation.lat, userLocation.lon]);
 
   // Nearest station calculation based on real live GPS location
   const nearestStation = useMemo(() => {
@@ -2096,13 +1508,13 @@ export default function DelhiAqiHeatmap() {
   // MAPBOX GL INITIALIZATION & WebGL HEATMAP ENGINE FOR ALL INDIA
   // =========================================================================
   useEffect(() => {
+    if (!showMap) return;
     if (!mapContainerRef.current) return;
     if (mapInstanceRef.current) return;
 
-    const activeProvider = getActiveMapProvider();
-    const isMapbox = activeProvider === 'mapbox';
-    const chosenStyle = isMapbox ? MAPBOX_DARK_STYLE : OPENFREEMAP_DARK_STYLE;
-    const activeEngine = getMapEngine();
+    if (!mapboxgl.accessToken) {
+      mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
+    }
 
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const initialLng = urlParams && urlParams.get('lng') ? parseFloat(urlParams.get('lng')) : 78.9629;
@@ -2110,9 +1522,9 @@ export default function DelhiAqiHeatmap() {
     const initialZoom = urlParams && urlParams.get('zoom') ? parseFloat(urlParams.get('zoom')) : 4.6;
     const initialPitch = urlParams && urlParams.get('pitch') ? parseFloat(urlParams.get('pitch')) : 16;
 
-    const map = new activeEngine.Map({
+    const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: chosenStyle, // High-contrast night navigation (Mapbox) or OpenFreeMap dark vector style (0 credits)
+      style: MAPBOX_DARK_STYLE, // High-contrast night navigation
       center: [initialLng, initialLat],
       zoom: initialZoom,
       minZoom: 3.8,
@@ -2139,7 +1551,7 @@ export default function DelhiAqiHeatmap() {
     map.boxZoom.enable();
     map.keyboard.enable();
 
-    map.addControl(new activeEngine.NavigationControl({ visualizePitch: true }), 'bottom-right');
+    map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'bottom-right');
 
     map.on('error', (e) => {
       console.warn('Map engine warning/event:', e?.error?.message || e?.message || e);
@@ -2151,10 +1563,6 @@ export default function DelhiAqiHeatmap() {
         window.__wmd_map = map;
       }
 
-      // Retune vector tiles to match Mapbox navigation-night palette in standby mode
-      if (!isMapbox) {
-        applyNavigationNightPalette(map);
-      }
 
       // 1. Add Stations GeoJSON Data Source
       map.addSource('aqi-stations', {
@@ -2516,14 +1924,32 @@ export default function DelhiAqiHeatmap() {
 
     return () => {
       cancelCinematic360TourRef.current?.();
-      map.remove();
-      mapInstanceRef.current = null;
-      mapLoadedRef.current = false;
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current = [];
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
+      if (targetMarkerRef.current) {
+        targetMarkerRef.current.remove();
+        targetMarkerRef.current = null;
+      }
+      if (mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.remove();
+        } catch {}
+        mapInstanceRef.current = null;
+        mapLoadedRef.current = false;
+      }
+      if (typeof window !== 'undefined') {
+        delete window.__wmd_map;
+      }
     };
-  }, []);
+  }, [showMap]);
 
   // Trigger 360° slanted orbital flyaround when user scrolls down from hero into map section
   useEffect(() => {
+    if (!showMap) return;
     if (!sectionContainerRef.current) return;
     const observer = new IntersectionObserver(
       (entries) => {
@@ -2543,7 +1969,7 @@ export default function DelhiAqiHeatmap() {
 
     observer.observe(sectionContainerRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [showMap]);
 
   // Update GeoJSON source when stations update
   useEffect(() => {
@@ -2668,8 +2094,7 @@ export default function DelhiAqiHeatmap() {
         setInspectedPoint(null);
       });
 
-      const Engine = getMapEngine();
-      const marker = new Engine.Marker({ element: el, anchor: 'bottom' })
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([st.lon, st.lat])
         .addTo(map);
 
@@ -2746,8 +2171,7 @@ export default function DelhiAqiHeatmap() {
       </div>
     `;
 
-    const Engine = getMapEngine();
-    targetMarkerRef.current = new Engine.Marker({ element: targetEl, anchor: 'center' })
+    targetMarkerRef.current = new mapboxgl.Marker({ element: targetEl, anchor: 'center' })
       .setLngLat([inspectedPoint.lon, inspectedPoint.lat])
       .addTo(map);
   }, [inspectedPoint, activeRange]);
@@ -2840,8 +2264,7 @@ export default function DelhiAqiHeatmap() {
         </div>
       `;
 
-      const Engine = getMapEngine();
-      userMarkerRef.current = new Engine.Marker({ element: userEl, anchor: 'center' })
+      userMarkerRef.current = new mapboxgl.Marker({ element: userEl, anchor: 'center' })
         .setLngLat([userLocation.lon, userLocation.lat])
         .addTo(map);
     } else {
@@ -2865,7 +2288,196 @@ export default function DelhiAqiHeatmap() {
     }
   }, [userLocation, userAqiEstimate]);
 
-return (
+  // =========================================================================
+  // DEVELOPMENT TOKEN-SAVER PLACEHOLDER (Default gate: burns 0 credits)
+  // =========================================================================
+  if (!showMap) {
+    return (
+      <section
+        ref={sectionContainerRef}
+        id="delhi-aqi-heatmap"
+        style={{
+          position: 'relative',
+          zIndex: 40,
+          width: '100%',
+          minHeight: '620px',
+          height: '75vh',
+          background: 'radial-gradient(ellipse at 50% 35%, #0f1c34 0%, #070a12 70%)',
+          color: '#f8fafc',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '40px 24px',
+          boxSizing: 'border-box',
+          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Subtle background animated ambient glow */}
+        <div
+          style={{
+            position: 'absolute',
+            width: '460px',
+            height: '460px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%)',
+            pointerEvents: 'none',
+            zIndex: 1,
+            filter: 'blur(30px)',
+          }}
+        />
+
+        {/* Development Token Guard Card */}
+        <div
+          className="glass-panel-master"
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            maxWidth: '540px',
+            width: '100%',
+            padding: '36px 30px',
+            borderRadius: '24px',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '18px',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(56, 189, 248, 0.12)',
+            border: '1px solid rgba(56, 189, 248, 0.22)',
+          }}
+        >
+          {/* Pulsing Status Badge */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '5px 14px',
+              borderRadius: '9999px',
+              background: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              color: '#34d399',
+              letterSpacing: '0.04em',
+            }}
+          >
+            <span
+              style={{
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                background: '#10b981',
+                boxShadow: '0 0 8px #10b981',
+              }}
+            />
+            DEV TOKEN SAVER ACTIVE • 0 CREDITS USED
+          </div>
+
+          {/* Icon in luminous circle */}
+          <div
+            style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '18px',
+              background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(37, 99, 235, 0.2) 100%)',
+              border: '1px solid rgba(56, 189, 248, 0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 0 24px rgba(56, 189, 248, 0.22)',
+            }}
+          >
+            <MapIcon size={32} color="#38bdf8" />
+          </div>
+
+          {/* Heading & Information */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: '1.4rem',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                background: 'linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              India 3D AQI Spatial Twin
+            </h2>
+            <p
+              style={{
+                margin: 0,
+                fontSize: '0.86rem',
+                lineHeight: 1.55,
+                color: '#94a3b8',
+                maxWidth: '430px',
+              }}
+            >
+              Mapbox tile loading, 3D building extrusions, and orbital camera flights are paused during development so hot-reloads burn 0 credits.
+            </p>
+          </div>
+
+          {/* Primary Show Map Button */}
+          <button
+            onClick={() => setShowMap(true)}
+            id="show-map-btn"
+            style={{
+              marginTop: '4px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              padding: '13px 32px',
+              borderRadius: '13px',
+              background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
+              color: '#ffffff',
+              fontSize: '0.94rem',
+              fontWeight: 700,
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              boxShadow: '0 10px 25px rgba(2, 132, 199, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.35)',
+              cursor: 'pointer',
+              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+              e.currentTarget.style.boxShadow = '0 14px 30px rgba(2, 132, 199, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.45)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              e.currentTarget.style.boxShadow = '0 10px 25px rgba(2, 132, 199, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.35)';
+            }}
+          >
+            <Sparkles size={17} />
+            <span>Show Map</span>
+            <ChevronRight size={17} />
+          </button>
+
+          {/* Token tier info footnote */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.72rem',
+              color: '#64748b',
+            }}
+          >
+            <span>Public Token Active</span>
+            <span>•</span>
+            <span>50,000 Loads Tier</span>
+            <span>•</span>
+            <span>Navigation Night 3D</span>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
     <section
       ref={sectionContainerRef}
       id="delhi-aqi-heatmap"
@@ -2963,15 +2575,11 @@ return (
             <span style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>•</span>
             <span style={{ fontSize: '0.7rem', color: '#e2e8f0', fontWeight: 500 }}>{lastUpdated}</span>
 
-            {/* Provider Mode Pill / Instant Reversibility Toggle */}
+            {/* Pause / Hide Map button to return to Token Saver without refreshing */}
             <button
-              onClick={handleToggleMapProvider}
-              className={`glass-pill ${mapProvider === 'free' ? 'glass-pill-success' : 'glass-pill-active'}`}
-              title={
-                mapProvider === 'free'
-                  ? 'Currently in Credit-Saver Standby Mode (0 Mapbox credits consumed). Click to connect with Mapbox Live.'
-                  : 'Currently connected to Mapbox Live (Consuming Mapbox credits). Click to switch to Credit-Saver Standby Mode.'
-              }
+              onClick={() => setShowMap(false)}
+              className="glass-pill"
+              title="Pause map engine and return to Token-Saver mode"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -2981,6 +2589,7 @@ return (
                 fontSize: '0.66rem',
                 fontWeight: 700,
                 cursor: 'pointer',
+                color: '#cbd5e1',
               }}
             >
               <span
@@ -2988,11 +2597,11 @@ return (
                   width: '6px',
                   height: '6px',
                   borderRadius: '50%',
-                  background: mapProvider === 'free' ? '#10b981' : '#60a5fa',
-                  boxShadow: mapProvider === 'free' ? '0 0 6px #10b981' : '0 0 6px #60a5fa',
+                  background: '#f59e0b',
+                  boxShadow: '0 0 6px #f59e0b',
                 }}
               />
-              <span>{mapProvider === 'free' ? 'Standby Mode (0 Mapbox Calls)' : 'Mapbox Live'}</span>
+              <span>Pause / Hide Map</span>
             </button>
           </div>
 
