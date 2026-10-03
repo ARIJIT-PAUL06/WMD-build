@@ -1364,9 +1364,8 @@ export default function DelhiAqiHeatmap() {
     );
   }, [playCinematic360Tour]);
 
-  // Auto-start GPS tracking on mount (only when map is active)
+  // Auto-start GPS tracking on mount
   useEffect(() => {
-    if (!showMap) return;
     startLiveGpsTracking();
     return () => {
       if (watchIdRef.current !== null) {
@@ -1374,7 +1373,7 @@ export default function DelhiAqiHeatmap() {
         watchIdRef.current = null;
       }
     };
-  }, [showMap, startLiveGpsTracking]);
+  }, [startLiveGpsTracking]);
 
   // Center or re-center map on user's live position
   const handleCenterOnUser = useCallback(() => {
@@ -1418,9 +1417,8 @@ export default function DelhiAqiHeatmap() {
   }, [isSidebarOpen]);
 
   useEffect(() => {
-    if (!showMap) return;
     fetchLiveNationalData(userLocation.lat, userLocation.lon);
-  }, [showMap, fetchLiveNationalData, userLocation.lat, userLocation.lon]);
+  }, [fetchLiveNationalData, userLocation.lat, userLocation.lon]);
 
   // Nearest station calculation based on real live GPS location
   const nearestStation = useMemo(() => {
@@ -2288,195 +2286,6 @@ export default function DelhiAqiHeatmap() {
     }
   }, [userLocation, userAqiEstimate]);
 
-  // =========================================================================
-  // DEVELOPMENT TOKEN-SAVER PLACEHOLDER (Default gate: burns 0 credits)
-  // =========================================================================
-  if (!showMap) {
-    return (
-      <section
-        ref={sectionContainerRef}
-        id="delhi-aqi-heatmap"
-        style={{
-          position: 'relative',
-          zIndex: 40,
-          width: '100%',
-          minHeight: '620px',
-          height: '75vh',
-          background: 'radial-gradient(ellipse at 50% 35%, #0f1c34 0%, #070a12 70%)',
-          color: '#f8fafc',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px 24px',
-          boxSizing: 'border-box',
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Subtle background animated ambient glow */}
-        <div
-          style={{
-            position: 'absolute',
-            width: '460px',
-            height: '460px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%)',
-            pointerEvents: 'none',
-            zIndex: 1,
-            filter: 'blur(30px)',
-          }}
-        />
-
-        {/* Development Token Guard Card */}
-        <div
-          className="glass-panel-master"
-          style={{
-            position: 'relative',
-            zIndex: 10,
-            maxWidth: '540px',
-            width: '100%',
-            padding: '36px 30px',
-            borderRadius: '24px',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '18px',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(56, 189, 248, 0.12)',
-            border: '1px solid rgba(56, 189, 248, 0.22)',
-          }}
-        >
-          {/* Pulsing Status Badge */}
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '5px 14px',
-              borderRadius: '9999px',
-              background: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              color: '#34d399',
-              letterSpacing: '0.04em',
-            }}
-          >
-            <span
-              style={{
-                width: '7px',
-                height: '7px',
-                borderRadius: '50%',
-                background: '#10b981',
-                boxShadow: '0 0 8px #10b981',
-              }}
-            />
-            DEV TOKEN SAVER ACTIVE • 0 CREDITS USED
-          </div>
-
-          {/* Icon in luminous circle */}
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '18px',
-              background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(37, 99, 235, 0.2) 100%)',
-              border: '1px solid rgba(56, 189, 248, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 0 24px rgba(56, 189, 248, 0.22)',
-            }}
-          >
-            <MapIcon size={32} color="#38bdf8" />
-          </div>
-
-          {/* Heading & Information */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <h2
-              style={{
-                margin: 0,
-                fontSize: '1.4rem',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
-                background: 'linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              India 3D AQI Spatial Twin
-            </h2>
-            <p
-              style={{
-                margin: 0,
-                fontSize: '0.86rem',
-                lineHeight: 1.55,
-                color: '#94a3b8',
-                maxWidth: '430px',
-              }}
-            >
-              Mapbox tile loading, 3D building extrusions, and orbital camera flights are paused during development so hot-reloads burn 0 credits.
-            </p>
-          </div>
-
-          {/* Primary Show Map Button */}
-          <button
-            onClick={() => setShowMap(true)}
-            id="show-map-btn"
-            style={{
-              marginTop: '4px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              padding: '13px 32px',
-              borderRadius: '13px',
-              background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
-              color: '#ffffff',
-              fontSize: '0.94rem',
-              fontWeight: 700,
-              border: '1px solid rgba(255, 255, 255, 0.25)',
-              boxShadow: '0 10px 25px rgba(2, 132, 199, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.35)',
-              cursor: 'pointer',
-              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-              e.currentTarget.style.boxShadow = '0 14px 30px rgba(2, 132, 199, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.45)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0) scale(1)';
-              e.currentTarget.style.boxShadow = '0 10px 25px rgba(2, 132, 199, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.35)';
-            }}
-          >
-            <Sparkles size={17} />
-            <span>Show Map</span>
-            <ChevronRight size={17} />
-          </button>
-
-          {/* Token tier info footnote */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '0.72rem',
-              color: '#64748b',
-            }}
-          >
-            <span>Public Token Active</span>
-            <span>•</span>
-            <span>50,000 Loads Tier</span>
-            <span>•</span>
-            <span>Navigation Night 3D</span>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section
       ref={sectionContainerRef}
@@ -2504,10 +2313,47 @@ export default function DelhiAqiHeatmap() {
           height: '100%',
           background: '#040711',
           zIndex: 1,
-          cursor: 'grab',
+          cursor: showMap ? 'grab' : 'default',
           pointerEvents: 'auto',
         }}
-      />
+      >
+        {!showMap && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'none',
+              zIndex: 1,
+              background: 'radial-gradient(ellipse at 50% 50%, #0d1527 0%, #040711 80%)',
+            }}
+          >
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 18px',
+                borderRadius: '9999px',
+                background: 'rgba(15, 23, 42, 0.75)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(56, 189, 248, 0.2)',
+                color: '#94a3b8',
+                fontSize: '0.74rem',
+                fontWeight: 600,
+                letterSpacing: '0.02em',
+                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)',
+              }}
+            >
+              <MapIcon size={14} color="#38bdf8" />
+              <span>Mapbox Paused (0 credits used) • Click <strong style={{ color: '#38bdf8' }}>"Show Map"</strong> in the top bar to load</span>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* ============================================================== */}
       {/* 2. BUTTER-SMOOTH PERIMETER SCENE FADE (FEATHERED & UNOBTRUSIVE)*/}
@@ -2575,21 +2421,35 @@ export default function DelhiAqiHeatmap() {
             <span style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>•</span>
             <span style={{ fontSize: '0.7rem', color: '#e2e8f0', fontWeight: 500 }}>{lastUpdated}</span>
 
-            {/* Pause / Hide Map button to return to Token Saver without refreshing */}
+            {/* Mapbox Live Toggle / Show Map Button */}
             <button
-              onClick={() => setShowMap(false)}
-              className="glass-pill"
-              title="Pause map engine and return to Token-Saver mode"
+              onClick={() => setShowMap((prev) => !prev)}
+              id="show-map-btn"
+              className={`glass-pill ${showMap ? 'glass-pill-active' : 'glass-pill-success'}`}
+              title={
+                showMap
+                  ? 'Mapbox Live is active. Click to pause map and save Mapbox credits.'
+                  : 'Mapbox is paused to save credits. Click to load live 3D Mapbox map.'
+              }
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '5px',
-                padding: '3px 10px',
+                gap: '6px',
+                padding: '3px 11px',
                 borderRadius: '9999px',
-                fontSize: '0.66rem',
+                fontSize: '0.68rem',
                 fontWeight: 700,
                 cursor: 'pointer',
-                color: '#cbd5e1',
+                background: showMap
+                  ? 'rgba(56, 189, 248, 0.18)'
+                  : 'linear-gradient(135deg, rgba(2, 132, 199, 0.35) 0%, rgba(37, 99, 235, 0.35) 100%)',
+                border: showMap
+                  ? '1px solid rgba(56, 189, 248, 0.4)'
+                  : '1px solid rgba(56, 189, 248, 0.5)',
+                boxShadow: showMap
+                  ? '0 0 8px rgba(56, 189, 248, 0.25)'
+                  : '0 0 10px rgba(56, 189, 248, 0.3)',
+                color: '#f8fafc',
               }}
             >
               <span
@@ -2597,11 +2457,12 @@ export default function DelhiAqiHeatmap() {
                   width: '6px',
                   height: '6px',
                   borderRadius: '50%',
-                  background: '#f59e0b',
-                  boxShadow: '0 0 6px #f59e0b',
+                  background: showMap ? '#60a5fa' : '#38bdf8',
+                  boxShadow: showMap ? '0 0 6px #60a5fa' : '0 0 6px #38bdf8',
+                  animation: !showMap ? 'pulse 2s infinite' : 'none',
                 }}
               />
-              <span>Pause / Hide Map</span>
+              <span>{showMap ? 'Mapbox Live' : 'Show Map'}</span>
             </button>
           </div>
 
