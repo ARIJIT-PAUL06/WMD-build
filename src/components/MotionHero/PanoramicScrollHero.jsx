@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ArrowDown, Wind } from 'lucide-react';
 import CrtScreenLensCanvas from './CrtScreenLensCanvas';
 import './PanoramicScrollHero.css';
 
@@ -226,52 +225,26 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
         />
 
         {/* ============================================================== */}
-        {/* TOP EDITORIAL HUD TELEMETRY CAPSULE (Clean, Uncluttered)       */}
+        {/* TOP BRAND DISPLAY (Clean, Modern, Uncluttered)                */}
         {/* ============================================================== */}
         <div className="hero-top-hud">
           <div className="hero-hud-brand">
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: isRightPhase ? '#10b981' : isMidPhase ? '#f59e0b' : '#ef4444', boxShadow: `0 0 10px ${isRightPhase ? '#10b981' : isMidPhase ? '#f59e0b' : '#ef4444'}` }} />
-            <span>VAYUVITALS</span>
-            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>01 • PROLOGUE</span>
-          </div>
-
-          <div className="hero-hud-pill">
-            <Wind size={13} color="#38bdf8" />
-            <span>Atmospheric Inversion Journey</span>
-            <span style={{ color: '#475569' }}>•</span>
-            <span style={{ color: isRightPhase ? '#34d399' : isMidPhase ? '#fbbf24' : '#f87171' }}>
-              {isRightPhase ? 'Phase III: Canopy Gas Exchange' : isMidPhase ? 'Phase II: Critical Transition' : 'Phase I: Particulate Decay'}
+            <span
+              style={{
+                fontFamily: "'Outfit', sans-serif",
+                fontWeight: 900,
+                fontSize: '1.4rem',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                background: 'linear-gradient(135deg, #ffffff 35%, #38bdf8 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                filter: 'drop-shadow(0 2px 14px rgba(56, 189, 248, 0.45))',
+              }}
+            >
+              VAYUVITALS
             </span>
           </div>
-        </div>
-
-        {/* Scroll Instruction Floating Pill at bottom center */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '24px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 30,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'rgba(15, 23, 42, 0.75)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '9999px',
-            padding: '8px 18px',
-            fontSize: '0.78rem',
-            color: '#94a3b8',
-            pointerEvents: 'none',
-          }}
-        >
-          <ArrowDown size={14} className="animate-bounce" color="#38bdf8" />
-          <span>
-            {scrollProgress < 0.95
-              ? 'Scroll down to journey from toxic smog to clean atmospheric renewal'
-              : 'Continue scrolling down to explore the India National AQI Heatmap'}
-          </span>
         </div>
       </div>
     </div>

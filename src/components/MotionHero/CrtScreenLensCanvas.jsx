@@ -344,33 +344,45 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
 
       curY += lines.length * (fontSize + 6) + 16;
 
-      // Row 3: Bold Single Telemetry Stat Callout (Clean, high impact, no tiny clutter)
-      ctx.font = '700 16px "Share Tech Mono", "JetBrains Mono", monospace';
-      const pillW = ctx.measureText(statPillText).width + 24;
-      const pillH = 32;
+      // Row 3: Bold Single Telemetry Stat Callout (Clean, high impact, prominent AQI readability)
+      ctx.font = '800 17px "Outfit", "Inter", sans-serif';
+      const pillW = ctx.measureText(statPillText).width + 36;
+      const pillH = 34;
 
-      // Pill Background with phosphor border
-      ctx.fillStyle = accentColor.replace('rgb', 'rgba').replace(')', ', 0.22)');
+      // Pill Background with high contrast dark plate
+      ctx.fillStyle = 'rgba(10, 15, 29, 0.88)';
       ctx.beginPath();
       if (ctx.roundRect) {
-        ctx.roundRect(x + paddingX, curY - 20, pillW, pillH, 5);
+        ctx.roundRect(x + paddingX, curY - 20, pillW, pillH, 7);
       } else {
         ctx.rect(x + paddingX, curY - 20, pillW, pillH);
       }
       ctx.fill();
 
+      // Sharp accent border with bloom
       ctx.save();
       ctx.strokeStyle = accentColor;
-      ctx.lineWidth = 1.4;
+      ctx.lineWidth = 1.8;
       ctx.shadowColor = accentGlow;
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = 10;
       ctx.stroke();
       ctx.restore();
 
-      ctx.fillStyle = badgeColor;
-      ctx.fillText(statPillText, x + paddingX + 12, curY + 2);
+      // Glowing indicator dot
+      ctx.save();
+      ctx.fillStyle = accentColor;
+      ctx.shadowColor = accentGlow;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(x + paddingX + 16, curY - 3, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
 
-      curY += 36;
+      // Sharp, bright, easily readable text
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(statPillText, x + paddingX + 28, curY + 3);
+
+      curY += 38;
 
       // Row 4: Bottom Action Strip (Buttons/Status bars have IDENTICAL dimensions across cards)
       const btnW = innerW;
@@ -477,14 +489,14 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         y: y1,
         cardW,
         cardH,
-        badgeText: '// CH-01: DELHI NCR // AIR INVERSION ALERT',
+        badgeText: 'DELHI NCR AIR ALERT',
         badgeColor: '#f87171',
-        strikingLine: '30 MILLION PEOPLE BREATHING ASH.',
-        statPillText: 'AQI 486 • SEVERE CRITICAL',
+        strikingLine: '30 MILLION PEOPLE BREATHING TOXIC SMOG.',
+        statPillText: 'AQI 486  —  HAZARDOUS',
         accentColor: '#ef4444',
         accentGlow: 'rgba(239, 68, 68, 0.70)',
         opacity: op1,
-        actionText: '[ CRISIS SECTOR: 140M THERMAL CEILING ]',
+        actionText: 'CRITICAL POLLUTION ALERT',
         isInteractiveButton: false,
         time,
       });
@@ -505,14 +517,14 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         y: y2,
         cardW,
         cardH,
-        badgeText: '// CH-02: CORRIDOR // MITIGATION ENGAGED',
+        badgeText: 'ACTIVE AIR RESTORATION',
         badgeColor: '#fbbf24',
-        strikingLine: 'THE EXACT LINE WHERE REPAIR BEGINS.',
-        statPillText: 'AQI 142 • CORRIDOR TRANSITION',
+        strikingLine: 'FILTERING AND SCRUBBING THE AIR.',
+        statPillText: 'AQI 142  —  MODERATE',
         accentColor: '#f59e0b',
         accentGlow: 'rgba(245, 158, 11, 0.70)',
         opacity: op2,
-        actionText: '[ AUTONOMOUS AIR SCRUBBING ENGAGED ]',
+        actionText: 'CLEAN AIR FILTRATION IN PROGRESS',
         isInteractiveButton: false,
         time,
       });
@@ -533,14 +545,14 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         y: y3,
         cardW,
         cardH,
-        badgeText: '// CH-03: HIMALAYAS // CANOPY RENEWAL',
+        badgeText: 'CLEAN MOUNTAIN AIR',
         badgeColor: '#34d399',
-        strikingLine: '11,000 LITERS OF UNTAINTED LIFE.',
-        statPillText: 'AQI 22 • PRISTINE CANOPY FLUX',
+        strikingLine: 'PURE, HEALTHY AIR TO BREATHE.',
+        statPillText: 'AQI 22  —  CLEAN & HEALTHY',
         accentColor: '#10b981',
         accentGlow: 'rgba(16, 185, 129, 0.70)',
         opacity: op3,
-        actionText: 'ENTER INDIA AQI HEATMAP',
+        actionText: 'EXPLORE LIVE AQI MAP',
         isInteractiveButton: true,
         time,
       });
