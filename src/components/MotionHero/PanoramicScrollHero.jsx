@@ -141,6 +141,10 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
   const ambientBg = brandTheme.ambient;
   const spotlightColor = brandTheme.spotlight;
 
+  const isLeftPhase = scrollProgress < 0.38;
+  const isMidPhase = scrollProgress >= 0.38 && scrollProgress < 0.68;
+  const isRightPhase = scrollProgress >= 0.68;
+
   return (
     <div
       ref={trackRef}
