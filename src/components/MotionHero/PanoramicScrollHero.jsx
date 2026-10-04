@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { ArrowDown, Wind, Sparkles, AlertTriangle, ShieldCheck, ChevronRight, Activity, Eye } from 'lucide-react';
+import CrtScreenLensCanvas from './CrtScreenLensCanvas';
 import './PanoramicScrollHero.css';
 
 /**
@@ -153,35 +154,15 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
         }}
       >
         {/* ============================================================== */}
-        {/* CRT SPHERICAL FACEPLATE OPTICAL DISPLACEMENT LENS (SVG FILTER) */}
+        {/* FIXED CRT CURVED SCREEN FACEPLATE (DYNAMIC BULGE LENS)         */}
+        {/* The screen lens is stationary; as you scroll, the picture      */}
+        {/* slides through the center and bulges dynamically outward!      */}
         {/* ============================================================== */}
-        <svg style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }} aria-hidden="true">
-          <defs>
-            {/* Spherical displacement map: radial gradient where center bulges forward */}
-            <radialGradient id="crt-lens-gradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-              <stop offset="0%" stopColor="#808080" />
-              <stop offset="60%" stopColor="#909090" />
-              <stop offset="85%" stopColor="#b5b5b5" />
-              <stop offset="100%" stopColor="#ffffff" />
-            </radialGradient>
-            <filter id="crt-spherical-barrel" x="-10%" y="-10%" width="120%" height="120%">
-              {/* Generate radial distortion vectors */}
-              <feRadialGradient />
-              <feTurbulence type="fractalNoise" baseFrequency="0.001 0.001" numOctaves="1" result="warpMap" />
-              <feDisplacementMap
-                in="SourceGraphic"
-                in2="warpMap"
-                scale="28"
-                xChannelSelector="R"
-                yChannelSelector="G"
-              />
-            </filter>
-          </defs>
-        </svg>
+        <CrtScreenLensCanvas scrollProgress={scrollProgress} mousePos={mousePos} />
 
-        {/* 1. Bulbous Spherical CRT Curvature Swell & Corner Blackout */}
+        {/* 1. Bulbous Spherical CRT Curvature Swell & Corner Blackout Frame */}
         <div className="hero-crt-screen-curvature" aria-hidden="true">
-          {/* Authentic CRT Glass Faceplate Curvature Lens Highlight (Top-left bulb reflection) */}
+          {/* Authentic CRT Glass Faceplate Curvature Lens Highlight */}
           <div className="hero-crt-glass-glare" />
         </div>
 
@@ -224,27 +205,6 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             transition: 'background 0.5s ease',
           }}
         />
-
-        {/* ============================================================== */}
-        {/* ULTRA-WIDE PANORAMIC 32:9 STRIP (BULGED CRT SPHERICAL FACEPLATE) */}
-        {/* ============================================================== */}
-        <div
-          className="hero-panoramic-crt-barrel"
-          style={{
-            transform: `translate3d(calc(-${scrollProgress * 50}% + ${mousePos.x * 0.15}px), ${mousePos.y * 0.15}px, 0)`,
-            transition: 'transform 0.12s cubic-bezier(0.1, 0.9, 0.2, 1)',
-            willChange: 'transform',
-          }}
-        >
-          <img
-            src="/lungs-panoramic.png"
-            alt="Smog-Decayed Lungs vs Pristine Green Foliage Lungs"
-            className="hero-crt-bulged-image"
-            style={{
-              filter: `contrast(1.15) brightness(${0.88 + scrollProgress * 0.12}) saturate(1.12)`,
-            }}
-          />
-        </div>
 
         {/* ============================================================== */}
         {/* TOP EDITORIAL HUD TELEMETRY CAPSULE (Clean, Uncluttered)       */}
