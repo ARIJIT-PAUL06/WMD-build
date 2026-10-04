@@ -18,7 +18,7 @@ const POLLUTANT_SPECS = [
   {
     id: 'pm25',
     name: 'Fine Particulate Matter',
-    symbol: 'PM₂.₅',
+    symbol: 'PM 2.5',
     unit: 'µg/m³',
     naaqsLimit: 60, // 24-hr Indian NAAQS
     whoLimit: 15,
@@ -32,7 +32,7 @@ const POLLUTANT_SPECS = [
   {
     id: 'pm10',
     name: 'Coarse Inhalable Dust',
-    symbol: 'PM₁₀',
+    symbol: 'PM 10',
     unit: 'µg/m³',
     naaqsLimit: 100, // 24-hr Indian NAAQS
     whoLimit: 45,
@@ -46,7 +46,7 @@ const POLLUTANT_SPECS = [
   {
     id: 'no2',
     name: 'Nitrogen Dioxide',
-    symbol: 'NO₂',
+    symbol: 'NO2',
     unit: 'µg/m³',
     naaqsLimit: 80,
     whoLimit: 25,
@@ -60,7 +60,7 @@ const POLLUTANT_SPECS = [
   {
     id: 'so2',
     name: 'Sulphur Dioxide',
-    symbol: 'SO₂',
+    symbol: 'SO2',
     unit: 'µg/m³',
     naaqsLimit: 80,
     whoLimit: 40,
@@ -88,7 +88,7 @@ const POLLUTANT_SPECS = [
   {
     id: 'o3',
     name: 'Tropospheric Ozone',
-    symbol: 'O₃',
+    symbol: 'O3',
     unit: 'µg/m³',
     naaqsLimit: 100, // 8-hr standard
     whoLimit: 100,
@@ -102,7 +102,7 @@ const POLLUTANT_SPECS = [
   {
     id: 'nh3',
     name: 'Ammonia Aerosol',
-    symbol: 'NH₃',
+    symbol: 'NH3',
     unit: 'µg/m³',
     naaqsLimit: 100,
     whoLimit: 100,
@@ -440,10 +440,10 @@ export default function AtmosphericCargoTruck() {
                   
                   // RELATIVE NORMALIZED HEIGHT SCALING SYSTEM:
                   // The highest pollutant bar in the active payload defines the ceiling (capped safely at 35% viewport height).
-                  // Minimum crate height is 10% (75px) so labels & symbols always remain clearly visible.
+                  // Minimum crate height is 12.5% (94px) so labels & numbers always remain clearly legible.
                   const maxRatio = Math.max(1, payloadStats.maxOverloadRatio);
                   const normalizedRatio = ratio / maxRatio; // 0 to 1 relative to highest pollutant
-                  const heightPercent = 10 + normalizedRatio * 25; // 10% (min) to 35% (max ceiling)
+                  const heightPercent = 12.5 + normalizedRatio * 23.5; // 12.5% (min) to 36% (max ceiling)
                   const heightPx = heightPercent * 7.51;
 
                   // Severity & Strobe Logic

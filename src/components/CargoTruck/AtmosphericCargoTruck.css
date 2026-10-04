@@ -525,53 +525,57 @@
 .container-lcd-panel {
   position: relative;
   z-index: 2;
-  width: 92%;
-  background: rgba(8, 12, 20, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
-  padding: 0.25rem 0.18rem;
+  width: 94%;
+  background: rgba(6, 10, 18, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 5px;
+  padding: 0.32rem 0.18rem;
   text-align: center;
   box-shadow: 
-    inset 0 1px 4px rgba(0, 0, 0, 0.9),
-    0 1px 2px rgba(255, 255, 255, 0.05);
+    inset 0 1px 5px rgba(0, 0, 0, 0.95),
+    0 2px 6px rgba(0, 0, 0, 0.7);
 }
 
 .container-chemical-code {
   font-family: 'Outfit', sans-serif;
   font-weight: 800;
-  font-size: clamp(0.65rem, 1.1vw, 0.88rem);
+  font-size: clamp(0.82rem, 1.35vw, 1.12rem);
   color: #ffffff;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.03em;
   line-height: 1.1;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 0 10px rgba(255, 255, 255, 0.65);
 }
 
 .container-value-text {
   font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  font-size: clamp(0.55rem, 0.95vw, 0.78rem);
+  font-weight: 800;
+  font-size: clamp(0.78rem, 1.25vw, 1.05rem);
   color: var(--cont-text-color, #f87171);
   line-height: 1.1;
-  margin-top: 2px;
+  letter-spacing: -0.01em;
+  text-shadow: 0 0 8px currentColor;
 }
 
 .container-unit-text {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(0.42rem, 0.7vw, 0.58rem);
-  color: #94a3b8;
-  font-weight: 500;
+  font-size: clamp(0.50rem, 0.8vw, 0.68rem);
+  color: #cbd5e1;
+  font-weight: 600;
+  margin-top: 2px;
+  letter-spacing: 0.01em;
 }
 
 /* Capacity Gauge Bar */
 .container-capacity-track {
   position: relative;
   z-index: 2;
-  width: 84%;
-  height: 3px;
-  background: rgba(0, 0, 0, 0.75);
+  width: 86%;
+  height: 3.5px;
+  background: rgba(0, 0, 0, 0.85);
   border-radius: 999px;
   overflow: hidden;
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 .container-capacity-fill {
