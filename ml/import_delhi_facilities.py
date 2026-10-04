@@ -26,19 +26,22 @@ OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
 def fetch_osm_facilities():
     query = f"""
-    [out:json][timeout:30];
+    [out:json][timeout:45];
     (
       node["amenity"="school"]["name"]({LAT_MIN},{LON_MIN},{LAT_MAX},{LON_MAX});
       node["amenity"="hospital"]["name"]({LAT_MIN},{LON_MIN},{LAT_MAX},{LON_MAX});
+      node["amenity"="college"]["name"]({LAT_MIN},{LON_MIN},{LAT_MAX},{LON_MAX});
+      node["amenity"="university"]["name"]({LAT_MIN},{LON_MIN},{LAT_MAX},{LON_MAX});
+      node["amenity"="clinic"]["name"]({LAT_MIN},{LON_MIN},{LAT_MAX},{LON_MAX});
     );
-    out body 100;
+    out body 400;
     """
-    print("[*] Querying Overpass API for Delhi schools and hospitals...")
+    print("[*] Querying Overpass API for Delhi schools, colleges, and health facilities...")
     data = urllib.parse.urlencode({'data': query}).encode('utf-8')
-    req = urllib.request.Request(OVERPASS_URL, data=data, headers={'User-Agent': 'WMD-Delhi-Directory/1.0'})
+    req = urllib.request.Request(OVERPASS_URL, data=data, headers={'User-Agent': 'VayuVitals-Facility-Enrichment/2.0'})
     
     try:
-        with urllib.request.urlopen(req, timeout=35) as res:
+        with urllib.request.urlopen(req, timeout=45) as res:
             result = json.loads(res.read().decode('utf-8'))
             elements = result.get('elements', [])
             print(f"[OK] Fetched {len(elements)} raw facility elements from OSM.")
@@ -71,9 +74,9 @@ def clean_and_format_element(elem):
             if '@' in em and len(em) > 5:
                 emails.append(em)
 
-    is_hospital = amenity == 'hospital'
-    facility_type = "Super-Specialty Hospital" if is_hospital else "Senior Secondary School"
-    category = "healthcare_facility" if is_hospital else "private_cbse"
+    is_hospital = amenity in ['hospital', 'clinic']
+    facility_type = "Super-Specialty Hospital / Healthcare Center" if is_hospital else ("University / College" if amenity in ['college', 'university'] else "Senior Secondary School")
+    category = "healthcare_facility" if is_hospital else ("higher_education" if amenity in ['college', 'university'] else "school_cbse")
 
     return {
         "id": slug_id,
