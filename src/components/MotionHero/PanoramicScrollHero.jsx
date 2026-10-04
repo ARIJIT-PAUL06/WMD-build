@@ -111,30 +111,32 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
   }, [scrollProgress]);
 
   // Continuous smooth color transition for VAYUVITALS brand text and ambient field
-  // Left (pollution red: 239, 68, 68) -> Mid (amber: 245, 158, 11) -> Right (clean green: 16, 185, 129)
+  // Left (pollution red: 248, 113, 113) -> Mid (amber: 251, 191, 36) -> Right (clean green: 52, 211, 153)
   const brandTheme = useMemo(() => {
     const p = Math.max(0, Math.min(1, scrollProgress));
     let r, g, b;
     if (p <= 0.5) {
-      // Phase 1 (Pollution Red) -> Phase 2 (Transition Amber)
+      // Phase 1 (Pollution Red #f87171) -> Phase 2 (Amber #fbbf24)
       const t = p / 0.5;
-      r = Math.round(239 + (245 - 239) * t);
-      g = Math.round(68 + (158 - 68) * t);
-      b = Math.round(68 + (11 - 68) * t);
+      r = Math.round(248 + (251 - 248) * t);
+      g = Math.round(113 + (191 - 113) * t);
+      b = Math.round(113 + (36 - 113) * t);
     } else {
-      // Phase 2 (Transition Amber) -> Phase 3 (Pristine Living Green)
+      // Phase 2 (Amber #fbbf24) -> Phase 3 (Living Green #34d399)
       const t = (p - 0.5) / 0.5;
-      r = Math.round(245 + (16 - 245) * t);
-      g = Math.round(158 + (185 - 158) * t);
-      b = Math.round(11 + (129 - 11) * t);
+      r = Math.round(251 + (52 - 251) * t);
+      g = Math.round(191 + (211 - 191) * t);
+      b = Math.round(36 + (153 - 36) * t);
     }
 
+    const rgb = `${r}, ${g}, ${b}`;
     return {
-      accentColor: `rgb(${r}, ${g}, ${b})`,
-      gradient: `linear-gradient(135deg, #ffffff 30%, rgb(${r}, ${g}, ${b}) 100%)`,
-      glow: `rgba(${r}, ${g}, ${b}, 0.65)`,
-      ambient: `rgba(${r}, ${g}, ${b}, 0.12)`,
-      spotlight: `rgba(${r}, ${g}, ${b}, 0.16)`,
+      textColor: `rgb(${rgb})`,
+      accentColor: `rgb(${rgb})`,
+      glow: `rgba(${rgb}, 0.65)`,
+      glowSoft: `rgba(${rgb}, 0.25)`,
+      ambient: `rgba(${rgb}, 0.12)`,
+      spotlight: `rgba(${rgb}, 0.16)`,
     };
   }, [scrollProgress]);
 
@@ -252,11 +254,9 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
                 fontSize: '1.45rem',
                 letterSpacing: '0.15em',
                 textTransform: 'uppercase',
-                background: brandTheme.gradient,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: `drop-shadow(0 2px 14px ${brandTheme.glow})`,
-                transition: 'filter 0.2s ease, background 0.2s ease',
+                color: brandTheme.textColor,
+                textShadow: `0 0 16px ${brandTheme.glow}, 0 0 32px ${brandTheme.glowSoft}`,
+                transition: 'color 0.15s ease, text-shadow 0.15s ease',
               }}
             >
               VAYUVITALS
