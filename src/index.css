@@ -519,7 +519,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 /* Subtle Atmospheric AQI Spore / Micro-Particle Radiator */
 .aqi-spore-container {
   position: absolute;
-  inset: -14px;
+  inset: -18px;
   pointer-events: none;
   overflow: visible;
   z-index: 0;
@@ -529,30 +529,30 @@ input[type="range"]::-webkit-slider-thumb:hover {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: var(--spore-size, 3px);
-  height: var(--spore-size, 3px);
+  width: var(--spore-size, 3.5px);
+  height: var(--spore-size, 3.5px);
   border-radius: 50%;
   background: var(--spore-color, #10b981);
-  box-shadow: 0 0 8px var(--spore-color, #10b981);
+  box-shadow: 0 0 10px var(--spore-color, #10b981), 0 0 20px var(--spore-color, #10b981);
   opacity: 0;
-  animation: radiateAqiSpore var(--spore-duration, 3.4s) cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  animation: radiateAqiSpore var(--spore-duration, 3.2s) cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
   animation-delay: var(--spore-delay, 0s);
-  filter: blur(0.6px);
+  filter: blur(0.4px);
 }
 
 @keyframes radiateAqiSpore {
   0% {
-    transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
+    transform: translate(-50%, -50%) translate(0, 0) scale(0.6);
     opacity: 0;
   }
   20% {
-    opacity: 0.38;
+    opacity: 0.85;
   }
-  65% {
-    opacity: 0.18;
+  60% {
+    opacity: 0.55;
   }
   100% {
-    transform: translate(-50%, -50%) translate(var(--tx, 30px), var(--ty, -30px)) scale(1.5);
+    transform: translate(-50%, -50%) translate(var(--tx, 36px), var(--ty, -36px)) scale(1.65);
     opacity: 0;
   }
 }
