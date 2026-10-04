@@ -3510,12 +3510,9 @@ export default function DelhiAqiHeatmap() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Sparkles size={13} color="#38bdf8" />
-                    <strong style={{ color: '#38bdf8', fontSize: '0.74rem', letterSpacing: '0.03em', textTransform: 'uppercase' }}>
-                      Gemini Flash Advisory
-                    </strong>
-                  </div>
+                  <strong style={{ color: '#38bdf8', fontSize: '0.74rem', letterSpacing: '0.03em', textTransform: 'uppercase', fontWeight: 800 }}>
+                    Recommendations
+                  </strong>
                   <span
                     className="glass-pill"
                     style={{
@@ -3529,7 +3526,7 @@ export default function DelhiAqiHeatmap() {
                     }}
                   >
                     {isLoadingAdvisory && <RefreshCw size={10} className="animate-spin" color="#38bdf8" />}
-                    {isLoadingAdvisory ? 'Updating...' : tokenStats ? `${tokenStats.total} tokens` : 'Live Insight'}
+                    {isLoadingAdvisory ? 'Updating...' : 'Live Guidance'}
                   </span>
                 </div>
                 <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.76rem', lineHeight: 1.45, opacity: isLoadingAdvisory ? 0.75 : 1, transition: 'opacity 0.2s ease' }}>
@@ -3544,40 +3541,62 @@ export default function DelhiAqiHeatmap() {
               style={{
                 padding: '14px 18px',
                 borderRadius: '16px',
-                border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.28)',
+                background: 'rgba(15, 23, 42, 0.65)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 20px rgba(16, 185, 129, 0.08)',
                 transition: 'border-color 0.3s ease',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#94a3b8', marginBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#38bdf8', boxShadow: '0 0 8px #38bdf8' }} />
-                  <span style={{ fontWeight: 700, color: '#e2e8f0' }}>Continuous Spectrum</span>
-                </div>
+                <span style={{ fontWeight: 800, color: '#e2e8f0', fontSize: '0.78rem', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  Zoom
+                </span>
                 <span
-                  className="glass-pill glass-pill-active"
+                  className="glass-pill"
                   style={{
                     fontWeight: 700,
                     fontSize: '0.68rem',
-                    padding: '2px 8px',
+                    padding: '2px 9px',
                     borderRadius: '6px',
+                    color: '#34d399',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    background: 'rgba(16, 185, 129, 0.12)',
                   }}
                 >
-                  {isAdaptiveMode && activeRange.isZoomed
-                    ? `Zoom ${activeRange.zoom}x (${activeRange.min} → ${activeRange.max} AQI)`
-                    : `India (${activeRange.nationalMin || 40} → ${activeRange.nationalMax || 260} AQI)`}
+                  {currentZoom.toFixed(1)}x {currentZoom >= 11 ? '· Street' : currentZoom >= 8 ? '· City' : '· Regional'}
                 </span>
               </div>
 
-              {/* Clean Cyber Cyan Zoom Bar */}
-              <div
-                style={{
-                  height: '10px',
-                  borderRadius: '5px',
-                  background: 'linear-gradient(90deg, #0284c7 0%, #0ea5e9 50%, #38bdf8 100%)',
-                  boxShadow: '0 2px 10px rgba(56, 189, 248, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.2)',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
-                }}
-              />
+              {/* Glassmorphic Interactive Zoom Bar with Scroll Button */}
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '4px 0' }}>
+                <input
+                  type="range"
+                  min="4.5"
+                  max="15.0"
+                  step="0.1"
+                  value={currentZoom}
+                  onChange={(e) => {
+                    const z = parseFloat(e.target.value);
+                    setCurrentZoom(z);
+                    if (mapRef.current) {
+                      mapRef.current.easeTo({ zoom: z, duration: 150 });
+                    }
+                  }}
+                  className="zoom-glass-slider"
+                  style={{
+                    background: `linear-gradient(to right, #059669 0%, #10b981 ${Math.max(
+                      0,
+                      Math.min(100, ((currentZoom - 4.5) / (15.0 - 4.5)) * 100)
+                    )}%, rgba(16, 185, 129, 0.15) ${Math.max(
+                      0,
+                      Math.min(100, ((currentZoom - 4.5) / (15.0 - 4.5)) * 100)
+                    )}%, rgba(15, 23, 42, 0.6) 100%)`,
+                  }}
+                  title="Drag or click to zoom map"
+                />
+              </div>
             </div>
           </div>
         </div>
