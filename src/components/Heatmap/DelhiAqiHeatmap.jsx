@@ -28,6 +28,7 @@ import {
   RotateCw,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   Activity,
   FileText,
   ShieldCheck
@@ -638,6 +639,7 @@ export default function DelhiAqiHeatmap() {
   // Cinematic 360° 3D Slanted Orbital Tour State & Refs
   const [isOrbiting360, setIsOrbiting360] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isGlideDropdownOpen, setIsGlideDropdownOpen] = useState(false);
   const sectionContainerRef = useRef(null);
   const hasPlayedIntroOrbitRef = useRef(false);
   const orbitAnimIdRef = useRef(null);
@@ -2589,6 +2591,28 @@ export default function DelhiAqiHeatmap() {
               />
               <span>{showMap ? 'Mapbox Live' : 'Show Map'}</span>
             </button>
+
+            {/* Glide Dropdown Button with Search Icon */}
+            <button
+              onClick={() => setIsGlideDropdownOpen((prev) => !prev)}
+              className={`glass-cuboid-btn ${isGlideDropdownOpen ? 'glass-cuboid-btn-active' : ''}`}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '9px',
+                fontSize: '0.78rem',
+              }}
+              title="Toggle Glide cities and search bar dropdown"
+            >
+              <Search size={13} color="#38bdf8" />
+              <span>Glide & Search</span>
+              <ChevronDown
+                size={13}
+                style={{
+                  transform: isGlideDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+              />
+            </button>
           </div>
 
           {/* Action Buttons: Metrics, Refresh, GPS & Integrated Telemetry Toggle */}
@@ -2711,156 +2735,169 @@ export default function DelhiAqiHeatmap() {
           </div>
         </div>
 
-        {/* Tier 2: Capital City Shortcuts (NO icons, decluttered) + Autocomplete Search Bar */}
+        {/* Tier 2: Animated Dropdown - Capital City Shortcuts + Autocomplete Search Bar */}
         <div
-          className="glass-panel-master"
           style={{
-            pointerEvents: 'auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '10px',
-            flexWrap: 'wrap',
-            padding: '6px 12px',
-            borderRadius: '12px',
+            pointerEvents: isGlideDropdownOpen ? 'auto' : 'none',
+            opacity: isGlideDropdownOpen ? 1 : 0,
+            transform: isGlideDropdownOpen ? 'translateY(0) scaleY(1)' : 'translateY(-10px) scaleY(0.96)',
+            transformOrigin: 'top center',
+            maxHeight: isGlideDropdownOpen ? '260px' : '0px',
+            overflow: isGlideDropdownOpen ? 'visible' : 'hidden',
+            transition: 'opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
-          {/* Quick Glide Capital City Shortcuts */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.67rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '3px' }}>
-              GLIDE:
-            </span>
-            {INDIA_REGION_PRESETS.map((preset) => {
-              const isActive = activePreset.id === preset.id;
-              return (
-                <button
-                  key={preset.id}
-                  onClick={() => handleGlideToRegion(preset)}
-                  className={`glass-pill ${isActive ? 'glass-pill-active' : ''}`}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    padding: '3px 9px',
-                    borderRadius: '9999px',
-                    fontSize: '0.67rem',
-                    fontWeight: isActive ? 700 : 600,
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  <span>{preset.name}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Place Search Bar with Autocomplete across India */}
           <div
-            ref={searchContainerRef}
+            className="glass-panel-master"
             style={{
-              position: 'relative',
-              zIndex: 110,
-              minWidth: '220px',
-              flex: '1 1 220px',
-              maxWidth: '320px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              flexWrap: 'wrap',
+              padding: '8px 14px',
+              borderRadius: '12px',
+              boxShadow: '0 12px 30px rgba(0, 0, 0, 0.55)',
+              border: '1px solid rgba(56, 189, 248, 0.25)',
             }}
           >
+            {/* Quick Glide Capital City Shortcuts */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.67rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '3px' }}>
+                GLIDE:
+              </span>
+              {INDIA_REGION_PRESETS.map((preset) => {
+                const isActive = activePreset.id === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    onClick={() => handleGlideToRegion(preset)}
+                    className={`glass-pill ${isActive ? 'glass-pill-active' : ''}`}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '3px 9px',
+                      borderRadius: '9999px',
+                      fontSize: '0.67rem',
+                      fontWeight: isActive ? 700 : 600,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <span>{preset.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Place Search Bar with Autocomplete across India */}
             <div
-              className="glass-input"
+              ref={searchContainerRef}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                borderRadius: '9999px',
-                padding: '4px 12px',
+                position: 'relative',
+                zIndex: 110,
+                minWidth: '220px',
+                flex: '1 1 220px',
+                maxWidth: '320px',
               }}
             >
-              <Search size={12} color="#94a3b8" />
-              <input
-                type="text"
-                placeholder="Search city, district, or town..."
-                value={searchQuery}
-                onChange={(e) => handleSearchInput(e.target.value)}
-                onFocus={() => {
-                  if (searchResults.length > 0) setShowSearchDropdown(true);
-                }}
+              <div
+                className="glass-input"
                 style={{
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  color: '#ffffff',
-                  fontSize: '0.73rem',
-                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  borderRadius: '9999px',
+                  padding: '4px 12px',
                 }}
-              />
-              {isSearching && <RefreshCw size={11} className="animate-spin" color="#38bdf8" />}
-              {searchQuery && !isSearching && (
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSearchResults([]);
-                    setShowSearchDropdown(false);
+              >
+                <Search size={12} color="#94a3b8" />
+                <input
+                  type="text"
+                  placeholder="Search city, district, or town..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearchInput(e.target.value)}
+                  onFocus={() => {
+                    if (searchResults.length > 0) setShowSearchDropdown(true);
                   }}
                   style={{
                     background: 'transparent',
                     border: 'none',
-                    color: '#94a3b8',
-                    cursor: 'pointer',
-                    padding: '2px 4px',
-                    fontSize: '0.75rem',
-                    lineHeight: 1,
+                    outline: 'none',
+                    color: '#ffffff',
+                    fontSize: '0.73rem',
+                    width: '100%',
+                  }}
+                />
+                {isSearching && <RefreshCw size={11} className="animate-spin" color="#38bdf8" />}
+                {searchQuery && !isSearching && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSearchResults([]);
+                      setShowSearchDropdown(false);
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      padding: '2px 4px',
+                      fontSize: '0.75rem',
+                      lineHeight: 1,
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Autocomplete Dropdown List */}
+              {showSearchDropdown && searchResults.length > 0 && (
+                <div
+                  className="glass-panel-master"
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 6px)',
+                    left: 0,
+                    right: 0,
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    maxHeight: '260px',
+                    overflowY: 'auto',
                   }}
                 >
-                  ✕
-                </button>
+                  {searchResults.map((f) => (
+                    <div
+                      key={f.id}
+                      onClick={() => handleSelectSearchResult(f)}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                        fontSize: '0.74rem',
+                        transition: 'background 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.18)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <MapPin size={13} color="#38bdf8" style={{ flexShrink: 0 }} />
+                      <div style={{ minWidth: 0 }}>
+                        <strong style={{ color: '#ffffff', display: 'block' }}>{f.text}</strong>
+                        <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {f.place_name}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
-
-            {/* Autocomplete Dropdown List */}
-            {showSearchDropdown && searchResults.length > 0 && (
-              <div
-                className="glass-panel-master"
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 6px)',
-                  left: 0,
-                  right: 0,
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                  maxHeight: '260px',
-                  overflowY: 'auto',
-                }}
-              >
-                {searchResults.map((f) => (
-                  <div
-                    key={f.id}
-                    onClick={() => handleSelectSearchResult(f)}
-                    style={{
-                      padding: '8px 12px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                      fontSize: '0.74rem',
-                      transition: 'background 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.18)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <MapPin size={13} color="#38bdf8" style={{ flexShrink: 0 }} />
-                    <div style={{ minWidth: 0 }}>
-                      <strong style={{ color: '#ffffff', display: 'block' }}>{f.text}</strong>
-                      <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {f.place_name}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>
