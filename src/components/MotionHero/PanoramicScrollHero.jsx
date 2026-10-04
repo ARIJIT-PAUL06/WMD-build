@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import CrtScreenLensCanvas from './CrtScreenLensCanvas';
 import './PanoramicScrollHero.css';
 
@@ -110,24 +110,36 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
     };
   }, [scrollProgress]);
 
-  // Determine active phase based on scroll progress
-  const isLeftPhase = scrollProgress < 0.38;
-  const isMidPhase = scrollProgress >= 0.38 && scrollProgress < 0.68;
-  const isRightPhase = scrollProgress >= 0.68;
+  // Continuous smooth color transition for VAYUVITALS brand text and ambient field
+  // Left (pollution red: 239, 68, 68) -> Mid (amber: 245, 158, 11) -> Right (clean green: 16, 185, 129)
+  const brandTheme = useMemo(() => {
+    const p = Math.max(0, Math.min(1, scrollProgress));
+    let r, g, b;
+    if (p <= 0.5) {
+      // Phase 1 (Pollution Red) -> Phase 2 (Transition Amber)
+      const t = p / 0.5;
+      r = Math.round(239 + (245 - 239) * t);
+      g = Math.round(68 + (158 - 68) * t);
+      b = Math.round(68 + (11 - 68) * t);
+    } else {
+      // Phase 2 (Transition Amber) -> Phase 3 (Pristine Living Green)
+      const t = (p - 0.5) / 0.5;
+      r = Math.round(245 + (16 - 245) * t);
+      g = Math.round(158 + (185 - 158) * t);
+      b = Math.round(11 + (129 - 11) * t);
+    }
 
-  // Background tint shifts from dark smog red/amber to clean emerald as you scroll
-  const ambientBg = isLeftPhase
-    ? 'rgba(239, 68, 68, 0.12)'
-    : isMidPhase
-    ? 'rgba(245, 158, 11, 0.08)'
-    : 'rgba(16, 185, 129, 0.08)';
+    return {
+      accentColor: `rgb(${r}, ${g}, ${b})`,
+      gradient: `linear-gradient(135deg, #ffffff 30%, rgb(${r}, ${g}, ${b}) 100%)`,
+      glow: `rgba(${r}, ${g}, ${b}, 0.65)`,
+      ambient: `rgba(${r}, ${g}, ${b}, 0.12)`,
+      spotlight: `rgba(${r}, ${g}, ${b}, 0.16)`,
+    };
+  }, [scrollProgress]);
 
-  // Spotlight color based on active narrative zone
-  const spotlightColor = isLeftPhase
-    ? 'rgba(239, 68, 68, 0.16)'
-    : isMidPhase
-    ? 'rgba(245, 158, 11, 0.13)'
-    : 'rgba(56, 189, 248, 0.16)';
+  const ambientBg = brandTheme.ambient;
+  const spotlightColor = brandTheme.spotlight;
 
   return (
     <div
@@ -233,13 +245,14 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
               style={{
                 fontFamily: "'Outfit', sans-serif",
                 fontWeight: 900,
-                fontSize: '1.4rem',
-                letterSpacing: '0.14em',
+                fontSize: '1.45rem',
+                letterSpacing: '0.15em',
                 textTransform: 'uppercase',
-                background: 'linear-gradient(135deg, #ffffff 35%, #38bdf8 100%)',
+                background: brandTheme.gradient,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 2px 14px rgba(56, 189, 248, 0.45))',
+                filter: `drop-shadow(0 2px 14px ${brandTheme.glow})`,
+                transition: 'filter 0.2s ease, background 0.2s ease',
               }}
             >
               VAYUVITALS
