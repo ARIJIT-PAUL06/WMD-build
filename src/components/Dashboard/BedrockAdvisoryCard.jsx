@@ -73,7 +73,7 @@ export default function BedrockAdvisoryCard({
                 Amazon Bedrock Health Synthesis
               </span>
               <span className="badge badge-aws" style={{ fontSize: '0.65rem' }}>
-                Synthesis Engine
+                AI Layer
               </span>
             </div>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
@@ -90,7 +90,7 @@ export default function BedrockAdvisoryCard({
           title="Invoke Bedrock to re-synthesize environmental explanation"
         >
           <RefreshCw size={12} className={isRegenerating ? 'animate-spin' : ''} />
-          {isRegenerating ? 'Synthesizing...' : 'Re-Synthesize'}
+          {isRegenerating ? 'Synthesizing...' : 'Refresh AI'}
         </button>
       </div>
 

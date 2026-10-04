@@ -234,7 +234,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             </h2>
 
             <p style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: 1.6 }}>
-              Between toxic exposure and clean atmospheric renewal lies the critical intervention zone—where real-time precision atmospheric telemetry, clean corridors, and rapid mitigation breathe life back into the urban ecosystem.
+              Between toxic exposure and clean atmospheric renewal lies the critical intervention zone—where real-time AI air monitoring, clean corridors, and rapid mitigation breathe life back into the urban ecosystem.
             </p>
           </div>
         </div>
