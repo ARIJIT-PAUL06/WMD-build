@@ -292,8 +292,11 @@
   object-fit: cover;
   pointer-events: none;
   z-index: 10;
+  /* Dual-sided soft gradient mask to ensure zero abrupt edges at front and back */
+  mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.5) 3.5%, black 6.5%, black 93%, rgba(0, 0, 0, 0.5) 95%, transparent 97.5%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.5) 3.5%, black 6.5%, black 93%, rgba(0, 0, 0, 0.5) 95%, transparent 97.5%);
   /* Deep, soft atmospheric drop shadow blending with dark road */
-  filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.95));
+  filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.9));
 }
 
 /* Ground Shadow Contact Patch */
