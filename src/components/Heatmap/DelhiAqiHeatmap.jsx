@@ -43,6 +43,46 @@ import initialIndiaStations from '../../data/indiaStations.json';
 export const MAPBOX_DARK_STYLE = 'mapbox://styles/mapbox/navigation-night-v1';
 
 /**
+ * Subtle Atmospheric Spores / Micro-Particle Radiator
+ * Gently radiates soft ambient spores matching the exact AQI color that dissolve into surroundings.
+ */
+function AqiSporeAura({ color = '#10b981' }) {
+  const sporeTrajectories = [
+    { tx: 0, ty: -32, size: 3.2, delay: 0, dur: 3.4 },
+    { tx: 22, ty: -24, size: 2.6, delay: 0.8, dur: 3.8 },
+    { tx: 34, ty: -6, size: 3.0, delay: 1.6, dur: 3.2 },
+    { tx: 28, ty: 18, size: 2.4, delay: 0.4, dur: 4.0 },
+    { tx: 12, ty: 32, size: 2.8, delay: 2.1, dur: 3.6 },
+    { tx: -10, ty: 34, size: 2.6, delay: 1.1, dur: 3.3 },
+    { tx: -28, ty: 20, size: 3.0, delay: 2.5, dur: 3.7 },
+    { tx: -34, ty: -4, size: 2.4, delay: 0.6, dur: 3.5 },
+    { tx: -20, ty: -26, size: 3.2, delay: 1.8, dur: 4.1 },
+    { tx: 14, ty: -34, size: 2.4, delay: 2.9, dur: 3.9 },
+    { tx: 30, ty: 6, size: 2.8, delay: 1.4, dur: 3.4 },
+    { tx: -16, ty: 18, size: 2.5, delay: 2.2, dur: 3.6 },
+  ];
+
+  return (
+    <div className="aqi-spore-container" aria-hidden="true">
+      {sporeTrajectories.map((s, idx) => (
+        <span
+          key={idx}
+          className="aqi-spore"
+          style={{
+            '--spore-color': color,
+            '--spore-size': `${s.size}px`,
+            '--spore-delay': `${s.delay}s`,
+            '--spore-duration': `${s.dur}s`,
+            '--tx': `${s.tx}px`,
+            '--ty': `${s.ty}px`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
  * Geographic Bounding Box tightly enclosing the official Indian national boundary
  */
 const INDIA_RASTER_BOUNDS = {
@@ -750,9 +790,12 @@ export default function DelhiAqiHeatmap() {
   updateRasterForViewportRef.current = updateRasterForViewport;
 
   // Gemini AI Advisory State (Token-Optimized)
-  const [geminiAdvisory, setGeminiAdvisory] = useState('');
+  const [geminiAdvisory, setGeminiAdvisory] = useState(
+    'Air quality telemetry is active. Outdoor commutes and ventilation recommendations are continuously evaluated.'
+  );
   const [tokenStats, setTokenStats] = useState(null);
   const [isLoadingAdvisory, setIsLoadingAdvisory] = useState(false);
+  const lastAdvisoryTargetRef = useRef('');
 
   // Fetch live national station telemetry across all 108 stations
   const fetchLiveNationalData = useCallback(async (userLat = null, userLon = null) => {
@@ -1171,28 +1214,30 @@ export default function DelhiAqiHeatmap() {
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.advisory) {
+        if (data && data.advisory) {
           setGeminiAdvisory(data.advisory);
-          setTokenStats(data.tokenUsage);
+          if (data.tokenUsage) setTokenStats(data.tokenUsage);
           setIsLoadingAdvisory(false);
           return;
         }
       }
-      setGeminiAdvisory(
-        station.aqi > 250
-          ? 'Elevated regional pollution. High risk of respiratory irritation; wear an N95 mask outdoors and run HEPA air filtration indoors.'
-          : station.aqi > 120
-          ? 'Moderate particulate haze. Sensitive individuals should avoid prolonged exertion during early morning and late evening.'
-          : 'Air quality is within favorable standards. Outdoor commutes and recreation are safe.'
-      );
+      const fallbackAdvisory = station.aqi > 250
+        ? 'Severe regional pollution index. High respiratory risk; wear an N95 mask outdoors and run indoor HEPA filtration.'
+        : station.aqi > 150
+        ? 'Unhealthy atmospheric haze. Reduce prolonged outdoor exertion and keep vehicle air recirculation enabled during commutes.'
+        : station.aqi > 90
+        ? 'Moderate particulate index. Sensitive individuals should pace outdoor morning exertion; commute conditions are fair.'
+        : 'Favorable air quality index. Outdoor recreation and morning commutes are safe across the zone.';
+      setGeminiAdvisory(fallbackAdvisory);
     } catch {
-      setGeminiAdvisory(
-        station.aqi > 250
-          ? 'Elevated regional pollution. High risk of respiratory irritation; wear an N95 mask outdoors and run HEPA air filtration indoors.'
-          : station.aqi > 120
-          ? 'Moderate particulate haze. Sensitive individuals should avoid prolonged exertion during early morning and late evening.'
-          : 'Air quality is within favorable standards. Outdoor commutes and recreation are safe.'
-      );
+      const fallbackAdvisory = station.aqi > 250
+        ? 'Severe regional pollution index. High respiratory risk; wear an N95 mask outdoors and run indoor HEPA filtration.'
+        : station.aqi > 150
+        ? 'Unhealthy atmospheric haze. Reduce prolonged outdoor exertion and keep vehicle air recirculation enabled during commutes.'
+        : station.aqi > 90
+        ? 'Moderate particulate index. Sensitive individuals should pace outdoor morning exertion; commute conditions are fair.'
+        : 'Favorable air quality index. Outdoor recreation and morning commutes are safe across the zone.';
+      setGeminiAdvisory(fallbackAdvisory);
     } finally {
       setIsLoadingAdvisory(false);
     }
@@ -1519,9 +1564,11 @@ export default function DelhiAqiHeatmap() {
   const displayStation = selectedStation || (nearestStation ? nearestStation.station : stations[0]);
 
   useEffect(() => {
-    if (displayStation) {
-      fetchGeminiAdvisory(displayStation);
-    }
+    if (!displayStation) return;
+    const targetKey = `${displayStation.name}-${Math.round((displayStation.aqi || 100) / 10)}`;
+    if (lastAdvisoryTargetRef.current === targetKey) return;
+    lastAdvisoryTargetRef.current = targetKey;
+    fetchGeminiAdvisory(displayStation);
   }, [displayStation, fetchGeminiAdvisory]);
 
   // Interpolated AQI at user's current live GPS coordinates using nationwide IDW (p = 2.0)
@@ -2548,12 +2595,14 @@ export default function DelhiAqiHeatmap() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {/* Metric Selector Tabs */}
             <div
-              className="glass-pill"
+              className="glass-panel-sub"
               style={{
                 display: 'flex',
                 padding: '3px',
-                borderRadius: '9999px',
-                gap: '2px',
+                borderRadius: '10px',
+                gap: '3px',
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
               }}
             >
               {[
@@ -2568,12 +2617,12 @@ export default function DelhiAqiHeatmap() {
                 <button
                   key={m.id}
                   onClick={() => setActivePollutant(m.id)}
-                  className={`glass-pill ${activePollutant === m.id ? 'glass-pill-active' : ''}`}
+                  className={`glass-cuboid-btn ${activePollutant === m.id ? 'glass-cuboid-btn-active' : ''}`}
                   style={{
-                    padding: '3px 9px',
-                    borderRadius: '9999px',
-                    fontSize: '0.69rem',
-                    fontWeight: 600,
+                    padding: '5px 11px',
+                    borderRadius: '7px',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                   }}
@@ -2583,49 +2632,40 @@ export default function DelhiAqiHeatmap() {
               ))}
             </div>
 
-            {/* Refresh Live Button */}
+            {/* Refresh Live Button - Fixed width & constant label to eliminate sizing jitter */}
             <button
               onClick={() => fetchLiveNationalData(userLocation.lat, userLocation.lon)}
               disabled={isLoadingLive}
-              className="glass-pill"
+              className="glass-cuboid-btn"
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                color: '#cbd5e1',
-                padding: '5px 12px',
-                borderRadius: '9999px',
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                cursor: 'pointer',
+                minWidth: '96px',
+                justifyContent: 'center',
+                padding: '6px 14px',
+                borderRadius: '9px',
+                fontSize: '0.78rem',
               }}
             >
-              <RefreshCw size={12} className={isLoadingLive ? 'animate-spin' : ''} />
-              <span>{isLoadingLive ? '...' : 'Refresh'}</span>
+              <RefreshCw size={13} className={isLoadingLive ? 'animate-spin' : ''} />
+              <span>Refresh</span>
             </button>
 
             {/* Live GPS Tracking Controller */}
             <button
               onClick={handleCenterOnUser}
               title={userLocation.isLiveGps ? 'Center camera on your live GPS position' : 'Start live GPS tracking'}
-              className={`glass-pill ${userLocation.isLiveGps ? 'glass-pill-success' : ''}`}
+              className={`glass-cuboid-btn ${userLocation.isLiveGps ? 'glass-cuboid-btn-success' : ''}`}
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '5px 12px',
-                borderRadius: '9999px',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                cursor: 'pointer',
+                padding: '6px 14px',
+                borderRadius: '9px',
+                fontSize: '0.78rem',
               }}
             >
               {isLocating ? (
-                <RefreshCw size={12} className="animate-spin" color="#38bdf8" />
+                <RefreshCw size={13} className="animate-spin" color="#38bdf8" />
               ) : userLocation.isLiveGps ? (
                 <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981', animation: 'pulse 1.2s infinite' }} />
               ) : (
-                <Navigation size={12} color="#38bdf8" />
+                <Navigation size={13} color="#38bdf8" />
               )}
               <span>
                 {isLocating
@@ -2640,44 +2680,33 @@ export default function DelhiAqiHeatmap() {
               <button
                 onClick={() => setIsFollowingUser((f) => !f)}
                 title="Toggle automatic camera tracking as you move"
-                className={`glass-pill ${isFollowingUser ? 'glass-pill-active' : ''}`}
+                className={`glass-cuboid-btn ${isFollowingUser ? 'glass-cuboid-btn-active' : ''}`}
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '5px 10px',
-                  borderRadius: '9999px',
-                  fontSize: '0.68rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
+                  padding: '6px 12px',
+                  borderRadius: '9px',
+                  fontSize: '0.76rem',
                 }}
               >
-                <LocateFixed size={12} color={isFollowingUser ? '#38bdf8' : '#94a3b8'} />
+                <LocateFixed size={13} color={isFollowingUser ? '#38bdf8' : '#94a3b8'} />
                 <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
               </button>
             )}
 
-            {/* Seamless Telemetry Toggle Button - Integrated into action bar to eliminate any overlap */}
+            {/* Seamless Telemetry Toggle Button */}
             <button
               onClick={() => setIsSidebarOpen((v) => !v)}
               title={isSidebarOpen ? 'Hide telemetry panel to maximize map' : 'Show telemetry & advisory HUD'}
-              className={`glass-pill ${!isSidebarOpen ? 'glass-pill-active' : ''}`}
+              className={`glass-cuboid-btn ${!isSidebarOpen ? 'glass-cuboid-btn-active' : ''}`}
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '9px',
+                fontSize: '0.78rem',
                 color: isSidebarOpen ? '#cbd5e1' : '#38bdf8',
-                padding: '5px 12px',
-                borderRadius: '9999px',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
               }}
             >
-              {isSidebarOpen ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+              {isSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
               <span>{isSidebarOpen ? 'Hide Telemetry' : 'Show Telemetry'}</span>
-              <Activity size={13} color={isSidebarOpen ? '#94a3b8' : '#10b981'} />
+              <Activity size={14} color={isSidebarOpen ? '#94a3b8' : '#10b981'} />
             </button>
           </div>
         </div>
@@ -3108,19 +3137,23 @@ export default function DelhiAqiHeatmap() {
                   </button>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '8px' }}>
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-heading)',
-                      fontSize: '3.2rem',
-                      fontWeight: 900,
-                      lineHeight: 1,
-                      color: getAqiColor(inspectedPoint.aqi, activeRange).hex,
-                      textShadow: `0 0 25px ${getAqiColor(inspectedPoint.aqi, activeRange).hex}66`,
-                    }}
-                  >
-                    {inspectedPoint.aqi}
-                  </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px', marginBottom: '8px' }}>
+                  <div style={{ position: 'relative', display: 'inline-flex' }}>
+                    <AqiSporeAura color={getAqiColor(inspectedPoint.aqi, activeRange).hex} />
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-heading)',
+                        fontSize: '3.85rem',
+                        fontWeight: 900,
+                        lineHeight: 1,
+                        color: getAqiColor(inspectedPoint.aqi, activeRange).hex,
+                        textShadow: `0 0 25px ${getAqiColor(inspectedPoint.aqi, activeRange).hex}55`,
+                        zIndex: 1,
+                      }}
+                    >
+                      {inspectedPoint.aqi}
+                    </span>
+                  </div>
                   <div>
                     <span style={{ fontSize: '0.95rem', fontWeight: 700, color: getAqiColor(inspectedPoint.aqi, activeRange).textHex }}>
                       AQI · {getAqiColor(inspectedPoint.aqi, activeRange).label}
@@ -3199,19 +3232,23 @@ export default function DelhiAqiHeatmap() {
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '8px' }}>
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-heading)',
-                      fontSize: '3.2rem',
-                      fontWeight: 900,
-                      lineHeight: 1,
-                      color: userColor.hex,
-                      textShadow: `0 0 25px ${userColor.hex}66`,
-                    }}
-                  >
-                    {userAqiEstimate !== null ? userAqiEstimate : '--'}
-                  </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px', marginBottom: '8px' }}>
+                  <div style={{ position: 'relative', display: 'inline-flex' }}>
+                    <AqiSporeAura color={userColor.hex} />
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-heading)',
+                        fontSize: '3.85rem',
+                        fontWeight: 900,
+                        lineHeight: 1,
+                        color: userColor.hex,
+                        textShadow: `0 0 25px ${userColor.hex}55`,
+                        zIndex: 1,
+                      }}
+                    >
+                      {userAqiEstimate !== null ? userAqiEstimate : '--'}
+                    </span>
+                  </div>
                   <div>
                     <span style={{ fontSize: '0.95rem', fontWeight: 700, color: userColor.textHex }}>
                       AQI · {userColor.label}
@@ -3386,18 +3423,19 @@ export default function DelhiAqiHeatmap() {
               style={{
                 padding: '20px',
                 borderRadius: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Selected Monitoring Node
                 </span>
                 <span
                   className="glass-pill"
                   style={{
-                    fontSize: '0.7rem',
+                    fontSize: '0.68rem',
                     color: getAqiColor(displayStation.aqi, activeRange).hex,
-                    padding: '3px 8px',
+                    padding: '2px 8px',
                     borderRadius: '6px',
                     fontWeight: 700,
                   }}
@@ -3406,49 +3444,76 @@ export default function DelhiAqiHeatmap() {
                 </span>
               </div>
 
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', margin: '0 0 4px' }}>
-                {displayStation.name}
-              </h3>
-              <p style={{ fontSize: '0.74rem', color: '#cbd5e1', margin: '0 0 14px' }}>
-                {displayStation.zone || displayStation.state || 'India'} · Multi-Source Ground & Satellite Grid
-              </p>
+              {/* Station Hero Header with Large AQI & Radiating Spores */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', marginBottom: '14px' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {displayStation.name}
+                  </h3>
+                  <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: 0 }}>
+                    {displayStation.zone || displayStation.state || 'India'} · Multi-Source Ground Grid
+                  </p>
+                </div>
 
-              {/* Station metrics grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '14px' }}>
-                <div className="glass-panel-sub" style={{ padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                  <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block' }}>AQI Index</span>
-                  <strong style={{ fontSize: '1.2rem', color: getAqiColor(displayStation.aqi, activeRange).hex }}>
+                <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                  <AqiSporeAura color={getAqiColor(displayStation.aqi, activeRange).hex} />
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-heading)',
+                      fontSize: '3.6rem',
+                      fontWeight: 900,
+                      lineHeight: 1,
+                      color: getAqiColor(displayStation.aqi, activeRange).hex,
+                      textShadow: `0 0 25px ${getAqiColor(displayStation.aqi, activeRange).hex}55`,
+                      zIndex: 1,
+                    }}
+                  >
                     {displayStation.aqi}
+                  </span>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 700, color: getAqiColor(displayStation.aqi, activeRange).textHex, zIndex: 1, marginTop: '2px' }}>
+                    AQI · {getAqiColor(displayStation.aqi, activeRange).label}
+                  </span>
+                </div>
+              </div>
+
+              {/* Station secondary metrics grid - Subtle, muted, non-jarring */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '14px' }}>
+                <div className="glass-panel-sub" style={{ padding: '8px 6px', borderRadius: '8px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <span style={{ fontSize: '0.62rem', color: '#64748b', display: 'block' }}>PM2.5</span>
+                  <strong style={{ fontSize: '0.95rem', color: '#f87171' }}>
+                    {displayStation.pm25} <span style={{ fontSize: '0.6rem', color: '#64748b' }}>µg</span>
                   </strong>
                 </div>
-                <div className="glass-panel-sub" style={{ padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                  <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block' }}>PM2.5</span>
-                  <strong style={{ fontSize: '1.1rem', color: '#f87171' }}>
-                    {displayStation.pm25} <span style={{ fontSize: '0.6rem' }}>µg</span>
+                <div className="glass-panel-sub" style={{ padding: '8px 6px', borderRadius: '8px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <span style={{ fontSize: '0.62rem', color: '#64748b', display: 'block' }}>PM10</span>
+                  <strong style={{ fontSize: '0.95rem', color: '#fb923c' }}>
+                    {displayStation.pm10} <span style={{ fontSize: '0.6rem', color: '#64748b' }}>µg</span>
                   </strong>
                 </div>
-                <div className="glass-panel-sub" style={{ padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                  <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block' }}>PM10</span>
-                  <strong style={{ fontSize: '1.1rem', color: '#fb923c' }}>
-                    {displayStation.pm10} <span style={{ fontSize: '0.6rem' }}>µg</span>
+                <div className="glass-panel-sub" style={{ padding: '8px 6px', borderRadius: '8px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <span style={{ fontSize: '0.62rem', color: '#64748b', display: 'block' }}>NO2</span>
+                  <strong style={{ fontSize: '0.95rem', color: '#38bdf8' }}>
+                    {displayStation.no2 || 24} <span style={{ fontSize: '0.6rem', color: '#64748b' }}>µg</span>
                   </strong>
                 </div>
               </div>
 
-              {/* Google Gemini AI Health & Commute Advisory */}
+              {/* Google Gemini AI Health & Commute Advisory - Zero size jumping */}
               <div
                 className="glass-panel-sub"
                 style={{
                   padding: '12px 14px',
                   borderRadius: '12px',
-                  border: '1px solid rgba(56, 189, 248, 0.25)',
-                  fontSize: '0.78rem',
-                  lineHeight: 1.5,
-                  color: '#e2e8f0',
+                  border: '1px solid rgba(56, 189, 248, 0.22)',
+                  minHeight: '84px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  boxSizing: 'border-box',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Sparkles size={13} color="#38bdf8" />
                     <strong style={{ color: '#38bdf8', fontSize: '0.74rem', letterSpacing: '0.03em', textTransform: 'uppercase' }}>
                       Gemini Flash Advisory
@@ -3459,15 +3524,19 @@ export default function DelhiAqiHeatmap() {
                     style={{
                       fontSize: '0.65rem',
                       color: '#94a3b8',
-                      padding: '2px 6px',
+                      padding: '2px 7px',
                       borderRadius: '4px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
                     }}
                   >
-                    {isLoadingAdvisory ? 'Analyzing...' : tokenStats ? `${tokenStats.total} tokens` : 'Token-Optimized'}
+                    {isLoadingAdvisory && <RefreshCw size={10} className="animate-spin" color="#38bdf8" />}
+                    {isLoadingAdvisory ? 'Updating...' : tokenStats ? `${tokenStats.total} tokens` : 'Live Insight'}
                   </span>
                 </div>
-                <p style={{ margin: 0, color: '#cbd5e1' }}>
-                  {isLoadingAdvisory ? 'Generating localized medical & commute advisory...' : geminiAdvisory}
+                <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.76rem', lineHeight: 1.45, opacity: isLoadingAdvisory ? 0.75 : 1, transition: 'opacity 0.2s ease' }}>
+                  {geminiAdvisory}
                 </p>
               </div>
             </div>
