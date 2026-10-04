@@ -307,10 +307,10 @@ export default function AtmosphericCargoTruck() {
 
   // Geometry configuration based on truck model
   const isCyber = truckModel === 'vayu_cyber';
-  const truckImageSrc = isCyber ? '/assets/truck_flatbed_cyber.png' : '/assets/truck_flatbed.png';
+  const truckImageSrc = isCyber ? '/assets/truck_flatbed_vayu.png' : '/assets/truck_flatbed.png';
   const truckAspectRatio = isCyber ? '1376 / 768' : '1024 / 576';
   const deckStyle = isCyber
-    ? { left: '36.34%', width: '56.32%', bottom: '50.52%' }
+    ? { left: '38.88%', width: '55.23%', bottom: '52.86%' }
     : { left: '31.8%', width: '60.5%', bottom: '42.36%' };
 
   return (
@@ -412,16 +412,14 @@ export default function AtmosphericCargoTruck() {
         {/* The Weighbridge Platform with the Truck */}
         <div className="weighbridge-stage">
           <div className="weighbridge-spotlight"></div>
+          <div className="weighbridge-scanner-beam"></div>
+          <div className="weighbridge-runway-line"></div>
 
           {/* Truck Viewport */}
           <div
             className="truck-viewport"
             style={{ aspectRatio: truckAspectRatio }}
           >
-            {/* Precision Runway Line Locked to Truck Viewport */}
-            <div className="weighbridge-runway-line"></div>
-            <div className="weighbridge-scanner-beam"></div>
-
             <div
               className="truck-chassis"
               style={{
