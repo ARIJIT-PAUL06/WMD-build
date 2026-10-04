@@ -990,7 +990,7 @@ export async function getIndiaNationalHeatmapData(userLat = null, userLon = null
   try {
     const lats = INDIA_NATIONAL_STATIONS.map((s) => s.lat).join(',');
     const lons = INDIA_NATIONAL_STATIONS.map((s) => s.lon).join(',');
-    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lons}&current=us_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide&timezone=auto`;
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lons}&current=us_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone&timezone=auto`;
 
     const res = await fetch(url, {
       headers: { Accept: 'application/json' },
@@ -1016,7 +1016,9 @@ export async function getIndiaNationalHeatmapData(userLat = null, userLon = null
         pm25: Math.round(rawPm25 * 10) / 10,
         pm10: Math.round(rawPm10 * 10) / 10,
         no2: Math.round((Number(live.nitrogen_dioxide) || 24) * 10) / 10,
+        so2: Math.round((Number(live.sulphur_dioxide) || 10) * 10) / 10,
         co: Math.round((Number(live.carbon_monoxide) ? live.carbon_monoxide / 100 : 0.8) * 10) / 10,
+        o3: Math.round((Number(live.ozone) || 30) * 10) / 10,
         source: 'Live Open-Meteo High-Res Grid',
         updatedAt: live.time || new Date().toISOString(),
       };
