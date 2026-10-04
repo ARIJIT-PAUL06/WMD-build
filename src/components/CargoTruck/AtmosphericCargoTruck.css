@@ -1,27 +1,28 @@
 /* AtmosphericCargoTruck.css */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
 
 .cargo-section {
   position: relative;
   width: 100%;
-  background: radial-gradient(ellipse at 50% 20%, rgba(15, 23, 42, 0.95) 0%, rgba(6, 10, 18, 0.98) 70%, #030712 100%);
-  padding: 5rem 1.5rem 6rem;
+  background: radial-gradient(ellipse at 50% 15%, rgba(15, 23, 42, 0.98) 0%, rgba(6, 10, 18, 0.99) 65%, #030712 100%);
+  padding: 5rem 1.5rem 6.5rem;
   overflow: hidden;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Background atmospheric particulate grid */
+/* Atmospheric Ambient Vignette & Floating Aerosol Dust */
 .cargo-section::before {
   content: '';
   position: absolute;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 40px 40px;
+    radial-gradient(circle at 20% 30%, rgba(239, 68, 68, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 80% 60%, rgba(6, 182, 212, 0.05) 0%, transparent 45%),
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
   pointer-events: none;
-  opacity: 0.7;
 }
 
 .cargo-container {
@@ -31,28 +32,28 @@
   z-index: 10;
 }
 
-/* Section Header */
+/* Header */
 .cargo-header {
   text-align: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2.25rem;
 }
 
 .cargo-badge-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.35rem 0.9rem;
+  padding: 0.35rem 0.95rem;
   border-radius: 9999px;
   background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.35);
   color: #f87171;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 0.85rem;
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
 }
 
 .cargo-badge-pill .pulse-dot {
@@ -66,12 +67,12 @@
 
 @keyframes pulse-dot-anim {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(1.4); }
+  50% { opacity: 0.3; transform: scale(1.4); }
 }
 
 .cargo-title {
   font-family: 'Outfit', sans-serif;
-  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  font-size: clamp(2rem, 3.8vw, 2.85rem);
   font-weight: 800;
   color: #f8fafc;
   line-height: 1.15;
@@ -86,14 +87,14 @@
 }
 
 .cargo-description {
-  max-width: 760px;
+  max-width: 780px;
   margin: 0 auto;
   color: #94a3b8;
-  font-size: 1rem;
+  font-size: 0.98rem;
   line-height: 1.6;
 }
 
-/* Preset Switcher Bar */
+/* Control Bar: Presets & Purge */
 .cargo-controls-bar {
   display: flex;
   flex-wrap: wrap;
@@ -101,12 +102,12 @@
   justify-content: space-between;
   gap: 1rem;
   background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 0.75rem 1rem;
   margin-bottom: 2rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
 }
 
 .cargo-presets-group {
@@ -123,33 +124,34 @@
   padding: 0.55rem 0.95rem;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(30, 41, 59, 0.5);
+  background: rgba(30, 41, 59, 0.55);
   color: #cbd5e1;
   font-family: 'Inter', sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .cargo-preset-btn:hover {
-  background: rgba(51, 65, 85, 0.7);
+  background: rgba(51, 65, 85, 0.8);
   color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
 }
 
 .cargo-preset-btn.active {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(249, 115, 22, 0.2) 100%);
-  border-color: rgba(249, 115, 22, 0.6);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(249, 115, 22, 0.25) 100%);
+  border-color: rgba(249, 115, 22, 0.7);
   color: #fed7aa;
-  box-shadow: 0 0 16px rgba(249, 115, 22, 0.25);
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.25);
 }
 
 .cargo-preset-btn.active.green-theme {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%);
-  border-color: rgba(16, 185, 129, 0.6);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.25) 100%);
+  border-color: rgba(16, 185, 129, 0.7);
   color: #a7f3d0;
-  box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
 }
 
 .cargo-actions-group {
@@ -174,170 +176,138 @@
 }
 
 .cargo-action-btn:hover {
-  background: rgba(51, 65, 85, 0.8);
+  background: rgba(51, 65, 85, 0.85);
   color: #f8fafc;
+  transform: translateY(-1px);
 }
 
 .cargo-action-btn.purge-btn {
   background: linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
-  border-color: rgba(6, 182, 212, 0.4);
+  border-color: rgba(6, 182, 212, 0.5);
   color: #67e8f9;
 }
 
 .cargo-action-btn.purge-btn:hover {
   background: linear-gradient(135deg, rgba(6, 182, 212, 0.35) 0%, rgba(59, 130, 246, 0.35) 100%);
-  box-shadow: 0 0 18px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.35);
   color: #ffffff;
 }
 
-/* Weighbridge Platform Canvas */
+/* ==========================================================
+   THE WEIGHBRIDGE STAGE & TRUCK SURROUNDINGS
+   Blended seamlessly into the dark UI
+   ========================================================== */
 .weighbridge-stage {
   position: relative;
   width: 100%;
   border-radius: 24px;
-  background: radial-gradient(ellipse at 50% 60%, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.8) 60%, rgba(9, 13, 22, 0.95) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: radial-gradient(ellipse at 50% 50%, rgba(18, 25, 43, 0.8) 0%, rgba(10, 15, 26, 0.95) 70%, #060913 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 2.5rem 1.5rem 2rem;
   box-shadow: 
-    0 25px 50px -12px rgba(0, 0, 0, 0.6),
+    0 30px 60px -15px rgba(0, 0, 0, 0.7),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   overflow: hidden;
 }
 
-/* Stage Lighting Effects */
+/* Cybernetic Overhead Spotlight */
 .weighbridge-spotlight {
   position: absolute;
-  top: -15%;
+  top: -20%;
   left: 50%;
   transform: translateX(-50%);
-  width: 75%;
-  height: 60%;
-  background: radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+  width: 85%;
+  height: 65%;
+  background: radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.15) 0%, rgba(6, 182, 212, 0.05) 50%, transparent 75%);
   pointer-events: none;
 }
 
-/* Scale Scanner Line */
+/* Laser Scanning Beam Sweeping the Payload */
 .weighbridge-scanner-beam {
   position: absolute;
-  top: 10%;
-  bottom: 25%;
+  top: 15%;
+  bottom: 28%;
   width: 2px;
-  background: linear-gradient(180deg, transparent 0%, rgba(6, 182, 212, 0.8) 50%, rgba(239, 68, 68, 0.8) 100%);
-  box-shadow: 0 0 15px rgba(6, 182, 212, 0.6);
+  background: linear-gradient(180deg, transparent 0%, rgba(6, 182, 212, 0.9) 40%, rgba(239, 68, 68, 0.9) 80%, transparent 100%);
+  box-shadow: 0 0 18px rgba(6, 182, 212, 0.7), 0 0 35px rgba(6, 182, 212, 0.4);
   pointer-events: none;
   z-index: 25;
-  animation: scan-beam-anim 6s infinite ease-in-out;
+  animation: scan-beam-anim 6.5s infinite ease-in-out;
 }
 
 @keyframes scan-beam-anim {
-  0% { left: 32%; opacity: 0; }
-  10% { opacity: 0.8; }
-  90% { opacity: 0.8; }
-  100% { left: 92%; opacity: 0; }
+  0% { left: 38%; opacity: 0; }
+  10% { opacity: 0.9; }
+  88% { opacity: 0.9; }
+  100% { left: 94%; opacity: 0; }
 }
 
-/* Truck Wrapper (Preserves 1024x576 Aspect Ratio) */
+/* ==========================================================
+   TRUCK VIEWPORT (16:9 Aspect Ratio matching 1376x768 render)
+   ========================================================== */
 .truck-viewport {
   position: relative;
   width: 100%;
-  max-width: 1050px;
+  max-width: 1100px;
   margin: 0 auto;
-  aspect-ratio: 1024 / 576;
+  aspect-ratio: 1376 / 768;
   user-select: none;
+  border-radius: 12px;
+  overflow: visible;
+  /* Smooth radial fade at edges so it seamlessly dissolves into the dark background */
+  mask-image: radial-gradient(ellipse 98% 90% at 50% 50%, black 75%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 98% 90% at 50% 50%, black 75%, transparent 100%);
 }
 
-/* Suspension Vibration and Sag */
+/* Suspension Compression & Engine Idle Vibration */
 .truck-chassis {
   position: relative;
   width: 100%;
   height: 100%;
-  transition: transform 0.6s cubic-bezier(0.34, 1.4, 0.64, 1);
-  animation: engine-idle-rumble 0.22s infinite ease-in-out alternate;
+  transition: transform 0.65s cubic-bezier(0.34, 1.4, 0.64, 1);
+  animation: engine-idle-rumble 0.24s infinite ease-in-out alternate;
 }
 
 @keyframes engine-idle-rumble {
-  0% { transform: translateY(0px) rotate(0deg); }
-  100% { transform: translateY(-0.8px) rotate(-0.04deg); }
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-0.7px); }
 }
 
-/* The Base Scania Truck Flatbed PNG */
+/* Base Truck High-Res Image */
 .truck-base-image {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  pointer-events: none;
-  z-index: 15;
-  filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.7));
-}
-
-/* Exhaust Stack Smoke Emitter */
-.exhaust-smoke-generator {
-  position: absolute;
-  top: 14%;
-  left: 25.5%;
+  object-fit: cover;
   pointer-events: none;
   z-index: 10;
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.8));
 }
 
-.smoke-puff {
+/* Ground Shadow Contact Patch */
+.truck-ground-shadow {
   position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(203, 213, 225, 0.35) 0%, rgba(148, 163, 184, 0.1) 60%, transparent 100%);
-  filter: blur(4px);
-  animation: exhaust-puff-anim 2.8s infinite ease-out;
-}
-
-.smoke-puff:nth-child(2) {
-  animation-delay: 0.9s;
-}
-
-.smoke-puff:nth-child(3) {
-  animation-delay: 1.8s;
-}
-
-@keyframes exhaust-puff-anim {
-  0% {
-    width: 8px;
-    height: 8px;
-    transform: translate(0, 0) scale(1);
-    opacity: 0.7;
-  }
-  50% {
-    opacity: 0.45;
-  }
-  100% {
-    width: 48px;
-    height: 48px;
-    transform: translate(-35px, -55px) scale(3.5);
-    opacity: 0;
-  }
-}
-
-/* Cabin Interior Glow & Headlight Beam */
-.truck-headlight-cone {
-  position: absolute;
-  left: -20%;
-  top: 60%;
-  width: 25%;
-  height: 35%;
-  background: linear-gradient(250deg, rgba(255, 237, 213, 0.18) 0%, transparent 80%);
-  clip-path: polygon(100% 30%, 0% 0%, 0% 100%, 100% 70%);
+  bottom: 12%;
+  left: 5%;
+  right: 5%;
+  height: 25px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
+  filter: blur(12px);
   pointer-events: none;
-  z-index: 12;
+  z-index: 4;
 }
 
-/* Underglow Neon Strip */
+/* Reactive Underglow Neon Strip */
 .truck-underglow {
   position: absolute;
-  bottom: 23%;
-  left: 10%;
-  right: 8%;
-  height: 12px;
+  bottom: 26%;
+  left: 8%;
+  right: 6%;
+  height: 14px;
   border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 50%, var(--underglow-color, rgba(249, 115, 22, 0.45)) 0%, transparent 75%);
-  filter: blur(10px);
+  background: radial-gradient(ellipse at 50% 50%, var(--underglow-color, rgba(6, 182, 212, 0.4)) 0%, transparent 75%);
+  filter: blur(14px);
   pointer-events: none;
   z-index: 5;
   transition: background 0.8s ease;
@@ -345,25 +315,25 @@
 
 /* ==========================================================
    CARGO CONTAINERS FLATBED MOUNTING DECK
-   Deck Geometry:
-   - x: 31.8% to 92.4% (width: 60.6%)
-   - y (flatbed surface): 57.64% from top => bottom: 42.36%
+   Measured Flatbed Geometry on 1376x768 Vayu Truck:
+   - x: 38.88% to 94.11% (width: 55.23%)
+   - y (flatbed deck): 47.14% from top => bottom: 52.86%
    ========================================================== */
 .containers-flatbed-deck {
   position: absolute;
-  left: 31.8%;
-  width: 60.5%;
-  bottom: 42.36%;
+  left: 38.88%;
+  width: 55.23%;
+  bottom: 52.86%;
   height: 0;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 0.65%;
-  z-index: 18; /* Sits right over the flatbed rails cleanly */
+  z-index: 18;
   pointer-events: auto;
 }
 
-/* Individual Cargo Pod */
+/* Individual Container Unit */
 .pollutant-container-unit {
   position: relative;
   flex: 1;
@@ -385,54 +355,57 @@
   z-index: 45;
 }
 
-/* Dynamic Physical Container Box */
+/* Dynamic Physical Container Box (ISO Shipping Container Aesthetic) */
 .container-box {
   position: relative;
   width: 100%;
   border-radius: 4px 4px 1px 1px;
   background: var(--cont-bg, #1e293b);
-  border: 1px solid var(--cont-border, rgba(255, 255, 255, 0.2));
+  border: 1px solid var(--cont-border, rgba(255, 255, 255, 0.25));
+  /* Realistic drop shadow onto flatbed deck + neon ambient aura */
   box-shadow: 
-    0 -4px 15px var(--cont-glow, rgba(0, 0, 0, 0.4)),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25),
-    inset 0 0 12px rgba(0, 0, 0, 0.6);
+    0 8px 18px rgba(0, 0, 0, 0.9),
+    0 2px 4px rgba(0, 0, 0, 0.95),
+    0 -3px 15px var(--cont-glow, rgba(0, 0, 0, 0.4)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  padding: 0.35rem 0.2rem 0.25rem;
+  padding: 0.4rem 0.22rem 0.3rem;
   overflow: hidden;
   transition: height 0.85s cubic-bezier(0.34, 1.4, 0.64, 1), background 0.5s ease, border-color 0.5s ease;
 }
 
-/* Corrugated Vertical Ribs Overlay (Simulating Freight Shipping Container) */
+/* 3D Vertical Corrugated Sheet Metal Shading */
 .container-box::before {
   content: '';
   position: absolute;
   inset: 0;
   background: repeating-linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.08) 0px,
-    rgba(255, 255, 255, 0.08) 2px,
+    rgba(255, 255, 255, 0.12) 0px,
+    rgba(255, 255, 255, 0.12) 2px,
     transparent 2px,
     transparent 5px,
-    rgba(0, 0, 0, 0.35) 5px,
-    rgba(0, 0, 0, 0.35) 8px
+    rgba(0, 0, 0, 0.55) 5px,
+    rgba(0, 0, 0, 0.55) 8px
   );
   pointer-events: none;
   opacity: 0.85;
 }
 
-/* Corner Reinforced Castings */
+/* Top Steel Reinforced Castings */
 .container-box::after {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.35);
+  height: 4px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.4) 0%, rgba(200, 210, 225, 0.6) 50%, rgba(255, 255, 255, 0.4) 100%);
   pointer-events: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.5);
 }
 
 /* Top Warning Strobe Beacon */
@@ -464,43 +437,45 @@
 @keyframes warning-strobe-flash {
   0%, 100% {
     transform: scale(0.9);
-    opacity: 0.4;
-    box-shadow: 0 0 4px var(--beacon-color, #ef4444);
+    opacity: 0.35;
+    box-shadow: 0 0 5px var(--beacon-color, #ef4444);
   }
   50% {
-    transform: scale(1.35);
+    transform: scale(1.4);
     opacity: 1;
-    box-shadow: 0 0 16px var(--beacon-color, #ef4444), 0 0 28px var(--beacon-color, #ef4444);
+    box-shadow: 0 0 18px var(--beacon-color, #ef4444), 0 0 30px var(--beacon-color, #ef4444);
   }
 }
 
-/* Digital LED Display Matrix on Container Face */
+/* Digital Beveled LCD Panel on Container */
 .container-lcd-panel {
   position: relative;
   z-index: 2;
-  width: 90%;
-  background: rgba(10, 15, 26, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-  padding: 0.2rem 0.15rem;
+  width: 92%;
+  background: rgba(8, 12, 20, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 0.25rem 0.18rem;
   text-align: center;
-  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.8);
+  box-shadow: 
+    inset 0 1px 4px rgba(0, 0, 0, 0.9),
+    0 1px 2px rgba(255, 255, 255, 0.05);
 }
 
 .container-chemical-code {
   font-family: 'Outfit', sans-serif;
   font-weight: 800;
-  font-size: clamp(0.65rem, 1.1vw, 0.85rem);
+  font-size: clamp(0.65rem, 1.1vw, 0.88rem);
   color: #ffffff;
   letter-spacing: -0.01em;
   line-height: 1.1;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
 }
 
 .container-value-text {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
-  font-size: clamp(0.55rem, 0.95vw, 0.75rem);
+  font-size: clamp(0.55rem, 0.95vw, 0.78rem);
   color: var(--cont-text-color, #f87171);
   line-height: 1.1;
   margin-top: 2px;
@@ -508,7 +483,7 @@
 
 .container-unit-text {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(0.42rem, 0.7vw, 0.55rem);
+  font-size: clamp(0.42rem, 0.7vw, 0.58rem);
   color: #94a3b8;
   font-weight: 500;
 }
@@ -517,9 +492,9 @@
 .container-capacity-track {
   position: relative;
   z-index: 2;
-  width: 82%;
+  width: 84%;
   height: 3px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.75);
   border-radius: 999px;
   overflow: hidden;
   margin-top: 4px;
@@ -532,84 +507,43 @@
   transition: width 0.6s ease;
 }
 
-/* Foot Pad Clamps anchoring to Flatbed */
+/* Mechanical Mounting Foot-Clamp Anchored to Trailer Bed */
 .container-foot-clamp {
   position: absolute;
-  bottom: -3px;
-  width: 85%;
-  height: 3px;
-  background: #0f172a;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 1px;
-}
-
-/* Road Weighbridge Surface & Markings */
-.weighbridge-road-bed {
-  margin-top: -3%;
-  position: relative;
-  width: 100%;
-  height: 36px;
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 60%, #030712 100%);
-  border-radius: 6px;
-  border-top: 2px solid rgba(255, 255, 255, 0.12);
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  overflow: hidden;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
-}
-
-.road-curb-stripes {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  bottom: -4px;
+  width: 88%;
   height: 4px;
-  background: repeating-linear-gradient(
-    -45deg,
-    #f59e0b 0px,
-    #f59e0b 12px,
-    #0f172a 12px,
-    #0f172a 24px
-  );
-  opacity: 0.85;
-}
-
-.road-center-dashes {
-  display: flex;
-  gap: 20px;
-  width: 100%;
-  justify-content: center;
-}
-
-.road-dash {
-  width: 32px;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.25);
+  background: #090d16;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.8);
   border-radius: 1px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
-/* Telemetry Dashboard Below Truck */
+/* ==========================================================
+   TELEMETRY HUD BELOW TRUCK
+   ========================================================== */
 .cargo-telemetry-hud {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
-  margin-top: 1.75rem;
+  margin-top: 2rem;
 }
 
 .telemetry-card {
   background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   padding: 1rem 1.15rem;
   position: relative;
   overflow: hidden;
-  transition: border-color 0.25s ease;
+  transition: border-color 0.25s ease, transform 0.25s ease;
 }
 
 .telemetry-card:hover {
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
 }
 
 .telemetry-label {
@@ -633,7 +567,7 @@
 
 .telemetry-big-number {
   font-family: 'Outfit', sans-serif;
-  font-size: 1.6rem;
+  font-size: 1.65rem;
   font-weight: 800;
   color: #f8fafc;
   line-height: 1.1;
@@ -667,10 +601,12 @@
   transition: width 0.7s ease, background 0.7s ease;
 }
 
-/* Active Selected Chemical Detail Card */
+/* ==========================================================
+   SELECTED CHEMICAL DEEP INSPECTION CARD
+   ========================================================== */
 .cargo-chemical-inspector {
   margin-top: 1.75rem;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.95) 100%);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 18px;
   padding: 1.5rem;
@@ -678,7 +614,7 @@
   grid-template-columns: 1fr 2fr;
   gap: 1.5rem;
   position: relative;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
 }
 
 @media (max-width: 768px) {
@@ -692,17 +628,17 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.65);
   border: 1px solid var(--inspect-accent, rgba(239, 68, 68, 0.4));
   border-radius: 14px;
   padding: 1.5rem 1rem;
   text-align: center;
-  box-shadow: 0 0 20px var(--inspect-glow, rgba(239, 68, 68, 0.15));
+  box-shadow: 0 0 25px var(--inspect-glow, rgba(239, 68, 68, 0.15));
 }
 
 .inspector-formula {
   font-family: 'Outfit', sans-serif;
-  font-size: 2.2rem;
+  font-size: 2.4rem;
   font-weight: 900;
   color: #ffffff;
   line-height: 1;
@@ -742,8 +678,8 @@
 }
 
 .inspector-stat-box {
-  background: rgba(15, 23, 42, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 10px;
   padding: 0.65rem 0.85rem;
 }
@@ -773,14 +709,16 @@
   color: #cbd5e1;
 }
 
-/* Manual Sliders Drawer (Expandable) */
+/* ==========================================================
+   MANUAL CHEMICAL SLIDERS DRAWER
+   ========================================================== */
 .cargo-sliders-drawer {
   margin-top: 1.5rem;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   padding: 1.25rem 1.5rem;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
 }
 
 .sliders-drawer-header {

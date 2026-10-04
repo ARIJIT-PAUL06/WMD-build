@@ -1,18 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Truck,
   AlertTriangle,
   ShieldCheck,
-  Flame,
   Activity,
-  Zap,
-  RotateCcw,
   Sliders,
   ChevronDown,
   ChevronUp,
-  Info,
   Radio,
-  Wind
+  Wind,
+  Layers,
+  RotateCcw
 } from 'lucide-react';
 import './AtmosphericCargoTruck.css';
 
@@ -27,8 +25,10 @@ const POLLUTANT_SPECS = [
     whoLimit: 15,
     source: 'Automotive diesel exhausts, biomass burning, crop residue combustion, thermal power units.',
     healthImpact: 'Ultra-fine particles (<2.5µm) penetrate alveolar capillary membranes directly into circulation, elevating cardiopulmonary mortality.',
-    accentColor: '#ef4444', // Red
-    baseHue: '0, 85%, 60%'
+    accentColor: '#ef4444',
+    contBg: 'linear-gradient(180deg, #7f1d1d 0%, #450a0a 100%)',
+    contBorder: '#ef4444',
+    contGlow: 'rgba(239, 68, 68, 0.55)'
   },
   {
     id: 'pm10',
@@ -39,8 +39,10 @@ const POLLUTANT_SPECS = [
     whoLimit: 45,
     source: 'Roadside dust resuspension, construction debris, soil erosion, coal-fired industrial units.',
     healthImpact: 'Trapped in upper tracheobronchial airways causing chronic bronchitis, emphysema, and acute asthma exacerbations.',
-    accentColor: '#f97316', // Orange
-    baseHue: '25, 95%, 53%'
+    accentColor: '#f97316',
+    contBg: 'linear-gradient(180deg, #7c2d12 0%, #431407 100%)',
+    contBorder: '#f97316',
+    contGlow: 'rgba(249, 115, 22, 0.5)'
   },
   {
     id: 'no2',
@@ -51,8 +53,10 @@ const POLLUTANT_SPECS = [
     whoLimit: 25,
     source: 'High-temperature internal combustion engines (heavy trucks, buses) and thermal generation stations.',
     healthImpact: 'Deep airway mucosal inflamer, precursor to secondary particulate nitrates and ground-level ozone formation.',
-    accentColor: '#eab308', // Yellow
-    baseHue: '48, 96%, 53%'
+    accentColor: '#eab308',
+    contBg: 'linear-gradient(180deg, #713f12 0%, #3f2008 100%)',
+    contBorder: '#eab308',
+    contGlow: 'rgba(234, 179, 8, 0.45)'
   },
   {
     id: 'so2',
@@ -63,8 +67,10 @@ const POLLUTANT_SPECS = [
     whoLimit: 40,
     source: 'Coal-fired power plants, petroleum refineries, heavy furnace oil combustion in industrial estates.',
     healthImpact: 'Potent bronchoconstrictor; drives acidic aerosol formation and environmental acid precipitation.',
-    accentColor: '#10b981', // Emerald
-    baseHue: '160, 84%, 39%'
+    accentColor: '#10b981',
+    contBg: 'linear-gradient(180deg, #064e3b 0%, #022c22 100%)',
+    contBorder: '#10b981',
+    contGlow: 'rgba(16, 185, 129, 0.4)'
   },
   {
     id: 'co',
@@ -75,8 +81,10 @@ const POLLUTANT_SPECS = [
     whoLimit: 4.0,
     source: 'Incomplete combustion in idling motor vehicles, biomass cooking chulhas, forest brushfires.',
     healthImpact: 'Binds with hemoglobin to form carboxyhemoglobin, impairing oxygen delivery to myocardial and cerebral tissues.',
-    accentColor: '#f43f5e', // Rose
-    baseHue: '345, 89%, 60%'
+    accentColor: '#f43f5e',
+    contBg: 'linear-gradient(180deg, #881337 0%, #4c0519 100%)',
+    contBorder: '#f43f5e',
+    contGlow: 'rgba(244, 63, 94, 0.45)'
   },
   {
     id: 'o3',
@@ -87,8 +95,10 @@ const POLLUTANT_SPECS = [
     whoLimit: 100,
     source: 'Secondary photochemical pollutant formed by solar reaction of NOx and VOCs on hot sunny afternoons.',
     healthImpact: 'Powerful cellular oxidant; damages alveolar linings, induces coughing, chest tightness, and long-term lung scarring.',
-    accentColor: '#06b6d4', // Cyan
-    baseHue: '188, 86%, 53%'
+    accentColor: '#06b6d4',
+    contBg: 'linear-gradient(180deg, #164e63 0%, #083344 100%)',
+    contBorder: '#06b6d4',
+    contGlow: 'rgba(6, 182, 212, 0.45)'
   },
   {
     id: 'nh3',
@@ -99,8 +109,10 @@ const POLLUTANT_SPECS = [
     whoLimit: 100,
     source: 'Agricultural fertilizer volatilization, livestock farming, untreated municipal sewage gutters.',
     healthImpact: 'Reacts with atmospheric nitric and sulfuric acids to synthesize regional ammonium salt smog hazes.',
-    accentColor: '#a855f7', // Purple
-    baseHue: '270, 91%, 65%'
+    accentColor: '#a855f7',
+    contBg: 'linear-gradient(180deg, #581c87 0%, #2e1065 100%)',
+    contBorder: '#a855f7',
+    contGlow: 'rgba(168, 85, 247, 0.5)'
   }
 ];
 
@@ -154,6 +166,7 @@ export default function AtmosphericCargoTruck() {
   const [activePreset, setActivePreset] = useState('india_avg');
   const [pollutantValues, setPollutantValues] = useState(PRESETS.india_avg.values);
   const [selectedPollutantId, setSelectedPollutantId] = useState('pm25');
+  const [truckModel, setTruckModel] = useState('vayu_cyber'); // 'vayu_cyber' | 'classic_scania'
   const [isTunerOpen, setIsTunerOpen] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
   const [isLiveLoading, setIsLiveLoading] = useState(false);
@@ -176,20 +189,13 @@ export default function AtmosphericCargoTruck() {
         maxOverloadRatio = ratio;
         worstPollutant = p;
       }
-      // Empirical cargo conversion: particulate + gas mass equivalent
       totalMass += (p.id === 'co' ? val * 50 : val);
     });
 
-    // Approximate metric tons per atmospheric column (4x4km over industrial grid)
     const grossTons = (totalMass * 0.082).toFixed(1);
-    
-    // Suspension load percentage (100% is max permissible axle rating)
-    const suspensionLoad = Math.min(100, Math.round(maxOverloadRatio * 48 + 24));
-    
-    // Physical sag of the truck chassis in pixels (0px to 4.5px)
+    const suspensionLoad = Math.min(100, Math.round(maxOverloadRatio * 46 + 26));
     const chassisSag = Math.min(5, Math.max(0, (maxOverloadRatio - 0.5) * 2.2));
 
-    // Overall hazard tier
     let hazardTier = 'ACCEPTABLE';
     let underglowColor = 'rgba(16, 185, 129, 0.45)';
     if (maxOverloadRatio > 2.0) {
@@ -214,7 +220,7 @@ export default function AtmosphericCargoTruck() {
     };
   }, [pollutantValues]);
 
-  // Switch to Preset
+  // Handle Preset Selection
   const handleSelectPreset = (presetKey) => {
     setActivePreset(presetKey);
     if (PRESETS[presetKey]) {
@@ -230,7 +236,6 @@ export default function AtmosphericCargoTruck() {
       if (!res.ok) throw new Error('Network error');
       const data = await res.json();
       if (data && data.stations && data.stations.length > 0) {
-        // Calculate real-time mean across all active monitoring stations
         let sumPm25 = 0, countPm25 = 0;
         let sumPm10 = 0, countPm10 = 0;
         let sumNo2 = 0, countNo2 = 0;
@@ -258,7 +263,6 @@ export default function AtmosphericCargoTruck() {
       }
     } catch (err) {
       console.warn('Could not fetch live telemetry, using fallback live estimates', err);
-      // Fallback to slightly randomized current telemetry
       setPollutantValues({
         pm25: 62.4,
         pm10: 124.8,
@@ -277,7 +281,6 @@ export default function AtmosphericCargoTruck() {
   // Decontamination Purge Action
   const handlePurgePayload = () => {
     setIsPurging(true);
-    // Vent all containers down to ultra-clean levels
     setTimeout(() => {
       setPollutantValues({
         pm25: 8.0,
@@ -301,6 +304,14 @@ export default function AtmosphericCargoTruck() {
       [pollutantId]: parseFloat(newValue)
     }));
   };
+
+  // Geometry configuration based on truck model
+  const isCyber = truckModel === 'vayu_cyber';
+  const truckImageSrc = isCyber ? '/assets/truck_flatbed_vayu.png' : '/assets/truck_flatbed.png';
+  const truckAspectRatio = isCyber ? '1376 / 768' : '1024 / 576';
+  const deckStyle = isCyber
+    ? { left: '38.88%', width: '55.23%', bottom: '52.86%' }
+    : { left: '31.8%', width: '60.5%', bottom: '42.36%' };
 
   return (
     <section className="cargo-section" id="atmospheric-cargo-section">
@@ -362,6 +373,16 @@ export default function AtmosphericCargoTruck() {
           </div>
 
           <div className="cargo-actions-group">
+            {/* Model switcher */}
+            <button
+              className="cargo-action-btn"
+              onClick={() => setTruckModel(isCyber ? 'classic_scania' : 'vayu_cyber')}
+              title="Switch Truck Design"
+            >
+              <Layers size={14} />
+              <span>{isCyber ? 'Cyber Hauler' : 'Classic Scania'}</span>
+            </button>
+
             <button
               className="cargo-action-btn purge-btn"
               onClick={handlePurgePayload}
@@ -389,8 +410,11 @@ export default function AtmosphericCargoTruck() {
           <div className="weighbridge-spotlight"></div>
           <div className="weighbridge-scanner-beam"></div>
 
-          {/* Truck Viewport (1024 / 576 aspect ratio) */}
-          <div className="truck-viewport">
+          {/* Truck Viewport */}
+          <div
+            className="truck-viewport"
+            style={{ aspectRatio: truckAspectRatio }}
+          >
             <div
               className="truck-chassis"
               style={{
@@ -398,64 +422,47 @@ export default function AtmosphericCargoTruck() {
                 '--underglow-color': payloadStats.underglowColor
               }}
             >
-              {/* Exhaust Smoke Animation */}
-              <div className="exhaust-smoke-generator">
-                <div className="smoke-puff"></div>
-                <div className="smoke-puff"></div>
-                <div className="smoke-puff"></div>
-              </div>
-
-              {/* Headlight Cone */}
-              <div className="truck-headlight-cone"></div>
-
-              {/* Underglow Neon */}
+              {/* Ground Shadow & Underglow */}
+              <div className="truck-ground-shadow"></div>
               <div className="truck-underglow"></div>
 
-              {/* Base Truck Flatbed Image */}
+              {/* Base Truck Image */}
               <img
-                src="/assets/truck_flatbed.png"
+                src={truckImageSrc}
                 alt="VayuVitals Flatbed Heavy Hauler Truck"
                 className="truck-base-image"
               />
 
               {/* =======================================================
                   CONTAINERS FLATBED DECK
-                  Deck baseline: bottom: 42.36% (y = 332 on 576px canvas)
-                  Horizontal span: left 31.8% to 92.4% (width: 60.5%)
+                  Mounted on physical deck surface
                   ======================================================= */}
-              <div className="containers-flatbed-deck">
+              <div className="containers-flatbed-deck" style={deckStyle}>
                 {POLLUTANT_SPECS.map(p => {
                   const val = pollutantValues[p.id] || 0;
                   const ratio = val / p.naaqsLimit;
                   
-                  // Proportional height as percentage of truck viewport height (H=576px)
-                  // Min 9% (~52px for labels), 100% NAAQS = ~26% (~150px), Overload = up to 44% (~253px)
-                  const heightPercent = Math.min(44, Math.max(9, 11 + ratio * 15));
+                  // Dynamic height calculation scaled to truck viewport height
+                  const heightPercent = isCyber
+                    ? Math.min(34, Math.max(9, 10 + ratio * 10)) // Cyber hauler scale
+                    : Math.min(44, Math.max(9, 11 + ratio * 15)); // Scania scale
 
-                  // Dynamic color and warning state based on safety limit
-                  let contBg, contBorder, contGlow, beaconColor, isStrobe = false;
+                  const heightPx = isCyber
+                    ? heightPercent * 7.68
+                    : heightPercent * 5.76;
+
+                  // Severity & Strobe Logic
+                  let beaconColor, isStrobe = false;
                   if (ratio > 1.8) {
-                    contBg = 'linear-gradient(180deg, #581c87 0%, #2e1065 100%)';
-                    contBorder = '#a855f7';
-                    contGlow = 'rgba(168, 85, 247, 0.6)';
                     beaconColor = '#ef4444';
                     isStrobe = true;
                   } else if (ratio > 1.0) {
-                    contBg = 'linear-gradient(180deg, #7f1d1d 0%, #450a0a 100%)';
-                    contBorder = '#ef4444';
-                    contGlow = 'rgba(239, 68, 68, 0.55)';
                     beaconColor = '#ef4444';
                     isStrobe = true;
                   } else if (ratio > 0.6) {
-                    contBg = 'linear-gradient(180deg, #78350f 0%, #451a03 100%)';
-                    contBorder = '#f59e0b';
-                    contGlow = 'rgba(245, 158, 11, 0.45)';
                     beaconColor = '#f59e0b';
                     isStrobe = false;
                   } else {
-                    contBg = 'linear-gradient(180deg, #064e3b 0%, #022c22 100%)';
-                    contBorder = '#10b981';
-                    contGlow = 'rgba(16, 185, 129, 0.35)';
                     beaconColor = '#10b981';
                     isStrobe = false;
                   }
@@ -472,10 +479,10 @@ export default function AtmosphericCargoTruck() {
                       <div
                         className="container-box"
                         style={{
-                          height: `${heightPercent * 5.76}px`, // Scaled to viewport height
-                          '--cont-bg': contBg,
-                          '--cont-border': isSelected ? '#ffffff' : contBorder,
-                          '--cont-glow': contGlow,
+                          height: `${heightPx}px`,
+                          '--cont-bg': p.contBg,
+                          '--cont-border': isSelected ? '#ffffff' : p.contBorder,
+                          '--cont-glow': p.contGlow,
                           '--cont-text-color': p.accentColor,
                           '--beacon-color': beaconColor
                         }}
@@ -517,21 +524,6 @@ export default function AtmosphericCargoTruck() {
                   );
                 })}
               </div>
-            </div>
-          </div>
-
-          {/* Road Surface & Chevron Markings */}
-          <div className="weighbridge-road-bed">
-            <div className="road-curb-stripes"></div>
-            <div className="road-center-dashes">
-              <span className="road-dash"></span>
-              <span className="road-dash"></span>
-              <span className="road-dash"></span>
-              <span className="road-dash"></span>
-              <span className="road-dash"></span>
-              <span className="road-dash"></span>
-              <span className="road-dash"></span>
-              <span className="road-dash"></span>
             </div>
           </div>
         </div>
