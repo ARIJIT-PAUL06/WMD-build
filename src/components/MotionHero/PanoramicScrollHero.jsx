@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ArrowDown, Wind, Sparkles, AlertTriangle, ShieldCheck, ChevronRight, Activity, Eye } from 'lucide-react';
+import { ArrowDown, Wind, Sparkles, AlertTriangle, ShieldCheck, ChevronRight, Activity, Eye, Flame, Gauge } from 'lucide-react';
 import CrtScreenLensCanvas from './CrtScreenLensCanvas';
 import './PanoramicScrollHero.css';
 
@@ -226,201 +226,346 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
 
         {/* Phase 1: Left / Smog Crisis & Destroyed Delhi */}
         <div
+          className="crt-perspective-stage-left"
           style={{
             position: 'absolute',
-            left: '8vw',
-            bottom: '14vh',
-            maxWidth: '500px',
+            left: '6vw',
+            bottom: '12vh',
+            maxWidth: '520px',
+            width: '90%',
             zIndex: 20,
             opacity: isLeftPhase ? 1 - scrollProgress * 2.2 : 0,
-            transform: `translateY(${scrollProgress * 60}px)`,
+            transform: `translateY(${scrollProgress * 50}px)`,
             transition: 'opacity 0.4s ease, transform 0.4s ease',
             pointerEvents: isLeftPhase ? 'auto' : 'none',
           }}
         >
-          <div
-            className="glass-panel"
-            style={{
-              padding: '24px 28px',
-              border: '1px solid rgba(239, 68, 68, 0.45)',
-              background: 'rgba(15, 10, 14, 0.85)',
-              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(239, 68, 68, 0.2)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <span
+          <div className="crt-curved-card crt-card-left">
+            <div className="crt-card-content">
+              {/* Telemetry Header */}
+              <div className="crt-card-header">
+                <span className="crt-station-tag" style={{ color: '#f87171' }}>
+                  <Flame size={12} /> DL-ANANDVIHAR-04 • SEVERE INVERSION
+                </span>
+                <span className="crt-coords-tag">28.6469°N, 77.3160°E • ELEV 214M</span>
+              </div>
+
+              {/* Status Badge Row */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: 'rgba(239, 68, 68, 0.22)',
+                    color: '#f87171',
+                    padding: '3px 10px',
+                    borderRadius: '9999px',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  <AlertTriangle size={11} />
+                  HAZARDOUS SMOG INVERSION
+                </span>
+                <span style={{ fontSize: '0.74rem', color: '#ef4444', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>
+                  AQI: 486 · SEVERE
+                </span>
+              </div>
+
+              {/* Title */}
+              <h1
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: 'rgba(239, 68, 68, 0.2)',
-                  color: '#f87171',
-                  padding: '4px 10px',
-                  borderRadius: '9999px',
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: '2.2rem',
+                  fontWeight: 800,
+                  lineHeight: 1.15,
+                  color: '#ffffff',
+                  margin: '6px 0 10px',
+                  letterSpacing: '-0.02em',
                 }}
               >
-                <AlertTriangle size={12} />
-                Hazardous Smog Inversion
-              </span>
-              <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 700 }}>AQI: 428 · Severe</span>
-            </div>
+                The Urban Chokehold
+              </h1>
 
-            <h1
-              style={{
-                fontFamily: 'var(--font-heading)',
-                fontSize: '2.4rem',
-                fontWeight: 800,
-                lineHeight: 1.15,
-                color: '#ffffff',
-                marginBottom: '12px',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              The Urban Crisis
-            </h1>
+              {/* Body Narrative */}
+              <p style={{ fontSize: '0.86rem', color: '#cbd5e1', lineHeight: 1.58, marginBottom: '12px' }}>
+                Dense stubble burning plumes and vehicular nitrates remain trapped beneath a rigid 140m thermal ceiling. Sub-micron particulate deposits directly into alveolar walls, turning bronchial pathways into blackened, decaying branches.
+              </p>
 
-            <p style={{ fontSize: '0.92rem', color: '#cbd5e1', lineHeight: 1.6, marginBottom: '16px' }}>
-              Stubble burning, vehicular emissions, and thermal inversions turn Delhi's atmosphere toxic. Toxic particulate matter deposits deep into alveolar walls, turning bronchial pathways into blackened, decaying branches.
-            </p>
+              {/* Dynamic Segmented Gauge Bar */}
+              <div className="crt-gauge-container">
+                <div className="crt-gauge-header">
+                  <span style={{ color: '#94a3b8' }}>PM2.5 TOXIC LOAD</span>
+                  <span style={{ color: '#ef4444' }}>486 µg/m³ [19.4× WHO LIMIT]</span>
+                </div>
+                <div className="crt-gauge-track">
+                  <div
+                    className="crt-gauge-fill"
+                    style={{
+                      width: '94%',
+                      background: 'linear-gradient(90deg, #f59e0b 0%, #ef4444 65%, #991b1b 100%)',
+                      boxShadow: '0 0 10px rgba(239, 68, 68, 0.6)',
+                    }}
+                  />
+                </div>
+              </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#fca5a5' }}>
-                <AlertTriangle size={16} /> Airway Constriction +88%
-              </span>
-              <span>•</span>
-              <span>PM2.5 &gt; 250 µg/m³</span>
+              {/* Telemetry Mini Data Grid */}
+              <div className="crt-telemetry-grid">
+                <div className="crt-telemetry-chip">
+                  <span className="crt-telemetry-chip-label">Airway Decay</span>
+                  <span className="crt-telemetry-chip-value" style={{ color: '#fca5a5' }}>+88% Spasm</span>
+                </div>
+                <div className="crt-telemetry-chip">
+                  <span className="crt-telemetry-chip-label">Inversion Deck</span>
+                  <span className="crt-telemetry-chip-value" style={{ color: '#fca5a5' }}>140M Trap</span>
+                </div>
+                <div className="crt-telemetry-chip">
+                  <span className="crt-telemetry-chip-label">Acute Risk</span>
+                  <span className="crt-telemetry-chip-value" style={{ color: '#ef4444' }}>CRITICAL</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Phase 2: Center / The Restoration & Turning Point */}
         <div
+          className="crt-perspective-stage-center"
           style={{
             position: 'absolute',
             left: '50%',
-            bottom: '14vh',
+            bottom: '12vh',
             transform: 'translateX(-50%)',
-            maxWidth: '520px',
-            width: '90%',
-            textAlign: 'center',
+            maxWidth: '540px',
+            width: '92%',
             zIndex: 20,
             opacity: isMidPhase ? 1 - Math.abs(scrollProgress - 0.52) * 4 : 0,
             transition: 'opacity 0.4s ease',
             pointerEvents: isMidPhase ? 'auto' : 'none',
           }}
         >
-          <div
-            className="glass-panel"
-            style={{
-              padding: '24px 28px',
-              border: '1px solid rgba(245, 158, 11, 0.4)',
-              background: 'rgba(9, 13, 22, 0.8)',
-              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(245, 158, 11, 0.15)',
-            }}
-          >
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', padding: '4px 12px', borderRadius: '9999px', fontSize: '0.72rem', fontWeight: 700, marginBottom: '10px' }}>
-              <Activity size={13} />
-              THE CRITICAL THRESHOLD · AQI 142
+          <div className="crt-curved-card crt-card-center">
+            <div className="crt-card-content">
+              {/* Telemetry Header */}
+              <div className="crt-card-header">
+                <span className="crt-station-tag" style={{ color: '#fbbf24' }}>
+                  <Activity size={12} /> AWS IOT TWIN • MITIGATION MATRIX
+                </span>
+                <span className="crt-coords-tag">AUTONOMOUS DISPATCH ACTIVE</span>
+              </div>
+
+              {/* Status Badge Row */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: 'rgba(245, 158, 11, 0.22)',
+                    color: '#fbbf24',
+                    padding: '3px 10px',
+                    borderRadius: '9999px',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  <Gauge size={11} />
+                  CRITICAL EQUILIBRIUM
+                </span>
+                <span style={{ fontSize: '0.74rem', color: '#f59e0b', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>
+                  AQI: 142 · MODERATE
+                </span>
+              </div>
+
+              {/* Title */}
+              <h2
+                style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: '2.1rem',
+                  fontWeight: 800,
+                  lineHeight: 1.15,
+                  color: '#ffffff',
+                  margin: '6px 0 10px',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                The Turning Point
+              </h2>
+
+              {/* Body Narrative */}
+              <p style={{ fontSize: '0.86rem', color: '#cbd5e1', lineHeight: 1.58, marginBottom: '12px' }}>
+                Between toxic stagnation and atmospheric renewal lies the critical intervention barrier. Real-time predictive ML orchestrates targeted anti-smog mist cannons and unlocks clean air corridors, stabilizing air before cellular damage becomes permanent.
+              </p>
+
+              {/* Dynamic Segmented Gauge Bar */}
+              <div className="crt-gauge-container">
+                <div className="crt-gauge-header">
+                  <span style={{ color: '#94a3b8' }}>CORRIDOR STABILIZATION</span>
+                  <span style={{ color: '#fbbf24' }}>58% STABILIZED [TRANSITION]</span>
+                </div>
+                <div className="crt-gauge-track">
+                  <div
+                    className="crt-gauge-fill"
+                    style={{
+                      width: '58%',
+                      background: 'linear-gradient(90deg, #ef4444 0%, #f59e0b 55%, #10b981 100%)',
+                      boxShadow: '0 0 10px rgba(245, 158, 11, 0.5)',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Telemetry Mini Data Grid */}
+              <div className="crt-telemetry-grid">
+                <div className="crt-telemetry-chip">
+                  <span className="crt-telemetry-chip-label">AI SageMaker</span>
+                  <span className="crt-telemetry-chip-value" style={{ color: '#fde68a' }}>Active Sync</span>
+                </div>
+                <div className="crt-telemetry-chip">
+                  <span className="crt-telemetry-chip-label">Corridor Shield</span>
+                  <span className="crt-telemetry-chip-value" style={{ color: '#fde68a' }}>2.4 KM Bio-Gate</span>
+                </div>
+                <div className="crt-telemetry-chip">
+                  <span className="crt-telemetry-chip-label">Wind Vector</span>
+                  <span className="crt-telemetry-chip-value" style={{ color: '#fbbf24' }}>4.8 KM/H WNW</span>
+                </div>
+              </div>
             </div>
-
-            <h2
-              style={{
-                fontFamily: 'var(--font-heading)',
-                fontSize: '2.1rem',
-                fontWeight: 800,
-                color: '#ffffff',
-                marginBottom: '10px',
-              }}
-            >
-              The Turning Point
-            </h2>
-
-            <p style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: 1.6 }}>
-              Between toxic exposure and clean atmospheric renewal lies the critical intervention zone—where real-time AI air monitoring, clean corridors, and rapid mitigation breathe life back into the urban ecosystem.
-            </p>
           </div>
         </div>
 
         {/* Phase 3: Right / The Living Canopy & Clean Air */}
         <div
+          className="crt-perspective-stage-right"
           style={{
             position: 'absolute',
-            right: '8vw',
-            bottom: '14vh',
-            maxWidth: '500px',
+            right: '6vw',
+            bottom: '12vh',
+            maxWidth: '520px',
+            width: '90%',
             zIndex: 20,
             opacity: isRightPhase ? (scrollProgress - 0.65) * 2.8 : 0,
-            transform: `translateY(${(1 - scrollProgress) * 60}px)`,
+            transform: `translateY(${(1 - scrollProgress) * 50}px)`,
             transition: 'opacity 0.4s ease, transform 0.4s ease',
             pointerEvents: isRightPhase ? 'auto' : 'none',
           }}
         >
-          <div
-            className="glass-panel"
-            style={{
-              padding: '26px 30px',
-              border: '1px solid rgba(16, 185, 129, 0.45)',
-              background: 'rgba(9, 13, 22, 0.85)',
-              boxShadow: '0 25px 50px rgba(0, 0, 0, 0.8), 0 0 35px rgba(16, 185, 129, 0.2)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <span
+          <div className="crt-curved-card crt-card-right">
+            <div className="crt-card-content">
+              {/* Telemetry Header */}
+              <div className="crt-card-header">
+                <span className="crt-station-tag" style={{ color: '#34d399' }}>
+                  <Sparkles size={12} /> SECTOR 09 • WESTERN HIMALAYAN CANOPY
+                </span>
+                <span className="crt-coords-tag">30.3165°N, 78.0322°E • ELEV 640M</span>
+              </div>
+
+              {/* Status Badge Row */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: 'rgba(16, 185, 129, 0.22)',
+                    color: '#34d399',
+                    padding: '3px 10px',
+                    borderRadius: '9999px',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  <ShieldCheck size={11} />
+                  NATURAL RESPIRATION
+                </span>
+                <span style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>
+                  AQI: 22 · PRISTINE
+                </span>
+              </div>
+
+              {/* Title */}
+              <h2
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: 'rgba(16, 185, 129, 0.2)',
-                  color: '#34d399',
-                  padding: '4px 10px',
-                  borderRadius: '9999px',
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: '2.2rem',
+                  fontWeight: 800,
+                  lineHeight: 1.15,
+                  color: '#ffffff',
+                  margin: '6px 0 10px',
+                  letterSpacing: '-0.02em',
                 }}
               >
-                <Sparkles size={12} />
-                Natural Respiration
-              </span>
-              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 700 }}>AQI: 24 · Good</span>
+                The Living Canopy
+              </h2>
+
+              {/* Body Narrative */}
+              <p style={{ fontSize: '0.86rem', color: '#cbd5e1', lineHeight: 1.58, marginBottom: '12px' }}>
+                A healthy human lung processes 11,000 liters of atmospheric air daily. In pristine forest corridors, bronchial cilia oscillate in unhindered rhythm, fueling alveolar gas exchange in perfect synchrony with tree canopies.
+              </p>
+
+              {/* Dynamic Segmented Gauge Bar */}
+              <div className="crt-gauge-container">
+                <div className="crt-gauge-header">
+                  <span style={{ color: '#94a3b8' }}>ALVEOLAR GAS EXCHANGE</span>
+                  <span style={{ color: '#34d399' }}>98.6% CAPACITY [OPTIMAL]</span>
+                </div>
+                <div className="crt-gauge-track">
+                  <div
+                    className="crt-gauge-fill"
+                    style={{
+                      width: '98%',
+                      background: 'linear-gradient(90deg, #059669 0%, #10b981 65%, #34d399 100%)',
+                      boxShadow: '0 0 10px rgba(16, 185, 129, 0.6)',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Telemetry Mini Data Grid */}
+              <div className="crt-telemetry-grid">
+                <div className="crt-telemetry-chip">
+                  <span className="crt-telemetry-chip-label">Alveolar Flux</span>
+                  <span className="crt-telemetry-chip-value" style={{ color: '#a7f3d0' }}>98.8% Flow</span>
+                </div>
+                <div className="crt-telemetry-chip">
+                  <span className="crt-telemetry-chip-label">Bio-Scrubbing</span>
+                  <span className="crt-telemetry-chip-value" style={{ color: '#a7f3d0' }}>4.8 T/Day</span>
+                </div>
+                <div className="crt-telemetry-chip">
+                  <span className="crt-telemetry-chip-label">Canopy Grade</span>
+                  <span className="crt-telemetry-chip-value" style={{ color: '#34d399' }}>PRISTINE</span>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <button
+                onClick={onExploreTwin}
+                className="btn-primary"
+                style={{
+                  width: '100%',
+                  marginTop: '16px',
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  boxShadow: '0 4px 20px rgba(16, 185, 129, 0.45)',
+                  padding: '12px 20px',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '0.88rem',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                <span>Explore India National AQI Heatmap</span>
+                <ChevronRight size={16} />
+              </button>
             </div>
-
-            <h2
-              style={{
-                fontFamily: 'var(--font-heading)',
-                fontSize: '2.4rem',
-                fontWeight: 800,
-                lineHeight: 1.15,
-                color: '#ffffff',
-                marginBottom: '12px',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              The Living Canopy
-            </h2>
-
-            <p style={{ fontSize: '0.92rem', color: '#cbd5e1', lineHeight: 1.6, marginBottom: '18px' }}>
-              Every healthy human lung processes 11,000 liters of air each day. In clean atmospheres, bronchial cilia oscillate in harmony, fueling alveolar gas exchange just like vibrant leaves converting light to life.
-            </p>
-
-            <button
-              onClick={onExploreTwin}
-              className="btn-primary"
-              style={{
-                width: '100%',
-                justifyContent: 'center',
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                boxShadow: '0 4px 20px rgba(16, 185, 129, 0.4)',
-                padding: '12px 20px',
-              }}
-            >
-              <span>Explore India National AQI Heatmap</span>
-              <ChevronRight size={16} />
-            </button>
           </div>
         </div>
 
