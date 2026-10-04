@@ -42,7 +42,7 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         uTexture: { value: panoramicTex },
         uScroll: { value: 0.0 },
         uParallax: { value: 0.0 },
-        uCurvature: { value: 0.65 }, // High-impact authentic CRT spherical faceplate bulge!
+        uCurvature: { value: 0.18 }, // Well-balanced, organic CRT faceplate swell (not overwhelming)
         uAspect: { value: width / height },
         uResolution: { value: new THREE.Vector2(width, height) },
       },
@@ -61,54 +61,64 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         uniform float uAspect;
         varying vec2 vUv;
 
-        // Spherical CRT barrel distortion math
+        // Balanced spherical CRT barrel distortion math
         vec2 curveFaceplate(vec2 uv) {
           vec2 centered = uv * 2.0 - 1.0;
           centered.x *= uAspect;
 
           float r2 = dot(centered, centered);
-          // Barrel distortion equation: pushes outer pixels inward & bulges center outward
-          vec2 distorted = centered * (1.0 + uCurvature * r2 * 0.5);
+          // Refined barrel distortion: larger visible aperture, gentle swell in center
+          vec2 distorted = centered * (1.0 + uCurvature * r2 * 0.35);
           distorted.x /= uAspect;
 
           return distorted * 0.5 + 0.5;
         }
 
         void main() {
-          // 1. Calculate the curved screen UV (Fixed to the physical CRT screen!)
+          // 1. Calculate curved screen UV
           vec2 screenUv = curveFaceplate(vUv);
 
-          // 2. Corner bezel blackout (Physical tube shadow outside the glass bulb)
-          if (screenUv.x < 0.0 || screenUv.x > 1.0 || screenUv.y < 0.0 || screenUv.y > 1.0) {
-            gl_FragColor = vec4(0.027, 0.039, 0.07, 1.0); // #070a12 background
+          // 2. Soft, progressive boundary feather (NO abrupt cut-offs!)
+          // Creates a cinematic, seamless dissolution into the dark canvas background
+          float edgeAlpha = smoothstep(0.0, 0.055, screenUv.x) *
+                            smoothstep(1.0, 0.945, screenUv.x) *
+                            smoothstep(0.0, 0.055, screenUv.y) *
+                            smoothstep(1.0, 0.945, screenUv.y);
+
+          // If completely out of lens bounds, smoothly return dark background
+          if (edgeAlpha <= 0.001) {
+            gl_FragColor = vec4(0.027, 0.039, 0.07, 1.0);
             return;
           }
 
           // 3. Map panoramic 32:9 image: The texture slides horizontally behind the fixed lens
-          // Panoramic image spans 2 full screen widths, so current window is a 0.5 slice
+          // Clamp sampling cleanly to avoid UV seam wraps
           float uOffset = uScroll * 0.5 + uParallax;
-          vec2 texUv = vec2(screenUv.x * 0.5 + uOffset, screenUv.y);
+          vec2 clampedScreen = clamp(screenUv, 0.0, 1.0);
+          vec2 texUv = vec2(clamp(clampedScreen.x * 0.5 + uOffset, 0.001, 0.999), clampedScreen.y);
 
-          // 4. Sample RGB with subtle CRT chromatic aberration at the curved borders
+          // 4. Subtle chromatic dispersion at peripheral edges
           float distFromCenter = distance(screenUv, vec2(0.5));
-          float rgbSplit = distFromCenter * 0.0035;
+          float rgbSplit = distFromCenter * 0.0022;
 
-          vec4 colR = texture2D(uTexture, vec2(texUv.x + rgbSplit, texUv.y));
+          vec4 colR = texture2D(uTexture, vec2(clamp(texUv.x + rgbSplit, 0.0, 1.0), texUv.y));
           vec4 colG = texture2D(uTexture, texUv);
-          vec4 colB = texture2D(uTexture, vec2(texUv.x - rgbSplit, texUv.y));
+          vec4 colB = texture2D(uTexture, vec2(clamp(texUv.x - rgbSplit, 0.0, 1.0), texUv.y));
           vec4 color = vec4(colR.r, colG.g, colB.b, 1.0);
 
-          // 5. Authentic CRT bulb specular edge roll-off
-          float edgeVignette = smoothstep(0.0, 0.08, screenUv.x) *
-                               smoothstep(1.0, 0.92, screenUv.x) *
-                               smoothstep(0.0, 0.08, screenUv.y) *
-                               smoothstep(1.0, 0.92, screenUv.y);
-          color.rgb *= mix(0.4, 1.0, edgeVignette);
+          // 5. Authentic CRT bulb specular edge vignette (Gentle, elegant falloff)
+          float edgeVignette = smoothstep(0.0, 0.12, screenUv.x) *
+                               smoothstep(1.0, 0.88, screenUv.x) *
+                               smoothstep(0.0, 0.12, screenUv.y) *
+                               smoothstep(1.0, 0.88, screenUv.y);
+          color.rgb *= mix(0.55, 1.0, edgeVignette);
 
-          // 6. Contrast & Saturation boost
-          color.rgb = pow(color.rgb, vec3(0.92)) * 1.06;
+          // 6. Contrast & Saturation balance
+          color.rgb = pow(color.rgb, vec3(0.94)) * 1.04;
 
-          gl_FragColor = color;
+          // 7. Blend seamlessly into the dark background (#070a12) at the edges
+          vec3 bgCol = vec3(0.027, 0.039, 0.07);
+          gl_FragColor = vec4(mix(bgCol, color.rgb, edgeAlpha), 1.0);
         }
       `,
       transparent: true,
