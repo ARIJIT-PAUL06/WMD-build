@@ -42,7 +42,7 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         uTexture: { value: panoramicTex },
         uScroll: { value: 0.0 },
         uParallax: { value: 0.0 },
-        uCurvature: { value: 0.65 }, // High-impact authentic CRT spherical faceplate bulge!
+        uCurvature: { value: 0.16 }, // Subtle, high-end widescreen CRT bulge that spans the whole monitor
         uAspect: { value: width / height },
         uResolution: { value: new THREE.Vector2(width, height) },
       },
@@ -61,52 +61,36 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         uniform float uAspect;
         varying vec2 vUv;
 
-        // Spherical CRT barrel distortion math
+        // Smooth widescreen CRT barrel bulge spanning edge-to-edge
         vec2 curveFaceplate(vec2 uv) {
           vec2 centered = uv * 2.0 - 1.0;
-          centered.x *= uAspect;
-
           float r2 = dot(centered, centered);
-          // Barrel distortion equation: pushes outer pixels inward & bulges center outward
-          vec2 distorted = centered * (1.0 + uCurvature * r2 * 0.5);
-          distorted.x /= uAspect;
-
+          // Controlled widescreen bulge that gracefully magnifies the center across the entire viewport
+          vec2 distorted = centered * (1.0 + uCurvature * (r2 - 1.0) * 0.4);
           return distorted * 0.5 + 0.5;
         }
 
         void main() {
-          // 1. Calculate the curved screen UV (Fixed to the physical CRT screen!)
+          // 1. Calculate the curved screen UV (Edge-to-edge full screen)
           vec2 screenUv = curveFaceplate(vUv);
+          // Clamp smoothly to prevent border tearing
+          screenUv = clamp(screenUv, vec2(0.001), vec2(0.999));
 
-          // 2. Corner bezel blackout (Physical tube shadow outside the glass bulb)
-          if (screenUv.x < 0.0 || screenUv.x > 1.0 || screenUv.y < 0.0 || screenUv.y > 1.0) {
-            gl_FragColor = vec4(0.027, 0.039, 0.07, 1.0); // #070a12 background
-            return;
-          }
-
-          // 3. Map panoramic 32:9 image: The texture slides horizontally behind the fixed lens
-          // Panoramic image spans 2 full screen widths, so current window is a 0.5 slice
+          // 2. Map panoramic 32:9 image: The texture slides horizontally edge-to-edge
           float uOffset = uScroll * 0.5 + uParallax;
           vec2 texUv = vec2(screenUv.x * 0.5 + uOffset, screenUv.y);
 
-          // 4. Sample RGB with subtle CRT chromatic aberration at the curved borders
+          // 3. Subtle CRT chromatic dispersion
           float distFromCenter = distance(screenUv, vec2(0.5));
-          float rgbSplit = distFromCenter * 0.0035;
+          float rgbSplit = distFromCenter * 0.002;
 
           vec4 colR = texture2D(uTexture, vec2(texUv.x + rgbSplit, texUv.y));
           vec4 colG = texture2D(uTexture, texUv);
           vec4 colB = texture2D(uTexture, vec2(texUv.x - rgbSplit, texUv.y));
           vec4 color = vec4(colR.r, colG.g, colB.b, 1.0);
 
-          // 5. Authentic CRT bulb specular edge roll-off
-          float edgeVignette = smoothstep(0.0, 0.08, screenUv.x) *
-                               smoothstep(1.0, 0.92, screenUv.x) *
-                               smoothstep(0.0, 0.08, screenUv.y) *
-                               smoothstep(1.0, 0.92, screenUv.y);
-          color.rgb *= mix(0.4, 1.0, edgeVignette);
-
-          // 6. Contrast & Saturation boost
-          color.rgb = pow(color.rgb, vec3(0.92)) * 1.06;
+          // 4. Contrast & Saturation boost
+          color.rgb = pow(color.rgb, vec3(0.94)) * 1.05;
 
           gl_FragColor = color;
         }
