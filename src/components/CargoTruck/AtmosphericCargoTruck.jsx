@@ -9,7 +9,6 @@ import {
   ChevronUp,
   Radio,
   Wind,
-  Layers,
   RotateCcw
 } from 'lucide-react';
 import './AtmosphericCargoTruck.css';
@@ -166,7 +165,6 @@ export default function AtmosphericCargoTruck() {
   const [activePreset, setActivePreset] = useState('india_avg');
   const [pollutantValues, setPollutantValues] = useState(PRESETS.india_avg.values);
   const [selectedPollutantId, setSelectedPollutantId] = useState('pm25');
-  const [truckModel, setTruckModel] = useState('vayu_cyber'); // 'vayu_cyber' | 'classic_scania'
   const [isTunerOpen, setIsTunerOpen] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
   const [isLiveLoading, setIsLiveLoading] = useState(false);
@@ -305,13 +303,10 @@ export default function AtmosphericCargoTruck() {
     }));
   };
 
-  // Geometry configuration based on truck model
-  const isCyber = truckModel === 'vayu_cyber';
-  const truckImageSrc = isCyber ? '/assets/truck_flatbed_vayu.png' : '/assets/truck_flatbed.png';
-  const truckAspectRatio = isCyber ? '1376 / 768' : '1024 / 576';
-  const deckStyle = isCyber
-    ? { left: '38.88%', width: '55.23%', bottom: '52.86%' }
-    : { left: '31.8%', width: '60.5%', bottom: '42.36%' };
+  // Geometry configuration based on user-provided master truck (2095x751)
+  const truckImageSrc = '/assets/truck_cargo_master.png';
+  const truckAspectRatio = '2095 / 751';
+  const deckStyle = { left: '34.37%', width: '60.14%', bottom: '48.34%' };
 
   return (
     <section className="cargo-section" id="atmospheric-cargo-section">
@@ -377,16 +372,6 @@ export default function AtmosphericCargoTruck() {
           </div>
 
           <div className="cargo-actions-group">
-            {/* Model switcher */}
-            <button
-              className="cargo-action-btn"
-              onClick={() => setTruckModel(isCyber ? 'classic_scania' : 'vayu_cyber')}
-              title="Switch Truck Design"
-            >
-              <Layers size={14} />
-              <span>{isCyber ? 'Cyber Hauler' : 'Classic Scania'}</span>
-            </button>
-
             <button
               className="cargo-action-btn purge-btn"
               onClick={handlePurgePayload}
@@ -412,14 +397,15 @@ export default function AtmosphericCargoTruck() {
         {/* The Weighbridge Platform with the Truck */}
         <div className="weighbridge-stage">
           <div className="weighbridge-spotlight"></div>
-          <div className="weighbridge-scanner-beam"></div>
-          <div className="weighbridge-runway-line"></div>
 
           {/* Truck Viewport */}
           <div
             className="truck-viewport"
             style={{ aspectRatio: truckAspectRatio }}
           >
+            {/* Ground Highway Runway Line (Positioned below the wheels on the road plane) */}
+            <div className="weighbridge-runway-line"></div>
+
             <div
               className="truck-chassis"
               style={{
@@ -430,6 +416,11 @@ export default function AtmosphericCargoTruck() {
               {/* Ground Shadow & Underglow */}
               <div className="truck-ground-shadow"></div>
               <div className="truck-underglow"></div>
+
+              {/* Laser Scanning Beam Sweeping Over Cargo Deck */}
+              <div className="weighbridge-scanner-beam">
+                <div className="scanner-beam-glow-head"></div>
+              </div>
 
               {/* Base Truck Image */}
               <img
@@ -447,14 +438,13 @@ export default function AtmosphericCargoTruck() {
                   const val = pollutantValues[p.id] || 0;
                   const ratio = val / p.naaqsLimit;
                   
-                  // Dynamic height calculation scaled to truck viewport height
-                  const heightPercent = isCyber
-                    ? Math.min(34, Math.max(9, 10 + ratio * 10)) // Cyber hauler scale
-                    : Math.min(44, Math.max(9, 11 + ratio * 15)); // Scania scale
-
-                  const heightPx = isCyber
-                    ? heightPercent * 7.68
-                    : heightPercent * 5.76;
+                  // RELATIVE NORMALIZED HEIGHT SCALING SYSTEM:
+                  // The highest pollutant bar in the active payload defines the ceiling (capped safely at 35% viewport height).
+                  // Minimum crate height is 10% (75px) so labels & symbols always remain clearly visible.
+                  const maxRatio = Math.max(1, payloadStats.maxOverloadRatio);
+                  const normalizedRatio = ratio / maxRatio; // 0 to 1 relative to highest pollutant
+                  const heightPercent = 10 + normalizedRatio * 25; // 10% (min) to 35% (max ceiling)
+                  const heightPx = heightPercent * 7.51;
 
                   // Severity & Strobe Logic
                   let beaconColor, isStrobe = false;
