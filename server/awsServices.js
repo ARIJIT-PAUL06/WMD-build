@@ -42,10 +42,12 @@ export async function saveReadingToDynamoDB(reading) {
   const startTime = Date.now();
   const tableName = process.env.DYNAMODB_TABLE_NAME || 'AirQualityReadings';
 
+  const rawTs = reading.timestamp || Date.now();
   const item = {
     city: reading.city,
-    timestamp: reading.timestamp || Date.now(),
-    dateStr: new Date(reading.timestamp || Date.now()).toISOString(),
+    timestamp: String(rawTs),
+    numericTimestamp: Number(rawTs),
+    dateStr: new Date(rawTs).toISOString(),
     aqi: reading.aqi,
     status: reading.status,
     pm25: reading.pollutants?.pm25 ?? 0,
@@ -131,7 +133,10 @@ export async function getHistoricalReadings(city, limit = 24) {
           success: true,
           mode: 'AWS_DYNAMODB',
           latencyMs: Date.now() - startTime,
-          data: result.Items.reverse(),
+          data: result.Items.reverse().map(it => ({
+            ...it,
+            timestamp: Number(it.numericTimestamp || it.timestamp)
+          })),
         };
       }
     } catch (err) {
