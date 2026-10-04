@@ -3143,27 +3143,52 @@ export default function DelhiAqiHeatmap() {
               </div>
             )}
 
-            {/* 1. PINPOINT INSPECTION OR SELECTED CAAQMS STATION */}
-            {inspectedPoint ? (
-              <div
-                className="glass-panel-sub"
-                style={{
-                  padding: '14px 16px',
-                  borderRadius: '14px',
-                  border: '1px solid rgba(244, 63, 94, 0.35)',
-                  background: 'rgba(15, 23, 42, 0.6)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Crosshair size={14} color="#f43f5e" />
-                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#f43f5e', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                      Pinpoint Micro-Zone Analysis
-                    </span>
-                  </div>
+            {/* ============================================================== */}
+            {/* 1. WHERE WE ARE CLICKING / CURRENT CENTER: THAT PLACE & AQI   */}
+            {/* ============================================================== */}
+            <div
+              className="glass-panel-sub"
+              style={{
+                padding: '12px 14px',
+                borderRadius: '13px',
+                border: inspectedPoint
+                  ? '1px solid rgba(244, 63, 94, 0.35)'
+                  : userLocation.isLiveGps
+                  ? '1px solid rgba(16, 185, 129, 0.3)'
+                  : '1px solid rgba(56, 189, 248, 0.22)',
+                background: 'rgba(15, 23, 42, 0.6)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {inspectedPoint ? (
+                    <Crosshair size={13} color="#f43f5e" />
+                  ) : userLocation.isLiveGps ? (
+                    <Radio size={13} color="#10b981" />
+                  ) : (
+                    <Crosshair size={13} color="#38bdf8" />
+                  )}
+                  <span
+                    style={{
+                      fontSize: '0.70rem',
+                      fontWeight: 800,
+                      color: inspectedPoint ? '#f43f5e' : userLocation.isLiveGps ? '#10b981' : '#38bdf8',
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {inspectedPoint
+                      ? 'Clicked Place Telemetry'
+                      : userLocation.isLiveGps
+                      ? 'Live GPS Location'
+                      : 'Current Center Coordinates'}
+                  </span>
+                </div>
+
+                {inspectedPoint ? (
                   <button
                     onClick={() => {
                       setInspectedPoint(null);
@@ -3171,7 +3196,7 @@ export default function DelhiAqiHeatmap() {
                     }}
                     className="glass-pill"
                     style={{
-                      fontSize: '0.68rem',
+                      fontSize: '0.66rem',
                       color: '#cbd5e1',
                       padding: '2px 8px',
                       borderRadius: '9999px',
@@ -3179,188 +3204,204 @@ export default function DelhiAqiHeatmap() {
                       cursor: 'pointer',
                     }}
                   >
-                    Close
+                    Reset
                   </button>
-                </div>
+                ) : (
+                  <span
+                    className={`glass-pill ${userLocation.isLiveGps ? 'glass-pill-success' : 'glass-pill-active'}`}
+                    style={{ fontSize: '0.64rem', padding: '2px 7px', borderRadius: '9999px', fontWeight: 700 }}
+                  >
+                    {userLocation.isLiveGps ? 'Satellite Lock' : 'Click Map to Inspect'}
+                  </span>
+                )}
+              </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <h3 style={{ fontSize: '0.98rem', fontWeight: 800, color: '#ffffff', margin: '0 0 3px', fontFamily: 'monospace' }}>
-                      {inspectedPoint.lat}° N, {inspectedPoint.lon}° E
-                    </h3>
-                    <p style={{ fontSize: '0.70rem', color: '#94a3b8', margin: 0 }}>
-                      {inspectedPoint?.nearestStation
-                        ? `${(typeof inspectedPoint.nearestStation === 'string' ? inspectedPoint.nearestStation.split('(')[0]?.trim() : inspectedPoint.nearestStation) || 'Station'} (${inspectedPoint.distanceKm ?? 0} km)`
-                        : 'Subcontinental spatial IDW estimate'}
-                    </p>
-                  </div>
-
-                  <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-                    <AqiSporeAura color={getAqiColor(inspectedPoint.aqi, activeRange).hex} />
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-heading)',
-                        fontSize: '3.4rem',
-                        fontWeight: 900,
-                        lineHeight: 1,
-                        color: getAqiColor(inspectedPoint.aqi, activeRange).hex,
-                        textShadow: `0 0 25px ${getAqiColor(inspectedPoint.aqi, activeRange).hex}55`,
-                        zIndex: 1,
-                      }}
-                    >
-                      {inspectedPoint.aqi}
-                    </span>
-                    <span style={{ fontSize: '0.66rem', fontWeight: 700, color: getAqiColor(inspectedPoint.aqi, activeRange).textHex, zIndex: 1, marginTop: '2px' }}>
-                      AQI · {getAqiColor(inspectedPoint.aqi, activeRange).label}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Secondary metrics */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-                  <div className="glass-panel-sub" style={{ padding: '6px 8px', borderRadius: '8px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                    <span style={{ fontSize: '0.60rem', color: '#64748b', display: 'block' }}>Estimated PM2.5</span>
-                    <strong style={{ fontSize: '0.88rem', color: '#f87171' }}>
-                      {inspectedPoint.pm25 != null ? inspectedPoint.pm25 : '—'} <span style={{ fontSize: '0.58rem', color: '#64748b' }}>µg/m³</span>
-                    </strong>
-                  </div>
-                  <div className="glass-panel-sub" style={{ padding: '6px 8px', borderRadius: '8px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                    <span style={{ fontSize: '0.60rem', color: '#64748b', display: 'block' }}>Distance to Sensor</span>
-                    <strong style={{ fontSize: '0.88rem', color: '#38bdf8' }}>
-                      {inspectedPoint.distanceKm != null ? `${inspectedPoint.distanceKm} km` : 'Local'}
-                    </strong>
-                  </div>
-                </div>
-
-                {/* Recommendation for this location */}
-                <div
-                  className="glass-panel-sub"
-                  style={{
-                    padding: '10px 12px',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(56, 189, 248, 0.16)',
-                    background: 'rgba(15, 23, 42, 0.45)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '5px' }}>
-                    <Compass size={13} color="#38bdf8" />
-                    <span style={{ color: '#38bdf8', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.02em', textTransform: 'uppercase' }}>
-                      Recommendation for this location
-                    </span>
-                  </div>
-                  <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.73rem', lineHeight: 1.45 }}>
-                    {getLocationRecommendation(inspectedPoint)}
+              {/* Coordinates and AQI Number */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff', margin: '0 0 2px', fontFamily: 'monospace' }}>
+                    {inspectedPoint
+                      ? `${inspectedPoint.lat}° N, ${inspectedPoint.lon}° E`
+                      : userLocation.isLiveGps
+                      ? `${userLocation.lat.toFixed(4)}° N, ${userLocation.lon.toFixed(4)}° E`
+                      : `${(displayStation.lat || 28.6139).toFixed(4)}° N, ${(displayStation.lon || 77.2090).toFixed(4)}° E`}
+                  </h4>
+                  <p style={{ fontSize: '0.68rem', color: '#94a3b8', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {inspectedPoint
+                      ? `Sensor: ${(typeof inspectedPoint.nearestStation === 'string' ? inspectedPoint.nearestStation.split('(')[0]?.trim() : inspectedPoint.nearestStation) || 'Nearby'} (${inspectedPoint.distanceKm ?? 0} km)`
+                      : userLocation.isLiveGps
+                      ? `${userLocation.label || 'Your Location'} · ±${userLocation.accuracy || 15}m`
+                      : 'Spatial center of active map viewport'}
                   </p>
                 </div>
+
+                <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                  <AqiSporeAura
+                    color={
+                      inspectedPoint
+                        ? getAqiColor(inspectedPoint.aqi, activeRange).hex
+                        : userLocation.isLiveGps
+                        ? userColor.hex
+                        : getAqiColor(displayStation.aqi, activeRange).hex
+                    }
+                  />
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-heading)',
+                      fontSize: '2.7rem',
+                      fontWeight: 900,
+                      lineHeight: 1,
+                      color: inspectedPoint
+                        ? getAqiColor(inspectedPoint.aqi, activeRange).hex
+                        : userLocation.isLiveGps
+                        ? userColor.hex
+                        : getAqiColor(displayStation.aqi, activeRange).hex,
+                      textShadow: `0 0 20px ${
+                        inspectedPoint
+                          ? getAqiColor(inspectedPoint.aqi, activeRange).hex
+                          : userLocation.isLiveGps
+                          ? userColor.hex
+                          : getAqiColor(displayStation.aqi, activeRange).hex
+                      }55`,
+                      zIndex: 1,
+                    }}
+                  >
+                    {inspectedPoint
+                      ? inspectedPoint.aqi
+                      : userLocation.isLiveGps
+                      ? userAqiEstimate !== null
+                        ? userAqiEstimate
+                        : '--'
+                      : displayStation.aqi}
+                  </span>
+                  <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#cbd5e1', zIndex: 1, marginTop: '1px' }}>
+                    AQI ·{' '}
+                    {inspectedPoint
+                      ? getAqiColor(inspectedPoint.aqi, activeRange).label
+                      : userLocation.isLiveGps
+                      ? userColor.label
+                      : getAqiColor(displayStation.aqi, activeRange).label}
+                  </span>
+                </div>
               </div>
-            ) : (
-              /* Selected CAAQMS Station Deep Dive */
+
+              {/* Extra micro-zone detail when inspected */}
+              {inspectedPoint && inspectedPoint.pm25 != null && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#94a3b8', paddingTop: '4px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <span>Micro-zone Estimated PM2.5:</span>
+                  <strong style={{ color: '#f87171' }}>{inspectedPoint.pm25} µg/m³</strong>
+                </div>
+              )}
+            </div>
+
+            {/* ============================================================== */}
+            {/* 2. THE STATION THAT WE ARE CURRENTLY IN                        */}
+            {/* ============================================================== */}
+            <div
+              className="glass-panel-sub"
+              style={{
+                padding: '12px 14px',
+                borderRadius: '13px',
+                border: '1px solid rgba(255, 255, 255, 0.07)',
+                background: 'rgba(15, 23, 42, 0.6)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Current Station
+                </span>
+                <span
+                  className="glass-pill"
+                  style={{
+                    fontSize: '0.64rem',
+                    color: getAqiColor(displayStation.aqi, activeRange).hex,
+                    padding: '2px 7px',
+                    borderRadius: '6px',
+                    fontWeight: 700,
+                  }}
+                >
+                  {displayStation.type || 'CAAQMS Node'}
+                </span>
+              </div>
+
+              {/* Station Name & AQI */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <h3 style={{ fontSize: '1.02rem', fontWeight: 800, color: '#ffffff', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {displayStation.name}
+                  </h3>
+                  <p style={{ fontSize: '0.68rem', color: '#94a3b8', margin: 0 }}>
+                    {displayStation.zone || displayStation.state || 'India'} · Sensor Grid
+                  </p>
+                </div>
+
+                <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                  <AqiSporeAura color={getAqiColor(displayStation.aqi, activeRange).hex} />
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-heading)',
+                      fontSize: '2.8rem',
+                      fontWeight: 900,
+                      lineHeight: 1,
+                      color: getAqiColor(displayStation.aqi, activeRange).hex,
+                      textShadow: `0 0 20px ${getAqiColor(displayStation.aqi, activeRange).hex}55`,
+                      zIndex: 1,
+                    }}
+                  >
+                    {displayStation.aqi}
+                  </span>
+                  <span style={{ fontSize: '0.62rem', fontWeight: 700, color: getAqiColor(displayStation.aqi, activeRange).textHex, zIndex: 1, marginTop: '1px' }}>
+                    AQI · {getAqiColor(displayStation.aqi, activeRange).label}
+                  </span>
+                </div>
+              </div>
+
+              {/* Station metrics grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                <div className="glass-panel-sub" style={{ padding: '5px 4px', borderRadius: '7px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <span style={{ fontSize: '0.58rem', color: '#64748b', display: 'block' }}>PM2.5</span>
+                  <strong style={{ fontSize: '0.84rem', color: '#f87171' }}>
+                    {displayStation.pm25} <span style={{ fontSize: '0.55rem', color: '#64748b' }}>µg</span>
+                  </strong>
+                </div>
+                <div className="glass-panel-sub" style={{ padding: '5px 4px', borderRadius: '7px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <span style={{ fontSize: '0.58rem', color: '#64748b', display: 'block' }}>PM10</span>
+                  <strong style={{ fontSize: '0.84rem', color: '#fb923c' }}>
+                    {displayStation.pm10} <span style={{ fontSize: '0.55rem', color: '#64748b' }}>µg</span>
+                  </strong>
+                </div>
+                <div className="glass-panel-sub" style={{ padding: '5px 4px', borderRadius: '7px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <span style={{ fontSize: '0.58rem', color: '#64748b', display: 'block' }}>NO2</span>
+                  <strong style={{ fontSize: '0.84rem', color: '#38bdf8' }}>
+                    {displayStation.no2 || 24} <span style={{ fontSize: '0.55rem', color: '#64748b' }}>µg</span>
+                  </strong>
+                </div>
+              </div>
+
+              {/* Recommendation for this location */}
               <div
                 className="glass-panel-sub"
                 style={{
-                  padding: '14px 16px',
-                  borderRadius: '14px',
-                  border: '1px solid rgba(255, 255, 255, 0.07)',
-                  background: 'rgba(15, 23, 42, 0.6)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px',
+                  padding: '9px 11px',
+                  borderRadius: '9px',
+                  border: '1px solid rgba(56, 189, 248, 0.16)',
+                  background: 'rgba(15, 23, 42, 0.45)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    Monitoring Station
-                  </span>
-                  <span
-                    className="glass-pill"
-                    style={{
-                      fontSize: '0.66rem',
-                      color: getAqiColor(displayStation.aqi, activeRange).hex,
-                      padding: '2px 8px',
-                      borderRadius: '6px',
-                      fontWeight: 700,
-                    }}
-                  >
-                    {displayStation.type || 'CAAQMS Node'}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
+                  <Compass size={12} color="#38bdf8" />
+                  <span style={{ color: '#38bdf8', fontSize: '0.70rem', fontWeight: 700, letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                    Recommendation for this location
                   </span>
                 </div>
-
-                {/* Station Hero Header with Large AQI & Radiating Spores */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <h3 style={{ fontSize: '1.08rem', fontWeight: 800, color: '#ffffff', margin: '0 0 3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {displayStation.name}
-                    </h3>
-                    <p style={{ fontSize: '0.70rem', color: '#94a3b8', margin: 0 }}>
-                      {displayStation.zone || displayStation.state || 'India'} · Ground Sensor Grid
-                    </p>
-                  </div>
-
-                  <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-                    <AqiSporeAura color={getAqiColor(displayStation.aqi, activeRange).hex} />
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-heading)',
-                        fontSize: '3.4rem',
-                        fontWeight: 900,
-                        lineHeight: 1,
-                        color: getAqiColor(displayStation.aqi, activeRange).hex,
-                        textShadow: `0 0 25px ${getAqiColor(displayStation.aqi, activeRange).hex}55`,
-                        zIndex: 1,
-                      }}
-                    >
-                      {displayStation.aqi}
-                    </span>
-                    <span style={{ fontSize: '0.66rem', fontWeight: 700, color: getAqiColor(displayStation.aqi, activeRange).textHex, zIndex: 1, marginTop: '2px' }}>
-                      AQI · {getAqiColor(displayStation.aqi, activeRange).label}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Station secondary metrics grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                  <div className="glass-panel-sub" style={{ padding: '7px 6px', borderRadius: '8px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                    <span style={{ fontSize: '0.60rem', color: '#64748b', display: 'block' }}>PM2.5</span>
-                    <strong style={{ fontSize: '0.88rem', color: '#f87171' }}>
-                      {displayStation.pm25} <span style={{ fontSize: '0.58rem', color: '#64748b' }}>µg</span>
-                    </strong>
-                  </div>
-                  <div className="glass-panel-sub" style={{ padding: '7px 6px', borderRadius: '8px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                    <span style={{ fontSize: '0.60rem', color: '#64748b', display: 'block' }}>PM10</span>
-                    <strong style={{ fontSize: '0.88rem', color: '#fb923c' }}>
-                      {displayStation.pm10} <span style={{ fontSize: '0.58rem', color: '#64748b' }}>µg</span>
-                    </strong>
-                  </div>
-                  <div className="glass-panel-sub" style={{ padding: '7px 6px', borderRadius: '8px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                    <span style={{ fontSize: '0.60rem', color: '#64748b', display: 'block' }}>NO2</span>
-                    <strong style={{ fontSize: '0.88rem', color: '#38bdf8' }}>
-                      {displayStation.no2 || 24} <span style={{ fontSize: '0.58rem', color: '#64748b' }}>µg</span>
-                    </strong>
-                  </div>
-                </div>
-
-                {/* Recommendation for this location */}
-                <div
-                  className="glass-panel-sub"
-                  style={{
-                    padding: '10px 12px',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(56, 189, 248, 0.16)',
-                    background: 'rgba(15, 23, 42, 0.45)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '5px' }}>
-                    <Compass size={13} color="#38bdf8" />
-                    <span style={{ color: '#38bdf8', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.02em', textTransform: 'uppercase' }}>
-                      Recommendation for this location
-                    </span>
-                  </div>
-                  <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.73rem', lineHeight: 1.45 }}>
-                    {getLocationRecommendation(displayStation)}
-                  </p>
-                </div>
+                <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.71rem', lineHeight: 1.4 }}>
+                  {getLocationRecommendation(displayStation)}
+                </p>
               </div>
-            )}
+            </div>
 
             {/* 2. CALIBRATED SEAMLESS ZOOM-ADAPTIVE SPECTRUM LEGEND */}
             <div
