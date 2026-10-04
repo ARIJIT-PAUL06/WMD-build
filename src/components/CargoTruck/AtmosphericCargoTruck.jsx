@@ -438,28 +438,6 @@ export default function AtmosphericCargoTruck() {
                 className="truck-base-image"
               />
 
-              {/* ⚡ Arc Reactor Pulsing Blue Engine Lights */}
-              {isCyber && (
-                <>
-                  {/* Slanted Aerodynamic Hood Blade */}
-                  <div className="arc-reactor-hood-blade" title="Quantum Induction Hood Blade" />
-
-                  {/* Lower Side Skirt Energy Bus with traversing plasma wave */}
-                  <div className="arc-reactor-skirt-strip" title="Arc Reactor Energy Bus">
-                    <div className="arc-reactor-plasma-wave" />
-                  </div>
-
-                  {/* Front Bumper Energy Intake */}
-                  <div className="arc-reactor-bumper-intake" title="Forward Flux Intake" />
-
-                  {/* Arc Reactor Core Disk */}
-                  <div className="arc-reactor-core-disc" title="Arc Reactor Core Unit" />
-
-                  {/* Synchronized Ground Plasma Flare */}
-                  <div className="arc-reactor-ground-flare" />
-                </>
-              )}
-
               {/* =======================================================
                   CONTAINERS FLATBED DECK
                   Mounted on physical deck surface

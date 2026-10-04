@@ -5,7 +5,7 @@
   position: relative;
   width: 100%;
   background: radial-gradient(ellipse at 50% 15%, rgba(15, 23, 42, 0.98) 0%, rgba(6, 10, 18, 0.99) 65%, #030712 100%);
-  padding: 6.5rem 1.5rem 7rem;
+  padding: 6rem 1.5rem 6.5rem;
   overflow: hidden;
   border-top: none; /* Seamless borderless transition from map section */
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -20,8 +20,8 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 220px;
-  background: linear-gradient(180deg, #070a12 0%, rgba(7, 10, 18, 0.95) 25%, rgba(7, 10, 18, 0.6) 65%, transparent 100%);
+  height: 180px;
+  background: linear-gradient(180deg, #070a12 0%, rgba(7, 10, 18, 0.92) 30%, rgba(7, 10, 18, 0.5) 65%, transparent 100%);
   pointer-events: none;
   z-index: 2;
 }
@@ -211,26 +211,29 @@
 /* ==========================================================
    SEAMLESS TRUCK STAGE & HIGHWAY RUNWAY
    Completely integrated into the surrounding environment
-   (No harsh card boxes, no cut-off boundary lines!)
+   (No harsh card boxes or picture-frame borders!)
    ========================================================== */
 .weighbridge-stage {
   position: relative;
   width: 100%;
-  padding: 1.5rem 0.5rem 1rem;
+  border-radius: 20px;
+  /* Soft organic gradient matching the page background */
+  background: radial-gradient(ellipse at 50% 60%, rgba(15, 23, 42, 0.6) 0%, rgba(10, 15, 26, 0.3) 60%, transparent 95%);
+  padding: 2rem 0.5rem 1.5rem;
   overflow: visible;
 }
 
 /* Cybernetic Overhead Volumetric Spotlight */
 .weighbridge-spotlight {
   position: absolute;
-  top: -30%;
+  top: -25%;
   left: 50%;
   transform: translateX(-50%);
-  width: 95%;
-  height: 90%;
-  background: radial-gradient(ellipse at 50% 0%, rgba(56, 189, 248, 0.12) 0%, rgba(6, 182, 212, 0.03) 50%, transparent 80%);
+  width: 90%;
+  height: 80%;
+  background: radial-gradient(ellipse at 50% 0%, rgba(56, 189, 248, 0.14) 0%, rgba(6, 182, 212, 0.04) 50%, transparent 80%);
   pointer-events: none;
-  filter: blur(25px);
+  filter: blur(20px);
 }
 
 /* Laser Scanning Beam Sweeping the Payload */
@@ -255,7 +258,6 @@
 
 /* ==========================================================
    TRUCK VIEWPORT (16:9 Aspect Ratio)
-   Ultra-smooth organic vignette eliminating any left/right abrupt cutoff
    ========================================================== */
 .truck-viewport {
   position: relative;
@@ -265,9 +267,6 @@
   aspect-ratio: 1376 / 768;
   user-select: none;
   overflow: visible;
-  /* Feather left and right edges smoothly into transparent space */
-  mask-image: radial-gradient(ellipse 88% 85% at 50% 52%, black 62%, rgba(0, 0, 0, 0.75) 78%, transparent 97%);
-  -webkit-mask-image: radial-gradient(ellipse 88% 85% at 50% 52%, black 62%, rgba(0, 0, 0, 0.75) 78%, transparent 97%);
 }
 
 /* Suspension Compression & Engine Idle Vibration */
@@ -293,6 +292,7 @@
   object-fit: cover;
   pointer-events: none;
   z-index: 10;
+  /* Deep, soft atmospheric drop shadow blending with dark road */
   filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.95));
 }
 
@@ -302,9 +302,9 @@
   bottom: 14%;
   left: 6%;
   right: 6%;
-  height: 32px;
-  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.45) 55%, transparent 88%);
-  filter: blur(16px);
+  height: 30px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.45) 55%, transparent 90%);
+  filter: blur(14px);
   pointer-events: none;
   z-index: 4;
 }
@@ -324,173 +324,17 @@
   transition: background 0.8s ease;
 }
 
-/* ==========================================================
-   ⚡ ARC REACTOR-STYLE PULSING BLUE ENGINE LIGHTS
-   High-tech Stark Industries Quantum Plasma Breathing & Spooling
-   ========================================================== */
-
-/* 1. Slanted Aerodynamic Hood Blade */
-.arc-reactor-hood-blade {
+/* Highway Ground Surface & Runway Markings */
+.weighbridge-runway-line {
   position: absolute;
-  left: 8.8%;
-  top: 47.8%;
-  width: 7.2%;
-  height: 1.4%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(56, 189, 248, 0.3) 0%, #ffffff 35%, #00f0ff 70%, rgba(56, 189, 248, 0.4) 100%);
-  transform: rotate(-7deg);
+  bottom: 12%;
+  left: 4%;
+  right: 4%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.3) 20%, rgba(56, 189, 248, 0.5) 50%, rgba(56, 189, 248, 0.3) 80%, transparent 100%);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
   pointer-events: none;
-  z-index: 14;
-  animation: arc-reactor-pulse 2.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* 2. Lower Side Skirt Neon Power Rail */
-.arc-reactor-skirt-strip {
-  position: absolute;
-  left: 17.5%;
-  top: 54.6%;
-  width: 14.8%;
-  height: 1.6%;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #38bdf8 0%, #ffffff 30%, #00f0ff 70%, #0284c7 100%);
-  pointer-events: none;
-  z-index: 14;
-  overflow: hidden;
-  animation: arc-reactor-pulse 2.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Traveling Quantum Plasma Wave along the side skirt */
-.arc-reactor-plasma-wave {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 45%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.95) 50%, transparent 100%);
-  filter: blur(1px);
-  animation: plasma-wave-traverse 1.9s infinite ease-in-out;
-}
-
-@keyframes plasma-wave-traverse {
-  0% { transform: translateX(-120%); }
-  100% { transform: translateX(250%); }
-}
-
-/* 3. Front Bumper Vertical Energy Intake */
-.arc-reactor-bumper-intake {
-  position: absolute;
-  left: 7.05%;
-  top: 54.4%;
-  width: 1.1%;
-  height: 3.4%;
-  border-radius: 2px;
-  background: linear-gradient(180deg, #ffffff 0%, #00f0ff 60%, #0369a1 100%);
-  pointer-events: none;
-  z-index: 14;
-  animation: arc-reactor-pulse 2.8s infinite cubic-bezier(0.4, 0, 0.2, 1) 0.12s;
-}
-
-/* 4. Arc Reactor Circular Core Disk (Wheel Hub/Chassis Energy Core) */
-.arc-reactor-core-disc {
-  position: absolute;
-  left: 15.2%;
-  top: 53.6%;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #ffffff 0%, #00f0ff 40%, rgba(2, 132, 199, 0.4) 80%, transparent 100%);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  pointer-events: none;
-  z-index: 14;
-  animation: arc-reactor-core-spin 4s infinite linear, arc-reactor-pulse 2.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes arc-reactor-core-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* 5. Synchronized Ground Plasma Flare */
-.arc-reactor-ground-flare {
-  position: absolute;
-  left: 8%;
-  bottom: 20%;
-  width: 28%;
-  height: 18%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 50%, rgba(0, 240, 255, 0.5) 0%, rgba(56, 189, 248, 0.18) 45%, transparent 75%);
-  filter: blur(14px);
-  pointer-events: none;
-  z-index: 6;
-  animation: arc-reactor-ground-flare 2.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Master Arc Reactor Double-Beat Cardiac & Harmonic Surge Pulse */
-@keyframes arc-reactor-pulse {
-  0% {
-    opacity: 0.65;
-    filter: drop-shadow(0 0 5px #00f0ff) drop-shadow(0 0 14px rgba(0, 240, 255, 0.6));
-    box-shadow: 0 0 8px #00f0ff, 0 0 18px rgba(0, 240, 255, 0.5), inset 0 0 4px #ffffff;
-  }
-  16% {
-    opacity: 0.85;
-    filter: drop-shadow(0 0 10px #00f0ff) drop-shadow(0 0 24px rgba(0, 240, 255, 0.75));
-  }
-  22% {
-    /* Primary Arc Reactor Energy Surge */
-    opacity: 1;
-    filter: drop-shadow(0 0 18px #00f0ff) drop-shadow(0 0 38px #00f0ff) drop-shadow(0 0 65px rgba(0, 240, 255, 0.95));
-    box-shadow: 0 0 18px #00f0ff, 0 0 35px #00f0ff, 0 0 65px rgba(0, 240, 255, 0.95), inset 0 0 10px #ffffff;
-    transform: scale(1.03);
-  }
-  28% {
-    /* Quantum recoil / micro-rebound */
-    opacity: 0.76;
-    filter: drop-shadow(0 0 7px #00f0ff) drop-shadow(0 0 16px rgba(0, 240, 255, 0.6));
-    transform: scale(1);
-  }
-  34% {
-    /* Secondary Harmonic Echo Surge */
-    opacity: 0.97;
-    filter: drop-shadow(0 0 14px #00f0ff) drop-shadow(0 0 30px #00f0ff);
-    box-shadow: 0 0 14px #00f0ff, 0 0 28px rgba(0, 240, 255, 0.8), inset 0 0 8px #ffffff;
-  }
-  58% {
-    opacity: 0.72;
-    filter: drop-shadow(0 0 6px #00f0ff) drop-shadow(0 0 15px rgba(0, 240, 255, 0.5));
-    transform: scale(1);
-  }
-  78% {
-    opacity: 0.62;
-  }
-  84% {
-    opacity: 0.74;
-  }
-  100% {
-    opacity: 0.65;
-    filter: drop-shadow(0 0 5px #00f0ff) drop-shadow(0 0 14px rgba(0, 240, 255, 0.6));
-    box-shadow: 0 0 8px #00f0ff, 0 0 18px rgba(0, 240, 255, 0.5), inset 0 0 4px #ffffff;
-  }
-}
-
-@keyframes arc-reactor-ground-flare {
-  0%, 100% {
-    opacity: 0.38;
-    transform: scale(0.95);
-  }
-  22% {
-    opacity: 0.95;
-    transform: scale(1.18);
-    filter: blur(18px);
-  }
-  34% {
-    opacity: 0.78;
-    transform: scale(1.08);
-  }
-  65% {
-    opacity: 0.32;
-    transform: scale(0.92);
-  }
+  z-index: 3;
 }
 
 /* ==========================================================
@@ -972,7 +816,7 @@
 /* Responsive adjustments */
 @media (max-width: 900px) {
   .cargo-section {
-    padding: 4.5rem 1rem 4.5rem;
+    padding: 4rem 1rem 4rem;
   }
   .weighbridge-stage {
     padding: 1rem 0;

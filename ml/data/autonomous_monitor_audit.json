@@ -462,5 +462,16 @@
     "emergencySurgesDetected": [],
     "petitionsEvaluated": [],
     "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T10:25:54.406Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 17,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
   }
 ]
