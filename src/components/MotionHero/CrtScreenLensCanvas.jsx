@@ -148,25 +148,18 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
           vec4 colB = texture2D(uTexture, vec2(clamp(texUv.x - rgbSplit, 0.0, 1.0), texUv.y));
           vec4 color = vec4(colR.r, colG.g, colB.b, 1.0);
 
-          // 8. SAMPLE THE MINIMAL TEMPLATES ON THE SAME CURVED SCREEN BULB
-          // Sampled at screenUv so the template receives the EXACT SAME physical spherical barrel curvature!
-          vec4 textCol = texture2D(uTextTexture, screenUv);
-
-          // Blend the template flat onto the background image pixels before beam & scanlines
-          color.rgb = mix(color.rgb, textCol.rgb, textCol.a);
-
-          // 9. Authentic Retrace Bar & Vertical Blanking Interval
-          float blankingBar = smoothstep(0.048, 0.0, abs(dY)) * 0.42;
+          // 8. Authentic Retrace Bar & Vertical Blanking Interval (applied to background image)
+          float blankingBar = smoothstep(0.048, 0.0, abs(dY)) * 0.38;
           color.rgb *= (1.0 - blankingBar);
 
-          // 10. Sharp Phosphor Electron Retrace Beam
+          // 9. Sharp Phosphor Electron Retrace Beam
           float beamDist = dY - 0.024;
           float sharpCore = exp(-pow(beamDist * 95.0, 2.0));
           float radiantBloom = exp(-pow(beamDist * 24.0, 2.0)) * 0.45;
           vec3 retraceColor = vec3(0.88, 0.96, 1.0) * (sharpCore * 0.72 + radiantBloom * 0.4);
           color.rgb += retraceColor;
 
-          // 11. Secondary phosphor ghost echo & AC ground hum
+          // 10. Secondary phosphor ghost echo & AC ground hum
           float trailingDist = dY + 0.026;
           float trailingLine = exp(-pow(trailingDist * 75.0, 2.0)) * 0.16;
           color.rgb += vec3(0.78, 0.92, 1.0) * trailingLine;
@@ -174,19 +167,32 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
           float humBar = sin(curvedY * 6.28318 * 2.0 - uTime * 1.1) * 0.02;
           color.rgb += humBar;
 
-          // 12. Curved phosphor interlace scanlines across entire screen
+          // 11. Curved phosphor interlace scanlines across entire screen
           float rasterLines = sin(curvedY * uResolution.y * 1.3) * 0.5 + 0.5;
-          color.rgb *= mix(0.88, 1.0, rasterLines);
+          color.rgb *= mix(0.86, 1.0, rasterLines);
 
-          // 13. Authentic CRT bulb edge vignette
+          // 12. Authentic CRT bulb edge vignette on background image
           float edgeVignette = smoothstep(0.0, 0.06, screenUv.x) *
                                smoothstep(1.0, 0.94, screenUv.x) *
                                smoothstep(0.0, 0.06, screenUv.y) *
                                smoothstep(1.0, 0.94, screenUv.y);
           color.rgb *= mix(0.74, 1.0, edgeVignette);
 
+          // 13. SAMPLE THE TEMPLATES ON THE SAME CURVED SCREEN BULB
+          // Sampled at screenUv so the template receives the EXACT SAME physical spherical barrel curvature!
+          vec4 textCol = texture2D(uTextTexture, screenUv);
+
+          // High-contrast, crystal-clear readability for the user:
+          // The template receives subtle scanline texturing (96%) and retrace illumination
+          // WITHOUT being dimmed by the heavy edge vignette or blanking bar!
+          if (textCol.a > 0.001) {
+            float textRaster = mix(0.96, 1.0, rasterLines);
+            vec3 readableText = textCol.rgb * textRaster + retraceColor * 0.12;
+            color.rgb = mix(color.rgb, readableText, textCol.a);
+          }
+
           // 14. Contrast & Color Grading
-          color.rgb = pow(color.rgb, vec3(0.95)) * 1.03;
+          color.rgb = pow(color.rgb, vec3(0.96)) * 1.02;
 
           // 15. Blend cleanly into dark bezel background (#070a12)
           vec3 bgCol = vec3(0.027, 0.039, 0.07);
@@ -200,10 +206,12 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
     scene.add(quad);
 
     // Helper: Draw an authentic ancient TV glitch card onto the 2D offscreen canvas
+    // Designed with crystal-clear high-contrast typography so text is effortlessly readable through the CRT lens
     function drawAncientGlitchCard(ctx, {
       x,
       y,
       cardW,
+      cardH,
       badgeText,
       badgeColor,
       strikingLine,
@@ -212,8 +220,8 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       accentColor,
       accentGlow,
       opacity,
-      showButton = false,
-      buttonText = '',
+      actionText = '',
+      isInteractiveButton = false,
       time = 0,
     }) {
       if (opacity <= 0.01) return;
@@ -222,32 +230,12 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       ctx.globalAlpha = opacity;
 
       const paddingX = 26;
-      const paddingY = 22;
+      const paddingY = 20;
       const innerW = cardW - paddingX * 2;
 
-      // Ancient TV Typography: VT323 / Share Tech Mono / Monospace
-      const fontSize = cardW < 440 ? 26 : 31;
-      ctx.font = `700 ${fontSize}px "VT323", "Share Tech Mono", "JetBrains Mono", monospace`;
-
-      // Word-wrap the striking line
-      const words = strikingLine.split(' ');
-      const lines = [];
-      let curLine = '';
-      for (let i = 0; i < words.length; i++) {
-        const testLine = curLine ? curLine + ' ' + words[i] : words[i];
-        if (ctx.measureText(testLine).width > innerW) {
-          lines.push(curLine);
-          curLine = words[i];
-        } else {
-          curLine = testLine;
-        }
-      }
-      if (curLine) lines.push(curLine);
-
-      const cardH = 22 + (lines.length * (fontSize + 6)) + 32 + (showButton ? 52 : 0) + paddingY * 2;
-
-      // 1. Dark Analog Cathode Ray Glass Box Backdrop
-      ctx.fillStyle = 'rgba(6, 10, 18, 0.88)';
+      // 1. Solid High-Contrast Dark CRT Box Backdrop
+      // Deep opaque tint (0.96) guarantees background imagery never bleeds through to obscure text
+      ctx.fillStyle = 'rgba(6, 10, 18, 0.96)';
       ctx.beginPath();
       if (ctx.roundRect) {
         ctx.roundRect(x, y, cardW, cardH, 10);
@@ -256,16 +244,16 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       }
       ctx.fill();
 
-      // 2. Micro-Scanline Texture baked into the card face
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+      // 2. Faint Horizontal Cathode Ray Scanline Texture
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
       for (let sy = y + 2; sy < y + cardH - 2; sy += 3) {
         ctx.fillRect(x + 2, sy, cardW - 4, 1.2);
       }
 
-      // 3. Phosphor Border with Analog Glow
+      // 3. Phosphor Border with Analog CRT Glow
       ctx.save();
       ctx.strokeStyle = accentColor;
-      ctx.lineWidth = 1.6;
+      ctx.lineWidth = 1.8;
       ctx.shadowColor = accentGlow;
       ctx.shadowBlur = 14;
       ctx.stroke();
@@ -274,7 +262,7 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       // 4. Vintage Terminal Corner Crosshairs
       ctx.strokeStyle = accentColor;
       ctx.lineWidth = 2.2;
-      const markLen = 9;
+      const markLen = 8;
       // Top-left
       ctx.beginPath();
       ctx.moveTo(x + 6, y + 6 + markLen);
@@ -300,81 +288,92 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       ctx.lineTo(x + cardW - 6, y + cardH - 6 - markLen);
       ctx.stroke();
 
-      // Glitch Physics Calculations
-      const isBurstGlitch = (Math.sin(time * 8.5) > 0.84) || (Math.cos(time * 21.3) > 0.88);
-      const glitchShiftX = isBurstGlitch
-        ? (Math.sin(time * 70.0) * 4.5 + (Math.random() - 0.5) * 4.0)
-        : (Math.sin(time * 14.0) * 0.9);
+      // Glitch Physics: subtle electronic twitch without blurring readability
+      const isBurstGlitch = (Math.sin(time * 7.5) > 0.90) && (Math.cos(time * 19.3) > 0.85);
+      const glitchShift = isBurstGlitch ? 1.4 : 0;
 
-      let curY = y + paddingY + 10;
+      let curY = y + paddingY + 8;
 
-      // A. Ancient Channel OSD Badge with Blinking Terminal Cursor
-      ctx.font = '700 13px "VT323", "Share Tech Mono", "JetBrains Mono", monospace';
+      // Row 1: Ancient Channel OSD Badge with Blinking Terminal Cursor
+      ctx.font = '700 13px "Share Tech Mono", "JetBrains Mono", Consolas, monospace';
       ctx.fillStyle = badgeColor;
       const blinker = Math.floor(time * 3.4) % 2 === 0 ? '█' : ' ';
       ctx.fillText(`${badgeText} ${blinker}`, x + paddingX, curY);
 
       curY += 24;
 
-      // B. The Striking Line (Rendered with RGB chromatic aberration & phosphor jitter)
-      ctx.font = `700 ${fontSize}px "VT323", "Share Tech Mono", "JetBrains Mono", monospace`;
+      // Row 2: The Striking Line (Crystal-clear bold white with high-contrast shadow)
+      // Word-wrap the striking line if needed
+      const fontSize = cardW < 440 ? 24 : 27;
+      ctx.font = `800 ${fontSize}px "Share Tech Mono", "JetBrains Mono", Consolas, monospace`;
+
+      const words = strikingLine.split(' ');
+      const lines = [];
+      let curLine = '';
+      for (let i = 0; i < words.length; i++) {
+        const testLine = curLine ? curLine + ' ' + words[i] : words[i];
+        if (ctx.measureText(testLine).width > innerW) {
+          lines.push(curLine);
+          curLine = words[i];
+        } else {
+          curLine = testLine;
+        }
+      }
+      if (curLine) lines.push(curLine);
 
       for (let i = 0; i < lines.length; i++) {
         const lineText = lines[i];
-        const lineY = curY + (i + 1) * (fontSize + 4);
+        const lineY = curY + (i + 1) * (fontSize + 3);
 
-        // RGB Electron Gun Convergence Misalignment (Chromatic Glitch)
-        // Blue / Cyan Phosphor Shift
-        ctx.fillStyle = 'rgba(34, 211, 238, 0.7)';
-        ctx.fillText(lineText, x + paddingX - glitchShiftX * 1.4, lineY);
+        // Subtle chromatic fringe on burst glitch only (leaves text crisp 98% of the time)
+        if (isBurstGlitch) {
+          ctx.fillStyle = 'rgba(34, 211, 238, 0.7)';
+          ctx.fillText(lineText, x + paddingX - glitchShift, lineY);
+          ctx.fillStyle = 'rgba(239, 68, 68, 0.7)';
+          ctx.fillText(lineText, x + paddingX + glitchShift, lineY);
+        }
 
-        // Red / Amber Phosphor Shift
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.7)';
-        ctx.fillText(lineText, x + paddingX + glitchShiftX * 1.4, lineY + (isBurstGlitch ? 0.8 : 0));
-
-        // Sharp Core Phosphor White with Bloom Glow
+        // Razor-sharp pure white core text with solid dark drop shadow for maximum legibility
         ctx.save();
-        ctx.shadowColor = accentGlow;
-        ctx.shadowBlur = isBurstGlitch ? 20 : 10;
-        ctx.fillStyle = '#f8fafc';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.98)';
+        ctx.shadowBlur = 6;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 2;
+        ctx.fillStyle = '#ffffff';
         ctx.fillText(lineText, x + paddingX, lineY);
         ctx.restore();
-
-        // Occasional horizontal glitch tear slice across the text
-        if (isBurstGlitch && i === 0) {
-          ctx.fillStyle = accentColor;
-          ctx.fillRect(x + paddingX - 4, lineY - fontSize * 0.35, innerW * 0.45, 1.8);
-        }
       }
 
-      curY += lines.length * (fontSize + 4) + 14;
+      curY += lines.length * (fontSize + 3) + 12;
 
-      // C. Very Little Information: Minimal Single Telemetry Line
-      ctx.font = '700 13px "VT323", "Share Tech Mono", "JetBrains Mono", monospace';
+      // Row 3: Minimal Single Telemetry Line
+      ctx.font = '700 12.5px "Share Tech Mono", "JetBrains Mono", Consolas, monospace';
       const pillW = ctx.measureText(statPillText).width + 16;
 
-      // Pill background
-      ctx.fillStyle = accentColor.replace('rgb', 'rgba').replace(')', ', 0.24)');
+      // Telemetry Pill Badge
+      ctx.fillStyle = accentColor.replace('rgb', 'rgba').replace(')', ', 0.28)');
       ctx.beginPath();
       if (ctx.roundRect) {
-        ctx.roundRect(x + paddingX, curY - 13, pillW, 20, 4);
+        ctx.roundRect(x + paddingX, curY - 12, pillW, 20, 4);
       } else {
-        ctx.rect(x + paddingX, curY - 13, pillW, 20);
+        ctx.rect(x + paddingX, curY - 12, pillW, 20);
       }
       ctx.fill();
 
       ctx.fillStyle = badgeColor;
       ctx.fillText(statPillText, x + paddingX + 8, curY + 2);
 
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = '#cbd5e1';
       ctx.fillText(statDetailText, x + paddingX + pillW + 12, curY + 2);
 
-      // D. (Optional Phase 3) Vintage Terminal CTA Button
-      if (showButton) {
-        curY += 24;
-        const btnW = innerW;
-        const btnH = 38;
+      curY += 24;
 
+      // Row 4: Bottom Action Strip (Buttons/Status bars have IDENTICAL dimensions across cards)
+      const btnW = innerW;
+      const btnH = 34;
+
+      if (isInteractiveButton) {
+        // Phase 3: Interactive CTA Button
         const btnGrad = ctx.createLinearGradient(x + paddingX, curY, x + paddingX + btnW, curY);
         btnGrad.addColorStop(0, '#059669');
         btnGrad.addColorStop(1, '#10b981');
@@ -388,7 +387,6 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         }
         ctx.fill();
 
-        // Phosphor border around button
         ctx.save();
         ctx.strokeStyle = '#34d399';
         ctx.lineWidth = 1.2;
@@ -406,10 +404,29 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
           active: opacity > 0.5,
         };
 
-        ctx.font = '700 15px "VT323", "Share Tech Mono", monospace';
+        ctx.font = '700 14px "Share Tech Mono", "JetBrains Mono", monospace';
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
-        ctx.fillText(`${buttonText}  ►`, x + paddingX + btnW / 2, curY + 24);
+        ctx.fillText(`${actionText}  ►`, x + paddingX + btnW / 2, curY + 22);
+        ctx.textAlign = 'left';
+      } else {
+        // Phase 1 & 2: Matching Status Bar of identical size
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(x + paddingX, curY, btnW, btnH, 6);
+        } else {
+          ctx.rect(x + paddingX, curY, btnW, btnH);
+        }
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = '700 12px "Share Tech Mono", "JetBrains Mono", monospace';
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'center';
+        ctx.fillText(actionText, x + paddingX + btnW / 2, curY + 21);
         ctx.textAlign = 'left';
       }
 
@@ -423,24 +440,31 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
     };
 
     // Function to draw all templates onto the offscreen canvas
-    // 1. Template 1 is ALREADY on screen and GOES DOWN as we scroll.
-    // 2. Templates 2 and 3 rise up from below as we scroll into them.
-    // 3. Made a little bit bigger with striking lines and minimal telemetry.
+    // 1. Template 1 & Template 3 have strictly EQUAL SIZES.
+    // 2. Template 1 and Template 3 have OPPOSITE / MIRRORED animations:
+    //    - Template 1 starts on-screen and goes DOWN on scroll.
+    //    - Template 3 starts off-screen below and comes UP on scroll.
+    // 3. Ultra-readable typography with 20:1 contrast ratio.
     const updateTextTexture = (scroll, time = 0) => {
       textCtx.setTransform(1, 0, 0, 1, 0, 0);
       textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
       textCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // Bigger, more cinematic template width
-      const cardW = Math.min(520, width * 0.88);
+      // Strictly equal dimensions for Template 1 and Template 3
+      const cardW = Math.min(520, width * 0.86);
+      const cardH = 210;
+
+      // Common vertical levels for symmetrical opposite motion
+      const restingY = height * 0.48;
+      const bottomOffscreenY = height * 1.05;
+      const travelDist = bottomOffscreenY - restingY;
 
       // ==============================================================
       // Phase 1: Urban Chokehold (Delhi Crisis)
-      // ALREADY on screen at scroll = 0, and as we scroll it GOES DOWN!
+      // Starts at restingY, and as we scroll down it GOES DOWN!
       // ==============================================================
-      const p1Drop = smooth(0.0, 0.20, scroll);
-      // Starts resting comfortably at 48% height, sinks downward off the screen
-      const y1 = (height * 0.48) + p1Drop * (height * 0.54);
+      const p1Drop = smooth(0.00, 0.20, scroll);
+      const y1 = restingY + p1Drop * travelDist;
       const x1 = width * 0.08 - scroll * width * 0.35;
       const op1 = Math.max(0, 1.0 - smooth(0.06, 0.20, scroll));
 
@@ -448,25 +472,27 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         x: x1,
         y: y1,
         cardW,
-        badgeText: '// CH-01 // AIR_INVERSION_ALERT',
+        cardH,
+        badgeText: '// CH-01: DELHI NCR // AIR INVERSION ALERT',
         badgeColor: '#f87171',
         strikingLine: '30 MILLION PEOPLE BREATHING ASH.',
         statPillText: 'AQI 486 [SEVERE]',
         statDetailText: 'PM2.5: 19.4× LIMIT // THERMAL TRAP',
         accentColor: '#ef4444',
-        accentGlow: 'rgba(239, 68, 68, 0.6)',
+        accentGlow: 'rgba(239, 68, 68, 0.65)',
         opacity: op1,
+        actionText: '[ CRISIS SECTOR: DELHI NCR // 140M THERMAL CEILING ]',
+        isInteractiveButton: false,
         time,
       });
 
       // ==============================================================
       // Phase 2: The Critical Turning Point (Intervention Corridor)
-      // Rises from below as we scroll into Phase 2
+      // Rises from below as we scroll into Phase 2, rests at restingY
       // ==============================================================
       const x2 = (width - cardW) / 2 - (scroll - 0.50) * width * 0.85;
-      // Rises from below (height * 0.96) up to resting position (height * 0.48)
       const p2Rise = smooth(0.24, 0.46, scroll);
-      const y2 = height * 0.96 - p2Rise * (height * 0.48);
+      const y2 = bottomOffscreenY - p2Rise * travelDist;
       const op2In = smooth(0.24, 0.38, scroll);
       const op2Out = smooth(0.58, 0.72, scroll);
       const op2 = op2In * (1.0 - op2Out);
@@ -475,42 +501,45 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         x: x2,
         y: y2,
         cardW,
-        badgeText: '// CH-02 // INTERCEPTION_POINT',
+        cardH,
+        badgeText: '// CH-02: CORRIDOR // MITIGATION ENGAGED',
         badgeColor: '#fbbf24',
         strikingLine: 'THE EXACT LINE WHERE REPAIR BEGINS.',
         statPillText: 'AQI 142 [TURNING POINT]',
         statDetailText: 'ATMOSPHERIC MITIGATION ENGAGED',
         accentColor: '#f59e0b',
-        accentGlow: 'rgba(245, 158, 11, 0.6)',
+        accentGlow: 'rgba(245, 158, 11, 0.65)',
         opacity: op2,
+        actionText: '[ AUTONOMOUS CORRIDOR // MIST CANNONS ACTIVE ]',
+        isInteractiveButton: false,
         time,
       });
 
       // ==============================================================
       // Phase 3: The Living Canopy (Restoration)
-      // Rises from below as we scroll into the lush green forest
+      // RISES UP from bottomOffscreenY to restingY (EXACT OPPOSITE OF PHASE 1!)
       // ==============================================================
       const x3Target = width * 0.92 - cardW;
-      const x3 = x3Target - Math.max(0, (0.88 - scroll) * width * 0.60);
-      // Rises from below up to resting position
-      const p3Rise = smooth(0.62, 0.86, scroll);
-      const y3 = height * 0.96 - p3Rise * (height * 0.50);
-      const op3 = smooth(0.62, 0.78, scroll);
+      const x3 = x3Target - Math.max(0, (0.88 - scroll) * width * 0.50);
+      const p3Rise = smooth(0.68, 0.88, scroll);
+      const y3 = bottomOffscreenY - p3Rise * travelDist;
+      const op3 = smooth(0.68, 0.84, scroll);
 
       drawAncientGlitchCard(textCtx, {
         x: x3,
         y: y3,
         cardW,
-        badgeText: '// CH-03 // CANOPY_RENEWAL',
+        cardH,
+        badgeText: '// CH-03: HIMALAYAS // RESTORATION HORIZON',
         badgeColor: '#34d399',
         strikingLine: '11,000 LITERS OF UNTAINTED LIFE.',
         statPillText: 'AQI 22 [PRISTINE]',
         statDetailText: '98.8% OPTIMAL ALVEOLAR FLUX',
         accentColor: '#10b981',
-        accentGlow: 'rgba(16, 185, 129, 0.6)',
+        accentGlow: 'rgba(16, 185, 129, 0.65)',
         opacity: op3,
-        showButton: true,
-        buttonText: 'ENTER INDIA AQI HEATMAP',
+        actionText: 'ENTER INDIA AQI HEATMAP',
+        isInteractiveButton: true,
         time,
       });
 

@@ -173,10 +173,10 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             aria-label="Explore India National AQI Heatmap"
             style={{
               position: 'absolute',
-              right: '7vw',
-              bottom: '14vh',
-              width: 'min(520px, 88vw)',
-              height: '48px',
+              right: '8vw',
+              top: 'calc(48vh + 145px)',
+              width: 'min(520px, 86vw)',
+              height: '38px',
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
