@@ -3541,61 +3541,51 @@ export default function DelhiAqiHeatmap() {
               style={{
                 padding: '14px 18px',
                 borderRadius: '16px',
-                border: '1px solid rgba(16, 185, 129, 0.28)',
+                border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)',
                 background: 'rgba(15, 23, 42, 0.65)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 20px rgba(16, 185, 129, 0.08)',
                 transition: 'border-color 0.3s ease',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#94a3b8', marginBottom: '10px' }}>
-                <span style={{ fontWeight: 800, color: '#e2e8f0', fontSize: '0.78rem', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                  Zoom
-                </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#94a3b8', marginBottom: '8px' }}>
+                <span style={{ fontWeight: 700, color: '#e2e8f0', fontSize: '0.76rem' }}>Zoom Spectrum</span>
                 <span
-                  className="glass-pill"
+                  className={`glass-pill ${isAdaptiveMode && activeRange.isZoomed ? 'glass-pill-success' : 'glass-pill-active'}`}
                   style={{
                     fontWeight: 700,
                     fontSize: '0.68rem',
-                    padding: '2px 9px',
+                    padding: '2px 8px',
                     borderRadius: '6px',
-                    color: '#34d399',
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    background: 'rgba(16, 185, 129, 0.12)',
                   }}
                 >
-                  {currentZoom.toFixed(1)}x {currentZoom >= 11 ? '· Street' : currentZoom >= 8 ? '· City' : '· Regional'}
+                  {isAdaptiveMode && activeRange.isZoomed
+                    ? `Zoom ${activeRange.zoom}x (${activeRange.min} → ${activeRange.max} AQI)`
+                    : `India (${activeRange.nationalMin || 40} → ${activeRange.nationalMax || 260} AQI)`}
                 </span>
               </div>
 
-              {/* Glassmorphic Interactive Zoom Bar with Scroll Button */}
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '4px 0' }}>
-                <input
-                  type="range"
-                  min="4.5"
-                  max="15.0"
-                  step="0.1"
-                  value={currentZoom}
-                  onChange={(e) => {
-                    const z = parseFloat(e.target.value);
-                    setCurrentZoom(z);
-                    if (mapRef.current) {
-                      mapRef.current.easeTo({ zoom: z, duration: 150 });
-                    }
-                  }}
-                  className="zoom-glass-slider"
-                  style={{
-                    background: `linear-gradient(to right, #059669 0%, #10b981 ${Math.max(
-                      0,
-                      Math.min(100, ((currentZoom - 4.5) / (15.0 - 4.5)) * 100)
-                    )}%, rgba(16, 185, 129, 0.15) ${Math.max(
-                      0,
-                      Math.min(100, ((currentZoom - 4.5) / (15.0 - 4.5)) * 100)
-                    )}%, rgba(15, 23, 42, 0.6) 100%)`,
-                  }}
-                  title="Drag or click to zoom map"
-                />
+              {/* Colored continuous gradient bar */}
+              <div
+                style={{
+                  height: '11px',
+                  borderRadius: '6px',
+                  background:
+                    'linear-gradient(90deg, #10b981 0%, #34d399 14%, #a3e635 28%, #eab308 42%, #f97316 58%, #ea580c 72%, #dc2626 86%, #b91c1c 100%)',
+                  marginBottom: '8px',
+                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.2)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                }}
+              />
+
+              {/* Dynamic tick labels synchronized with viewport AQI range */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.66rem', color: '#cbd5e1', fontWeight: 700 }}>
+                <span style={{ color: '#10b981' }}>{activeRange.min} (Min)</span>
+                <span style={{ color: '#a3e635' }}>
+                  {Math.round(activeRange.min + (activeRange.max - activeRange.min) * 0.33)}
+                </span>
+                <span style={{ color: '#fb923c' }}>
+                  {Math.round(activeRange.min + (activeRange.max - activeRange.min) * 0.66)}
+                </span>
+                <span style={{ color: '#f87171' }}>{activeRange.max} (Max)</span>
               </div>
             </div>
           </div>
