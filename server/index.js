@@ -18,9 +18,21 @@ import {
   generate630Advisory,
   testDispatch630Advisory,
   evaluateMorningAdvisories,
-  craftAndDispatchMidDayEmergency
+  craftAndDispatchMidDayEmergency,
+  FACILITY_TEST_MAPPINGS
 } from './advisoryDispatchService.js';
 import { getSesHealth, sendEmailViaSES, triggerEmailVerification } from './sesService.js';
+import { analyzeChemicalFingerprint, fetchLiveSourceAttribution } from './sourceAttributionService.js';
+import { syncAllPopulatedGrids, fetchLiveTelemetryForGrid, get14DayCompliance } from './gridTelemetryService.js';
+import {
+  startAutonomousDaemon,
+  runAutonomousMonitoringCycle,
+  dispatchBlockEmergencySurge,
+  runPredictiveAdvisoryEvaluation,
+  evaluate14DayChronicBlockPetitions,
+  getMonitorStatus,
+  clearMonitorDebounces
+} from './autonomousAtmosphericMonitor.js';
 
 dotenv.config();
 
@@ -511,6 +523,238 @@ app.get('/api/directory/facilities', (req, res) => {
 });
 
 /**
+ * 48-Hour Continuous Atmospheric Forecasting Engine
+ * Physics-grounded machine learning inference (SageMaker / Local fallback)
+ */
+app.get('/api/sagemaker/forecast', async (req, res) => {
+  try {
+    const {
+      schoolId,
+      schoolName,
+      facilityId,
+      facilityName,
+      lat,
+      lon,
+      basePm25,
+      threshold
+    } = req.query;
+
+    const forecast = await getSchoolAqiForecast({
+      schoolId: schoolId || facilityId || 'dps_rk_puram',
+      schoolName: schoolName || facilityName || 'Delhi Public School, R.K. Puram',
+      facilityId: facilityId || schoolId || 'dps_rk_puram',
+      facilityName: facilityName || schoolName || 'Delhi Public School, R.K. Puram',
+      lat: lat ? parseFloat(lat) : 28.5672,
+      lon: lon ? parseFloat(lon) : 77.1741,
+      basePm25: basePm25 ? parseInt(basePm25, 10) : 145,
+      threshold: threshold ? parseInt(threshold, 10) : 60
+    });
+
+    res.json({ success: true, ...forecast });
+  } catch (err) {
+    console.error('[API /api/sagemaker/forecast Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Multi-Gas Chemical Source Attribution & Forensic Fingerprinting
+ */
+app.get('/api/source-attribution', async (req, res) => {
+  try {
+    const { lat, lon, pm25, pm10, no2, so2, o3, co, windSpeed, temp, month, day, hour } = req.query;
+
+    if (pm10 !== undefined && no2 !== undefined) {
+      // Direct analytical calculation if telemetry vectors provided
+      const fingerprint = analyzeChemicalFingerprint({
+        pm25: pm25 ? Number(pm25) : 145,
+        pm10: Number(pm10),
+        no2: Number(no2),
+        so2: so2 ? Number(so2) : 12,
+        o3: o3 ? Number(o3) : 35,
+        co: co ? Number(co) : 1.0,
+        windSpeed: windSpeed ? Number(windSpeed) : 2.2,
+        temp: temp ? Number(temp) : 24,
+        month: month ? Number(month) : new Date().getMonth() + 1,
+        day: day ? Number(day) : new Date().getDate(),
+        hour: hour ? Number(hour) : new Date().getHours()
+      });
+      return res.json({ success: true, mode: 'DIRECT_VECTOR_ANALYSIS', fingerprint });
+    }
+
+    // Otherwise, fetch live telemetry via Open-Meteo multi-gas sensor ingest
+    const result = await fetchLiveSourceAttribution({
+      lat: lat ? parseFloat(lat) : 28.6139,
+      lon: lon ? parseFloat(lon) : 77.2090,
+      currentPm25: pm25 ? Number(pm25) : null
+    });
+
+    res.json(result);
+  } catch (err) {
+    console.error('[API /api/source-attribution Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Synchronize 14-Day Empirical Multi-Gas Telemetry across Delhi-NCR Grids from Open-Meteo
+ */
+app.post('/api/telemetry/sync-grids', async (req, res) => {
+  try {
+    const daysPast = parseInt(req.body?.daysPast, 10) || 14;
+    const synced = await syncAllPopulatedGrids(daysPast);
+    res.json({
+      success: true,
+      message: `Synchronized empirical telemetry across ${synced.length} spatial grid blocks`,
+      syncedGrids: synced
+    });
+  } catch (err) {
+    console.error('[API /api/telemetry/sync-grids Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Query 14-Day Compliance Status for a Spatial Grid Block
+ */
+app.get('/api/telemetry/compliance/:gridId', (req, res) => {
+  try {
+    const { gridId } = req.params;
+    const compliance = get14DayCompliance(gridId);
+    res.json({ success: true, gridId, compliance });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/spatial-grids/facilities', (req, res) => {
+  try {
+    const facilities = getAllDirectoryFacilities().facilities;
+    res.json({ success: true, facilitiesCount: facilities.length, facilities });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/spatial-grids/directory', (req, res) => {
+  try {
+    const directory = getAllDirectoryFacilities();
+    res.json({ success: true, ...directory, testMappings: FACILITY_TEST_MAPPINGS });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/spatial-grids/mappings', (req, res) => {
+  res.json({ success: true, mappings: FACILITY_TEST_MAPPINGS });
+});
+
+app.get('/api/spatial-grids/:gridId/compliance', (req, res) => {
+  try {
+    const { gridId } = req.params;
+    const compliance = get14DayCompliance(gridId);
+    res.json({ success: true, gridId, compliance });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * ============================================================================
+ * AUTONOMOUS ATMOSPHERIC MONITOR & EMERGENCY DAEMON ENDPOINTS
+ * ============================================================================
+ */
+app.get('/api/monitor/status', (req, res) => {
+  try {
+    const status = getMonitorStatus();
+    res.json({ success: true, ...status });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/monitor/run-cycle', async (req, res) => {
+  try {
+    const { dispatchViaSes = true, isSandbox = true } = req.body || {};
+    const report = await runAutonomousMonitoringCycle({ dispatchViaSes, isSandbox });
+    res.json({ success: true, report });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/monitor/clear-debounces', (req, res) => {
+  try {
+    const result = clearMonitorDebounces();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/monitor/block-emergency', async (req, res) => {
+  try {
+    const { gridId, currentPm25 = 245, anomalyType, dispatchViaSes = true, isSandbox = true, ignoreDebounce = false } = req.body;
+    if (!gridId) {
+      return res.status(400).json({ success: false, error: 'gridId is required' });
+    }
+    const result = await dispatchBlockEmergencySurge({
+      gridId,
+      currentPm25: Number(currentPm25),
+      anomalyType,
+      dispatchViaSes: Boolean(dispatchViaSes),
+      isSandbox: Boolean(isSandbox),
+      ignoreDebounce: Boolean(ignoreDebounce)
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/monitor/predictive-advisories', async (req, res) => {
+  try {
+    const {
+      facilityId,
+      thresholdPm25 = 120,
+      dispatchViaSes = true,
+      isSandbox = true,
+      maxFacilities = 15,
+      ignoreDebounce = false,
+      simulatedPm25
+    } = req.body || {};
+    const results = await runPredictiveAdvisoryEvaluation({
+      facilityId,
+      thresholdPm25: Number(thresholdPm25),
+      dispatchViaSes: Boolean(dispatchViaSes),
+      isSandbox: Boolean(isSandbox),
+      maxFacilities: Number(maxFacilities),
+      ignoreDebounce: Boolean(ignoreDebounce),
+      simulatedPm25: simulatedPm25 !== undefined ? Number(simulatedPm25) : null
+    });
+    res.json({ success: true, resultsCount: results.length, results });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/monitor/chronic-petitions', async (req, res) => {
+  try {
+    const { gridId, dispatchViaSes = true, isSandbox = true, ignoreDebounce = false, forcePetition = false } = req.body || {};
+    const results = await evaluate14DayChronicBlockPetitions({
+      gridId,
+      dispatchViaSes: Boolean(dispatchViaSes),
+      isSandbox: Boolean(isSandbox),
+      ignoreDebounce: Boolean(ignoreDebounce),
+      forcePetition: Boolean(forcePetition)
+    });
+    res.json({ success: true, resultsCount: results.length, results });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * Preview 6:30 AM Advisory bulletin for any facility
  */
 app.get('/api/advisory/preview-630', async (req, res) => {
@@ -638,7 +882,13 @@ if (!process.env.VERCEL) {
     console.log(`   - POST /api/bedrock-advisory`);
     console.log(`   - POST /api/sensor-ingest (IoT Core simulation)`);
     console.log(`   - GET  /api/aws-status`);
+    console.log(`   - GET  /api/monitor/status`);
+    console.log(`   - POST /api/monitor/run-cycle`);
+    console.log(`   - POST /api/monitor/block-emergency`);
     console.log(`=======================================================`);
+
+    // Start background atmospheric monitoring daemon (Interval: 30 minutes)
+    startAutonomousDaemon(30);
   });
 }
 

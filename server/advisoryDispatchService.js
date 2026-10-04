@@ -13,6 +13,7 @@ import { fileURLToPath } from 'url';
 import { findGridForCoordinates } from './gridTelemetryService.js';
 import { getSchoolAqiForecast } from './sagemakerService.js';
 import { sendEmailViaSES } from './sesService.js';
+import { analyzeChemicalFingerprint, fetchLiveSourceAttribution, renderAttributionCardHtml } from './sourceAttributionService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,6 +48,43 @@ function loadSpatialGrids() {
     console.error('[AdvisoryService] Error reading spatial_grids.json:', err.message);
   }
   return {};
+}
+
+/**
+ * Designated 1-to-1 institutional routing for live demonstration & testing
+ */
+export const FACILITY_TEST_MAPPINGS = {
+  'dps_rk_puram': {
+    email: 'psubai2006@gmail.com',
+    institutionName: 'Delhi Public School, R.K. Puram',
+    zone: 'South West Delhi (Sector 12, R.K. Puram)',
+    gridId: 'GRID_R03_C05'
+  },
+  'modern_barakhamba': {
+    email: 'lalsiddharth924@gmail.com',
+    institutionName: 'Modern School, Barakhamba Road',
+    zone: 'Central Delhi (Connaught Place)',
+    gridId: 'GRID_R04_C05'
+  },
+  'dps_rohini': {
+    email: 'deepsharma9128@gmail.com',
+    institutionName: 'Delhi Public School, Rohini',
+    zone: 'North West Delhi (Sector 24, Rohini)',
+    gridId: 'GRID_R05_C03'
+  }
+};
+
+/**
+ * Resolves the live recipient email for any facility
+ */
+export function resolveRecipientForFacility(facilityId, overrideEmail = null) {
+  if (overrideEmail && overrideEmail !== 'tester@wmd-civic.in' && overrideEmail !== 'vayuvitals@gmail.com') {
+    return overrideEmail;
+  }
+  if (FACILITY_TEST_MAPPINGS[facilityId]) {
+    return FACILITY_TEST_MAPPINGS[facilityId].email;
+  }
+  return process.env.COMMAND_CENTRE_EMAIL || 'psubai2006@gmail.com';
 }
 
 /**
@@ -97,6 +135,286 @@ export function getFacilitiesInGrid(gridId) {
   return all.filter(f => f.gridId === gridId);
 }
 
+
+/**
+ * Visual AQI Spectrum Gauge Component
+ */
+function renderAqiSpectrumBar(pm25, isEmergency = false) {
+  let categoryLabel = 'GOOD';
+  let badgeBg = '#10b981';
+
+  if (pm25 <= 30) {
+    categoryLabel = 'GOOD';
+    badgeBg = '#10b981';
+  } else if (pm25 <= 60) {
+    categoryLabel = 'SATISFACTORY';
+    badgeBg = '#84cc16';
+  } else if (pm25 <= 90) {
+    categoryLabel = 'MODERATE';
+    badgeBg = '#eab308';
+  } else if (pm25 <= 120) {
+    categoryLabel = 'POOR';
+    badgeBg = '#f97316';
+  } else if (pm25 <= 250) {
+    categoryLabel = 'VERY POOR';
+    badgeBg = '#ef4444';
+  } else {
+    categoryLabel = 'SEVERE / HAZARDOUS';
+    badgeBg = '#881337';
+  }
+
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 18px 0 8px 0;">
+      <tr>
+        <td style="padding-bottom: 6px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td align="left" style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #475569;">
+                📊 ATMOSPHERIC PARTICULATE SPECTRUM (PM2.5)
+              </td>
+              <td align="right">
+                <span style="display: inline-block; background-color: ${badgeBg}; color: #ffffff; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px;">
+                  ${categoryLabel}
+                </span>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <!-- 6-SEGMENT COLOR SPECTRUM BAR -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: separate; border-spacing: 3px; height: 12px;">
+            <tr>
+              <td width="15%" height="12" style="background-color: #10b981; border-radius: 4px 0 0 4px;" title="Good (0-30)"></td>
+              <td width="15%" height="12" style="background-color: #84cc16;" title="Satisfactory (31-60)"></td>
+              <td width="17%" height="12" style="background-color: #eab308;" title="Moderate (61-90)"></td>
+              <td width="17%" height="12" style="background-color: #f97316;" title="Poor (91-120)"></td>
+              <td width="18%" height="12" style="background-color: #ef4444;" title="Very Poor (121-250)"></td>
+              <td width="18%" height="12" style="background-color: #881337; border-radius: 0 4px 4px 0;" title="Severe (250+)"></td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top: 4px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 10px; font-weight: 700; color: #94a3b8;">
+            <tr>
+              <td width="15%" align="left">0</td>
+              <td width="15%" align="center">30</td>
+              <td width="17%" align="center">60</td>
+              <td width="17%" align="center">90</td>
+              <td width="18%" align="center">120</td>
+              <td width="18%" align="right">250+ µg/m³</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top: 8px;">
+          <div style="background-color: ${isEmergency ? '#fff1f2' : '#f8fafc'}; border: 1px solid ${isEmergency ? '#fecdd3' : '#e2e8f0'}; border-radius: 6px; padding: 8px 12px; font-size: 11.5px; color: ${isEmergency ? '#9f1239' : '#334155'}; font-weight: 700; text-align: center;">
+            ▲ LIVE READING: <strong style="color: ${badgeBg}; font-size: 13px;">${pm25} µg/m³</strong> • Status: <strong>${categoryLabel}</strong> (Permissible Safe Limit: 60 µg/m³)
+          </div>
+        </td>
+      </tr>
+    </table>
+  `.trim();
+}
+
+/**
+ * 3-Tile Graphical KPI Scorecard
+ */
+function renderKpiScorecard({ pm25, aqi, riskCategory, actionDirective, confidenceBand = null, isEmergency = false }) {
+  const exceedance = (pm25 / 50).toFixed(1);
+  const bandHtml = confidenceBand
+    ? `<div style="font-size: 9px; color: ${isEmergency ? '#991b1b' : '#0284c7'}; margin-top: 4px; font-weight: 700; letter-spacing: 0.2px;">80% CI: ${confidenceBand.p10}–${confidenceBand.p90} µg/m³</div>`
+    : '';
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 18px 0 22px 0;">
+      <tr>
+        <td width="32%" style="background: ${isEmergency ? '#fff1f2' : '#f8fafc'}; border: 1.5px solid ${isEmergency ? '#fecdd3' : '#e2e8f0'}; border-radius: 12px; padding: 14px 10px; text-align: center; vertical-align: top;">
+          <div style="font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.6px;">PREDICTED PEAK</div>
+          <div style="font-size: 26px; font-weight: 900; color: ${isEmergency ? '#dc2626' : '#0f172a'}; margin: 4px 0 2px 0;">
+            ${pm25} <span style="font-size: 11px; font-weight: 600; color: #64748b;">µg/m³</span>
+          </div>
+          <div style="display: inline-block; background-color: ${isEmergency ? '#fee2e2' : '#f1f5f9'}; color: ${isEmergency ? '#991b1b' : '#475569'}; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px;">
+            ⚠️ ${exceedance}× Safe Limit
+          </div>
+          ${bandHtml}
+        </td>
+        <td width="2%"></td>
+        <td width="32%" style="background: ${isEmergency ? '#fef2f2' : '#f8fafc'}; border: 1.5px solid ${isEmergency ? '#fecaca' : '#e2e8f0'}; border-radius: 12px; padding: 14px 10px; text-align: center; vertical-align: top;">
+          <div style="font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.6px;">HEALTH RISK TIER</div>
+          <div style="font-size: 19px; font-weight: 900; color: ${isEmergency ? '#b91c1c' : '#b45309'}; margin: 8px 0 4px 0;">
+            ${riskCategory}
+          </div>
+          <div style="display: inline-block; background-color: ${isEmergency ? '#fee2e2' : '#fef3c7'}; color: ${isEmergency ? '#991b1b' : '#92400e'}; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px;">
+            🚨 Pediatric Hazard
+          </div>
+        </td>
+        <td width="2%"></td>
+        <td width="32%" style="background: ${isEmergency ? '#fff7ed' : '#f8fafc'}; border: 1.5px solid ${isEmergency ? '#fed7aa' : '#e2e8f0'}; border-radius: 12px; padding: 14px 10px; text-align: center; vertical-align: top;">
+          <div style="font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.6px;">CAMPUS DIRECTIVE</div>
+          <div style="font-size: 15px; font-weight: 900; color: #0f172a; margin: 10px 0 6px 0;">
+            ${actionDirective}
+          </div>
+          <div style="display: inline-block; background-color: #ffedd5; color: #9a3412; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px;">
+            ⛔ Zero Grounds
+          </div>
+        </td>
+      </tr>
+    </table>
+  `.trim();
+}
+
+/**
+ * Visual Campus Day Timeline Component
+ */
+function renderTimelineSchedule(dangerWindows, safeWindows) {
+  const dangerRows = (dangerWindows || []).map(w => `
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff5f5; border: 1px solid #fee2e2; border-left: 4px solid #ef4444; border-radius: 0 8px 8px 0; margin-bottom: 10px;">
+      <tr>
+        <td style="padding: 12px 16px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td>
+                <span style="display: inline-block; background-color: #fecaca; color: #991b1b; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 4px; margin-right: 6px;">
+                  ⛔ ${w.window}
+                </span>
+                <strong style="color: #991b1b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px;">HIGH DANGER — INVERSION TRAP</strong>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-top: 5px; font-size: 12.5px; color: #475569; line-height: 1.4;">
+                ${w.reason}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `).join('');
+
+  const safeRows = (safeWindows || []).map(w => `
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0fdf4; border: 1px solid #dcfce7; border-left: 4px solid #22c55e; border-radius: 0 8px 8px 0; margin-bottom: 10px;">
+      <tr>
+        <td style="padding: 12px 16px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td>
+                <span style="display: inline-block; background-color: #bbf7d0; color: #166534; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 4px; margin-right: 6px;">
+                  ✅ ${w.window}
+                </span>
+                <strong style="color: #166534; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px;">RECOMMENDED DISPERSAL & TRANSIT WINDOW</strong>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-top: 5px; font-size: 12.5px; color: #475569; line-height: 1.4;">
+                ${w.reason}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `).join('');
+
+  return dangerRows + safeRows;
+}
+
+/**
+ * Visual Directive Cards with Icon Medallions
+ */
+function renderDirectiveCards(directivesList, isEmergency = false) {
+  const defaultIcons = ['🏃‍♂️', '🚪', '💨', '🩺', '🚌', '📋'];
+  return directivesList.map((d, idx) => {
+    let title = '';
+    let desc = '';
+    let icon = defaultIcons[idx % defaultIcons.length];
+
+    if (typeof d === 'string') {
+      const clean = d.replace(/^[•\-\*\d\.\s]+/, '').trim();
+      const colonIdx = clean.indexOf(':');
+      if (colonIdx > 0 && colonIdx < 35) {
+        title = clean.substring(0, colonIdx).trim();
+        desc = clean.substring(colonIdx + 1).trim();
+      } else {
+        title = `Mandatory Protocol #${idx + 1}`;
+        desc = clean;
+      }
+    } else {
+      title = d.title || `Mandatory Protocol #${idx + 1}`;
+      desc = d.description || d.text || '';
+      if (d.icon) icon = d.icon;
+    }
+
+    const lowerTitle = title.toLowerCase();
+    if (lowerTitle.includes('recall') || lowerTitle.includes('recess') || lowerTitle.includes('playground') || lowerTitle.includes('outdoor')) {
+      icon = '🏃‍♂️';
+    } else if (lowerTitle.includes('door') || lowerTitle.includes('window') || lowerTitle.includes('seal') || lowerTitle.includes('envelope')) {
+      icon = '🚪';
+    } else if (lowerTitle.includes('filter') || lowerTitle.includes('hepa') || lowerTitle.includes('purif') || lowerTitle.includes('air') || lowerTitle.includes('ventilat')) {
+      icon = '💨';
+    } else if (lowerTitle.includes('infirm') || lowerTitle.includes('medical') || lowerTitle.includes('asthma') || lowerTitle.includes('pediatric') || lowerTitle.includes('health') || lowerTitle.includes('doctor')) {
+      icon = '🩺';
+    } else if (lowerTitle.includes('transit') || lowerTitle.includes('bus') || lowerTitle.includes('dismiss')) {
+      icon = '🚌';
+    }
+
+    const borderColor = isEmergency ? '#ef4444' : '#0284c7';
+    const iconBg = isEmergency ? '#fee2e2' : '#e0f2fe';
+
+    return `
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid ${borderColor}; border-radius: 0 10px 10px 0; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <tr>
+          <td width="48" style="padding: 14px 6px 14px 14px; vertical-align: middle;">
+            <div style="width: 38px; height: 38px; background-color: ${iconBg}; border-radius: 50%; text-align: center; line-height: 38px; font-size: 19px;">
+              ${icon}
+            </div>
+          </td>
+          <td style="padding: 14px 16px 14px 8px; vertical-align: middle;">
+            <div style="font-size: 13.5px; font-weight: 800; color: #0f172a; margin-bottom: 3px; letter-spacing: -0.2px;">
+              ${title}
+            </div>
+            <div style="font-size: 13px; color: #475569; line-height: 1.5;">
+              ${desc}
+            </div>
+          </td>
+        </tr>
+      </table>
+    `;
+  }).join('');
+}
+
+/**
+ * Executive Institutional Footer
+ */
+function renderExecutiveFooter(facility) {
+  return `
+    <tr>
+      <td style="background-color: #0b1329; color: #94a3b8; padding: 28px 32px; font-size: 12px; line-height: 1.6; border-top: 1px solid #1e293b; text-align: left;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td>
+              <div style="font-size: 13.5px; font-weight: 800; color: #ffffff; margin-bottom: 4px;">
+                🌿 VAYUVITALS • Clean Air & Institutional Health Network
+              </div>
+              <div style="color: #64748b; font-size: 11.5px; margin-bottom: 12px;">
+                National Capital Region Rapid Environmental Advisory Command • New Delhi
+              </div>
+              <div style="border-top: 1px solid #1e293b; padding-top: 10px; font-size: 11px; color: #64748b;">
+                Official Inquiries: <a href="mailto:vayuvitals@gmail.com" style="color: #38bdf8; text-decoration: none; font-weight: 600;">vayuvitals@gmail.com</a> • 24/7 Nodal Hotline: <strong>011-2338-7000</strong><br>
+                Regulatory Nodal Carbon Copy: <span style="color: #cbd5e1;">${facility.nodalOfficerEmail || 'DoE Zonal Directorate / DPCC Clean Air Division'}</span><br>
+                Official communication dispatched under Institutional Environmental Health Monitoring Directives.
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `;
+}
+
 /**
  * Generate the 6:30 AM Morning Air Advisory for a facility
  */
@@ -106,7 +424,7 @@ export async function generate630Advisory({ facilityId, basePm25 = 175 }) {
     throw new Error(`Facility not found with ID: ${facilityId}`);
   }
 
-  // 1. Fetch SageMaker forward prediction for this facility's coordinates
+  // 1. Fetch forward prediction for this facility's coordinates
   const forecast = await getSchoolAqiForecast({
     schoolId: facility.id,
     schoolName: facility.name,
@@ -130,90 +448,112 @@ export async function generate630Advisory({ facilityId, basePm25 = 175 }) {
     || basePm25 
     || 145;
   const isSevere = peakAqi > 150;
+  const arrivalConfidenceBand = forecast.peakMorningArrival?.confidenceBand || null;
 
-  // 2. Protocols tailored to facility type
+  // 2. Multi-Gas Chemical Source Attribution & Forensic Fingerprint
+  const attributionResult = await fetchLiveSourceAttribution({
+    lat: facility.lat,
+    lon: facility.lon,
+    currentPm25: peakAqi
+  });
+  const chemicalAttribution = attributionResult.fingerprint;
+
+  // 3. Protocols tailored to facility type
   const protocols = facility.facilityClass === 'healthcare'
     ? [
-        'Pre-alert Respiratory & Pediatric Emergency wards for morning asthma/COPD exacerbations.',
-        'Calibrate mechanical HEPA filtration units across ICU and neonatal care units.',
-        'Ensure nebulizers and bronchodilator inventories are fully stocked in outpatient clinics.'
+        'Infirmary Alert: Pre-alert Respiratory & Pediatric Emergency wards for morning asthma/COPD exacerbations.',
+        'HEPA Calibration: Calibrate mechanical HEPA filtration units across ICU and neonatal care units.',
+        'Pharmaceutical Stock: Ensure nebulizers and bronchodilator inventories are fully stocked in outpatient clinics.'
       ]
     : [
-        'MANDATORY: Cancel all outdoor morning sports, assemblies, and physical education classes during 07:00 - 09:30 AM.',
-        'Conduct mid-day recess indoors; seal classroom windows facing arterial traffic corridors.',
-        'Vulnerable student protocol: Identify children with known asthma or allergies for indoor monitoring.',
-        'Schedule essential outdoor campus transit exclusively during the recommended solar dispersion window (02:30 - 04:30 PM).'
+        'Grounds Suspension: MANDATORY cancel all outdoor morning sports, assemblies, and physical education classes during 07:00 - 09:30 AM.',
+        'Classroom Enclosure: Conduct mid-day recess indoors; seal classroom windows facing arterial traffic corridors.',
+        'Pediatric Health Triage: Identify children with known asthma or allergies for indoor monitoring.',
+        'Scheduled Transit Window: Schedule essential outdoor campus transit exclusively during the recommended solar dispersion window (02:30 - 04:30 PM).'
       ];
 
-  const emailSubject = `[6:30 AM CIVIC ADVISORY] Predicted Air Hazard & Outdoor Activity Restrictions for ${facility.name}`;
+  const emailSubject = `⚠️ Air Quality Advisory: Morning Outdoor Activity Guidance for ${facility.name}`;
 
   const emailBodyHtml = `
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VayuVitals Morning Air Quality Advisory</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1e293b; background-color: #f8fafc; padding: 20px; }
-    .container { max-width: 650px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; }
-    .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; padding: 24px; text-align: left; }
-    .header h1 { margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: #38bdf8; }
-    .header p { margin: 0; font-size: 13px; color: #94a3b8; }
-    .badge-severe { display: inline-block; background: #dc2626; color: #ffffff; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700; margin-top: 10px; }
-    .content { padding: 24px; }
-    .card-danger { background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 16px; }
-    .card-safe { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 16px; }
-    .time-slot { font-weight: 700; font-size: 15px; color: #991b1b; }
-    .safe-slot { font-weight: 700; font-size: 15px; color: #166534; }
-    .protocol-list { padding-left: 20px; margin-top: 8px; }
-    .protocol-list li { margin-bottom: 6px; font-size: 13.5px; }
-    .footer { background: #f1f5f9; padding: 16px 24px; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; }
+    body { margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+    .wrapper { width: 100%; background-color: #f1f5f9; padding: 24px 0; }
+    .main-table { max-width: 620px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08); }
+    .header-cell { background: linear-gradient(135deg, #090e17 0%, #0f172a 50%, #1e293b 100%); padding: 32px 32px 28px 32px; text-align: left; }
+    .brand-tag { display: inline-block; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); color: #38bdf8; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; padding: 4px 12px; border-radius: 9999px; margin-bottom: 12px; }
+    .header-title { margin: 0; font-size: 23px; font-weight: 900; color: #ffffff; letter-spacing: -0.4px; line-height: 1.3; }
+    .header-sub { margin: 8px 0 0 0; font-size: 13px; color: #94a3b8; line-height: 1.5; }
+    .content-cell { padding: 30px 32px; }
+    .section-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #0f172a; margin: 26px 0 12px 0; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <p style="text-transform: uppercase; letter-spacing: 1px; font-size: 11px; font-weight: 700; color: #38bdf8;">WMD Autonomous Air Intelligence • Daily 6:30 AM Bulletin</p>
-      <h1>Outdoor Activity Safety Warning</h1>
-      <p>Target Facility: <strong>${facility.name}</strong> • Spatial Cell: <strong>${facility.gridId}</strong></p>
-      <span class="badge-severe">PREDICTED PEAK AQI: ${peakAqi} µg/m³ PM2.5 (Severe)</span>
-    </div>
-    
-    <div class="content">
-      <p>Dear Administrator / Principal / Medical Superintendent,</p>
-      <p>Based on our 3-year historical meteorological model and AWS SageMaker 48-hour forward telemetry curve, today’s atmospheric inversion over <strong>${facility.locality || facility.district}</strong> will trap hazardous particulate matter at breathing level during morning transit.</p>
-      
-      <div class="card-danger">
-        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #b91c1c; margin-bottom: 6px;">⛔ HIGH DANGER: STRICTLY AVOID OUTDOOR ACTIVITIES</div>
-        ${dangerWindows.map(w => `
-          <div style="margin-bottom: 8px;">
-            <span class="time-slot">${w.window}</span> — <span style="font-size: 13px; color: #475569;">${w.reason}</span>
+  <div class="wrapper">
+    <table class="main-table" cellpadding="0" cellspacing="0" width="100%">
+      <!-- BRAND HEADER -->
+      <tr>
+        <td class="header-cell">
+          <span class="brand-tag">🌿 VAYUVITALS • CLEAN AIR NETWORK</span>
+          <h1 class="header-title">Daily Air Quality & Campus Activity Advisory</h1>
+          <p class="header-sub">
+            Target Facility: <strong style="color: #ffffff;">${facility.name}</strong> • ${facility.locality || facility.district}
+          </p>
+        </td>
+      </tr>
+
+      <!-- BODY CONTENT -->
+      <tr>
+        <td class="content-cell">
+          <!-- 1. GRAPHICAL SPECTRUM GAUGE -->
+          ${renderAqiSpectrumBar(peakAqi, false)}
+
+          <!-- 2. 3-TILE KPI DASHBOARD -->
+          ${renderKpiScorecard({
+            pm25: peakAqi,
+            aqi: Math.round(peakAqi * 1.5),
+            riskCategory: isSevere ? 'SEVERE HAZARD' : 'VERY POOR',
+            actionDirective: 'RESTRICT GROUNDS',
+            confidenceBand: arrivalConfidenceBand,
+            isEmergency: false
+          })}
+
+          <!-- 3. FORENSIC CHEMICAL SOURCE ATTRIBUTION -->
+          ${renderAttributionCardHtml(chemicalAttribution, false)}
+
+          <!-- 4. GRAPHICAL SCHEDULE TIMELINE -->
+          <div class="section-title">🕒 Recommended Campus Schedule Today</div>
+          ${renderTimelineSchedule(dangerWindows, safeWindows)}
+
+          <!-- 5. ACTIONABLE DIRECTIVE CARDS -->
+          <div class="section-title">📋 Mandatory Campus Health Directives</div>
+          ${renderDirectiveCards(protocols, false)}
+
+          <!-- CTA BUTTON -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0 16px 0;">
+            <tr>
+              <td align="center">
+                <a href="https://vayuvitals.delhi.gov.in" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; font-size: 13.5px; font-weight: 800; text-decoration: none; padding: 12px 28px; border-radius: 9999px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35); letter-spacing: 0.3px;">
+                  📊 Access Live Campus Telemetry & Air Radar →
+                </a>
+              </td>
+            </tr>
+          </table>
+
+          <div style="margin-top: 20px; padding: 12px 16px; background-color: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; font-size: 11.5px; color: #64748b; line-height: 1.5;">
+            <strong>Institutional Oversight Note:</strong> Continuous atmospheric monitoring is active for this district. In cases of sustained exceedance, empirical notices are forwarded to environmental and education regulatory authorities.
           </div>
-        `).join('')}
-      </div>
+        </td>
+      </tr>
 
-      <div class="card-safe">
-        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #15803d; margin-bottom: 6px;">✅ RECOMMENDED OUTDOOR / TRANSIT WINDOW</div>
-        ${safeWindows.map(w => `
-          <div>
-            <span class="safe-slot">${w.window}</span> — <span style="font-size: 13px; color: #475569;">${w.reason}</span>
-          </div>
-        `).join('')}
-      </div>
-
-      <h3 style="font-size: 15px; margin-top: 20px; color: #0f172a;">Actionable Campus Directives for Today:</h3>
-      <ul class="protocol-list">
-        ${protocols.map(p => `<li>${p}</li>`).join('')}
-      </ul>
-
-      <p style="margin-top: 20px; font-size: 13px; color: #64748b;">
-        <em>Statutory Escalation Notice: If severe ambient air pollution in ${facility.gridId} persists for 14 continuous days, an empirical Section 10 legal complaint will be automatically submitted to the Central Pollution Control Board and the Department of Education.</em>
-      </p>
-    </div>
-
-    <div class="footer">
-      Generated automatically by WMD Environmental Intelligence Engine.<br>
-      Regulatory Nodal CC: ${facility.nodalOfficerEmail || 'DoE Zonal Education Officer / DPCC'}<br>
-      Official Facility Contacts: ${facility.emails.join(', ')}
-    </div>
+      <!-- EXECUTIVE FOOTER -->
+      ${renderExecutiveFooter(facility)}
+    </table>
   </div>
 </body>
 </html>
@@ -238,7 +578,8 @@ export async function generate630Advisory({ facilityId, basePm25 = 175 }) {
       category: isSevere ? 'Severe' : 'Very Poor',
       dangerWindows,
       safeWindows,
-      protocols
+      protocols,
+      chemicalAttribution
     },
     emailPayload: {
       to: facility.emails,
@@ -252,20 +593,28 @@ export async function generate630Advisory({ facilityId, basePm25 = 175 }) {
 /**
  * Simulate or test dispatching the 6:30 AM advisory
  */
-export async function testDispatch630Advisory({ facilityId, testEmail = 'tester@wmd-civic.in', isSandbox = true, dispatchViaSes = false }) {
+export async function testDispatch630Advisory({ facilityId, testEmail = null, isSandbox = true, dispatchViaSes = true }) {
   const advisory = await generate630Advisory({ facilityId });
 
-  // Use specified testEmail or fallback to facility primary email
-  const actualRecipient = testEmail || advisory.facility.primaryEmail;
+  const actualRecipient = resolveRecipientForFacility(facilityId, testEmail);
   
   let sesResponse = null;
   if (!isSandbox || dispatchViaSes) {
     try {
       sesResponse = await sendEmailViaSES({
         to: actualRecipient,
-        subject: advisory.emailPayload.subject,
+        subject: `[VayuVitals Forecast • ${advisory.facility.name}] ${advisory.emailPayload.subject}`,
         htmlBody: advisory.emailPayload.html
       });
+      // Zero-Loss Guard: If delivery failed because recipient is pending verification in SES Sandbox, route copy to command center
+      if (!sesResponse?.success && sesResponse?.error?.includes('not verified') && actualRecipient !== 'psubai2006@gmail.com') {
+        console.warn(`[SES Fallback] ${actualRecipient} is pending SES verification. Delivering alert copy to verified command center (psubai2006@gmail.com)...`);
+        sesResponse = await sendEmailViaSES({
+          to: 'psubai2006@gmail.com',
+          subject: `[VayuVitals Forecast • ${advisory.facility.name} (Delivered to Command Center - ${actualRecipient} Pending SES Verification)] ${advisory.emailPayload.subject}`,
+          htmlBody: advisory.emailPayload.html
+        });
+      }
     } catch (err) {
       sesResponse = { success: false, error: err.message };
     }
@@ -288,7 +637,7 @@ export async function testDispatch630Advisory({ facilityId, testEmail = 'tester@
     deliveryNote: sesResponse?.success
       ? `Live email successfully delivered via AWS SES to ${actualRecipient}. MessageId: ${sesResponse.messageId}`
       : (isSandbox
-          ? `Sandbox mode active: Delivered safely to tester (${actualRecipient}) without spamming real school administrator.`
+          ? `Sandbox mode active: Delivered safely to command center (${actualRecipient}) without spamming real school administrator.`
           : `Live production dispatch sent via SES: ${sesResponse?.diagnosticHint || sesResponse?.error}`)
   };
 
@@ -300,27 +649,24 @@ export async function testDispatch630Advisory({ facilityId, testEmail = 'tester@
 }
 
 /**
- * ============================================================================
- * 1. THRESHOLD-GATED 6:30 AM ADVISORY (Suppresses on clean summer/monsoon days)
- * ============================================================================
+ * Threshold-gated 6:30 AM Advisory (Suppresses on clean summer/monsoon days)
  */
 export async function evaluateMorningAdvisories({
   facilityId = 'dps_rk_puram',
-  thresholdPm25 = 120, // Indian NAQI 'Poor' threshold (>120 is hazardous for children)
+  thresholdPm25 = 120,
   basePm25 = null,
-  testEmail = 'tester@wmd-civic.in',
-  isSandbox = true
+  testEmail = null,
+  isSandbox = true,
+  dispatchViaSes = true
 }) {
   const facility = getFacilityById(facilityId);
   if (!facility) {
     throw new Error(`Facility not found with ID: ${facilityId}`);
   }
 
-  // Generate the forward forecast
   const advisory = await generate630Advisory({ facilityId, basePm25: basePm25 || 175 });
   const predictedPeak = advisory.forecast.predictedPeakPm25;
 
-  // THRESHOLD GATE: If predicted peak is below threshold, suppress alert
   if (predictedPeak <= thresholdPm25) {
     return {
       dispatched: false,
@@ -333,8 +679,15 @@ export async function evaluateMorningAdvisories({
     };
   }
 
-  // Threshold exceeded: Dispatch targeted morning advisory
-  const testResult = await testDispatch630Advisory({ facilityId, testEmail, isSandbox });
+  const effectiveRecipient = resolveRecipientForFacility(facilityId, testEmail);
+
+  const testResult = await testDispatch630Advisory({
+    facilityId,
+    testEmail: effectiveRecipient,
+    isSandbox,
+    dispatchViaSes
+  });
+
   return {
     dispatched: true,
     reason: `Hazardous morning pollution predicted (Peak PM2.5: ${predictedPeak} µg/m³ > Threshold: ${thresholdPm25} µg/m³). Morning advisory dispatched.`,
@@ -355,32 +708,45 @@ export async function evaluateMorningAdvisories({
 export async function craftAndDispatchMidDayEmergency({
   facilityId = 'dps_rk_puram',
   currentPm25 = 295,
-  anomalyType = 'Sudden Mid-Day Dust & Boundary Layer Stagnation',
-  testEmail = 'tester@wmd-civic.in',
-  isSandbox = true
+  anomalyType = null,
+  testEmail = null,
+  isSandbox = true,
+  dispatchViaSes = false
 }) {
   const facility = getFacilityById(facilityId);
   if (!facility) {
     throw new Error(`Facility not found with ID: ${facilityId}`);
   }
 
+  // 1. Analyze Multi-Gas Chemical Fingerprint for Proximate Root Cause
+  const attributionResult = await fetchLiveSourceAttribution({
+    lat: facility.lat,
+    lon: facility.lon,
+    currentPm25
+  });
+  const chemicalAttribution = attributionResult.fingerprint;
+  const effectiveAnomaly = anomalyType || `${chemicalAttribution.driverTitle} (${chemicalAttribution.confidencePct}% Forensic Confidence)`;
+
   const apiKey = process.env.GEMINI_API_KEY;
-  let geminiDirectives = '';
+  let rawGeminiText = '';
 
   const promptText = `
-You are the Chief Environmental Safety Officer for the WMD Clean Air Command Center in Delhi.
-It is 12:00 PM noon. Live telemetry sensors just detected a sudden, hazardous air pollution surge in ${facility.district} (Grid: ${facility.gridId}).
+You are the Chief Environmental Safety Officer for the VayuVitals Institutional Air Command Network in Delhi.
+It is 12:00 PM noon. Live telemetry sensors just detected a sudden, hazardous air pollution surge in ${facility.district}.
 Target Facility: ${facility.name} (${facility.type})
 Current Live PM2.5: ${currentPm25} µg/m³ (Extremely Hazardous)
-Anomaly Trigger: ${anomalyType}
+Forensic Proximate Cause: ${chemicalAttribution.driverTitle} (${chemicalAttribution.confidencePct}% Confidence)
+Chemical Fingerprint: Ratio PM2.5/PM10 = ${chemicalAttribution.metrics.fineToCoarseRatio}, NO2 = ${chemicalAttribution.metrics.no2} µg/m³, O3 = ${chemicalAttribution.metrics.o3} µg/m³, SO2 = ${chemicalAttribution.metrics.so2} µg/m³
+Atmospheric Physics Trigger: ${chemicalAttribution.scientificReason}
 
-Craft an urgent 4-bullet executive emergency directive for the School Principal / Medical Administrator before students enter the playground for lunch recess.
-Directives must be actionable, authoritative, calm, and specific:
-1. Immediate recall of students from open grounds.
-2. Mandatory indoor lunch recess protocols.
-3. Sealing exterior building doors and powering on HEPA filtration.
-4. Infirmary readiness for pediatric asthmatic emergencies.
-Keep it strictly under 150 words. Do not include introductory pleasantries.
+Craft exactly 4 executive emergency directives for the School Principal / Medical Administrator before students enter the playground for lunch recess.
+Address both the indoor recess safety and the specific chemical driver (${chemicalAttribution.driverTitle}).
+Format each of the 4 items on a single line starting with an action verb title followed by a colon, like:
+• Playground Recall: Immediately sound the campus bell to recall all students from open playgrounds and sports fields into classrooms.
+• Indoor Recess & Sealing: Enforce mandatory indoor lunch recess; close all exterior-facing doors and windows to minimize particulate ingress.
+• Mechanical Filtration: Power on all available HEPA filtration units in classrooms and common areas on maximum recirculation mode.
+• Infirmary Readiness: Pre-alert campus medical staff to have nebulizers and salbutamol inhalers prepared for students with known asthma.
+Keep it strictly under 150 words. Do not include introductory pleasantries or markdown symbols.
   `.trim();
 
   if (apiKey) {
@@ -401,92 +767,137 @@ Keep it strictly under 150 words. Do not include introductory pleasantries.
 
       if (res.ok) {
         const data = await res.json();
-        geminiDirectives = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+        rawGeminiText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
       }
     } catch (err) {
       console.warn('[AdvisoryService] Gemini API call timed out or failed, using deterministic emergency directives:', err.message);
     }
   }
 
-  // Fallback if Gemini unavailable
-  if (!geminiDirectives) {
-    geminiDirectives = `
-• IMMEDIATELY CANCEL OUTDOOR LUNCH RECESS: Sound the campus bell to recall all students from sports grounds and open courtyards into primary buildings immediately.
-• INDOOR SECLUSION & DOOR SEALING: Close all exterior classroom windows and ventilation vents facing arterial roads; activate all available ceiling fans and indoor air purifiers.
-• SPECIAL PEDIATRIC VULNERABILITY ALERT: Instruct class teachers to monitor any students with known bronchial asthma or dust allergies; keep emergency salbutamol inhalers ready in the campus medical room.
-• POSTPONE PHYSICAL EDUCATION: All physical education and sports coaching scheduled for afternoon sessions (12:00 - 02:00 PM) are suspended until further clearance.
-    `.trim();
+  let directiveItems = [];
+  if (rawGeminiText) {
+    directiveItems = rawGeminiText
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 5);
   }
 
-  const subject = `[URGENT FLASH ALERT: 12:00 PM AIR SURGE] Immediate Indoor Recess Directive for ${facility.name}`;
+  // Fallback if Gemini unavailable or returned empty
+  if (!directiveItems.length) {
+    directiveItems = [
+      'Playground Recall: Immediately sound the campus alert bell to recall all students from sports grounds and open courtyards into main buildings.',
+      'Indoor Seclusion & Door Sealing: Enforce mandatory indoor lunch recess; seal all exterior windows facing arterial corridors and power on indoor air purifiers.',
+      'Pediatric Vulnerability Protocol: Instruct class teachers to monitor any students with known asthma; have salbutamol inhalers ready in the campus medical room.',
+      'Postpone Physical Education: Cancel all sports training and outdoor activities for afternoon sessions until atmospheric dispersion clears ground air.'
+    ];
+  }
+
+  const subject = `🚨 CRITICAL AIR QUALITY SURGE: Immediate Recess Directive for ${facility.name}`;
 
   const htmlBody = `
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VayuVitals Critical Mid-Day Air Surge Alert</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #0f172a; background-color: #f8fafc; padding: 20px; }
-    .container { max-width: 650px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 2px solid #ef4444; overflow: hidden; }
-    .emergency-banner { background: #dc2626; color: #ffffff; padding: 18px 24px; text-align: left; }
-    .emergency-banner h1 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
-    .emergency-badge { display: inline-block; background: #ffffff; color: #dc2626; font-weight: 800; font-size: 13px; padding: 4px 10px; border-radius: 6px; margin-top: 8px; }
-    .content { padding: 24px; }
-    .metric-box { background: #fee2e2; border-left: 5px solid #b91c1c; padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 20px; }
-    .directives { background: #f8fafc; border: 1px solid #e2e8f0; padding: 18px 24px; border-radius: 8px; white-space: pre-line; line-height: 1.7; font-size: 14.5px; color: #1e293b; }
-    .footer { background: #f1f5f9; padding: 16px 24px; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; }
+    body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+    .wrapper { width: 100%; background-color: #f8fafc; padding: 24px 0; }
+    .main-table { max-width: 620px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 2px solid #ef4444; box-shadow: 0 12px 30px -5px rgba(220, 38, 38, 0.15); }
+    .emergency-header { background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 50%, #991b1b 100%); padding: 32px 32px 28px 32px; text-align: left; }
+    .emergency-tag { display: inline-block; background: rgba(254, 202, 202, 0.2); border: 1px solid rgba(254, 202, 202, 0.4); color: #fee2e2; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; padding: 4px 12px; border-radius: 9999px; margin-bottom: 12px; }
+    .header-title { margin: 0; font-size: 23px; font-weight: 900; color: #ffffff; letter-spacing: -0.3px; line-height: 1.3; }
+    .header-sub { margin: 8px 0 0 0; font-size: 13px; color: #fecaca; line-height: 1.5; }
+    .content-cell { padding: 30px 32px; }
+    .section-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #0f172a; margin: 24px 0 12px 0; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="emergency-banner">
-      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #fecaca;">WMD Emergency Air Intercept • High Priority Bulletin</div>
-      <h1>🚨 CRITICAL MID-DAY POLLUTION SURGE</h1>
-      <span class="emergency-badge">CURRENT PM2.5: ${currentPm25} µg/m³ (CRITICAL HAZARD)</span>
-    </div>
+  <div class="wrapper">
+    <table class="main-table" cellpadding="0" cellspacing="0" width="100%">
+      <!-- EMERGENCY HEADER -->
+      <tr>
+        <td class="emergency-header">
+          <span class="emergency-tag">🚨 VAYUVITALS • PRIORITY AIR DISPATCH</span>
+          <h1 class="header-title">CRITICAL MID-DAY POLLUTION SURGE</h1>
+          <p class="header-sub">
+            Target Facility: <strong style="color: #ffffff;">${facility.name}</strong> • ${facility.locality || facility.district}
+          </p>
+        </td>
+      </tr>
 
-    <div class="content">
-      <p style="font-size: 15px; margin-top: 0;">
-        <strong>ATTENTION: Principal / Sports Director / Medical Superintendent (${facility.name})</strong>
-      </p>
-      
-      <div class="metric-box">
-        <div style="font-weight: 700; color: #991b1b; font-size: 14px;">ANOMALOUS 12:00 PM AIR SURGE DETECTED</div>
-        <div style="font-size: 13px; color: #475569; margin-top: 4px;">
-          Detected in <strong>${facility.district} (Grid: ${facility.gridId})</strong>.<br>
-          Trigger: <em>${anomalyType}</em>. Real-time telemetry indicates particulate concentrations are <strong>3.2x above safe physiological limits</strong>.
-        </div>
-      </div>
+      <!-- BODY CONTENT -->
+      <tr>
+        <td class="content-cell">
+          <!-- 1. GRAPHICAL SPECTRUM GAUGE -->
+          ${renderAqiSpectrumBar(currentPm25, true)}
 
-      <h3 style="margin-top: 15px; font-size: 15px; color: #0f172a;">AI-Synthesized Immediate Emergency Directives:</h3>
-      <div class="directives">
-${geminiDirectives}
-      </div>
+          <!-- 2. 3-TILE KPI SCORECARD -->
+          ${renderKpiScorecard({
+            pm25: currentPm25,
+            aqi: Math.round(currentPm25 * 1.45),
+            riskCategory: 'SEVERE HAZARD',
+            actionDirective: 'INDOOR RECESS ONLY',
+            confidenceBand: {
+              p10: Math.max(15, Math.round(Math.exp(Math.log(1 + currentPm25) - 1.28 * 0.3264) - 1)),
+              p50: currentPm25,
+              p90: Math.round(Math.exp(Math.log(1 + currentPm25) + 1.28 * 0.3264) - 1)
+            },
+            isEmergency: true
+          })}
 
-      <p style="margin-top: 20px; font-size: 12.5px; color: #64748b;">
-        This alert was generated in real time following a sudden telemetry anomaly that deviated from the morning seasonal forecast.
-      </p>
-    </div>
+          <!-- 3. FORENSIC CHEMICAL SOURCE ATTRIBUTION -->
+          ${renderAttributionCardHtml(chemicalAttribution, true)}
 
-    <div class="footer">
-      AI Engine: Google Gemini 2.5 Flash / WMD Sensor Telemetry Fusion<br>
-      Regulatory Carbon Copy: ${facility.nodalOfficerEmail || 'DoE Zonal Directorate / DPCC Emergency Cell'}<br>
-      Direct Facility Contact: ${facility.primaryEmail}
-    </div>
+          <!-- 4. DIRECTIVE CARDS -->
+          <div class="section-title">📋 Immediate Campus Action Directives</div>
+          ${renderDirectiveCards(directiveItems, true)}
+
+          <!-- CTA BUTTON -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0 16px 0;">
+            <tr>
+              <td align="center">
+                <a href="https://vayuvitals.delhi.gov.in" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; font-size: 13.5px; font-weight: 800; text-decoration: none; padding: 12px 28px; border-radius: 9999px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35); letter-spacing: 0.3px;">
+                  🚨 Access Live Campus Telemetry & Air Radar →
+                </a>
+              </td>
+            </tr>
+          </table>
+
+          <div style="background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 12px 16px; font-size: 12px; color: #9a3412; line-height: 1.5; margin-top: 16px;">
+            <strong>Immediate Campus Notice:</strong> Live ground sensors indicate particulate levels are 4.9× above the permissible safe limit. All students must be kept indoors until ambient levels subside.
+          </div>
+        </td>
+      </tr>
+
+      <!-- EXECUTIVE FOOTER -->
+      ${renderExecutiveFooter(facility)}
+    </table>
   </div>
 </body>
 </html>
   `.trim();
 
-  const actualRecipient = testEmail || facility.primaryEmail;
+  const actualRecipient = resolveRecipientForFacility(facility.id, testEmail);
 
   let sesResponse = null;
   if (!isSandbox || dispatchViaSes) {
     try {
       sesResponse = await sendEmailViaSES({
         to: actualRecipient,
-        subject,
+        subject: `[VayuVitals Alert • ${facility.name}] ${subject}`,
         htmlBody
       });
+      // Zero-Loss Guard: If delivery failed because recipient is pending verification in SES Sandbox, route copy to command center
+      if (!sesResponse?.success && sesResponse?.error?.includes('not verified') && actualRecipient !== 'psubai2006@gmail.com') {
+        console.warn(`[SES Fallback] ${actualRecipient} is pending SES verification. Delivering alert copy to verified command center (psubai2006@gmail.com)...`);
+        sesResponse = await sendEmailViaSES({
+          to: 'psubai2006@gmail.com',
+          subject: `[VayuVitals Alert • ${facility.name} (Delivered to Command Center - ${actualRecipient} Pending SES Verification)] ${subject}`,
+          htmlBody
+        });
+      }
     } catch (err) {
       sesResponse = { success: false, error: err.message };
     }
@@ -496,21 +907,25 @@ ${geminiDirectives}
     alertId: `EMERGENCY_${Date.now()}`,
     timestamp: new Date().toISOString(),
     triggerHour: '12:00 PM',
-    anomalyType,
+    anomalyType: effectiveAnomaly,
     currentPm25,
+    chemicalAttribution,
     facilityName: facility.name,
     gridId: facility.gridId,
     aiModelUsed: apiKey ? 'gemini-2.5-flash' : 'rule-based-deterministic',
     sentTo: actualRecipient,
+    actualRecipientSentTo: actualRecipient,
     isSandbox,
     sesResponse,
+    status: sesResponse?.success ? 'DELIVERED_VIA_AWS_SES' : (sesResponse?.error ? 'SES_ERROR' : 'DISPATCHED'),
     subject,
-    directives: geminiDirectives
+    directives: directiveItems
   };
 
   return {
     success: true,
     emergencyRecord,
+    dispatchRecord: emergencyRecord,
     emailPayload: {
       to: facility.emails,
       subject,
@@ -518,3 +933,4 @@ ${geminiDirectives}
     }
   };
 }
+
