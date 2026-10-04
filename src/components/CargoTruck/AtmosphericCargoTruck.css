@@ -451,22 +451,22 @@
   transition: height 0.85s cubic-bezier(0.34, 1.4, 0.64, 1), background 0.5s ease, border-color 0.5s ease;
 }
 
-/* 3D Vertical Corrugated Sheet Metal Shading (Softened crevices for high text legibility) */
+/* 3D Vertical Corrugated Sheet Metal Shading */
 .container-box::before {
   content: '';
   position: absolute;
   inset: 0;
   background: repeating-linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.08) 0px,
-    rgba(255, 255, 255, 0.08) 2px,
+    rgba(255, 255, 255, 0.12) 0px,
+    rgba(255, 255, 255, 0.12) 2px,
     transparent 2px,
     transparent 5px,
-    rgba(0, 0, 0, 0.22) 5px,
-    rgba(0, 0, 0, 0.22) 8px
+    rgba(0, 0, 0, 0.55) 5px,
+    rgba(0, 0, 0, 0.55) 8px
   );
   pointer-events: none;
-  opacity: 0.60;
+  opacity: 0.85;
 }
 
 /* Top Steel Reinforced Castings */
@@ -537,8 +537,6 @@
 }
 
 .container-chemical-code {
-  position: relative;
-  z-index: 3;
   font-family: 'Outfit', sans-serif;
   font-weight: 800;
   font-size: clamp(0.82rem, 1.35vw, 1.12rem);
@@ -546,8 +544,7 @@
   letter-spacing: 0.03em;
   line-height: 1.1;
   white-space: nowrap;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 10px rgba(255, 255, 255, 0.5);
-  margin-top: 1px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 0 10px rgba(255, 255, 255, 0.65);
 }
 
 .container-value-text {
