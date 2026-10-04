@@ -141,8 +141,12 @@ export async function runPredictiveAdvisoryEvaluation({
 
   for (const facility of allFacilities) {
     const lastSent = monitorState.lastPredictiveAdvisoryByFacility[facility.id] || 0;
-    if (!ignoreDebounce && (now - lastSent < ONE_DAY_MS)) {
-      results.push({ facilityId: facility.id, name: facility.name, dispatched: false, reason: 'Debounced (Already sent within 24h)' });
+    const isSameDayInIst = lastSent > 0 &&
+      new Date(lastSent).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) ===
+      new Date(now).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+
+    if (!ignoreDebounce && isSameDayInIst) {
+      results.push({ facilityId: facility.id, name: facility.name, dispatched: false, reason: 'Debounced (Already dispatched today in IST)' });
       continue;
     }
 
@@ -494,9 +498,10 @@ export async function runAutonomousMonitoringCycle({ dispatchViaSes = true, isSa
     const petitionResults = await evaluate14DayChronicBlockPetitions({ dispatchViaSes, isSandbox });
     cycleReport.petitionsEvaluated = petitionResults;
 
-    // 4. If during early morning window (06:00 - 07:30 AM), run predictive morning advisory evaluation (Pillar 1)
-    const currentHour = new Date().getHours();
-    if (currentHour >= 6 && currentHour <= 8) {
+    // 4. If during early morning window (06:00 - 08:30 AM IST), run predictive morning advisory evaluation (Pillar 1)
+    const istHourStr = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', hour: 'numeric', hour12: false }).format(new Date());
+    const istHour = parseInt(istHourStr, 10);
+    if (istHour >= 6 && istHour <= 8) {
       const advResults = await runPredictiveAdvisoryEvaluation({
         thresholdPm25: 120,
         dispatchViaSes,

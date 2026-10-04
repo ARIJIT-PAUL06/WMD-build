@@ -247,6 +247,18 @@
         "pm25": 145,
         "schoolName": "Delhi Public School, R.K. Puram",
         "schoolId": "dps_rk_puram"
+      },
+      {
+        "timestamp": "2026-10-04T18:10:41.536Z",
+        "pm25": 265,
+        "schoolName": "Delhi Public School, R.K. Puram",
+        "schoolId": "dps_rk_puram"
+      },
+      {
+        "timestamp": "2026-10-04T18:13:24.967Z",
+        "pm25": 265,
+        "schoolName": "Delhi Public School, R.K. Puram",
+        "schoolId": "dps_rk_puram"
       }
     ],
     "dailyHistory": []

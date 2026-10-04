@@ -682,5 +682,354 @@
     "emergencySurgesDetected": [],
     "petitionsEvaluated": [],
     "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T18:09:08.348Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 35,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T18:10:44.863Z",
+    "eventType": "PREDICTIVE_ADVISORY_DISPATCHED",
+    "facilityId": "dps_rk_puram",
+    "facilityName": "Delhi Public School, R.K. Puram",
+    "predictedPeak": 265,
+    "recipient": "psubai2006@gmail.com",
+    "messageId": "010001a1081c7404-4000b7c1-8dbb-46ef-8418-8c34c1bea24b-000000"
+  },
+  {
+    "timestamp": "2026-10-04T18:11:15.067Z",
+    "eventType": "BLOCK_EMERGENCY_DISPATCHED",
+    "gridId": "GRID_R03_C05",
+    "pm25": 275,
+    "anomalyType": "Sudden Atmospheric Stagnation & Particulate Incursion",
+    "facilitiesCount": 17,
+    "results": [
+      {
+        "facilityId": "dps_rk_puram",
+        "name": "Delhi Public School, R.K. Puram",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081c7c71-8f6dfa88-f883-43aa-aef0-6579bc69d825-000000"
+      },
+      {
+        "facilityId": "modern_vasant_vihar",
+        "name": "Modern School, Vasant Vihar",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081c832d-7885089a-e9d2-458f-a20b-38fbb4fd8fd3-000000"
+      },
+      {
+        "facilityId": "sanskriti_school",
+        "name": "Sanskriti School, Chanakyapuri",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081c89b6-06b2707f-ce04-458a-8956-43cd473a0faa-000000"
+      },
+      {
+        "facilityId": "springdales_dhaula_kuan",
+        "name": "Springdales School, Dhaula Kuan",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081c90a7-a8822994-4928-440a-9a66-2e8ba648631b-000000"
+      },
+      {
+        "facilityId": "tagore_vasant_vihar",
+        "name": "Tagore International School, Vasant Vihar",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081c977e-f29c85bd-020a-4937-911c-e61f97a2ec19-000000"
+      },
+      {
+        "facilityId": "air_force_golden_jubilee",
+        "name": "Air Force Golden Jubilee Institute",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081c9e5a-5d332fae-c722-4b2d-b72e-8285b4aa95c4-000000"
+      },
+      {
+        "facilityId": "delhi_university_south",
+        "name": "University of Delhi (South Campus)",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081ca512-968a21db-8167-4efe-bdfe-e28e94cd4979-000000"
+      },
+      {
+        "facilityId": "govt_girls_senior_secondary_sc",
+        "name": "Govt. Girls Senior Secondary School",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081cabce-11be231d-49a8-4cba-9614-5de29a4f5330-000000"
+      },
+      {
+        "facilityId": "dps_international_school",
+        "name": "DPS International School",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081cb2d3-7fb2cbae-26c0-4029-b90c-8ea44aaae158-000000"
+      },
+      {
+        "facilityId": "jose_martin_sarvodya_vidyalya",
+        "name": "Jose Martin Sarvodya Vidyalya",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081cb9d1-09e471b1-f01f-4d52-847d-f18ff1d18a75-000000"
+      },
+      {
+        "facilityId": "dcac",
+        "name": "DCAC",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081cc070-2bb9b50e-5964-4af2-97be-05eba957dc19-000000"
+      },
+      {
+        "facilityId": "mount_carmel_school_senior_win",
+        "name": "Mount Carmel School (Senior Wing)",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081cc70d-7e69a042-7bd6-4d17-b48a-ab9c982f0106-000000"
+      },
+      {
+        "facilityId": "dav_public_school",
+        "name": "DAV Public School",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081ccde7-787570a0-e2b9-483c-ba43-a435d3e7fc18-000000"
+      },
+      {
+        "facilityId": "kendriya_vidyalaya",
+        "name": "Kendriya Vidyalaya",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081cd468-e2b7755a-fab4-44e6-8b5a-a8e36325b51d-000000"
+      },
+      {
+        "facilityId": "masjid_e_quba_madrasa_islamia",
+        "name": "Masjid-e-Quba Madrasa Islamia",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081cdadf-182640ee-fa9d-4c7b-9c28-9673f51b04eb-000000"
+      },
+      {
+        "facilityId": "goyal_mri_diagnostic_centre",
+        "name": "Goyal MRI & Diagnostic Centre",
+        "facilityClass": "healthcare",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081ce1cd-eb3914f7-5860-4573-ac4e-e64e9290e2fe-000000"
+      },
+      {
+        "facilityId": "diyos",
+        "name": "Diyos",
+        "facilityClass": "healthcare",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081ce85d-ad7dd6d1-763c-43b3-8323-ebb8e1c13fa7-000000"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-10-04T18:11:15.848Z",
+    "eventType": "14_DAY_PETITION_DISPATCHED",
+    "gridId": "GRID_R03_C05",
+    "compliance": {
+      "totalHours": 42,
+      "severeHours": 2,
+      "avgPm25": 173,
+      "totalDaysRecorded": 2,
+      "petitionEligible": false
+    },
+    "facilitiesCount": 17,
+    "messageId": "010001a1081ced10-a1730808-709c-482d-a92a-468460a304ac-000000"
+  },
+  {
+    "timestamp": "2026-10-04T18:13:28.133Z",
+    "eventType": "PREDICTIVE_ADVISORY_DISPATCHED",
+    "facilityId": "dps_rk_puram",
+    "facilityName": "Delhi Public School, R.K. Puram",
+    "predictedPeak": 265,
+    "recipient": "psubai2006@gmail.com",
+    "messageId": "010001a1081ef1bd-a2da6735-85cb-488e-9fcc-7c3f0a2ab4fb-000000"
+  },
+  {
+    "timestamp": "2026-10-04T18:13:58.567Z",
+    "eventType": "BLOCK_EMERGENCY_DISPATCHED",
+    "gridId": "GRID_R03_C05",
+    "pm25": 275,
+    "anomalyType": "Sudden Atmospheric Stagnation & Particulate Incursion",
+    "facilitiesCount": 17,
+    "results": [
+      {
+        "facilityId": "dps_rk_puram",
+        "name": "Delhi Public School, R.K. Puram",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081efa52-4fd7ef7b-17d1-4326-b9b4-7ac476abf0d5-000000"
+      },
+      {
+        "facilityId": "modern_vasant_vihar",
+        "name": "Modern School, Vasant Vihar",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f0132-0f7c288a-5523-4aea-bef0-185f26f19c7e-000000"
+      },
+      {
+        "facilityId": "sanskriti_school",
+        "name": "Sanskriti School, Chanakyapuri",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f0809-42220a44-4b22-424e-98c6-488e69540411-000000"
+      },
+      {
+        "facilityId": "springdales_dhaula_kuan",
+        "name": "Springdales School, Dhaula Kuan",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f0e81-4627b5d6-5b77-40ad-bd18-d90a99587be4-000000"
+      },
+      {
+        "facilityId": "tagore_vasant_vihar",
+        "name": "Tagore International School, Vasant Vihar",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f1517-ea8fbcc8-41b4-481a-8982-029acbf2d5a7-000000"
+      },
+      {
+        "facilityId": "air_force_golden_jubilee",
+        "name": "Air Force Golden Jubilee Institute",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f1c06-a5d4581b-4676-4e24-9299-93fc033a6d17-000000"
+      },
+      {
+        "facilityId": "delhi_university_south",
+        "name": "University of Delhi (South Campus)",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f22f7-ef48ac49-5ebf-4027-917d-216afc954eae-000000"
+      },
+      {
+        "facilityId": "govt_girls_senior_secondary_sc",
+        "name": "Govt. Girls Senior Secondary School",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f2a1a-8fd683fd-9986-4ee2-bab7-f2419384f44f-000000"
+      },
+      {
+        "facilityId": "dps_international_school",
+        "name": "DPS International School",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f3153-abfec637-6691-4347-a1fa-42a119d7d25d-000000"
+      },
+      {
+        "facilityId": "jose_martin_sarvodya_vidyalya",
+        "name": "Jose Martin Sarvodya Vidyalya",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f3848-324f398c-d27a-4894-9da8-6a4f9e655e7f-000000"
+      },
+      {
+        "facilityId": "dcac",
+        "name": "DCAC",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f3f17-27484395-2c53-4206-8d7d-f9c4bd93aa6d-000000"
+      },
+      {
+        "facilityId": "mount_carmel_school_senior_win",
+        "name": "Mount Carmel School (Senior Wing)",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f461e-d5c50a2e-2a8f-4c9f-85ad-9014d451fd9e-000000"
+      },
+      {
+        "facilityId": "dav_public_school",
+        "name": "DAV Public School",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f4cc4-0ef10e02-d36a-4f9a-b6a0-070bd19a56b3-000000"
+      },
+      {
+        "facilityId": "kendriya_vidyalaya",
+        "name": "Kendriya Vidyalaya",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f5347-efd2a4a9-cfff-4523-84fd-9b353ab2660a-000000"
+      },
+      {
+        "facilityId": "masjid_e_quba_madrasa_islamia",
+        "name": "Masjid-e-Quba Madrasa Islamia",
+        "facilityClass": "educational",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f59d4-07c52dab-6600-4321-99dc-076b79041300-000000"
+      },
+      {
+        "facilityId": "goyal_mri_diagnostic_centre",
+        "name": "Goyal MRI & Diagnostic Centre",
+        "facilityClass": "healthcare",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f6068-89896eb5-7ecf-4fd9-90ab-7c1a58bc5f9e-000000"
+      },
+      {
+        "facilityId": "diyos",
+        "name": "Diyos",
+        "facilityClass": "healthcare",
+        "status": "DELIVERED_VIA_AWS_SES",
+        "recipient": "psubai2006@gmail.com",
+        "messageId": "010001a1081f6743-3c11f03a-34a5-4c43-9ced-f0d3916b81c7-000000"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-10-04T18:13:59.393Z",
+    "eventType": "14_DAY_PETITION_DISPATCHED",
+    "gridId": "GRID_R03_C05",
+    "compliance": {
+      "totalHours": 43,
+      "severeHours": 3,
+      "avgPm25": 175,
+      "totalDaysRecorded": 2,
+      "petitionEligible": false
+    },
+    "facilitiesCount": 17,
+    "messageId": "010001a1081f6be7-ef3d4870-9e8b-4892-99dc-cf5a392df5af-000000"
   }
 ]
