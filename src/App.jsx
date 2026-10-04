@@ -7,7 +7,28 @@ import PollutantDetailPage from './components/PollutantDetail/PollutantDetailPag
 
 export default function App() {
   const heatmapRef = useRef(null);
-  const [isGlobalMonitorOpen, setIsGlobalMonitorOpen] = useState(false);
+  const checkIsMonitorRequested = () => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    const hash = window.location.hash.toLowerCase();
+    const path = window.location.pathname.toLowerCase();
+    return (
+      params.get('shield') === 'true' ||
+      params.get('testbench') === 'true' ||
+      params.get('monitor') === 'true' ||
+      params.get('view') === 'shield' ||
+      params.get('view') === 'testbench' ||
+      params.get('view') === 'monitor' ||
+      hash === '#shield' ||
+      hash === '#testbench' ||
+      hash === '#monitor' ||
+      path === '/shield' ||
+      path === '/testbench' ||
+      path === '/monitor'
+    );
+  };
+
+  const [isGlobalMonitorOpen, setIsGlobalMonitorOpen] = useState(checkIsMonitorRequested);
 
   // Active Pollutant Detail Page State with URL Deep-Linking & History API
   const [activePollutant, setActivePollutant] = useState(() => {
@@ -23,10 +44,32 @@ export default function App() {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
       setActivePollutant(params.get('pollutant') || null);
+      setIsGlobalMonitorOpen(checkIsMonitorRequested());
     };
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
   }, []);
+
+  const handleCloseMonitor = () => {
+    setIsGlobalMonitorOpen(false);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location);
+      url.searchParams.delete('shield');
+      url.searchParams.delete('testbench');
+      url.searchParams.delete('monitor');
+      if (['shield', 'testbench', 'monitor'].includes(url.searchParams.get('view'))) {
+        url.searchParams.delete('view');
+      }
+      if (['#shield', '#testbench', '#monitor'].includes(url.hash.toLowerCase())) {
+        url.hash = '';
+      }
+      window.history.pushState({}, '', url);
+    }
+  };
 
   const handleSelectPollutant = (pollutantId) => {
     setActivePollutant(pollutantId);
@@ -71,7 +114,7 @@ export default function App() {
         <DelhiAqiHeatmap />
         <AutonomousMonitorModal
           isOpen={isGlobalMonitorOpen}
-          onClose={() => setIsGlobalMonitorOpen(false)}
+          onClose={handleCloseMonitor}
         />
       </div>
     );
@@ -80,11 +123,17 @@ export default function App() {
   // Render Dedicated Pollutant Deep-Dive Intelligence Page when active
   if (activePollutant) {
     return (
-      <PollutantDetailPage
-        pollutantId={activePollutant}
-        onBack={handleBackToTruck}
-        onSelectPollutant={handleSelectPollutant}
-      />
+      <>
+        <PollutantDetailPage
+          pollutantId={activePollutant}
+          onBack={handleBackToTruck}
+          onSelectPollutant={handleSelectPollutant}
+        />
+        <AutonomousMonitorModal
+          isOpen={isGlobalMonitorOpen}
+          onClose={handleCloseMonitor}
+        />
+      </>
     );
   }
 
@@ -104,7 +153,7 @@ export default function App() {
       {/* Autonomous Atmospheric Shield & Emergency Monitor Test Bench */}
       <AutonomousMonitorModal
         isOpen={isGlobalMonitorOpen}
-        onClose={() => setIsGlobalMonitorOpen(false)}
+        onClose={handleCloseMonitor}
       />
     </div>
   );
