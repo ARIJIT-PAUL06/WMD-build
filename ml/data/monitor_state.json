@@ -1,0 +1,16 @@
+{
+  "lastCycleAt": "2026-10-04T08:08:13.481Z",
+  "lastPredictiveAdvisoryByFacility": {
+    "dps_rk_puram": 1791092811978
+  },
+  "lastEmergencySentByGrid": {
+    "GRID_R03_C05": 1791092855802
+  },
+  "lastPetitionSentByGrid": {
+    "GRID_R03_C05": 1791100304716
+  },
+  "totalCyclesExecuted": 12,
+  "totalEmergenciesDispatched": 2,
+  "totalPetitionsDispatched": 2,
+  "totalPredictiveAdvisoriesDispatched": 4
+}

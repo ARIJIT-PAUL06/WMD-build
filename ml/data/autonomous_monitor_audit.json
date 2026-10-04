@@ -1,0 +1,422 @@
+[
+  {
+    "timestamp": "2026-10-04T05:34:34.913Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 1,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T05:35:25.076Z",
+    "eventType": "BLOCK_EMERGENCY_DISPATCHED",
+    "gridId": "GRID_R03_C05",
+    "pm25": 265,
+    "anomalyType": "Severe Inversion & Heavy Transit Corridor Stagnation",
+    "facilitiesCount": 17,
+    "results": [
+      {
+        "facilityId": "dps_rk_puram",
+        "name": "Delhi Public School, R.K. Puram",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "modern_vasant_vihar",
+        "name": "Modern School, Vasant Vihar",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "sanskriti_school",
+        "name": "Sanskriti School, Chanakyapuri",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "springdales_dhaula_kuan",
+        "name": "Springdales School, Dhaula Kuan",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "tagore_vasant_vihar",
+        "name": "Tagore International School, Vasant Vihar",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "air_force_golden_jubilee",
+        "name": "Air Force Golden Jubilee Institute",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "delhi_university_south",
+        "name": "University of Delhi (South Campus)",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "govt_girls_senior_secondary_sc",
+        "name": "Govt. Girls Senior Secondary School",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "dps_international_school",
+        "name": "DPS International School",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "jose_martin_sarvodya_vidyalya",
+        "name": "Jose Martin Sarvodya Vidyalya",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "dcac",
+        "name": "DCAC",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "mount_carmel_school_senior_win",
+        "name": "Mount Carmel School (Senior Wing)",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "dav_public_school",
+        "name": "DAV Public School",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "kendriya_vidyalaya",
+        "name": "Kendriya Vidyalaya",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "masjid_e_quba_madrasa_islamia",
+        "name": "Masjid-e-Quba Madrasa Islamia",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "goyal_mri_diagnostic_centre",
+        "name": "Goyal MRI & Diagnostic Centre",
+        "facilityClass": "healthcare",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "diyos",
+        "name": "Diyos",
+        "facilityClass": "healthcare",
+        "status": "DISPATCHED"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-10-04T05:35:45.487Z",
+    "eventType": "PREDICTIVE_ADVISORY_DISPATCHED",
+    "facilityId": "dps_rk_puram",
+    "facilityName": "Delhi Public School, R.K. Puram",
+    "predictedPeak": 185,
+    "recipient": "principal@dpsrkp.net",
+    "messageId": "SANDBOX_MOCK"
+  },
+  {
+    "timestamp": "2026-10-04T05:35:48.194Z",
+    "eventType": "PREDICTIVE_ADVISORY_DISPATCHED",
+    "facilityId": "modern_barakhamba",
+    "facilityName": "Modern School, Barakhamba Road",
+    "predictedPeak": 223,
+    "recipient": "principal@modernschool.net",
+    "messageId": "SANDBOX_MOCK"
+  },
+  {
+    "timestamp": "2026-10-04T05:35:50.341Z",
+    "eventType": "PREDICTIVE_ADVISORY_DISPATCHED",
+    "facilityId": "modern_vasant_vihar",
+    "facilityName": "Modern School, Vasant Vihar",
+    "predictedPeak": 185,
+    "recipient": "msvv@modernschool.net",
+    "messageId": "SANDBOX_MOCK"
+  },
+  {
+    "timestamp": "2026-10-04T05:43:32.228Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 2,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T05:46:55.521Z",
+    "eventType": "PREDICTIVE_ADVISORY_DISPATCHED",
+    "facilityId": "dps_rk_puram",
+    "facilityName": "Delhi Public School, R.K. Puram",
+    "predictedPeak": 265,
+    "recipient": "vayuvitals@gmail.com",
+    "messageId": "010001a1057375ee-2b3f8802-0980-4fa9-92e8-4ac74c001be7-000000"
+  },
+  {
+    "timestamp": "2026-10-04T05:47:35.804Z",
+    "eventType": "BLOCK_EMERGENCY_DISPATCHED",
+    "gridId": "GRID_R03_C05",
+    "pm25": 275,
+    "anomalyType": "Sudden Atmospheric Stagnation & Particulate Incursion",
+    "facilitiesCount": 17,
+    "results": [
+      {
+        "facilityId": "dps_rk_puram",
+        "name": "Delhi Public School, R.K. Puram",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "modern_vasant_vihar",
+        "name": "Modern School, Vasant Vihar",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "sanskriti_school",
+        "name": "Sanskriti School, Chanakyapuri",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "springdales_dhaula_kuan",
+        "name": "Springdales School, Dhaula Kuan",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "tagore_vasant_vihar",
+        "name": "Tagore International School, Vasant Vihar",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "air_force_golden_jubilee",
+        "name": "Air Force Golden Jubilee Institute",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "delhi_university_south",
+        "name": "University of Delhi (South Campus)",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "govt_girls_senior_secondary_sc",
+        "name": "Govt. Girls Senior Secondary School",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "dps_international_school",
+        "name": "DPS International School",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "jose_martin_sarvodya_vidyalya",
+        "name": "Jose Martin Sarvodya Vidyalya",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "dcac",
+        "name": "DCAC",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "mount_carmel_school_senior_win",
+        "name": "Mount Carmel School (Senior Wing)",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "dav_public_school",
+        "name": "DAV Public School",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "kendriya_vidyalaya",
+        "name": "Kendriya Vidyalaya",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "masjid_e_quba_madrasa_islamia",
+        "name": "Masjid-e-Quba Madrasa Islamia",
+        "facilityClass": "educational",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "goyal_mri_diagnostic_centre",
+        "name": "Goyal MRI & Diagnostic Centre",
+        "facilityClass": "healthcare",
+        "status": "DISPATCHED"
+      },
+      {
+        "facilityId": "diyos",
+        "name": "Diyos",
+        "facilityClass": "healthcare",
+        "status": "DISPATCHED"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-10-04T05:47:36.579Z",
+    "eventType": "14_DAY_PETITION_DISPATCHED",
+    "gridId": "GRID_R03_C05",
+    "compliance": {
+      "totalHours": 38,
+      "severeHours": 1,
+      "avgPm25": 171,
+      "totalDaysRecorded": 2,
+      "petitionEligible": false
+    },
+    "facilitiesCount": 17,
+    "messageId": "010001a105741638-052d46e5-4e7a-47b2-a022-a6a86d86efcf-000000"
+  },
+  {
+    "timestamp": "2026-10-04T05:48:00.897Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 3,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T06:17:55.921Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 4,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T06:47:55.969Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 5,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T07:17:56.032Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 6,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T07:26:25.552Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 7,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T07:50:39.678Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 8,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T07:51:46.048Z",
+    "eventType": "14_DAY_PETITION_DISPATCHED",
+    "gridId": "GRID_R03_C05",
+    "compliance": {
+      "totalHours": 40,
+      "severeHours": 1,
+      "avgPm25": 172,
+      "totalDaysRecorded": 2,
+      "petitionEligible": false
+    },
+    "facilitiesCount": 17,
+    "messageId": "010001a105e5c1bb-d4ee469a-f23c-4e30-8edd-22abe46c16e1-000000"
+  },
+  {
+    "timestamp": "2026-10-04T07:52:06.602Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 9,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T08:04:32.801Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 10,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T08:07:14.942Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 11,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T08:08:13.481Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 12,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  }
+]

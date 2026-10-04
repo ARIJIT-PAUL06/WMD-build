@@ -131,6 +131,9 @@ export function consolidateDailyAverages(gridId, targetDateStr) {
 /**
  * Get 14-Day compliance status for an institution or grid
  */
+/**
+ * Get 14-Day compliance status for an institution or grid
+ */
 export function get14DayCompliance(gridId) {
   const g = grid14DayBuffer[gridId];
   if (!g || !g.hourlyBuffer || g.hourlyBuffer.length === 0) {
@@ -158,3 +161,74 @@ export function get14DayCompliance(gridId) {
     petitionEligible
   };
 }
+
+/**
+ * Fetch and synchronize 14-day empirical telemetry from Open-Meteo for any grid or coordinate
+ */
+export async function fetchLiveTelemetryForGrid(gridId, lat, lon, daysPast = 14) {
+  try {
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm2_5,pm10,nitrogen_dioxide,carbon_monoxide&past_days=${daysPast}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const times = data.hourly?.time || [];
+    const pm25s = data.hourly?.pm2_5 || [];
+    const pm10s = data.hourly?.pm10 || [];
+    const no2s = data.hourly?.nitrogen_dioxide || [];
+
+    if (!grid14DayBuffer[gridId]) {
+      grid14DayBuffer[gridId] = {
+        gridId,
+        hourlyBuffer: [],
+        dailyHistory: []
+      };
+    }
+
+    const buffer = [];
+    for (let i = 0; i < times.length; i++) {
+      if (pm25s[i] !== null && pm25s[i] !== undefined) {
+        buffer.push({
+          timestamp: times[i],
+          pm25: Math.round(pm25s[i] * 10) / 10,
+          pm10: pm10s[i] !== null ? Math.round(pm10s[i] * 10) / 10 : null,
+          no2: no2s[i] !== null ? Math.round(no2s[i] * 10) / 10 : null,
+          source: 'OPEN_METEO_EMPIRICAL_API'
+        });
+      }
+    }
+
+    grid14DayBuffer[gridId].hourlyBuffer = buffer;
+
+    // Persist
+    try {
+      fs.writeFileSync(BUFFER_PATH, JSON.stringify(grid14DayBuffer, null, 2));
+    } catch (e) {
+      // Non-fatal
+    }
+
+    return {
+      gridId,
+      recordsSynced: buffer.length,
+      avgPm25: buffer.length ? Math.round(buffer.reduce((acc, r) => acc + r.pm25, 0) / buffer.length) : null
+    };
+  } catch (err) {
+    console.warn(`[GridTelemetryService] Live sync failed for ${gridId}:`, err.message);
+    return null;
+  }
+}
+
+/**
+ * Synchronize live empirical telemetry across all populated spatial grids in Delhi-NCR
+ */
+export async function syncAllPopulatedGrids(daysPast = 14) {
+  const populated = Object.values(spatialGrids).filter(g => g.facility_count > 0 || g.centroid);
+  const results = [];
+  for (const grid of populated.slice(0, 15)) { // Prioritize primary educational blocks
+    const r = await fetchLiveTelemetryForGrid(grid.grid_id, grid.centroid.lat, grid.centroid.lon, daysPast);
+    if (r) results.push(r);
+    await new Promise(res => setTimeout(res, 150)); // Polite rate limit
+  }
+  return results;
+}
+
