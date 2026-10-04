@@ -528,5 +528,27 @@
     "emergencySurgesDetected": [],
     "petitionsEvaluated": [],
     "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T12:38:37.786Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 22,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T12:40:13.959Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 23,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
   }
 ]
