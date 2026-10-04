@@ -1,266 +1,331 @@
 /* AtmosphericCargoTruck.css */
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
 
-.cargo-section {
+/* ==========================================================
+   FULL-SCREEN ATMOSPHERIC CARGO SECTION (100vh / Seamless Blend)
+   ========================================================== */
+.cargo-section-fullscreen {
   position: relative;
   width: 100%;
-  background: radial-gradient(ellipse at 50% 15%, rgba(15, 23, 42, 0.98) 0%, rgba(6, 10, 18, 0.99) 65%, #030712 100%);
-  padding: 5rem 1.5rem 6.5rem;
+  height: 100vh;
+  min-height: 840px;
+  background: #070a12;
+  color: #f8fafc;
   overflow: hidden;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem 2rem 1.75rem;
+  box-sizing: border-box;
 }
 
-/* Atmospheric Ambient Vignette & Floating Aerosol Dust */
-.cargo-section::before {
+/* Background Atmospheric Mesh & Subtle Volumetric Depth */
+.cargo-section-fullscreen::before {
   content: '';
   position: absolute;
   inset: 0;
   background-image: 
-    radial-gradient(circle at 20% 30%, rgba(239, 68, 68, 0.04) 0%, transparent 40%),
-    radial-gradient(circle at 80% 60%, rgba(6, 182, 212, 0.05) 0%, transparent 45%),
+    radial-gradient(circle at 50% 30%, rgba(56, 189, 248, 0.04) 0%, transparent 60%),
+    radial-gradient(circle at 15% 75%, rgba(239, 68, 68, 0.035) 0%, transparent 45%),
+    radial-gradient(circle at 85% 75%, rgba(6, 182, 212, 0.04) 0%, transparent 45%),
     linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 48px 48px, 48px 48px;
   pointer-events: none;
+  z-index: 1;
 }
 
-.cargo-container {
+/* ==========================================================
+   BUTTER-SMOOTH PERIMETER SCENE FADE (Exact Match to Map)
+   Ensures 100% continuous, seamless scroll from Map to Truck
+   ========================================================== */
+.cargo-perimeter-fade {
+  position: absolute;
+  inset: 0;
+  z-index: 22;
+  pointer-events: none;
+  background: 
+    linear-gradient(to bottom, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) top / 100% 56px no-repeat,
+    linear-gradient(to top, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) bottom / 100% 56px no-repeat,
+    linear-gradient(to right, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) left / 52px 100% no-repeat,
+    linear-gradient(to left, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) right / 52px 100% no-repeat;
+}
+
+/* ==========================================================
+   UNIQUE HOLOGRAPHIC HUD CORNER BRACKETS & TELEMETRY LABELS
+   ========================================================== */
+.cargo-hud-corner {
+  position: absolute;
+  z-index: 24;
+  pointer-events: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: rgba(56, 189, 248, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+}
+
+.cargo-hud-corner.top-left {
+  top: 18px;
+  left: 24px;
+}
+
+.cargo-hud-corner.top-right {
+  top: 18px;
+  right: 24px;
+  flex-direction: row-reverse;
+}
+
+.cargo-hud-corner.bottom-left {
+  bottom: 18px;
+  left: 24px;
+}
+
+.cargo-hud-corner.bottom-right {
+  bottom: 18px;
+  right: 24px;
+  flex-direction: row-reverse;
+}
+
+.corner-bracket-svg {
+  width: 24px;
+  height: 24px;
+  stroke: rgba(56, 189, 248, 0.45);
+  fill: none;
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.3));
+}
+
+/* Animated Volumetric Aerosol Fog Drifting */
+.cargo-aerosol-fog-drift {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0.35;
+  background: radial-gradient(ellipse 60% 40% at 50% 60%, rgba(148, 163, 184, 0.12) 0%, transparent 70%);
+  animation: fog-drift-anim 14s infinite alternate ease-in-out;
+}
+
+@keyframes fog-drift-anim {
+  0% { transform: translateX(-40px) scale(1); opacity: 0.25; }
+  100% { transform: translateX(40px) scale(1.08); opacity: 0.45; }
+}
+
+/* ==========================================================
+   TOP FLOATING COMMAND DECK
+   ========================================================== */
+.cargo-top-command-deck {
+  position: relative;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
   max-width: 1240px;
   margin: 0 auto;
-  position: relative;
-  z-index: 10;
 }
 
-/* Header */
-.cargo-header {
-  text-align: center;
-  margin-bottom: 2.25rem;
-}
-
-.cargo-badge-pill {
-  display: inline-flex;
+.cargo-header-row {
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.95rem;
-  border-radius: 9999px;
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  color: #f87171;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin-bottom: 0.85rem;
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
-.cargo-badge-pill .pulse-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #ef4444;
-  box-shadow: 0 0 8px #ef4444;
-  animation: pulse-dot-anim 1.5s infinite ease-in-out;
+.cargo-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
 }
 
-@keyframes pulse-dot-anim {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.3; transform: scale(1.4); }
-}
-
-.cargo-title {
+.cargo-main-title {
   font-family: 'Outfit', sans-serif;
-  font-size: clamp(2rem, 3.8vw, 2.85rem);
+  font-size: 1.55rem;
   font-weight: 800;
   color: #f8fafc;
-  line-height: 1.15;
-  margin-bottom: 0.85rem;
   letter-spacing: -0.02em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.cargo-title .highlight-gradient {
+.cargo-main-title .title-accent {
   background: linear-gradient(135deg, #f97316 0%, #ef4444 50%, #ec4899 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.cargo-description {
-  max-width: 780px;
-  margin: 0 auto;
+.cargo-subtitle-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
   color: #94a3b8;
-  font-size: 0.98rem;
-  line-height: 1.6;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 3px 9px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Control Bar: Presets & Purge */
-.cargo-controls-bar {
+/* Translucent Glass Pill Control Dock */
+.cargo-controls-dock {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  width: 100%;
   background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
-}
-
-.cargo-presets-group {
-  display: flex;
+  border-radius: 14px;
+  padding: 0.5rem 0.85rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  gap: 0.75rem;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
 }
 
-.cargo-preset-btn {
+.cargo-presets-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.cargo-preset-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 0.95rem;
-  border-radius: 10px;
+  gap: 0.4rem;
+  padding: 0.42rem 0.85rem;
+  border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(30, 41, 59, 0.55);
+  background: rgba(30, 41, 59, 0.5);
   color: #cbd5e1;
   font-family: 'Inter', sans-serif;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.cargo-preset-btn:hover {
-  background: rgba(51, 65, 85, 0.8);
+.cargo-preset-chip:hover {
+  background: rgba(51, 65, 85, 0.75);
   color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-1px);
 }
 
-.cargo-preset-btn.active {
+.cargo-preset-chip.active {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(249, 115, 22, 0.25) 100%);
-  border-color: rgba(249, 115, 22, 0.7);
+  border-color: rgba(249, 115, 22, 0.65);
   color: #fed7aa;
-  box-shadow: 0 0 20px rgba(249, 115, 22, 0.25);
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.25);
 }
 
-.cargo-preset-btn.active.green-theme {
+.cargo-preset-chip.active.green-theme {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.25) 100%);
-  border-color: rgba(16, 185, 129, 0.7);
+  border-color: rgba(16, 185, 129, 0.65);
   color: #a7f3d0;
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
 }
 
-.cargo-actions-group {
+.cargo-dock-actions {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.5rem;
 }
 
-.cargo-action-btn {
+.cargo-dock-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.55rem 0.9rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(30, 41, 59, 0.6);
+  gap: 0.4rem;
+  padding: 0.42rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(30, 41, 59, 0.55);
   color: #94a3b8;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.cargo-action-btn:hover {
-  background: rgba(51, 65, 85, 0.85);
+.cargo-dock-btn:hover {
+  background: rgba(51, 65, 85, 0.8);
   color: #f8fafc;
   transform: translateY(-1px);
 }
 
-.cargo-action-btn.purge-btn {
+.cargo-dock-btn.purge-action {
   background: linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
-  border-color: rgba(6, 182, 212, 0.5);
+  border-color: rgba(6, 182, 212, 0.45);
   color: #67e8f9;
 }
 
-.cargo-action-btn.purge-btn:hover {
+.cargo-dock-btn.purge-action:hover {
   background: linear-gradient(135deg, rgba(6, 182, 212, 0.35) 0%, rgba(59, 130, 246, 0.35) 100%);
-  box-shadow: 0 0 20px rgba(6, 182, 212, 0.35);
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.35);
   color: #ffffff;
 }
 
 /* ==========================================================
-   THE WEIGHBRIDGE STAGE & TRUCK SURROUNDINGS
-   Blended seamlessly into the dark UI
+   CENTER CINEMA WEIGHBRIDGE & TRUCK HERO VIEWPORT
    ========================================================== */
-.weighbridge-stage {
+.cargo-center-stage {
   position: relative;
+  z-index: 10;
   width: 100%;
-  border-radius: 24px;
-  background: radial-gradient(ellipse at 50% 50%, rgba(18, 25, 43, 0.8) 0%, rgba(10, 15, 26, 0.95) 70%, #060913 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 2.5rem 1.5rem 2rem;
-  box-shadow: 
-    0 30px 60px -15px rgba(0, 0, 0, 0.7),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 380px;
+  max-height: 540px;
 }
 
-/* Cybernetic Overhead Spotlight */
-.weighbridge-spotlight {
+/* Laser Scanning Horizon Beam */
+.stage-laser-scanner {
   position: absolute;
-  top: -20%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 85%;
-  height: 65%;
-  background: radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.15) 0%, rgba(6, 182, 212, 0.05) 50%, transparent 75%);
-  pointer-events: none;
-}
-
-/* Laser Scanning Beam Sweeping the Payload */
-.weighbridge-scanner-beam {
-  position: absolute;
-  top: 15%;
-  bottom: 28%;
+  top: 10%;
+  bottom: 25%;
   width: 2px;
-  background: linear-gradient(180deg, transparent 0%, rgba(6, 182, 212, 0.9) 40%, rgba(239, 68, 68, 0.9) 80%, transparent 100%);
-  box-shadow: 0 0 18px rgba(6, 182, 212, 0.7), 0 0 35px rgba(6, 182, 212, 0.4);
+  background: linear-gradient(180deg, transparent 0%, rgba(56, 189, 248, 0.85) 40%, rgba(239, 68, 68, 0.85) 80%, transparent 100%);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.7), 0 0 35px rgba(56, 189, 248, 0.35);
   pointer-events: none;
-  z-index: 25;
-  animation: scan-beam-anim 6.5s infinite ease-in-out;
+  z-index: 21;
+  animation: laser-scan-sweep 7s infinite ease-in-out;
 }
 
-@keyframes scan-beam-anim {
+@keyframes laser-scan-sweep {
   0% { left: 38%; opacity: 0; }
-  10% { opacity: 0.9; }
-  88% { opacity: 0.9; }
+  8% { opacity: 0.85; }
+  92% { opacity: 0.85; }
   100% { left: 94%; opacity: 0; }
 }
 
-/* ==========================================================
-   TRUCK VIEWPORT (16:9 Aspect Ratio matching 1376x768 render)
-   ========================================================== */
-.truck-viewport {
+/* Truck Viewport (Maintains precise aspect-ratio with high-res render) */
+.cargo-truck-canvas {
   position: relative;
-  width: 100%;
-  max-width: 1100px;
-  margin: 0 auto;
+  width: 92%;
+  max-width: 1260px;
   aspect-ratio: 1376 / 768;
+  max-height: 52vh;
+  margin: 0 auto;
   user-select: none;
-  border-radius: 12px;
-  overflow: visible;
-  /* Smooth radial fade at edges so it seamlessly dissolves into the dark background */
-  mask-image: radial-gradient(ellipse 98% 90% at 50% 50%, black 75%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 98% 90% at 50% 50%, black 75%, transparent 100%);
+  /* Smooth radial dissolve at outer edges so truck melts seamlessly into dark background */
+  mask-image: radial-gradient(ellipse 96% 90% at 50% 50%, black 78%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 96% 90% at 50% 50%, black 78%, transparent 100%);
 }
 
-/* Suspension Compression & Engine Idle Vibration */
-.truck-chassis {
+.cargo-chassis-rig {
   position: relative;
   width: 100%;
   height: 100%;
@@ -270,46 +335,31 @@
 
 @keyframes engine-idle-rumble {
   0% { transform: translateY(0px); }
-  100% { transform: translateY(-0.7px); }
+  100% { transform: translateY(-0.8px); }
 }
 
-/* Base Truck High-Res Image */
-.truck-base-image {
+.cargo-base-render {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   pointer-events: none;
-  z-index: 10;
-  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.8));
+  z-index: 12;
+  filter: drop-shadow(0 25px 35px rgba(0, 0, 0, 0.85));
 }
 
-/* Ground Shadow Contact Patch */
-.truck-ground-shadow {
-  position: absolute;
-  bottom: 12%;
-  left: 5%;
-  right: 5%;
-  height: 25px;
-  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
-  filter: blur(12px);
-  pointer-events: none;
-  z-index: 4;
-}
-
-/* Reactive Underglow Neon Strip */
-.truck-underglow {
+.cargo-underglow-aura {
   position: absolute;
   bottom: 26%;
   left: 8%;
   right: 6%;
-  height: 14px;
+  height: 16px;
   border-radius: 50%;
   background: radial-gradient(ellipse at 50% 50%, var(--underglow-color, rgba(6, 182, 212, 0.4)) 0%, transparent 75%);
   filter: blur(14px);
   pointer-events: none;
-  z-index: 5;
+  z-index: 6;
   transition: background 0.8s ease;
 }
 
@@ -319,7 +369,7 @@
    - x: 38.88% to 94.11% (width: 55.23%)
    - y (flatbed deck): 47.14% from top => bottom: 52.86%
    ========================================================== */
-.containers-flatbed-deck {
+.cargo-flatbed-deck {
   position: absolute;
   left: 38.88%;
   width: 55.23%;
@@ -333,8 +383,7 @@
   pointer-events: auto;
 }
 
-/* Individual Container Unit */
-.pollutant-container-unit {
+.cargo-container-pod {
   position: relative;
   flex: 1;
   display: flex;
@@ -345,18 +394,18 @@
   transition: transform 0.25s ease, filter 0.25s ease;
 }
 
-.pollutant-container-unit:hover {
-  transform: translateY(-4px) scale(1.02);
+.cargo-container-pod:hover {
+  transform: translateY(-5px) scale(1.02);
+  z-index: 35;
+}
+
+.cargo-container-pod.active-selected {
+  transform: translateY(-7px) scale(1.04);
   z-index: 40;
 }
 
-.pollutant-container-unit.selected {
-  transform: translateY(-6px) scale(1.03);
-  z-index: 45;
-}
-
 /* Dynamic Physical Container Box (ISO Shipping Container Aesthetic) */
-.container-box {
+.cargo-iso-box {
   position: relative;
   width: 100%;
   border-radius: 4px 4px 1px 1px;
@@ -364,7 +413,7 @@
   border: 1px solid var(--cont-border, rgba(255, 255, 255, 0.25));
   /* Realistic drop shadow onto flatbed deck + neon ambient aura */
   box-shadow: 
-    0 8px 18px rgba(0, 0, 0, 0.9),
+    0 8px 18px rgba(0, 0, 0, 0.95),
     0 2px 4px rgba(0, 0, 0, 0.95),
     0 -3px 15px var(--cont-glow, rgba(0, 0, 0, 0.4)),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
@@ -372,13 +421,13 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  padding: 0.4rem 0.22rem 0.3rem;
+  padding: 0.38rem 0.2rem 0.28rem;
   overflow: hidden;
   transition: height 0.85s cubic-bezier(0.34, 1.4, 0.64, 1), background 0.5s ease, border-color 0.5s ease;
 }
 
 /* 3D Vertical Corrugated Sheet Metal Shading */
-.container-box::before {
+.cargo-iso-box::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -396,7 +445,7 @@
 }
 
 /* Top Steel Reinforced Castings */
-.container-box::after {
+.cargo-iso-box::after {
   content: '';
   position: absolute;
   top: 0;
@@ -409,7 +458,7 @@
 }
 
 /* Top Warning Strobe Beacon */
-.container-beacon-mount {
+.cargo-strobe-mount {
   position: absolute;
   top: -10px;
   left: 50%;
@@ -422,7 +471,7 @@
   pointer-events: none;
 }
 
-.beacon-bulb {
+.strobe-beacon-core {
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -430,7 +479,7 @@
   box-shadow: 0 0 8px var(--beacon-color, #10b981);
 }
 
-.beacon-bulb.strobe {
+.strobe-beacon-core.flashing {
   animation: warning-strobe-flash 0.85s infinite ease-in-out;
 }
 
@@ -448,48 +497,47 @@
 }
 
 /* Digital Beveled LCD Panel on Container */
-.container-lcd-panel {
+.cargo-lcd-matrix {
   position: relative;
   z-index: 2;
   width: 92%;
-  background: rgba(8, 12, 20, 0.92);
+  background: rgba(8, 12, 20, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 4px;
-  padding: 0.25rem 0.18rem;
+  padding: 0.22rem 0.16rem;
   text-align: center;
   box-shadow: 
     inset 0 1px 4px rgba(0, 0, 0, 0.9),
     0 1px 2px rgba(255, 255, 255, 0.05);
 }
 
-.container-chemical-code {
+.cargo-chem-symbol {
   font-family: 'Outfit', sans-serif;
   font-weight: 800;
-  font-size: clamp(0.65rem, 1.1vw, 0.88rem);
+  font-size: clamp(0.65rem, 1.05vw, 0.85rem);
   color: #ffffff;
   letter-spacing: -0.01em;
   line-height: 1.1;
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
 }
 
-.container-value-text {
+.cargo-chem-value {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
-  font-size: clamp(0.55rem, 0.95vw, 0.78rem);
+  font-size: clamp(0.55rem, 0.9vw, 0.76rem);
   color: var(--cont-text-color, #f87171);
   line-height: 1.1;
   margin-top: 2px;
 }
 
-.container-unit-text {
+.cargo-chem-unit {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(0.42rem, 0.7vw, 0.58rem);
+  font-size: clamp(0.42rem, 0.65vw, 0.56rem);
   color: #94a3b8;
   font-weight: 500;
 }
 
-/* Capacity Gauge Bar */
-.container-capacity-track {
+.cargo-chem-gauge {
   position: relative;
   z-index: 2;
   width: 84%;
@@ -497,18 +545,18 @@
   background: rgba(0, 0, 0, 0.75);
   border-radius: 999px;
   overflow: hidden;
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
-.container-capacity-fill {
+.cargo-chem-fill {
   height: 100%;
   border-radius: 999px;
   background: var(--cont-text-color, #ef4444);
   transition: width 0.6s ease;
 }
 
-/* Mechanical Mounting Foot-Clamp Anchored to Trailer Bed */
-.container-foot-clamp {
+/* Mechanical Mounting Foot-Clamp */
+.cargo-deck-clamp {
   position: absolute;
   bottom: -4px;
   width: 88%;
@@ -521,263 +569,263 @@
 }
 
 /* ==========================================================
-   TELEMETRY HUD BELOW TRUCK
+   BOTTOM FLOATING TELEMETRY STRIP & INSPECTION DOCK
    ========================================================== */
-.cargo-telemetry-hud {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-  margin-top: 2rem;
+.cargo-bottom-dock {
+  position: relative;
+  z-index: 25;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
 }
 
-.telemetry-card {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(14px);
+.cargo-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.85rem;
+}
+
+@media (max-width: 900px) {
+  .cargo-telemetry-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.cargo-hud-card {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 1rem 1.15rem;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
   position: relative;
   overflow: hidden;
-  transition: border-color 0.25s ease, transform 0.25s ease;
+  transition: all 0.25s ease;
 }
 
-.telemetry-card:hover {
+.cargo-hud-card:hover {
   border-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
 }
 
-.telemetry-label {
+.cargo-hud-lbl {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
   text-transform: uppercase;
   color: #94a3b8;
   letter-spacing: 0.05em;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.25rem;
 }
 
-.telemetry-value-row {
+.cargo-hud-val-row {
   display: flex;
   align-items: baseline;
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
-.telemetry-big-number {
+.cargo-hud-number {
   font-family: 'Outfit', sans-serif;
-  font-size: 1.65rem;
+  font-size: 1.45rem;
   font-weight: 800;
   color: #f8fafc;
   line-height: 1.1;
 }
 
-.telemetry-unit {
+.cargo-hud-unit {
   font-family: 'Inter', sans-serif;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   color: #64748b;
   font-weight: 500;
 }
 
-.telemetry-subtext {
-  font-size: 0.78rem;
+.cargo-hud-subtext {
+  font-size: 0.72rem;
   color: #94a3b8;
-  margin-top: 0.35rem;
+  margin-top: 0.2rem;
 }
 
-.telemetry-gauge-bar {
+.cargo-hud-bar {
   width: 100%;
-  height: 6px;
+  height: 5px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 999px;
   overflow: hidden;
-  margin-top: 0.6rem;
+  margin-top: 0.45rem;
 }
 
-.telemetry-gauge-fill {
+.cargo-hud-bar-fill {
   height: 100%;
   border-radius: 999px;
   transition: width 0.7s ease, background 0.7s ease;
 }
 
-/* ==========================================================
-   SELECTED CHEMICAL DEEP INSPECTION CARD
-   ========================================================== */
-.cargo-chemical-inspector {
-  margin-top: 1.75rem;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.95) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
-  padding: 1.5rem;
-  display: grid;
-  grid-template-columns: 1fr 2fr;
+/* Selected Chemical Deep Inspector Card (Floating/Docked) */
+.cargo-detail-flyout {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, rgba(20, 29, 48, 0.95) 0%, rgba(10, 15, 26, 0.98) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 1.5rem;
-  position: relative;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+  z-index: 30;
+  animation: slide-up-flyout 0.25s ease-out;
 }
 
-@media (max-width: 768px) {
-  .cargo-chemical-inspector {
-    grid-template-columns: 1fr;
-  }
+@keyframes slide-up-flyout {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.inspector-chemical-badge {
+.flyout-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.flyout-chem-pill {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(15, 23, 42, 0.7);
   border: 1px solid var(--inspect-accent, rgba(239, 68, 68, 0.4));
-  border-radius: 14px;
-  padding: 1.5rem 1rem;
-  text-align: center;
-  box-shadow: 0 0 25px var(--inspect-glow, rgba(239, 68, 68, 0.15));
+  border-radius: 10px;
+  padding: 0.5rem 0.85rem;
+  min-width: 80px;
+  box-shadow: 0 0 15px var(--inspect-glow, rgba(239, 68, 68, 0.2));
 }
 
-.inspector-formula {
+.flyout-symbol {
   font-family: 'Outfit', sans-serif;
-  font-size: 2.4rem;
-  font-weight: 900;
+  font-size: 1.4rem;
+  font-weight: 800;
   color: #ffffff;
-  line-height: 1;
 }
 
-.inspector-chem-name {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #cbd5e1;
-  margin-top: 0.4rem;
+.flyout-stats-row {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
 }
 
-.inspector-status-pill {
-  margin-top: 0.75rem;
-  padding: 0.25rem 0.7rem;
-  border-radius: 999px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  background: var(--inspect-pill-bg, rgba(239, 68, 68, 0.2));
-  color: var(--inspect-accent, #ef4444);
-  border: 1px solid var(--inspect-accent, #ef4444);
-}
-
-.inspector-details-pane {
+.flyout-stat-item {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
 }
 
-.inspector-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.inspector-stat-box {
-  background: rgba(15, 23, 42, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 10px;
-  padding: 0.65rem 0.85rem;
-}
-
-.inspector-stat-lbl {
-  font-size: 0.72rem;
-  color: #64748b;
+.flyout-stat-lbl {
   font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: #94a3b8;
   text-transform: uppercase;
 }
 
-.inspector-stat-val {
+.flyout-stat-val {
   font-family: 'Outfit', sans-serif;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #f1f5f9;
-  margin-top: 2px;
 }
 
-.inspector-sources-block {
-  font-size: 0.85rem;
-  color: #94a3b8;
-  line-height: 1.5;
-}
-
-.inspector-sources-block strong {
+.flyout-right-desc {
+  font-size: 0.8rem;
   color: #cbd5e1;
+  max-width: 480px;
+  line-height: 1.45;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  padding-left: 1.25rem;
 }
 
-/* ==========================================================
-   MANUAL CHEMICAL SLIDERS DRAWER
-   ========================================================== */
-.cargo-sliders-drawer {
-  margin-top: 1.5rem;
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 1.25rem 1.5rem;
-  backdrop-filter: blur(14px);
+.flyout-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.15s ease;
 }
 
-.sliders-drawer-header {
+.flyout-close-btn:hover {
+  color: #ffffff;
+}
+
+/* Manual Sliders Flyout Drawer */
+.cargo-sliders-flyout {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 0;
+  right: 0;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+  z-index: 30;
+  animation: slide-up-flyout 0.25s ease-out;
+}
+
+.sliders-flyout-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
-.sliders-title {
-  font-family: 'Outfit', sans-serif;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #f8fafc;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.sliders-grid {
+.sliders-flyout-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
 }
 
-.slider-unit {
+.slider-flyout-item {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.25rem;
 }
 
-.slider-label-row {
+.slider-flyout-lbl-row {
   display: flex;
   justify-content: space-between;
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   font-weight: 600;
   color: #cbd5e1;
 }
 
-.slider-current-val {
+.slider-flyout-val {
   font-family: 'JetBrains Mono', monospace;
   color: #f59e0b;
 }
 
-.cargo-range-input {
+.slider-flyout-range {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.1);
+  height: 4px;
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 999px;
   outline: none;
 }
 
-.cargo-range-input::-webkit-slider-thumb {
+.slider-flyout-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   background: #f97316;
   cursor: pointer;
@@ -785,26 +833,19 @@
   transition: transform 0.15s ease;
 }
 
-.cargo-range-input::-webkit-slider-thumb:hover {
+.slider-flyout-range::-webkit-slider-thumb:hover {
   transform: scale(1.3);
 }
 
 /* Responsive adjustments */
-@media (max-width: 900px) {
-  .cargo-section {
-    padding: 3.5rem 1rem 4rem;
+@media (max-width: 1024px) {
+  .cargo-section-fullscreen {
+    height: auto;
+    min-height: 100vh;
+    padding: 3rem 1rem 3rem;
+    gap: 1.5rem;
   }
-  .weighbridge-stage {
-    padding: 1.5rem 0.75rem 1rem;
-  }
-  .cargo-controls-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .cargo-presets-group {
-    justify-content: center;
-  }
-  .cargo-actions-group {
-    justify-content: center;
+  .cargo-center-stage {
+    min-height: 320px;
   }
 }

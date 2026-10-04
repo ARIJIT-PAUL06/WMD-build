@@ -10,7 +10,9 @@ import {
   Radio,
   Wind,
   Layers,
-  RotateCcw
+  RotateCcw,
+  X,
+  Crosshair
 } from 'lucide-react';
 import './AtmosphericCargoTruck.css';
 
@@ -165,7 +167,7 @@ const PRESETS = {
 export default function AtmosphericCargoTruck() {
   const [activePreset, setActivePreset] = useState('india_avg');
   const [pollutantValues, setPollutantValues] = useState(PRESETS.india_avg.values);
-  const [selectedPollutantId, setSelectedPollutantId] = useState('pm25');
+  const [selectedPollutantId, setSelectedPollutantId] = useState(null);
   const [truckModel, setTruckModel] = useState('vayu_cyber'); // 'vayu_cyber' | 'classic_scania'
   const [isTunerOpen, setIsTunerOpen] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
@@ -173,7 +175,7 @@ export default function AtmosphericCargoTruck() {
 
   // Active selected pollutant object
   const activePollutant = useMemo(() => {
-    return POLLUTANT_SPECS.find(p => p.id === selectedPollutantId) || POLLUTANT_SPECS[0];
+    return POLLUTANT_SPECS.find(p => p.id === selectedPollutantId) || null;
   }, [selectedPollutantId]);
 
   // Aggregate Payload Calculations
@@ -196,7 +198,7 @@ export default function AtmosphericCargoTruck() {
     const suspensionLoad = Math.min(100, Math.round(maxOverloadRatio * 46 + 26));
     const chassisSag = Math.min(5, Math.max(0, (maxOverloadRatio - 0.5) * 2.2));
 
-    let hazardTier = 'ACCEPTABLE';
+    let hazardTier = 'ACCEPTABLE TRANSIT';
     let underglowColor = 'rgba(16, 185, 129, 0.45)';
     if (maxOverloadRatio > 2.0) {
       hazardTier = 'CRITICAL OVERLOAD';
@@ -205,7 +207,7 @@ export default function AtmosphericCargoTruck() {
       hazardTier = 'NAAQS EXCEEDED';
       underglowColor = 'rgba(249, 115, 22, 0.55)';
     } else if (maxOverloadRatio > 0.7) {
-      hazardTier = 'MODERATE';
+      hazardTier = 'MODERATE BURDEN';
       underglowColor = 'rgba(234, 179, 8, 0.45)';
     }
 
@@ -314,28 +316,100 @@ export default function AtmosphericCargoTruck() {
     : { left: '31.8%', width: '60.5%', bottom: '42.36%' };
 
   return (
-    <section className="cargo-section" id="atmospheric-cargo-section">
-      <div className="cargo-container">
-        {/* Section Header */}
-        <div className="cargo-header">
-          <div className="cargo-badge-pill">
-            <span className="pulse-dot"></span>
-            <span>03 • Industrial Atmospheric Logistics</span>
+    <section className="cargo-section-fullscreen" id="atmospheric-cargo-section">
+      {/* ============================================================== */}
+      {/* 1. BUTTER-SMOOTH PERIMETER SCENE FADE (EXACT MATCH TO MAP)     */}
+      {/* ============================================================== */}
+      <div className="cargo-perimeter-fade" />
+
+      {/* ============================================================== */}
+      {/* 2. UNIQUE HOLOGRAPHIC HUD CORNER BRACKETS & TELEMETRY LABELS   */}
+      {/* ============================================================== */}
+      <div className="cargo-hud-corner top-left">
+        <svg className="corner-bracket-svg" viewBox="0 0 24 24">
+          <path d="M22 2H2v20" />
+        </svg>
+        <span>SYS // LAT 28.6139°N</span>
+      </div>
+
+      <div className="cargo-hud-corner top-right">
+        <svg className="corner-bracket-svg" viewBox="0 0 24 24">
+          <path d="M2 2h20v20" />
+        </svg>
+        <span>ORBITAL SENSOR LOCK // ACTIVE</span>
+      </div>
+
+      <div className="cargo-hud-corner bottom-left">
+        <svg className="corner-bracket-svg" viewBox="0 0 24 24">
+          <path d="M22 22H2V2" />
+        </svg>
+        <span>CARGO MANIFEST // CPCB-IND-01</span>
+      </div>
+
+      <div className="cargo-hud-corner bottom-right">
+        <svg className="corner-bracket-svg" viewBox="0 0 24 24">
+          <path d="M2 22h20V2" />
+        </svg>
+        <span>ELEV 216M // AEROSOL COLUMN</span>
+      </div>
+
+      {/* Volumetric Atmospheric Fog Drift */}
+      <div className="cargo-aerosol-fog-drift" />
+
+      {/* ============================================================== */}
+      {/* 3. TOP FLOATING COMMAND DECK                                   */}
+      {/* ============================================================== */}
+      <div className="cargo-top-command-deck">
+        <div className="cargo-header-row">
+          <div className="cargo-title-group">
+            <h2 className="cargo-main-title">
+              <Truck size={20} color="#38bdf8" />
+              <span>VayuVitals <span className="title-accent">Atmospheric Cargo Hauler</span></span>
+            </h2>
+            <span className="cargo-subtitle-tag">03 • National Atmospheric Freight</span>
           </div>
-          <h2 className="cargo-title">
-            VayuVitals <span className="highlight-gradient">Atmospheric Cargo Hauler</span>
-          </h2>
-          <p className="cargo-description">
-            Physicalizing airborne molecular mass into a standardized freight container payload. Container heights,
-            warning strobes, and trailer suspension physics dynamically react to current chemical pollutant densities across India.
-          </p>
+
+          <div className="cargo-dock-actions">
+            {/* Model switcher */}
+            <button
+              className="cargo-dock-btn"
+              onClick={() => setTruckModel(isCyber ? 'classic_scania' : 'vayu_cyber')}
+              title="Switch Truck Design"
+            >
+              <Layers size={13} />
+              <span>{isCyber ? 'Cyber Hauler' : 'Classic Scania'}</span>
+            </button>
+
+            <button
+              className="cargo-dock-btn purge-action"
+              onClick={handlePurgePayload}
+              disabled={isPurging}
+              title="Discharge airborne chemical payload down to zero"
+            >
+              <Wind size={13} />
+              <span>{isPurging ? 'Venting Cargo...' : 'Atmospheric Purge'}</span>
+            </button>
+
+            <button
+              className="cargo-dock-btn"
+              onClick={() => {
+                setIsTunerOpen(!isTunerOpen);
+                if (selectedPollutantId) setSelectedPollutantId(null);
+              }}
+              title="Toggle manual chemical payload sliders"
+            >
+              <Sliders size={13} />
+              <span>{isTunerOpen ? 'Hide Sliders' : 'Payload Sliders'}</span>
+              {isTunerOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+          </div>
         </div>
 
-        {/* Top Control Deck: Presets & Purge */}
-        <div className="cargo-controls-bar">
-          <div className="cargo-presets-group">
+        {/* Translucent Glass Pill Control Dock */}
+        <div className="cargo-controls-dock">
+          <div className="cargo-presets-pills">
             <button
-              className={`cargo-preset-btn ${activePreset === 'india_avg' ? 'active' : ''}`}
+              className={`cargo-preset-chip ${activePreset === 'india_avg' ? 'active' : ''}`}
               onClick={() => handleSelectPreset('india_avg')}
               title="Pan-India National Average from CPCB CAAQMS Network"
             >
@@ -344,7 +418,7 @@ export default function AtmosphericCargoTruck() {
             </button>
 
             <button
-              className={`cargo-preset-btn ${activePreset === 'delhi_hotspot' ? 'active' : ''}`}
+              className={`cargo-preset-chip ${activePreset === 'delhi_hotspot' ? 'active' : ''}`}
               onClick={() => handleSelectPreset('delhi_hotspot')}
               title="Delhi Winter Severe Hotspot (Anand Vihar/Jahangirpuri)"
             >
@@ -353,7 +427,7 @@ export default function AtmosphericCargoTruck() {
             </button>
 
             <button
-              className={`cargo-preset-btn ${activePreset === 'pristine' ? 'active green-theme' : ''}`}
+              className={`cargo-preset-chip ${activePreset === 'pristine' ? 'active green-theme' : ''}`}
               onClick={() => handleSelectPreset('pristine')}
               title="Pristine mountain air baseline (Ladakh)"
             >
@@ -362,328 +436,237 @@ export default function AtmosphericCargoTruck() {
             </button>
 
             <button
-              className={`cargo-preset-btn ${activePreset === 'live' ? 'active' : ''}`}
+              className={`cargo-preset-chip ${activePreset === 'live' ? 'active' : ''}`}
               onClick={handleFetchLiveTelemetry}
               disabled={isLiveLoading}
               title="Query real-time 108 CAAQMS station stream"
             >
-              <Radio size={14} className={isLiveLoading ? 'animate-spin' : ''} />
+              <Radio size={13} className={isLiveLoading ? 'animate-spin' : ''} />
               <span>{isLiveLoading ? 'Connecting...' : 'Live CAAQMS Stream'}</span>
             </button>
           </div>
 
-          <div className="cargo-actions-group">
-            {/* Model switcher */}
-            <button
-              className="cargo-action-btn"
-              onClick={() => setTruckModel(isCyber ? 'classic_scania' : 'vayu_cyber')}
-              title="Switch Truck Design"
-            >
-              <Layers size={14} />
-              <span>{isCyber ? 'Cyber Hauler' : 'Classic Scania'}</span>
-            </button>
-
-            <button
-              className="cargo-action-btn purge-btn"
-              onClick={handlePurgePayload}
-              disabled={isPurging}
-              title="Discharge airborne chemical payload down to zero"
-            >
-              <Wind size={15} />
-              <span>{isPurging ? 'Venting Cargo...' : 'Atmospheric Purge'}</span>
-            </button>
-
-            <button
-              className="cargo-action-btn"
-              onClick={() => setIsTunerOpen(!isTunerOpen)}
-              title="Toggle manual chemical payload sliders"
-            >
-              <Sliders size={15} />
-              <span>{isTunerOpen ? 'Hide Sliders' : 'Payload Sliders'}</span>
-              {isTunerOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </button>
+          <div style={{ fontSize: '0.74rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Crosshair size={12} color="#38bdf8" />
+            <span>Interactive Cargo Pods • Click any container to inspect</span>
           </div>
         </div>
+      </div>
 
-        {/* The Weighbridge Platform with the Truck */}
-        <div className="weighbridge-stage">
-          <div className="weighbridge-spotlight"></div>
-          <div className="weighbridge-scanner-beam"></div>
+      {/* ============================================================== */}
+      {/* 4. CENTER CINEMA WEIGHBRIDGE & TRUCK HERO VIEWPORT            */}
+      {/* ============================================================== */}
+      <div className="cargo-center-stage">
+        {/* Laser Scanning Horizon Beam */}
+        <div className="stage-laser-scanner" />
 
-          {/* Truck Viewport */}
+        {/* Truck Canvas (Exact 16:9 Aspect Ratio) */}
+        <div
+          className="cargo-truck-canvas"
+          style={{ aspectRatio: truckAspectRatio }}
+        >
           <div
-            className="truck-viewport"
-            style={{ aspectRatio: truckAspectRatio }}
+            className="cargo-chassis-rig"
+            style={{
+              transform: `translateY(${payloadStats.chassisSag}px)`,
+              '--underglow-color': payloadStats.underglowColor
+            }}
           >
-            <div
-              className="truck-chassis"
-              style={{
-                transform: `translateY(${payloadStats.chassisSag}px)`,
-                '--underglow-color': payloadStats.underglowColor
-              }}
-            >
-              {/* Ground Shadow & Underglow */}
-              <div className="truck-ground-shadow"></div>
-              <div className="truck-underglow"></div>
+            {/* Underglow Aura */}
+            <div className="cargo-underglow-aura" />
 
-              {/* Base Truck Image */}
-              <img
-                src={truckImageSrc}
-                alt="VayuVitals Flatbed Heavy Hauler Truck"
-                className="truck-base-image"
-              />
+            {/* Base Truck High-Res Render */}
+            <img
+              src={truckImageSrc}
+              alt="VayuVitals Flatbed Heavy Hauler Truck"
+              className="cargo-base-render"
+            />
 
-              {/* =======================================================
-                  CONTAINERS FLATBED DECK
-                  Mounted on physical deck surface
-                  ======================================================= */}
-              <div className="containers-flatbed-deck" style={deckStyle}>
-                {POLLUTANT_SPECS.map(p => {
-                  const val = pollutantValues[p.id] || 0;
-                  const ratio = val / p.naaqsLimit;
-                  
-                  // Dynamic height calculation scaled to truck viewport height
-                  const heightPercent = isCyber
-                    ? Math.min(34, Math.max(9, 10 + ratio * 10)) // Cyber hauler scale
-                    : Math.min(44, Math.max(9, 11 + ratio * 15)); // Scania scale
+            {/* =======================================================
+                CARGO CONTAINERS FLATBED MOUNTING DECK
+                Mounted directly on flatbed deck surface
+                ======================================================= */}
+            <div className="cargo-flatbed-deck" style={deckStyle}>
+              {POLLUTANT_SPECS.map(p => {
+                const val = pollutantValues[p.id] || 0;
+                const ratio = val / p.naaqsLimit;
 
-                  const heightPx = isCyber
-                    ? heightPercent * 7.68
-                    : heightPercent * 5.76;
+                // Dynamic height calculation scaled to truck viewport height
+                const heightPercent = isCyber
+                  ? Math.min(34, Math.max(9, 10 + ratio * 10)) // Cyber hauler scale
+                  : Math.min(44, Math.max(9, 11 + ratio * 15)); // Scania scale
 
-                  // Severity & Strobe Logic
-                  let beaconColor, isStrobe = false;
-                  if (ratio > 1.8) {
-                    beaconColor = '#ef4444';
-                    isStrobe = true;
-                  } else if (ratio > 1.0) {
-                    beaconColor = '#ef4444';
-                    isStrobe = true;
-                  } else if (ratio > 0.6) {
-                    beaconColor = '#f59e0b';
-                    isStrobe = false;
-                  } else {
-                    beaconColor = '#10b981';
-                    isStrobe = false;
-                  }
+                const heightPx = isCyber
+                  ? heightPercent * 7.68
+                  : heightPercent * 5.76;
 
-                  const isSelected = selectedPollutantId === p.id;
+                // Severity & Strobe Logic
+                let beaconColor, isStrobe = false;
+                if (ratio > 1.8) {
+                  beaconColor = '#ef4444';
+                  isStrobe = true;
+                } else if (ratio > 1.0) {
+                  beaconColor = '#ef4444';
+                  isStrobe = true;
+                } else if (ratio > 0.6) {
+                  beaconColor = '#f59e0b';
+                  isStrobe = false;
+                } else {
+                  beaconColor = '#10b981';
+                  isStrobe = false;
+                }
 
-                  return (
+                const isSelected = selectedPollutantId === p.id;
+
+                return (
+                  <div
+                    key={p.id}
+                    className={`cargo-container-pod ${isSelected ? 'active-selected' : ''}`}
+                    onClick={() => setSelectedPollutantId(isSelected ? null : p.id)}
+                    title={`Click to inspect ${p.name}: ${val} ${p.unit} (${Math.round(ratio * 100)}% of NAAQS)`}
+                  >
                     <div
-                      key={p.id}
-                      className={`pollutant-container-unit ${isSelected ? 'selected' : ''}`}
-                      onClick={() => setSelectedPollutantId(p.id)}
-                      title={`Click to inspect ${p.name}: ${val} ${p.unit} (${Math.round(ratio * 100)}% of NAAQS)`}
+                      className="cargo-iso-box"
+                      style={{
+                        height: `${heightPx}px`,
+                        '--cont-bg': p.contBg,
+                        '--cont-border': isSelected ? '#ffffff' : p.contBorder,
+                        '--cont-glow': p.contGlow,
+                        '--cont-text-color': p.accentColor,
+                        '--beacon-color': beaconColor
+                      }}
                     >
-                      <div
-                        className="container-box"
-                        style={{
-                          height: `${heightPx}px`,
-                          '--cont-bg': p.contBg,
-                          '--cont-border': isSelected ? '#ffffff' : p.contBorder,
-                          '--cont-glow': p.contGlow,
-                          '--cont-text-color': p.accentColor,
-                          '--beacon-color': beaconColor
-                        }}
-                      >
-                        {/* Top Strobe Hazard Beacon */}
-                        <div className="container-beacon-mount">
-                          <div className={`beacon-bulb ${isStrobe ? 'strobe' : ''}`}></div>
-                        </div>
+                      {/* Top Strobe Hazard Beacon */}
+                      <div className="cargo-strobe-mount">
+                        <div className={`strobe-beacon-core ${isStrobe ? 'flashing' : ''}`} />
+                      </div>
 
-                        {/* Top Identification Code */}
-                        <div className="container-chemical-code">
-                          {p.symbol}
-                        </div>
+                      {/* Top Identification Code */}
+                      <div className="cargo-chem-symbol">
+                        {p.symbol}
+                      </div>
 
-                        {/* Middle/Bottom LCD Display */}
-                        <div className="container-lcd-panel">
-                          <div className="container-value-text">
-                            {val}
-                          </div>
-                          <div className="container-unit-text">
-                            {p.unit}
-                          </div>
+                      {/* Middle/Bottom LCD Display */}
+                      <div className="cargo-lcd-matrix">
+                        <div className="cargo-chem-value">
+                          {val}
                         </div>
-
-                        {/* Bottom Capacity Percentage Bar */}
-                        <div className="container-capacity-track">
-                          <div
-                            className="container-capacity-fill"
-                            style={{
-                              width: `${Math.min(100, Math.round(ratio * 100))}%`
-                            }}
-                          ></div>
+                        <div className="cargo-chem-unit">
+                          {p.unit}
                         </div>
                       </div>
 
-                      {/* Mechanical Foot Clamp anchoring to flatbed deck */}
-                      <div className="container-foot-clamp"></div>
+                      {/* Bottom Capacity Percentage Bar */}
+                      <div className="cargo-chem-gauge">
+                        <div
+                          className="cargo-chem-fill"
+                          style={{
+                            width: `${Math.min(100, Math.round(ratio * 100))}%`
+                          }}
+                        />
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
+
+                    {/* Mechanical Foot Clamp anchoring to flatbed deck */}
+                    <div className="cargo-deck-clamp" />
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Telemetry Readout Grid Below Truck */}
-        <div className="cargo-telemetry-hud">
-          <div className="telemetry-card">
-            <div className="telemetry-label">
-              <Truck size={14} />
-              <span>Gross Payload Mass</span>
-            </div>
-            <div className="telemetry-value-row">
-              <span className="telemetry-big-number">{payloadStats.grossTons}</span>
-              <span className="telemetry-unit">Tons / km³ column</span>
-            </div>
-            <p className="telemetry-subtext">Estimated mass in active troposphere</p>
-          </div>
-
-          <div className="telemetry-card">
-            <div className="telemetry-label">
-              <Activity size={14} />
-              <span>Trailer Suspension Load</span>
-            </div>
-            <div className="telemetry-value-row">
-              <span className="telemetry-big-number">{payloadStats.suspensionLoad}%</span>
-              <span className="telemetry-unit">Axle Rating</span>
-            </div>
-            <div className="telemetry-gauge-bar">
-              <div
-                className="telemetry-gauge-fill"
-                style={{
-                  width: `${payloadStats.suspensionLoad}%`,
-                  background: payloadStats.suspensionLoad > 85 ? '#ef4444' : payloadStats.suspensionLoad > 65 ? '#f59e0b' : '#10b981'
-                }}
-              ></div>
-            </div>
-          </div>
-
-          <div className="telemetry-card">
-            <div className="telemetry-label">
-              <AlertTriangle size={14} />
-              <span>Dominant Hazard Factor</span>
-            </div>
-            <div className="telemetry-value-row">
-              <span className="telemetry-big-number" style={{ color: payloadStats.worstPollutant.accentColor }}>
-                {payloadStats.worstPollutant.symbol}
-              </span>
-              <span className="telemetry-unit">
-                {Math.round(payloadStats.maxOverloadRatio * 100)}% of Limit
-              </span>
-            </div>
-            <p className="telemetry-subtext">{payloadStats.hazardTier}</p>
-          </div>
-
-          <div className="telemetry-card">
-            <div className="telemetry-label">
-              <ShieldCheck size={14} />
-              <span>Standard Protocol</span>
-            </div>
-            <div className="telemetry-value-row">
-              <span className="telemetry-big-number" style={{ fontSize: '1.25rem', color: '#38bdf8' }}>
-                NAAQS 2026
-              </span>
-              <span className="telemetry-unit">CPCB Standard</span>
-            </div>
-            <p className="telemetry-subtext">Automated 24-hr regulatory ceiling</p>
-          </div>
-        </div>
-
-        {/* Selected Chemical Deep Inspector Card */}
+      {/* ============================================================== */}
+      {/* 5. BOTTOM FLOATING TELEMETRY STRIP & FLYOUTS                   */}
+      {/* ============================================================== */}
+      <div className="cargo-bottom-dock">
+        {/* Selected Chemical Deep Inspector Flyout */}
         {activePollutant && (
           <div
-            className="cargo-chemical-inspector"
+            className="cargo-detail-flyout"
             style={{
               '--inspect-accent': activePollutant.accentColor,
-              '--inspect-glow': `${activePollutant.accentColor}33`,
-              '--inspect-pill-bg': `${activePollutant.accentColor}22`
+              '--inspect-glow': `${activePollutant.accentColor}33`
             }}
           >
-            <div className="inspector-chemical-badge">
-              <span className="inspector-formula">{activePollutant.symbol}</span>
-              <span className="inspector-chem-name">{activePollutant.name}</span>
-              <span className="inspector-status-pill">
-                {((pollutantValues[activePollutant.id] || 0) / activePollutant.naaqsLimit) > 1.0 ? '🚨 CEILING EXCEEDED' : '✅ WITHIN SAFE CEILING'}
-              </span>
-            </div>
+            <div className="flyout-left">
+              <div className="flyout-chem-pill">
+                <span className="flyout-symbol">{activePollutant.symbol}</span>
+                <span style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 600 }}>{activePollutant.name.split(' ')[0]}</span>
+              </div>
 
-            <div className="inspector-details-pane">
-              <div className="inspector-stats-grid">
-                <div className="inspector-stat-box">
-                  <span className="inspector-stat-lbl">Current Load</span>
-                  <div className="inspector-stat-val">
+              <div className="flyout-stats-row">
+                <div className="flyout-stat-item">
+                  <span className="flyout-stat-lbl">Current Load</span>
+                  <span className="flyout-stat-val">
                     {pollutantValues[activePollutant.id] || 0} {activePollutant.unit}
-                  </div>
+                  </span>
                 </div>
 
-                <div className="inspector-stat-box">
-                  <span className="inspector-stat-lbl">India NAAQS Ceiling</span>
-                  <div className="inspector-stat-val">
+                <div className="flyout-stat-item">
+                  <span className="flyout-stat-lbl">India NAAQS Ceiling</span>
+                  <span className="flyout-stat-val">
                     {activePollutant.naaqsLimit} {activePollutant.unit}
-                  </div>
+                  </span>
                 </div>
 
-                <div className="inspector-stat-box">
-                  <span className="inspector-stat-lbl">WHO 2021 Guideline</span>
-                  <div className="inspector-stat-val">
-                    {activePollutant.whoLimit} {activePollutant.unit}
-                  </div>
-                </div>
-
-                <div className="inspector-stat-box">
-                  <span className="inspector-stat-lbl">Load Ratio</span>
-                  <div className="inspector-stat-val" style={{ color: activePollutant.accentColor }}>
+                <div className="flyout-stat-item">
+                  <span className="flyout-stat-lbl">Load Ratio</span>
+                  <span className="flyout-stat-val" style={{ color: activePollutant.accentColor }}>
                     {Math.round(((pollutantValues[activePollutant.id] || 0) / activePollutant.naaqsLimit) * 100)}%
-                  </div>
+                  </span>
                 </div>
-              </div>
-
-              <div className="inspector-sources-block">
-                <p style={{ marginBottom: '0.4rem' }}>
-                  <strong>Key Anthropogenic & Environmental Sources: </strong>
-                  {activePollutant.source}
-                </p>
-                <p>
-                  <strong>Cellular & Pathological Health Impact: </strong>
-                  {activePollutant.healthImpact}
-                </p>
               </div>
             </div>
+
+            <div className="flyout-right-desc">
+              <p style={{ margin: '0 0 4px', color: '#e2e8f0' }}>
+                <strong style={{ color: '#f8fafc' }}>Sources: </strong>{activePollutant.source}
+              </p>
+              <p style={{ margin: 0, color: '#94a3b8' }}>
+                <strong style={{ color: '#cbd5e1' }}>Impact: </strong>{activePollutant.healthImpact}
+              </p>
+            </div>
+
+            <button
+              className="flyout-close-btn"
+              onClick={() => setSelectedPollutantId(null)}
+              title="Close detail card"
+            >
+              <X size={16} />
+            </button>
           </div>
         )}
 
-        {/* Manual Sliders Drawer (Expandable) */}
+        {/* Manual Sliders Flyout Drawer */}
         {isTunerOpen && (
-          <div className="cargo-sliders-drawer">
-            <div className="sliders-drawer-header">
-              <span className="sliders-title">
-                <Sliders size={16} />
+          <div className="cargo-sliders-flyout">
+            <div className="sliders-flyout-header">
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Sliders size={14} color="#38bdf8" />
                 <span>Manual Chemical Payload Injector</span>
               </span>
               <button
-                className="cargo-action-btn"
+                className="cargo-dock-btn"
                 onClick={() => handleSelectPreset('india_avg')}
               >
-                <RotateCcw size={13} />
+                <RotateCcw size={12} />
                 <span>Reset to Pan-India</span>
               </button>
             </div>
 
-            <div className="sliders-grid">
+            <div className="sliders-flyout-grid">
               {POLLUTANT_SPECS.map(p => {
                 const val = pollutantValues[p.id] || 0;
                 const maxSlider = p.id === 'co' ? 10.0 : p.naaqsLimit * 4;
                 const step = p.id === 'co' ? 0.1 : 1;
 
                 return (
-                  <div key={p.id} className="slider-unit">
-                    <div className="slider-label-row">
-                      <span>{p.symbol} ({p.name.split(' ')[0]})</span>
-                      <span className="slider-current-val">{val} {p.unit}</span>
+                  <div key={p.id} className="slider-flyout-item">
+                    <div className="slider-flyout-lbl-row">
+                      <span>{p.symbol}</span>
+                      <span className="slider-flyout-val">{val} {p.unit}</span>
                     </div>
                     <input
                       type="range"
@@ -692,7 +675,7 @@ export default function AtmosphericCargoTruck() {
                       step={step}
                       value={val}
                       onChange={(e) => handleSliderChange(p.id, e.target.value)}
-                      className="cargo-range-input"
+                      className="slider-flyout-range"
                     />
                   </div>
                 );
@@ -700,6 +683,71 @@ export default function AtmosphericCargoTruck() {
             </div>
           </div>
         )}
+
+        {/* Telemetry Strip (4 Glass Cards) */}
+        <div className="cargo-telemetry-grid">
+          <div className="cargo-hud-card">
+            <div className="cargo-hud-lbl">
+              <Truck size={13} color="#38bdf8" />
+              <span>Gross Payload Mass</span>
+            </div>
+            <div className="cargo-hud-val-row">
+              <span className="cargo-hud-number">{payloadStats.grossTons}</span>
+              <span className="cargo-hud-unit">Tons / km³ column</span>
+            </div>
+            <p className="cargo-hud-subtext">Tropospheric aerosol density</p>
+          </div>
+
+          <div className="cargo-hud-card">
+            <div className="cargo-hud-lbl">
+              <Activity size={13} color="#f59e0b" />
+              <span>Trailer Suspension Load</span>
+            </div>
+            <div className="cargo-hud-val-row">
+              <span className="cargo-hud-number">{payloadStats.suspensionLoad}%</span>
+              <span className="cargo-hud-unit">Axle Rating</span>
+            </div>
+            <div className="cargo-hud-bar">
+              <div
+                className="cargo-hud-bar-fill"
+                style={{
+                  width: `${payloadStats.suspensionLoad}%`,
+                  background: payloadStats.suspensionLoad > 85 ? '#ef4444' : payloadStats.suspensionLoad > 65 ? '#f59e0b' : '#10b981'
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="cargo-hud-card">
+            <div className="cargo-hud-lbl">
+              <AlertTriangle size={13} color="#ef4444" />
+              <span>Dominant Hazard Factor</span>
+            </div>
+            <div className="cargo-hud-val-row">
+              <span className="cargo-hud-number" style={{ color: payloadStats.worstPollutant.accentColor }}>
+                {payloadStats.worstPollutant.symbol}
+              </span>
+              <span className="cargo-hud-unit">
+                {Math.round(payloadStats.maxOverloadRatio * 100)}% of Limit
+              </span>
+            </div>
+            <p className="cargo-hud-subtext">{payloadStats.hazardTier}</p>
+          </div>
+
+          <div className="cargo-hud-card">
+            <div className="cargo-hud-lbl">
+              <ShieldCheck size={13} color="#34d399" />
+              <span>Regulatory Standard</span>
+            </div>
+            <div className="cargo-hud-val-row">
+              <span className="cargo-hud-number" style={{ fontSize: '1.25rem', color: '#38bdf8' }}>
+                NAAQS 2026
+              </span>
+              <span className="cargo-hud-unit">CPCB Standard</span>
+            </div>
+            <p className="cargo-hud-subtext">24-hr permissible national ceiling</p>
+          </div>
+        </div>
       </div>
     </section>
   );

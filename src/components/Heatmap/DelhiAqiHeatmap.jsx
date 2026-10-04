@@ -3604,7 +3604,7 @@ export default function DelhiAqiHeatmap() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <Sparkles size={13} color="#38bdf8" />
                     <strong style={{ color: '#38bdf8', fontSize: '0.74rem', letterSpacing: '0.03em', textTransform: 'uppercase' }}>
-                      Gemini 3.8 Flash Advisory
+                      Atmospheric Health & Commute Advisory
                     </strong>
                   </div>
                   <span

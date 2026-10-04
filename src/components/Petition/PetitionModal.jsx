@@ -1232,7 +1232,7 @@ export default function PetitionModal({
                   }}
                 >
                   <Sparkles size={13} className={isPolishing ? 'animate-spin' : ''} />
-                  {isPolishing ? 'Polishing...' : 'Polish Tone with AI'}
+                  {isPolishing ? 'Refining...' : 'Refine Formal Tone'}
                 </button>
               </div>
             </div>
