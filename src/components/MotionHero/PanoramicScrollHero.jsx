@@ -1,18 +1,20 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ArrowDown, Wind, Sparkles, AlertTriangle, ShieldCheck, ChevronRight, Activity } from 'lucide-react';
+import { ArrowDown, Wind, Sparkles, AlertTriangle, ShieldCheck, ChevronRight, Activity, Eye } from 'lucide-react';
+import './PanoramicScrollHero.css';
 
 /**
- * PanoramicScrollHero
- * Cinematic motion landing page:
- * - As the user scrolls vertically, the 32:9 panoramic image (spanning two 16:9 viewports)
- *   moves from left (pristine lush green tree-lung) to right (charcoal decaying tree-lung with smog).
- * - Synchronized narrative overlays and atmospheric lighting transitions.
+ * PanoramicScrollHero - Option A: Cinematic Sensor & Atmospheric Particulate Treatment
+ * - Mask low-resolution texture with animated GPU particle field, film grain & optical scanlines
+ * - Interactive mouse luminescence flare
+ * - Scroll-driven scrub transitioning from toxic smog crisis to pristine living canopy
  */
 export default function PanoramicScrollHero({ onExploreTwin }) {
   const trackRef = useRef(null);
+  const canvasRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0, clientX: 0, clientY: 0 });
 
+  // 1. Scroll-driven scrub tracking
   useEffect(() => {
     const handleScroll = () => {
       if (!trackRef.current) return;
@@ -29,11 +31,83 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // 2. Mouse tracking for parallax and aperture spotlight
   const handleMouseMove = (e) => {
     const x = (e.clientX / window.innerWidth - 0.5) * 20;
     const y = (e.clientY / window.innerHeight - 0.5) * 20;
-    setMousePos({ x, y });
+    setMousePos({ x, y, clientX: e.clientX, clientY: e.clientY });
   };
+
+  // 3. Atmospheric Particle Canvas: Floating Soot / Smoke (Left) -> Glowing Spores / Oxygen (Right)
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animId;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Particle seed generator
+    const particleCount = 55;
+    const particles = Array.from({ length: particleCount }).map(() => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      radius: Math.random() * 2.2 + 0.8,
+      speedX: (Math.random() - 0.5) * 0.45,
+      speedY: -Math.random() * 0.6 - 0.2, // Drifting upwards like smoke/spores
+      alpha: Math.random() * 0.5 + 0.25,
+      pulse: Math.random() * Math.PI * 2,
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const isClean = scrollProgress > 0.55;
+
+      particles.forEach(p => {
+        p.x += p.speedX + (mousePos.x * 0.02);
+        p.y += p.speedY;
+        p.pulse += 0.03;
+
+        // Wrap around viewport edges
+        if (p.y < -10) p.y = canvas.height + 10;
+        if (p.x < -10) p.x = canvas.width + 10;
+        if (p.x > canvas.width + 10) p.x = -10;
+
+        const currentAlpha = Math.max(0.1, p.alpha + Math.sin(p.pulse) * 0.2);
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+
+        if (!isClean) {
+          // Left Phase: Toxic Amber & Red Ash/Soot Particulates
+          ctx.fillStyle = `rgba(239, 68, 68, ${currentAlpha * 0.65})`;
+          ctx.shadowBlur = p.radius * 4;
+          ctx.shadowColor = 'rgba(239, 68, 68, 0.5)';
+        } else {
+          // Right Phase: Bioluminescent Emerald / Cyan Pollen & Spores
+          ctx.fillStyle = `rgba(52, 211, 153, ${currentAlpha * 0.85})`;
+          ctx.shadowBlur = p.radius * 6;
+          ctx.shadowColor = 'rgba(16, 185, 129, 0.7)';
+        }
+        ctx.fill();
+        ctx.shadowBlur = 0; // Reset
+      });
+
+      animId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', resize);
+    };
+  }, [scrollProgress, mousePos.x]);
 
   // Determine active phase based on scroll progress
   const isLeftPhase = scrollProgress < 0.38;
@@ -46,6 +120,13 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
     : isMidPhase
     ? 'rgba(245, 158, 11, 0.08)'
     : 'rgba(16, 185, 129, 0.08)';
+
+  // Spotlight color based on active narrative zone
+  const spotlightColor = isLeftPhase
+    ? 'rgba(239, 68, 68, 0.18)'
+    : isMidPhase
+    ? 'rgba(245, 158, 11, 0.15)'
+    : 'rgba(56, 189, 248, 0.18)';
 
   return (
     <div
@@ -70,14 +151,36 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
           justifyContent: 'center',
         }}
       >
-        {/* Hybrid Depth Vignette & Seamless Bottom Gradient Fade */}
+        {/* ============================================================== */}
+        {/* OPTION A: CINEMATIC RESOLUTION MASKING ENGINE                  */}
+        {/* ============================================================== */}
+
+        {/* 1. Procedural Film Grain Overlay (Breaks up bilinear pixel blur) */}
+        <div className="hero-grain-overlay" aria-hidden="true" />
+
+        {/* 2. Micro-Scanline Optical Matrix (Crisp 1px horizontal sensor lines) */}
+        <div className="hero-scanline-matrix" aria-hidden="true" />
+
+        {/* 3. Floating Interactive Particulate Canvas (Soot motes & Spores) */}
+        <canvas ref={canvasRef} className="hero-particles-canvas" />
+
+        {/* 4. Mouse-reactive Volumetric Aperture Spotlight */}
+        <div
+          className="hero-cursor-luminescence"
+          style={{
+            background: `radial-gradient(circle 380px at ${mousePos.clientX || window.innerWidth / 2}px ${mousePos.clientY || window.innerHeight / 2}px, ${spotlightColor} 0%, transparent 80%)`,
+          }}
+          aria-hidden="true"
+        />
+
+        {/* 5. Hybrid Depth Vignette & Seamless Bottom Gradient Fade into Map */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
             zIndex: 10,
             pointerEvents: 'none',
-            background: `radial-gradient(ellipse 90% 80% at center, transparent 45%, rgba(7, 10, 18, 0.55) 80%, rgba(7, 10, 18, 0.88) 100%), linear-gradient(to bottom, rgba(7, 10, 18, 0.35) 0%, transparent 15%, transparent 60%, rgba(7, 10, 18, 0.8) 85%, #070a12 100%), ${ambientBg}`,
+            background: `radial-gradient(ellipse 90% 80% at center, transparent 40%, rgba(7, 10, 18, 0.58) 75%, rgba(7, 10, 18, 0.92) 100%), linear-gradient(to bottom, rgba(7, 10, 18, 0.4) 0%, transparent 16%, transparent 60%, rgba(7, 10, 18, 0.85) 85%, #070a12 100%), ${ambientBg}`,
             transition: 'background 0.5s ease',
           }}
         />
@@ -107,11 +210,31 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
               height: '100vh',
               objectFit: 'cover',
               objectPosition: 'center',
-              filter: `contrast(1.08) brightness(${0.88 + scrollProgress * 0.12})`,
+              filter: `contrast(1.12) brightness(${0.86 + scrollProgress * 0.12}) saturate(1.08)`,
               userSelect: 'none',
               pointerEvents: 'none',
             }}
           />
+        </div>
+
+        {/* ============================================================== */}
+        {/* TOP EDITORIAL HUD TELEMETRY CAPSULE (Clean, Uncluttered)       */}
+        {/* ============================================================== */}
+        <div className="hero-top-hud">
+          <div className="hero-hud-brand">
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: isRightPhase ? '#10b981' : isMidPhase ? '#f59e0b' : '#ef4444', boxShadow: `0 0 10px ${isRightPhase ? '#10b981' : isMidPhase ? '#f59e0b' : '#ef4444'}` }} />
+            <span>VAYUVITALS</span>
+            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>01 • PROLOGUE</span>
+          </div>
+
+          <div className="hero-hud-pill">
+            <Wind size={13} color="#38bdf8" />
+            <span>Atmospheric Inversion Journey</span>
+            <span style={{ color: '#475569' }}>•</span>
+            <span style={{ color: isRightPhase ? '#34d399' : isMidPhase ? '#fbbf24' : '#f87171' }}>
+              {isRightPhase ? 'Phase III: Canopy Gas Exchange' : isMidPhase ? 'Phase II: Critical Transition' : 'Phase I: Particulate Decay'}
+            </span>
+          </div>
         </div>
 
         {/* ============================================================== */}
