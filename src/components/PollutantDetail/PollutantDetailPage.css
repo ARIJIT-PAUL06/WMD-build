@@ -1,0 +1,590 @@
+/* ==========================================================================
+   POLLUTANT DETAIL INTELLIGENCE PAGE - HIGH-TECH CYBER GLASSMORPHISM
+   ========================================================================== */
+
+.pollutant-page-root {
+  min-height: 100vh;
+  width: 100%;
+  color: #f1f5f9;
+  font-family: var(--font-body, 'Inter', -apple-system, sans-serif);
+  background: #070a12;
+  position: relative;
+  overflow-x: hidden;
+  padding-bottom: 80px;
+}
+
+/* Ambient Backdrops & Dynamic Glow */
+.pollutant-ambient-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 600px;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(circle at 50% -100px, var(--theme-accent-glow, rgba(239, 68, 68, 0.25)) 0%, transparent 70%);
+  transition: background 0.5s ease;
+}
+
+.pollutant-grid-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Sticky Top Navigation Bar */
+.pollutant-nav-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(7, 10, 18, 0.75);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  transition: all 0.3s ease;
+}
+
+.pollutant-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pollutant-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pollutant-back-btn:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: var(--theme-primary, #38bdf8);
+  color: #ffffff;
+  transform: translateX(-3px);
+  box-shadow: 0 0 16px var(--theme-accent-glow, rgba(56, 189, 248, 0.3));
+}
+
+.pollutant-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.pollutant-breadcrumb-separator {
+  color: #475569;
+}
+
+/* Pollutant Quick Selector Tabs */
+.pollutant-selector-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  max-width: 60%;
+  scrollbar-width: none;
+  padding: 2px;
+}
+
+.pollutant-selector-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.pollutant-tab-btn {
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.pollutant-tab-btn:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(30, 41, 59, 0.75);
+}
+
+.pollutant-tab-btn.active {
+  color: #ffffff;
+  background: var(--theme-card-bg, rgba(239, 68, 68, 0.18));
+  border-color: var(--theme-primary, #ef4444);
+  box-shadow: 0 0 14px var(--theme-accent-glow, rgba(239, 68, 68, 0.35));
+}
+
+/* Main Container */
+.pollutant-content-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 36px 24px;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* Hero Section */
+.pollutant-hero-card {
+  border-radius: 24px;
+  background: var(--theme-hero-gradient, linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(7, 10, 18, 0.95) 100%));
+  border: 1px solid var(--theme-card-border, rgba(239, 68, 68, 0.3));
+  padding: 38px 44px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55), 0 0 35px var(--theme-accent-glow, rgba(239, 68, 68, 0.15));
+}
+
+.pollutant-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--theme-card-border, rgba(239, 68, 68, 0.4));
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--theme-badge-color, #fca5a5);
+  margin-bottom: 18px;
+}
+
+.pollutant-hero-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.pollutant-hero-left {
+  flex: 1 1 540px;
+}
+
+.pollutant-hero-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.pollutant-symbol-badge {
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 3.4rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 0 0 28px var(--theme-accent-glow, rgba(239, 68, 68, 0.6));
+}
+
+.pollutant-full-name {
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.15;
+}
+
+.pollutant-tagline {
+  font-size: 1.05rem;
+  color: #cbd5e1;
+  line-height: 1.55;
+  margin-bottom: 16px;
+  max-width: 640px;
+}
+
+.pollutant-classification-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Hero Stats Metric Strip */
+.pollutant-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pollutant-metric-box {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.pollutant-metric-box:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.pollutant-metric-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.pollutant-metric-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.pollutant-metric-val {
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.pollutant-metric-unit {
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.pollutant-metric-note {
+  font-size: 0.68rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* Two-Column Section: 3D Pulmonary & Respiratory Visualization */
+.pollutant-lungs-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: stretch;
+}
+
+@media (max-width: 992px) {
+  .pollutant-lungs-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pollutant-canvas-card {
+  border-radius: 20px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 480px;
+  position: relative;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.5);
+}
+
+.pollutant-canvas-header {
+  padding: 16px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(7, 10, 18, 0.6);
+  z-index: 5;
+}
+
+.pollutant-canvas-title {
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pollutant-canvas-viewport {
+  flex: 1;
+  width: 100%;
+  position: relative;
+}
+
+.pollutant-canvas-hint {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(10px);
+  padding: 5px 14px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.72rem;
+  color: #94a3b8;
+  pointer-events: none;
+  z-index: 5;
+  white-space: nowrap;
+}
+
+.pollutant-pathology-card {
+  border-radius: 20px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 26px 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 22px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.5);
+}
+
+.pollutant-pathology-title {
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pollutant-region-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: var(--theme-card-bg, rgba(239, 68, 68, 0.15));
+  border: 1px solid var(--theme-card-border, rgba(239, 68, 68, 0.3));
+  color: var(--theme-primary, #ef4444);
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.pollutant-pathology-desc {
+  font-size: 0.88rem;
+  color: #cbd5e1;
+  line-height: 1.65;
+  margin-bottom: 16px;
+}
+
+.pollutant-symptoms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pollutant-symptom-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.82rem;
+  color: #e2e8f0;
+  line-height: 1.4;
+}
+
+/* Analytical Graphs & Diurnal Trends */
+.pollutant-data-section {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 28px;
+}
+
+@media (max-width: 992px) {
+  .pollutant-data-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pollutant-graph-card {
+  border-radius: 20px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 26px 30px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.pollutant-graph-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pollutant-section-h3 {
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Curated Documentaries & Video Archive */
+.pollutant-docs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+}
+
+.pollutant-doc-card {
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+.pollutant-doc-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--theme-primary, #38bdf8);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.65), 0 0 25px var(--theme-accent-glow, rgba(56, 189, 248, 0.25));
+}
+
+.pollutant-doc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.pollutant-doc-title {
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.35;
+  margin: 6px 0;
+}
+
+.pollutant-doc-summary {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.pollutant-doc-takeaway {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid var(--theme-primary, #ef4444);
+  font-size: 0.76rem;
+  color: #e2e8f0;
+  line-height: 1.45;
+}
+
+/* Countermeasures Grid */
+.pollutant-countermeasures-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.pollutant-countermeasure-card {
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pollutant-countermeasure-title {
+  font-weight: 800;
+  font-size: 0.88rem;
+  color: var(--theme-primary, #38bdf8);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pollutant-countermeasure-rule {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Responsive Overrides */
+@media (max-width: 768px) {
+  .pollutant-nav-bar {
+    padding: 12px 16px;
+  }
+
+  .pollutant-selector-tabs {
+    display: none;
+  }
+
+  .pollutant-hero-card {
+    padding: 26px 20px;
+  }
+
+  .pollutant-symbol-badge {
+    font-size: 2.6rem;
+  }
+
+  .pollutant-full-name {
+    font-size: 1.6rem;
+  }
+}

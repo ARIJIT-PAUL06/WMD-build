@@ -156,7 +156,7 @@ const PRESETS = {
   }
 };
 
-export default function AtmosphericCargoTruck() {
+export default function AtmosphericCargoTruck({ onSelectPollutant }) {
   const [activePreset, setActivePreset] = useState('india_avg');
   const [pollutantValues, setPollutantValues] = useState(PRESETS.india_avg.values);
   const [selectedPollutantId, setSelectedPollutantId] = useState('pm25');
@@ -432,8 +432,14 @@ export default function AtmosphericCargoTruck() {
                     <div
                       key={p.id}
                       className={`pollutant-container-unit ${isSelected ? 'selected' : ''}`}
-                      onClick={() => setSelectedPollutantId(p.id)}
-                      title={`Click to inspect ${p.name}: ${val} ${p.unit} (${Math.round(ratio * 100)}% of NAAQS)`}
+                      onClick={() => {
+                        setSelectedPollutantId(p.id);
+                        if (onSelectPollutant) {
+                          onSelectPollutant(p.id);
+                        }
+                      }}
+                      title={`Click to open full ${p.name} (${p.symbol}) deep-dive investigation & health analysis`}
+                      style={{ cursor: 'pointer' }}
                     >
                       <div
                         className="container-box"
