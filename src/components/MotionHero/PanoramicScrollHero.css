@@ -123,7 +123,43 @@
   align-items: center;
   /* Barrel distortion perspective to swell the middle of the screen */
   transform-style: preserve-3d;
-  perspective: 1200px;
+  perspective: 900px;
+}
+
+/* The actual bulged CRT screen picture */
+.hero-crt-bulged-image {
+  width: 200vw;
+  height: 100vh;
+  object-fit: cover;
+  object-position: center;
+  user-select: none;
+  pointer-events: none;
+  /* Convex spherical swell: Center magnifies and bows forward */
+  transform: scale(1.08) translateZ(40px);
+  border-radius: 40px;
+  /* Smooth edge pincushion shadow */
+  box-shadow: 
+    inset 0 0 80px rgba(0, 0, 0, 0.9),
+    0 0 120px rgba(0, 0, 0, 0.95);
+}
+
+/* Diagonal glass faceplate reflection (vintage TV curved bulb glare) */
+.hero-crt-glass-glare {
+  position: absolute;
+  top: -15%;
+  left: -15%;
+  width: 75%;
+  height: 65%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 40% 40%,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 40%,
+    transparent 70%
+  );
+  transform: rotate(-18deg);
+  pointer-events: none;
+  mix-blend-mode: screen;
 }
 
 /* 5. Minimalist Floating Telemetry HUD Capsule */

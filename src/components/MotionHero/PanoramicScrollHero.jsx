@@ -153,11 +153,37 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
         }}
       >
         {/* ============================================================== */}
-        {/* VINTAGE CRT & ANALOG TELEVISION SENSOR FILTER RIG              */}
+        {/* CRT SPHERICAL FACEPLATE OPTICAL DISPLACEMENT LENS (SVG FILTER) */}
         {/* ============================================================== */}
+        <svg style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }} aria-hidden="true">
+          <defs>
+            {/* Spherical displacement map: radial gradient where center bulges forward */}
+            <radialGradient id="crt-lens-gradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+              <stop offset="0%" stopColor="#808080" />
+              <stop offset="60%" stopColor="#909090" />
+              <stop offset="85%" stopColor="#b5b5b5" />
+              <stop offset="100%" stopColor="#ffffff" />
+            </radialGradient>
+            <filter id="crt-spherical-barrel" x="-10%" y="-10%" width="120%" height="120%">
+              {/* Generate radial distortion vectors */}
+              <feRadialGradient />
+              <feTurbulence type="fractalNoise" baseFrequency="0.001 0.001" numOctaves="1" result="warpMap" />
+              <feDisplacementMap
+                in="SourceGraphic"
+                in2="warpMap"
+                scale="28"
+                xChannelSelector="R"
+                yChannelSelector="G"
+              />
+            </filter>
+          </defs>
+        </svg>
 
         {/* 1. Bulbous Spherical CRT Curvature Swell & Corner Blackout */}
-        <div className="hero-crt-screen-curvature" aria-hidden="true" />
+        <div className="hero-crt-screen-curvature" aria-hidden="true">
+          {/* Authentic CRT Glass Faceplate Curvature Lens Highlight (Top-left bulb reflection) */}
+          <div className="hero-crt-glass-glare" />
+        </div>
 
         {/* 2. Vintage TV Rolling Screen Tear Band (Sweeps up and down) */}
         <div className="hero-crt-rolling-bar" aria-hidden="true" />
@@ -200,12 +226,12 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
         />
 
         {/* ============================================================== */}
-        {/* ULTRA-WIDE PANORAMIC 32:9 STRIP (WITH CRT BULB BARREL PERSPECTIVE) */}
+        {/* ULTRA-WIDE PANORAMIC 32:9 STRIP (BULGED CRT SPHERICAL FACEPLATE) */}
         {/* ============================================================== */}
         <div
           className="hero-panoramic-crt-barrel"
           style={{
-            transform: `translate3d(calc(-${scrollProgress * 50}% + ${mousePos.x * 0.15}px), ${mousePos.y * 0.15}px, 0) scale(1.035)`,
+            transform: `translate3d(calc(-${scrollProgress * 50}% + ${mousePos.x * 0.15}px), ${mousePos.y * 0.15}px, 0)`,
             transition: 'transform 0.12s cubic-bezier(0.1, 0.9, 0.2, 1)',
             willChange: 'transform',
           }}
@@ -213,15 +239,9 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
           <img
             src="/lungs-panoramic.png"
             alt="Smog-Decayed Lungs vs Pristine Green Foliage Lungs"
+            className="hero-crt-bulged-image"
             style={{
-              width: '200vw',
-              height: '100vh',
-              objectFit: 'cover',
-              objectPosition: 'center',
               filter: `contrast(1.15) brightness(${0.88 + scrollProgress * 0.12}) saturate(1.12)`,
-              userSelect: 'none',
-              pointerEvents: 'none',
-              borderRadius: '24px',
             }}
           />
         </div>
