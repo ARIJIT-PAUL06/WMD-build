@@ -2429,8 +2429,8 @@ export default function DelhiAqiHeatmap() {
           zIndex: 2,
           pointerEvents: 'none',
           background: `
-            linear-gradient(to bottom, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) top / 100% 46px no-repeat,
-            linear-gradient(to top, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) bottom / 100% 46px no-repeat,
+            linear-gradient(to bottom, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) top / 100% 50px no-repeat,
+            linear-gradient(to top, #070a12 0%, rgba(7, 10, 18, 0.98) 25%, rgba(7, 10, 18, 0.90) 45%, rgba(7, 10, 18, 0.65) 65%, rgba(7, 10, 18, 0.35) 80%, rgba(7, 10, 18, 0.10) 92%, transparent 100%) bottom / 100% 140px no-repeat,
             linear-gradient(to right, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) left / 42px 100% no-repeat,
             linear-gradient(to left, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) right / 42px 100% no-repeat
           `,

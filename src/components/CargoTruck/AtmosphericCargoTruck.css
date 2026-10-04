@@ -4,7 +4,7 @@
 .cargo-section {
   position: relative;
   width: 100%;
-  background: radial-gradient(ellipse at 50% 15%, rgba(15, 23, 42, 0.98) 0%, rgba(6, 10, 18, 0.99) 65%, #030712 100%);
+  background: radial-gradient(ellipse at 50% 0%, #070a12 0%, #070a12 25%, rgba(15, 23, 42, 0.95) 55%, rgba(6, 10, 18, 0.99) 80%, #030712 100%);
   padding: 6rem 1.5rem 6.5rem;
   overflow: hidden;
   border-top: none; /* Seamless borderless transition from map section */
@@ -20,8 +20,8 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 180px;
-  background: linear-gradient(180deg, #070a12 0%, rgba(7, 10, 18, 0.92) 30%, rgba(7, 10, 18, 0.5) 65%, transparent 100%);
+  height: 240px;
+  background: linear-gradient(180deg, #070a12 0%, rgba(7, 10, 18, 0.95) 40%, rgba(7, 10, 18, 0.6) 70%, transparent 100%);
   pointer-events: none;
   z-index: 2;
 }
