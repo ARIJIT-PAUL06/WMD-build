@@ -157,7 +157,7 @@ async function runTestSuite() {
         gridId: targetGrid,
         currentPm25: 275,
         anomalyType: 'Sudden Atmospheric Stagnation & Particulate Incursion',
-        dispatchViaSes: true,
+        dispatchViaSes: false, // Dry-run in test to protect daily AWS SES sending quota
         isSandbox: true,
         ignoreDebounce: true
       })
@@ -165,10 +165,10 @@ async function runTestSuite() {
     const data = await res.json();
 
     if (data.success && data.dispatched && data.facilitiesAlerted > 0) {
-      console.log(`  ${colors.green}✔ Block Emergency Flash Alert Dispatched to All Enclosed Facilities!${colors.reset}`);
+      console.log(`  ${colors.green}✔ Block Emergency Flash Alert Engine Verified (Simulated Dispatch to Protect Quota)!${colors.reset}`);
       console.log(`    • Spatial Block: ${colors.cyan}${data.gridId}${colors.reset}`);
       console.log(`    • Surge PM2.5: ${colors.red}${data.pm25} µg/m³ (Severe Emergency)${colors.reset}`);
-      console.log(`    • Facilities Alerted Simultaneously: ${colors.bright}${data.facilitiesAlerted} institutions${colors.reset}`);
+      console.log(`    • Facilities Enclosed & Alerted: ${colors.bright}${data.facilitiesAlerted} institutions${colors.reset}`);
       console.log(`    • Sample Enclosed Institutions:`);
       data.facilities.slice(0, 4).forEach(f => {
         console.log(`      - [${f.facilityClass === 'healthcare' ? 'HOSPITAL' : 'SCHOOL'}] ${f.name} → ${f.status}`);
@@ -194,7 +194,7 @@ async function runTestSuite() {
         gridId: 'GRID_R03_C05',
         forcePetition: true,
         ignoreDebounce: true,
-        dispatchViaSes: true,
+        dispatchViaSes: false, // Dry-run in test to protect daily AWS SES sending quota
         isSandbox: true
       })
     });
