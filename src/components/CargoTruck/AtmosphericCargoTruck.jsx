@@ -301,14 +301,14 @@ export default function AtmosphericCargoTruck() {
 
       <div className="cargo-container">
         {/* Section Header */}
-        <div className="cargo-header" style={{ marginBottom: '1.75rem' }}>
+        <div className="cargo-header" style={{ marginBottom: '3.75rem' }}>
           <h2 className="cargo-title" style={{ marginBottom: 0 }}>
             VayuVitals <span className="highlight-gradient">Atmospheric Cargo Hauler</span>
           </h2>
         </div>
 
         {/* Top Control Deck: Presets & Purge */}
-        <div className="cargo-controls-bar">
+        <div className="cargo-controls-bar" style={{ marginBottom: '5rem', maxWidth: '940px', marginLeft: 'auto', marginRight: 'auto' }}>
           <div className="cargo-presets-group">
             <button
               className={`cargo-preset-btn ${activePreset === 'india_avg' ? 'active' : ''}`}
