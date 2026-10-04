@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ArrowDown, Wind, Sparkles, AlertTriangle, ShieldCheck, ChevronRight, Activity, Eye, Flame, Gauge } from 'lucide-react';
+import { ArrowDown, Wind } from 'lucide-react';
 import CrtScreenLensCanvas from './CrtScreenLensCanvas';
 import './PanoramicScrollHero.css';
 
@@ -130,20 +130,6 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
     ? 'rgba(245, 158, 11, 0.13)'
     : 'rgba(56, 189, 248, 0.16)';
 
-  // Minimal templates glide horizontally across the screen with the panoramic image
-  const p1Offset = (0.05 - scrollProgress) * 110;
-  const p1Opacity = Math.max(0, Math.min(1, 1 - scrollProgress * 3.4));
-  const p1RotY = Math.max(-2, Math.min(10, 6 + (0.05 - scrollProgress) * 16));
-
-  const p2Dist = scrollProgress - 0.50;
-  const p2Offset = -p2Dist * 140;
-  const p2Opacity = Math.max(0, Math.min(1, (0.24 - Math.abs(p2Dist)) / 0.12));
-  const p2RotY = Math.max(-10, Math.min(10, -p2Dist * 28));
-
-  const p3Offset = Math.max(0, (0.88 - scrollProgress) * 120);
-  const p3Opacity = Math.max(0, Math.min(1, (scrollProgress - 0.65) / 0.18));
-  const p3RotY = Math.max(-10, Math.min(4, -6 + (0.88 - scrollProgress) * 16));
-
   return (
     <div
       ref={trackRef}
@@ -168,140 +154,36 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
         }}
       >
         {/* ============================================================== */}
-        {/* FIXED CRT CURVED SCREEN FACEPLATE (DYNAMIC BULGE LENS)         */}
-        {/* The screen lens is stationary; as you scroll, the picture      */}
-        {/* slides through the center and bulges dynamically outward!      */}
+        {/* AUTHENTIC CRT CURVED SCREEN LENS WITH IN-SHADER TEMPLATES      */}
+        {/* The templates lie flat on the background image inside WebGL,   */}
+        {/* sharing the exact spherical barrel distortion & scanlines,     */}
+        {/* and rise smoothly from below to up as user scrolls down!       */}
         {/* ============================================================== */}
-        <CrtScreenLensCanvas scrollProgress={scrollProgress} mousePos={mousePos} />
+        <CrtScreenLensCanvas
+          scrollProgress={scrollProgress}
+          mousePos={mousePos}
+          onExploreTwin={onExploreTwin}
+        />
 
-        {/* ============================================================== */}
-        {/* BEHIND-THE-FILTER MINIMAL TEMPLATES (Arriving with the image)   */}
-        {/* Placed at zIndex: 9, beneath CRT glare, grain, flicker & beam  */}
-        {/* ============================================================== */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            zIndex: 9,
-            overflow: 'hidden',
-            pointerEvents: 'none',
-          }}
-        >
-          {/* Phase 1: Left / Smog Crisis */}
-          <div
-            className="crt-stage-left"
+        {/* Phase 3 Interactive CTA Hotspot Overlay */}
+        {isRightPhase && (
+          <button
+            type="button"
+            onClick={onExploreTwin}
+            aria-label="Explore India National AQI Heatmap"
             style={{
               position: 'absolute',
-              left: '6vw',
-              bottom: '12vh',
-              opacity: p1Opacity,
-              transform: `translate3d(${p1Offset}vw, 0, 0)`,
-              transition: 'opacity 0.25s ease',
-              pointerEvents: p1Opacity > 0.05 ? 'auto' : 'none',
+              right: '7vw',
+              bottom: '14vh',
+              width: 'min(430px, 85vw)',
+              height: '46px',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              zIndex: 35,
             }}
-          >
-            <div
-              className="crt-minimal-card crt-card-toxic"
-              style={{
-                transform: `perspective(1000px) rotateY(${p1RotY}deg) rotateX(-2deg)`,
-              }}
-            >
-              <div className="crt-minimal-content">
-                <div className="crt-minimal-badge" style={{ color: '#f87171' }}>
-                  <Flame size={12} /> 01 • PROLOGUE // DELHI NCR
-                </div>
-                <h1 className="crt-minimal-title">A City Choking in Silence.</h1>
-                <p className="crt-minimal-statement">
-                  A 140-meter thermal ceiling traps toxic stubble smoke and particulate soot over 30 million people. Microscopic soot settles deep into alveolar walls, destroying lung capacity breath by breath.
-                </p>
-                <div className="crt-minimal-stat-line" style={{ color: '#ef4444' }}>
-                  <span className="crt-minimal-stat-pill" style={{ background: 'rgba(239, 68, 68, 0.22)', color: '#f87171' }}>
-                    AQI 486 · SEVERE
-                  </span>
-                  <span style={{ color: '#94a3b8' }}>PM2.5: 19.4× WHO Limit</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Phase 2: Center / The Turning Point */}
-          <div
-            className="crt-stage-center"
-            style={{
-              position: 'absolute',
-              left: '50%',
-              bottom: '12vh',
-              opacity: p2Opacity,
-              transform: `translate3d(calc(-50% + ${p2Offset}vw), 0, 0)`,
-              transition: 'opacity 0.25s ease',
-              pointerEvents: p2Opacity > 0.05 ? 'auto' : 'none',
-            }}
-          >
-            <div
-              className="crt-minimal-card crt-card-turning"
-              style={{
-                transform: `perspective(1000px) rotateY(${p2RotY}deg) rotateX(2deg) scale(1.02)`,
-              }}
-            >
-              <div className="crt-minimal-content">
-                <div className="crt-minimal-badge" style={{ color: '#fbbf24' }}>
-                  <Activity size={12} /> 02 • INTERVENTION // THE CORRIDOR
-                </div>
-                <h2 className="crt-minimal-title">The Line Between Decay & Renewal.</h2>
-                <p className="crt-minimal-statement">
-                  Where predictive atmospheric intelligence intercepts the smog plume. Automated clean air corridors and mist cannons deploy dynamically to halt cellular damage before it becomes permanent.
-                </p>
-                <div className="crt-minimal-stat-line" style={{ color: '#f59e0b' }}>
-                  <span className="crt-minimal-stat-pill" style={{ background: 'rgba(245, 158, 11, 0.22)', color: '#fbbf24' }}>
-                    AQI 142 · TURNING POINT
-                  </span>
-                  <span style={{ color: '#94a3b8' }}>Autonomous Mitigation Active</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Phase 3: Right / The Living Canopy */}
-          <div
-            className="crt-stage-right"
-            style={{
-              position: 'absolute',
-              right: '6vw',
-              bottom: '12vh',
-              opacity: p3Opacity,
-              transform: `translate3d(${p3Offset}vw, 0, 0)`,
-              transition: 'opacity 0.25s ease',
-              pointerEvents: p3Opacity > 0.05 ? 'auto' : 'none',
-            }}
-          >
-            <div
-              className="crt-minimal-card crt-card-canopy"
-              style={{
-                transform: `perspective(1000px) rotateY(${p3RotY}deg) rotateX(-2deg)`,
-              }}
-            >
-              <div className="crt-minimal-content">
-                <div className="crt-minimal-badge" style={{ color: '#34d399' }}>
-                  <Sparkles size={12} /> 03 • RESTORATION // HIMALAYAN CANOPY
-                </div>
-                <h2 className="crt-minimal-title">11,000 Liters of Pure Life.</h2>
-                <p className="crt-minimal-statement">
-                  Every healthy human lung processes 11,000 liters of atmospheric gas daily. In pristine forest air, bronchial cilia oscillate freely, synchronizing human respiration with the Himalayan canopy.
-                </p>
-                <div className="crt-minimal-stat-line" style={{ color: '#10b981' }}>
-                  <span className="crt-minimal-stat-pill" style={{ background: 'rgba(16, 185, 129, 0.22)', color: '#34d399' }}>
-                    AQI 22 · PRISTINE
-                  </span>
-                  <span style={{ color: '#94a3b8' }}>Alveolar Flux: 98.8% Optimal</span>
-                </div>
-                <button onClick={onExploreTwin} className="crt-minimal-cta">
-                  <span>Explore India National AQI Heatmap</span>
-                  <ChevronRight size={15} />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+          />
+        )}
 
         {/* 1. Bulbous Spherical CRT Curvature Swell & Corner Blackout Frame */}
         <div className="hero-crt-screen-curvature" aria-hidden="true">
