@@ -53,14 +53,14 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
     window.addEventListener('resize', resize);
 
     // Particle seed generator
-    const particleCount = 55;
+    const particleCount = 48;
     const particles = Array.from({ length: particleCount }).map(() => ({
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
-      radius: Math.random() * 2.2 + 0.8,
-      speedX: (Math.random() - 0.5) * 0.45,
-      speedY: -Math.random() * 0.6 - 0.2, // Drifting upwards like smoke/spores
-      alpha: Math.random() * 0.5 + 0.25,
+      radius: Math.random() * 2.0 + 0.8,
+      speedX: (Math.random() - 0.5) * 0.25, // Gentle, calm natural horizontal drift
+      speedY: -Math.random() * 0.45 - 0.15, // Smooth calm upward float
+      alpha: Math.random() * 0.45 + 0.2,
       pulse: Math.random() * Math.PI * 2,
     }));
 
@@ -69,30 +69,31 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
       const isClean = scrollProgress > 0.55;
 
       particles.forEach(p => {
-        p.x += p.speedX + (mousePos.x * 0.02);
+        // Calm, steady physics - NO erratic mouse whipping!
+        p.x += p.speedX;
         p.y += p.speedY;
-        p.pulse += 0.03;
+        p.pulse += 0.025;
 
         // Wrap around viewport edges
         if (p.y < -10) p.y = canvas.height + 10;
         if (p.x < -10) p.x = canvas.width + 10;
         if (p.x > canvas.width + 10) p.x = -10;
 
-        const currentAlpha = Math.max(0.1, p.alpha + Math.sin(p.pulse) * 0.2);
+        const currentAlpha = Math.max(0.08, p.alpha + Math.sin(p.pulse) * 0.18);
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
 
         if (!isClean) {
           // Left Phase: Toxic Amber & Red Ash/Soot Particulates
-          ctx.fillStyle = `rgba(239, 68, 68, ${currentAlpha * 0.65})`;
-          ctx.shadowBlur = p.radius * 4;
-          ctx.shadowColor = 'rgba(239, 68, 68, 0.5)';
+          ctx.fillStyle = `rgba(239, 68, 68, ${currentAlpha * 0.6})`;
+          ctx.shadowBlur = p.radius * 3;
+          ctx.shadowColor = 'rgba(239, 68, 68, 0.4)';
         } else {
           // Right Phase: Bioluminescent Emerald / Cyan Pollen & Spores
-          ctx.fillStyle = `rgba(52, 211, 153, ${currentAlpha * 0.85})`;
-          ctx.shadowBlur = p.radius * 6;
-          ctx.shadowColor = 'rgba(16, 185, 129, 0.7)';
+          ctx.fillStyle = `rgba(52, 211, 153, ${currentAlpha * 0.75})`;
+          ctx.shadowBlur = p.radius * 5;
+          ctx.shadowColor = 'rgba(16, 185, 129, 0.6)';
         }
         ctx.fill();
         ctx.shadowBlur = 0; // Reset
@@ -107,7 +108,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', resize);
     };
-  }, [scrollProgress, mousePos.x]);
+  }, [scrollProgress]);
 
   // Determine active phase based on scroll progress
   const isLeftPhase = scrollProgress < 0.38;
@@ -123,10 +124,10 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
 
   // Spotlight color based on active narrative zone
   const spotlightColor = isLeftPhase
-    ? 'rgba(239, 68, 68, 0.18)'
+    ? 'rgba(239, 68, 68, 0.16)'
     : isMidPhase
-    ? 'rgba(245, 158, 11, 0.15)'
-    : 'rgba(56, 189, 248, 0.18)';
+    ? 'rgba(245, 158, 11, 0.13)'
+    : 'rgba(56, 189, 248, 0.16)';
 
   return (
     <div
@@ -152,54 +153,61 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
         }}
       >
         {/* ============================================================== */}
-        {/* OPTION A: CINEMATIC RESOLUTION MASKING ENGINE                  */}
+        {/* VINTAGE CRT & ANALOG TELEVISION SENSOR FILTER RIG              */}
         {/* ============================================================== */}
 
-        {/* 1. Procedural Film Grain Overlay (Breaks up bilinear pixel blur) */}
+        {/* 1. Bulbous Spherical CRT Curvature Swell & Corner Blackout */}
+        <div className="hero-crt-screen-curvature" aria-hidden="true" />
+
+        {/* 2. Vintage TV Rolling Screen Tear Band (Sweeps up and down) */}
+        <div className="hero-crt-rolling-bar" aria-hidden="true" />
+
+        {/* 3. Analog Phosphor Micro-Flicker Layer */}
+        <div className="hero-crt-flicker-layer" aria-hidden="true" />
+
+        {/* 4. Procedural Film Grain Overlay */}
         <div className="hero-grain-overlay" aria-hidden="true" />
 
-        {/* 2. Micro-Scanline Optical Matrix (Crisp 1px horizontal sensor lines) */}
+        {/* 5. Micro-Scanline Optical Matrix (Crisp 1px CRT interlace lines) */}
         <div className="hero-scanline-matrix" aria-hidden="true" />
 
-        {/* 3. Floating Interactive Particulate Canvas (Soot motes & Spores) */}
+        {/* 6. Calm Floating Particulate Field (Soot & Spores) */}
         <canvas ref={canvasRef} className="hero-particles-canvas" />
 
-        {/* 4. Mouse-reactive Volumetric Aperture Spotlight */}
+        {/* 7. Mouse-reactive Volumetric Lens Spotlight */}
         <div
           className="hero-cursor-luminescence"
           style={{
-            background: `radial-gradient(circle 380px at ${mousePos.clientX || window.innerWidth / 2}px ${mousePos.clientY || window.innerHeight / 2}px, ${spotlightColor} 0%, transparent 80%)`,
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            zIndex: 14,
+            background: `radial-gradient(circle 420px at ${mousePos.clientX || window.innerWidth / 2}px ${mousePos.clientY || window.innerHeight / 2}px, ${spotlightColor} 0%, transparent 80%)`,
           }}
           aria-hidden="true"
         />
 
-        {/* 5. Hybrid Depth Vignette & Seamless Bottom Gradient Fade into Map */}
+        {/* 8. Seamless Bottom Gradient Fade into Map */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            zIndex: 10,
+            zIndex: 17,
             pointerEvents: 'none',
-            background: `radial-gradient(ellipse 90% 80% at center, transparent 40%, rgba(7, 10, 18, 0.58) 75%, rgba(7, 10, 18, 0.92) 100%), linear-gradient(to bottom, rgba(7, 10, 18, 0.4) 0%, transparent 16%, transparent 60%, rgba(7, 10, 18, 0.85) 85%, #070a12 100%), ${ambientBg}`,
+            background: `linear-gradient(to bottom, rgba(7, 10, 18, 0.45) 0%, transparent 14%, transparent 60%, rgba(7, 10, 18, 0.88) 85%, #070a12 100%), ${ambientBg}`,
             transition: 'background 0.5s ease',
           }}
         />
 
         {/* ============================================================== */}
-        {/* ULTRA-WIDE PANORAMIC 32:9 STRIP (Spanning two 16:9 viewports)   */}
+        {/* ULTRA-WIDE PANORAMIC 32:9 STRIP (WITH CRT BULB BARREL PERSPECTIVE) */}
         {/* ============================================================== */}
         <div
+          className="hero-panoramic-crt-barrel"
           style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '200vw', // Spans two full 16:9 viewports side-by-side
-            height: '100vh',
-            transform: `translate3d(calc(-${scrollProgress * 50}% + ${mousePos.x * 0.3}px), ${mousePos.y * 0.3}px, 0)`,
-            transition: 'transform 0.08s cubic-bezier(0.1, 0.9, 0.2, 1)',
+            transform: `translate3d(calc(-${scrollProgress * 50}% + ${mousePos.x * 0.15}px), ${mousePos.y * 0.15}px, 0) scale(1.035)`,
+            transition: 'transform 0.12s cubic-bezier(0.1, 0.9, 0.2, 1)',
             willChange: 'transform',
-            display: 'flex',
-            alignItems: 'center',
           }}
         >
           <img
@@ -210,9 +218,10 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
               height: '100vh',
               objectFit: 'cover',
               objectPosition: 'center',
-              filter: `contrast(1.12) brightness(${0.86 + scrollProgress * 0.12}) saturate(1.08)`,
+              filter: `contrast(1.15) brightness(${0.88 + scrollProgress * 0.12}) saturate(1.12)`,
               userSelect: 'none',
               pointerEvents: 'none',
+              borderRadius: '24px',
             }}
           />
         </div>
