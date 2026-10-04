@@ -136,12 +136,16 @@ export default function LungsCanvas({ aqi = 45, interactive = true }) {
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
+          maxWidth: '92%',
+          textAlign: 'center',
+          justifyContent: 'center',
+          whiteSpace: 'normal',
           pointerEvents: 'none',
           zIndex: 10,
         }}
       >
-        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#38bdf8' }} />
-        <span>Click & drag to rotate 3D lungs · Scroll to zoom</span>
+        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#38bdf8', flexShrink: 0 }} />
+        <span>Rotate 3D lungs · Pinch or scroll to zoom</span>
       </div>
     </div>
   );

@@ -638,8 +638,20 @@ export default function DelhiAqiHeatmap() {
 
   // Cinematic 360° 3D Slanted Orbital Tour State & Refs
   const [isOrbiting360, setIsOrbiting360] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 1024 : false));
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : true));
   const [isGlideDropdownOpen, setIsGlideDropdownOpen] = useState(false);
+
+  // Dynamic window resize listener for seamless responsive layout transitions
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const sectionContainerRef = useRef(null);
   const hasPlayedIntroOrbitRef = useRef(false);
   const orbitAnimIdRef = useRef(null);
@@ -837,10 +849,10 @@ export default function DelhiAqiHeatmap() {
     if (typeof window === 'undefined') return { right: 0, left: 0, top: 0, bottom: 0 };
     const isWide = window.innerWidth >= 1024;
     return {
-      right: isSidebarOpen && isWide ? 440 : 40,
-      left: 40,
-      top: 80,
-      bottom: 80,
+      right: isSidebarOpen && isWide ? 440 : (isWide ? 40 : 16),
+      left: isWide ? 40 : 16,
+      top: isWide ? 80 : 50,
+      bottom: isWide ? 80 : 50,
     };
   }, [isSidebarOpen]);
   getCameraPaddingRef.current = getCameraPadding;
@@ -2506,11 +2518,11 @@ export default function DelhiAqiHeatmap() {
       <div
         style={{
           position: 'absolute',
-          top: '20px',
-          left: '24px',
-          right: isSidebarOpen ? '444px' : '24px',
+          top: isMobile ? '12px' : '20px',
+          left: isMobile ? '12px' : '24px',
+          right: isMobile ? '12px' : (isSidebarOpen ? '444px' : '24px'),
           zIndex: 25,
-          transition: 'right 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
+          transition: 'right 0.32s cubic-bezier(0.16, 1, 0.3, 1), left 0.32s, top 0.32s',
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
@@ -2525,9 +2537,9 @@ export default function DelhiAqiHeatmap() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '12px',
+            gap: isMobile ? '8px' : '12px',
             flexWrap: 'wrap',
-            padding: '8px 16px',
+            padding: isMobile ? '8px 10px' : '8px 16px',
             borderRadius: '14px',
           }}
         >
@@ -2627,6 +2639,10 @@ export default function DelhiAqiHeatmap() {
                 gap: '3px',
                 background: 'rgba(15, 23, 42, 0.65)',
                 border: '1px solid rgba(255, 255, 255, 0.12)',
+                overflowX: 'auto',
+                maxWidth: isMobile ? '100%' : 'none',
+                WebkitOverflowScrolling: 'touch',
+                scrollbarWidth: 'none',
               }}
             >
               {[
@@ -2909,16 +2925,18 @@ export default function DelhiAqiHeatmap() {
         className="glass-panel-master"
         style={{
           position: 'absolute',
-          bottom: '24px',
-          left: '24px',
-          right: isSidebarOpen ? '444px' : 'auto',
-          maxWidth: isSidebarOpen ? 'calc(100% - 468px)' : 'calc(100% - 48px)',
+          bottom: isMobile ? '12px' : '24px',
+          left: isMobile ? '12px' : '24px',
+          right: isMobile ? '12px' : (isSidebarOpen ? '444px' : 'auto'),
+          maxWidth: isMobile ? 'calc(100% - 24px)' : (isSidebarOpen ? 'calc(100% - 468px)' : 'calc(100% - 48px)'),
           zIndex: 25,
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
-          padding: '11px 16px',
+          padding: isMobile ? '8px 12px' : '11px 16px',
           borderRadius: '16px',
+          maxHeight: isMobile ? '38vh' : 'none',
+          overflowY: isMobile ? 'auto' : 'visible',
           transition: 'right 0.32s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
@@ -3060,17 +3078,34 @@ export default function DelhiAqiHeatmap() {
         </div>
       </div>
 
+      {/* Mobile backdrop overlay to tap-to-close drawer */}
+      {isMobile && isSidebarOpen && (
+        <div
+          onClick={() => setIsSidebarOpen(false)}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 55,
+            background: 'rgba(3, 7, 18, 0.65)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            transition: 'opacity 0.25s ease',
+          }}
+        />
+      )}
+
       {/* ============================================================== */}
       {/* 5. FLOATING RIGHT-SIDE TELEMETRY HUD (COLLAPSIBLE OVERLAY)     */}
       {/* ============================================================== */}
       <aside
         style={{
           position: 'absolute',
-          top: '20px',
-          bottom: '24px',
-          right: isSidebarOpen ? '24px' : '-440px',
-          width: 'min(410px, calc(100vw - 48px))',
-          zIndex: 25,
+          top: isMobile ? '12px' : '20px',
+          bottom: isMobile ? '12px' : '24px',
+          right: isSidebarOpen ? (isMobile ? '12px' : '24px') : (isMobile ? '-105vw' : '-440px'),
+          width: isMobile ? 'calc(100vw - 24px)' : 'min(410px, calc(100vw - 48px))',
+          maxWidth: '430px',
+          zIndex: isMobile ? 60 : 25,
           transition: 'right 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
           display: 'flex',
           flexDirection: 'column',

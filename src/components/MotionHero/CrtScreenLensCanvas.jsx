@@ -222,8 +222,9 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       ctx.save();
       ctx.globalAlpha = opacity;
 
-      const paddingX = 28;
-      const paddingY = 22;
+      const isMobile = cardW < 440;
+      const paddingX = isMobile ? 16 : 28;
+      const paddingY = isMobile ? 14 : 22;
       const innerW = cardW - paddingX * 2;
 
       // 1. Dark Analog Cathode Ray Glass Box Backdrop
@@ -254,7 +255,7 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       // 4. Vintage Terminal Corner Crosshairs
       ctx.strokeStyle = accentColor;
       ctx.lineWidth = 2.2;
-      const markLen = 9;
+      const markLen = isMobile ? 7 : 9;
       // Top-left
       ctx.beginPath();
       ctx.moveTo(x + 6, y + 6 + markLen);
@@ -286,18 +287,19 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         ? (Math.sin(time * 70.0) * 4.2 + (Math.sin(time * 110.0)) * 3.2)
         : (Math.sin(time * 14.0) * 1.2);
 
-      let curY = y + paddingY + 8;
+      let curY = y + paddingY + 6;
 
-      // Row 1: Channel OSD Badge (Bold 16px monospace with blinking phosphor terminal cursor)
-      ctx.font = '700 16px "Share Tech Mono", "JetBrains Mono", monospace';
+      // Row 1: Channel OSD Badge (Bold monospace with blinking phosphor terminal cursor)
+      const badgeFont = isMobile ? 13 : 16;
+      ctx.font = `700 ${badgeFont}px "Share Tech Mono", "JetBrains Mono", monospace`;
       ctx.fillStyle = badgeColor;
       const blinker = Math.floor(time * 3.5) % 2 === 0 ? '█' : ' ';
       ctx.fillText(`${badgeText} ${blinker}`, x + paddingX, curY);
 
-      curY += 28;
+      curY += isMobile ? 22 : 28;
 
-      // Row 2: The Striking Line (Large, bold 34px headline with RGB chromatic convergence glitch filter)
-      const fontSize = cardW < 460 ? 28 : 34;
+      // Row 2: The Striking Line (Dynamic headline with RGB chromatic convergence glitch filter)
+      const fontSize = cardW < 360 ? 18 : cardW < 460 ? 21 : cardW < 600 ? 26 : 34;
       ctx.font = `800 ${fontSize}px "Share Tech Mono", "JetBrains Mono", monospace`;
 
       const words = strikingLine.split(' ');
@@ -316,18 +318,15 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
 
       for (let i = 0; i < lines.length; i++) {
         const lineText = lines[i];
-        const lineY = curY + (i + 1) * (fontSize + 6);
+        const lineY = curY + (i + 1) * (fontSize + (isMobile ? 4 : 6));
 
         // RGB Electron Gun Convergence Misalignment (Chromatic Glitch Filter)
-        // Blue / Cyan Phosphor Shift
         ctx.fillStyle = 'rgba(34, 211, 238, 0.8)';
         ctx.fillText(lineText, x + paddingX - glitchShiftX * 1.5, lineY);
 
-        // Red / Amber Phosphor Shift
         ctx.fillStyle = 'rgba(239, 68, 68, 0.8)';
         ctx.fillText(lineText, x + paddingX + glitchShiftX * 1.5, lineY + (isBurstGlitch ? 0.9 : 0));
 
-        // Sharp Core Phosphor White with Bloom Glow
         ctx.save();
         ctx.shadowColor = accentGlow;
         ctx.shadowBlur = isBurstGlitch ? 26 : 14;
@@ -335,31 +334,30 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         ctx.fillText(lineText, x + paddingX, lineY);
         ctx.restore();
 
-        // Authentic CRT glitch tear slice across text on burst
         if (isBurstGlitch && i === 0) {
           ctx.fillStyle = accentColor;
           ctx.fillRect(x + paddingX - 4, lineY - fontSize * 0.35, innerW * 0.45, 2.2);
         }
       }
 
-      curY += lines.length * (fontSize + 6) + 16;
+      curY += lines.length * (fontSize + (isMobile ? 4 : 6)) + (isMobile ? 12 : 16);
 
       // Row 3: Bold Single Telemetry Stat Callout (Clean, high impact, prominent AQI readability)
-      ctx.font = '800 17px "Outfit", "Inter", sans-serif';
-      const pillW = ctx.measureText(statPillText).width + 36;
-      const pillH = 34;
+      const pillFont = isMobile ? 13 : 17;
+      ctx.font = `800 ${pillFont}px "Outfit", "Inter", sans-serif`;
+      const pillW = Math.min(innerW, ctx.measureText(statPillText).width + (isMobile ? 26 : 36));
+      const pillH = isMobile ? 28 : 34;
 
       // Pill Background with high contrast dark plate
       ctx.fillStyle = 'rgba(10, 15, 29, 0.88)';
       ctx.beginPath();
       if (ctx.roundRect) {
-        ctx.roundRect(x + paddingX, curY - 20, pillW, pillH, 7);
+        ctx.roundRect(x + paddingX, curY - (isMobile ? 16 : 20), pillW, pillH, 7);
       } else {
-        ctx.rect(x + paddingX, curY - 20, pillW, pillH);
+        ctx.rect(x + paddingX, curY - (isMobile ? 16 : 20), pillW, pillH);
       }
       ctx.fill();
 
-      // Sharp accent border with bloom
       ctx.save();
       ctx.strokeStyle = accentColor;
       ctx.lineWidth = 1.8;
@@ -374,19 +372,19 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       ctx.shadowColor = accentGlow;
       ctx.shadowBlur = 8;
       ctx.beginPath();
-      ctx.arc(x + paddingX + 16, curY - 3, 5, 0, Math.PI * 2);
+      ctx.arc(x + paddingX + (isMobile ? 12 : 16), curY - (isMobile ? 2 : 3), isMobile ? 4 : 5, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
       // Sharp, bright, easily readable text
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(statPillText, x + paddingX + 28, curY + 3);
+      ctx.fillText(statPillText, x + paddingX + (isMobile ? 22 : 28), curY + (isMobile ? 3 : 3));
 
-      curY += 38;
+      curY += isMobile ? 28 : 38;
 
-      // Row 4: Bottom Action Strip (Buttons/Status bars have IDENTICAL dimensions across cards)
+      // Row 4: Bottom Action Strip
       const btnW = innerW;
-      const btnH = 38;
+      const btnH = isMobile ? 32 : 38;
 
       if (isInteractiveButton) {
         // Phase 3: Interactive CTA Button
@@ -420,10 +418,10 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
           active: opacity > 0.5,
         };
 
-        ctx.font = '700 16px "Share Tech Mono", "JetBrains Mono", monospace';
+        ctx.font = `700 ${isMobile ? 13 : 16}px "Share Tech Mono", "JetBrains Mono", monospace`;
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
-        ctx.fillText(`${actionText}  ►`, x + paddingX + btnW / 2, curY + 24);
+        ctx.fillText(`${actionText}  ►`, x + paddingX + btnW / 2, curY + (isMobile ? 20 : 24));
         ctx.textAlign = 'left';
       } else {
         // Phase 1 & 2: Matching Status Bar of identical size
@@ -439,10 +437,10 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         ctx.fill();
         ctx.stroke();
 
-        ctx.font = '700 15px "Share Tech Mono", "JetBrains Mono", monospace';
+        ctx.font = `700 ${isMobile ? 12 : 15}px "Share Tech Mono", "JetBrains Mono", monospace`;
         ctx.fillStyle = '#94a3b8';
         ctx.textAlign = 'center';
-        ctx.fillText(actionText, x + paddingX + btnW / 2, curY + 24);
+        ctx.fillText(actionText, x + paddingX + btnW / 2, curY + (isMobile ? 20 : 24));
         ctx.textAlign = 'left';
       }
 
@@ -467,11 +465,12 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       textCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       // Strictly equal dimensions for Template 1, Template 2, and Template 3
-      const cardW = Math.min(560, width * 0.88);
-      const cardH = 250;
+      const isMobile = width < 600;
+      const cardW = Math.min(560, width * (isMobile ? 0.92 : 0.88));
+      const cardH = isMobile ? 225 : 250;
 
       // Common vertical levels for symmetrical opposite motion
-      const restingY = height * 0.44;
+      const restingY = height * (isMobile ? 0.38 : 0.44);
       const bottomOffscreenY = height * 1.08;
       const travelDist = bottomOffscreenY - restingY;
 
@@ -481,7 +480,7 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       // ==============================================================
       const p1Drop = smooth(0.00, 0.20, scroll);
       const y1 = restingY + p1Drop * travelDist;
-      const x1 = width * 0.08 - scroll * width * 0.35;
+      const x1 = isMobile ? (width - cardW) / 2 : (width * 0.08 - scroll * width * 0.35);
       const op1 = Math.max(0, 1.0 - smooth(0.06, 0.20, scroll));
 
       drawAncientGlitchCard(textCtx, {
@@ -505,7 +504,7 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       // Phase 2: The Critical Turning Point (Intervention Corridor)
       // Rises from below as we scroll into Phase 2, rests at restingY
       // ==============================================================
-      const x2 = (width - cardW) / 2 - (scroll - 0.50) * width * 0.85;
+      const x2 = (width - cardW) / 2 - (scroll - 0.50) * width * (isMobile ? 0.45 : 0.85);
       const p2Rise = smooth(0.24, 0.46, scroll);
       const y2 = bottomOffscreenY - p2Rise * travelDist;
       const op2In = smooth(0.24, 0.38, scroll);
@@ -534,8 +533,8 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       // Starts offscreen below at bottomOffscreenY and RISES UP to restingY
       // EXACT OPPOSITE OF PHASE 1!
       // ==============================================================
-      const x3Target = width * 0.92 - cardW;
-      const x3 = x3Target - Math.max(0, (0.88 - scroll) * width * 0.50);
+      const x3Target = isMobile ? (width - cardW) / 2 : (width * 0.92 - cardW);
+      const x3 = isMobile ? (width - cardW) / 2 : (x3Target - Math.max(0, (0.88 - scroll) * width * 0.50));
       const p3Rise = smooth(0.68, 0.88, scroll);
       const y3 = bottomOffscreenY - p3Rise * travelDist;
       const op3 = smooth(0.68, 0.84, scroll);
@@ -560,11 +559,23 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       textTexture.needsUpdate = true;
     };
 
-    // Interactive button pointer tracking
+    // Interactive button pointer tracking (click & touch)
     const handleCanvasClick = (e) => {
       const rect = renderer.domElement.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
+      const btn = buttonBounds.current;
+      if (btn && btn.active && mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h) {
+        if (onExploreTwin) onExploreTwin();
+      }
+    };
+
+    const handleCanvasTouch = (e) => {
+      if (!e.touches || e.touches.length === 0) return;
+      const touch = e.touches[0];
+      const rect = renderer.domElement.getBoundingClientRect();
+      const mx = touch.clientX - rect.left;
+      const my = touch.clientY - rect.top;
       const btn = buttonBounds.current;
       if (btn && btn.active && mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h) {
         if (onExploreTwin) onExploreTwin();
@@ -584,6 +595,7 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
     };
 
     renderer.domElement.addEventListener('click', handleCanvasClick);
+    renderer.domElement.addEventListener('touchstart', handleCanvasTouch, { passive: true });
     renderer.domElement.addEventListener('mousemove', handleCanvasMouseMove);
 
     const clock = new THREE.Clock();
@@ -616,6 +628,7 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       cancelAnimationFrame(reqId);
       window.removeEventListener('resize', handleResize);
       renderer.domElement.removeEventListener('click', handleCanvasClick);
+      renderer.domElement.removeEventListener('touchstart', handleCanvasTouch);
       renderer.domElement.removeEventListener('mousemove', handleCanvasMouseMove);
       if (renderer.domElement && renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);

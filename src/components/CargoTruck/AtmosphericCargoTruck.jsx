@@ -224,7 +224,7 @@ export default function AtmosphericCargoTruck({ onSelectPollutant }) {
   const handleFetchLiveTelemetry = async () => {
     setIsLiveLoading(true);
     try {
-      const res = await fetch('http://localhost:3001/api/india-heatmap');
+      const res = await fetch('/api/india-heatmap');
       if (!res.ok) throw new Error('Network error');
       const data = await res.json();
       if (data && data.stations && data.stations.length > 0) {
@@ -490,6 +490,36 @@ export default function AtmosphericCargoTruck({ onSelectPollutant }) {
                 })}
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Mobile Quick-Select Pollutant Bar (Optimized for finger touch on small screens) */}
+        <div className="cargo-mobile-pollutant-bar" aria-label="Quick Select Pollutant">
+          <div className="cargo-mobile-bar-label">
+            <span>Tap any crate below or choose a pollutant to inspect:</span>
+          </div>
+          <div className="cargo-mobile-pills-row">
+            {POLLUTANT_SPECS.map(p => {
+              const val = pollutantValues[p.id] || 0;
+              const isSelected = selectedPollutantId === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    setSelectedPollutantId(p.id);
+                    if (onSelectPollutant) onSelectPollutant(p.id);
+                  }}
+                  className={`cargo-mobile-pill-btn ${isSelected ? 'active' : ''}`}
+                  style={{
+                    '--p-color': p.accentColor,
+                    '--p-bg': p.contBg,
+                  }}
+                >
+                  <span className="pill-code">{p.symbol}</span>
+                  <span className="pill-reading">{val} <span className="pill-unit-sub">{p.unit}</span></span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

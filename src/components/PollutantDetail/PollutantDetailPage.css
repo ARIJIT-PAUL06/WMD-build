@@ -569,22 +569,100 @@
 /* Responsive Overrides */
 @media (max-width: 768px) {
   .pollutant-nav-bar {
-    padding: 12px 16px;
+    padding: 10px 14px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .pollutant-nav-left {
+    justify-content: space-between;
+    width: 100%;
   }
 
   .pollutant-selector-tabs {
+    display: flex !important;
+    max-width: 100%;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 2px 0;
+    gap: 6px;
+  }
+
+  .pollutant-selector-tabs::-webkit-scrollbar {
     display: none;
   }
 
+  .pollutant-tab-btn {
+    padding: 5px 12px;
+    font-size: 0.72rem;
+    flex-shrink: 0;
+  }
+
+  .pollutant-content-container {
+    padding: 16px 12px;
+    gap: 20px;
+  }
+
   .pollutant-hero-card {
-    padding: 26px 20px;
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+
+  .pollutant-hero-header-row {
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .pollutant-hero-left {
+    flex: 1 1 100%;
+    width: 100%;
   }
 
   .pollutant-symbol-badge {
-    font-size: 2.6rem;
+    font-size: 2.5rem;
   }
 
   .pollutant-full-name {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
+  }
+
+  .pollutant-hero-header-row > div:last-child {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+  }
+
+  .pollutant-metrics-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 18px;
+    padding-top: 16px;
+  }
+
+  .pollutant-metric-val {
+    font-size: 1.45rem;
+  }
+
+  .pollutant-canvas-card {
+    min-height: 380px;
+  }
+
+  .pollutant-pathology-card {
+    padding: 18px 16px;
+  }
+
+  .pollutant-graph-card {
+    padding: 18px 14px;
+  }
+
+  .pollutant-docs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pollutant-countermeasures-grid {
+    grid-template-columns: 1fr;
   }
 }
+

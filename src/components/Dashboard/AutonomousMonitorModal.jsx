@@ -71,7 +71,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
   const fetchStatus = async () => {
     try {
       setStatusLoading(true);
-      const res = await fetch('http://localhost:3001/api/monitor/status');
+      const res = await fetch('/api/monitor/status');
       if (res.ok) {
         const data = await res.json();
         setDaemonStatus(data);
@@ -91,8 +91,8 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
     try {
       setDataLoading(true);
       const [facRes, gridRes] = await Promise.all([
-        fetch('http://localhost:3001/api/spatial-grids/facilities'),
-        fetch('http://localhost:3001/api/spatial-grids/directory')
+        fetch('/api/spatial-grids/facilities'),
+        fetch('/api/spatial-grids/directory')
       ]);
 
       if (facRes.ok) {
@@ -113,7 +113,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
   // Load 14-day compliance for Pillar 3
   const fetchP3Compliance = async (gId) => {
     try {
-      const res = await fetch(`http://localhost:3001/api/spatial-grids/${gId}/compliance`);
+      const res = await fetch(`/api/spatial-grids/${gId}/compliance`);
       if (res.ok) {
         const data = await res.json();
         setP3Compliance(data.compliance || null);
@@ -161,7 +161,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
     try {
       setCycleLoading(true);
       setActionMessage(null);
-      const res = await fetch('http://localhost:3001/api/monitor/run-cycle', {
+      const res = await fetch('/api/monitor/run-cycle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dispatchViaSes: true, isSandbox: true })
@@ -180,7 +180,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
   // Clear Debounce Cooldowns
   const handleClearDebounces = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/monitor/clear-debounces', { method: 'POST' });
+      const res = await fetch('/api/monitor/clear-debounces', { method: 'POST' });
       const data = await res.json();
       setActionMessage('All 3h and 24h debouncing cooldowns cleared! Ready for immediate re-test.');
       fetchStatus();
@@ -196,7 +196,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
       setP1Result(null);
       const simulatedValue = p1Scenario === 'clean' ? 65 : p1SimulatedPm25;
       
-      const res = await fetch('http://localhost:3001/api/monitor/predictive-advisories', {
+      const res = await fetch('/api/monitor/predictive-advisories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -223,7 +223,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
     try {
       setP2Loading(true);
       setP2Result(null);
-      const res = await fetch('http://localhost:3001/api/monitor/block-emergency', {
+      const res = await fetch('/api/monitor/block-emergency', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -250,7 +250,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
     try {
       setP3Loading(true);
       setP3Result(null);
-      const res = await fetch('http://localhost:3001/api/monitor/chronic-petitions', {
+      const res = await fetch('/api/monitor/chronic-petitions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -281,10 +281,11 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
         zIndex: 9999,
         background: 'rgba(3, 7, 18, 0.85)',
         backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px',
+        padding: '12px',
         animation: 'fadeIn 0.25s ease-out'
       }}
     >
@@ -292,9 +293,9 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
         style={{
           width: '100%',
           maxWidth: '1100px',
-          maxHeight: '92vh',
+          maxHeight: '94vh',
           background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(10, 15, 30, 0.99) 100%)',
-          borderRadius: '24px',
+          borderRadius: '20px',
           border: '1.5px solid rgba(56, 189, 248, 0.3)',
           boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px rgba(56, 189, 248, 0.15)',
           display: 'flex',
@@ -307,12 +308,14 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
         {/* HEADER BAR */}
         <div
           style={{
-            padding: '20px 28px',
+            padding: '16px 20px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'rgba(255, 255, 255, 0.02)'
+            background: 'rgba(255, 255, 255, 0.02)',
+            flexWrap: 'wrap',
+            gap: '12px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
