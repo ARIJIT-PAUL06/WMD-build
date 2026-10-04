@@ -572,5 +572,38 @@
     "emergencySurgesDetected": [],
     "petitionsEvaluated": [],
     "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T13:22:55.389Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 25,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T13:52:50.410Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 26,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-04T14:22:50.447Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 27,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
   }
 ]
