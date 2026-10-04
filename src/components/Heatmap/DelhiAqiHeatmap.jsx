@@ -3342,47 +3342,7 @@ export default function DelhiAqiHeatmap() {
                   )}
                 </div>
 
-                {/* Quick GPS Action buttons */}
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                  <button
-                    onClick={handleCenterOnUser}
-                    className="glass-pill glass-pill-active"
-                    style={{
-                      flex: 1,
-                      padding: '7px 10px',
-                      borderRadius: '8px',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '5px',
-                    }}
-                  >
-                    <Crosshair size={12} />
-                    <span>Center Map</span>
-                  </button>
-                  <button
-                    onClick={() => setIsFollowingUser((f) => !f)}
-                    className={`glass-pill ${isFollowingUser ? 'glass-pill-active' : ''}`}
-                    style={{
-                      flex: 1,
-                      padding: '7px 10px',
-                      borderRadius: '8px',
-                      fontSize: '0.72rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '5px',
-                    }}
-                  >
-                    <LocateFixed size={12} />
-                    <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
-                  </button>
-                </div>
+
               </div>
             ) : (
               /* GPS Inactive / Requesting State (ZERO DEMO DATA) */
@@ -3578,23 +3538,23 @@ export default function DelhiAqiHeatmap() {
               </div>
             </div>
 
-            {/* 3. CALIBRATED SEAMLESS ZOOM-ADAPTIVE SPECTRUM LEGEND */}
+            {/* 3. CALIBRATED SEAMLESS ZOOM SPECTRUM */}
             <div
               className="glass-panel-sub"
               style={{
-                padding: '16px 18px',
+                padding: '14px 18px',
                 borderRadius: '16px',
-                border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
                 transition: 'border-color 0.3s ease',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#94a3b8', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#94a3b8', marginBottom: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#38bdf8', boxShadow: '0 0 8px #38bdf8' }} />
                   <span style={{ fontWeight: 700, color: '#e2e8f0' }}>Continuous Spectrum</span>
                 </div>
                 <span
-                  className={`glass-pill ${isAdaptiveMode && activeRange.isZoomed ? 'glass-pill-success' : 'glass-pill-active'}`}
+                  className="glass-pill glass-pill-active"
                   style={{
                     fontWeight: 700,
                     fontSize: '0.68rem',
@@ -3608,45 +3568,16 @@ export default function DelhiAqiHeatmap() {
                 </span>
               </div>
 
-              {/* Seamless continuous gradient bar - ZERO black contour lines */}
+              {/* Clean Cyber Cyan Zoom Bar */}
               <div
                 style={{
-                  height: '12px',
-                  borderRadius: '6px',
-                  background:
-                    'linear-gradient(90deg, #10b981 0%, #34d399 14%, #a3e635 28%, #eab308 42%, #f97316 58%, #ea580c 72%, #dc2626 86%, #b91c1c 100%)',
-                  marginBottom: '8px',
-                  boxShadow: '0 2px 14px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  height: '10px',
+                  borderRadius: '5px',
+                  background: 'linear-gradient(90deg, #0284c7 0%, #0ea5e9 50%, #38bdf8 100%)',
+                  boxShadow: '0 2px 10px rgba(56, 189, 248, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.2)',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
                 }}
               />
-
-              {/* Dynamic tick labels synchronized with viewport AQI range */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.66rem', color: '#cbd5e1', fontWeight: 700 }}>
-                <span style={{ color: '#10b981' }}>{activeRange.min} (Min)</span>
-                <span style={{ color: '#a3e635' }}>
-                  {Math.round(activeRange.min + (activeRange.max - activeRange.min) * 0.33)}
-                </span>
-                <span style={{ color: '#fb923c' }}>
-                  {Math.round(activeRange.min + (activeRange.max - activeRange.min) * 0.66)}
-                </span>
-                <span style={{ color: '#f87171' }}>{activeRange.max} (Max)</span>
-              </div>
-
-              <div
-                style={{
-                  marginTop: '8px',
-                  paddingTop: '6px',
-                  borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-                  fontSize: '0.68rem',
-                  lineHeight: 1.4,
-                  color: isAdaptiveMode && activeRange.isZoomed ? '#34d399' : '#94a3b8',
-                }}
-              >
-                {isAdaptiveMode && activeRange.isZoomed
-                  ? `✦ Zoom Dynamic Contrast: Local ${activeRange.min} AQI is Green, ${activeRange.max} AQI is Bright Red.`
-                  : `✦ Nationwide Gradient: Lowest AQI is Green and highest is Bright Red. Zoom into any region to recalibrate.`}
-              </div>
             </div>
           </div>
         </div>
