@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import PanoramicScrollHero from './components/MotionHero/PanoramicScrollHero';
 import DelhiAqiHeatmap from './components/Heatmap/DelhiAqiHeatmap';
 import AutonomousMonitorModal from './components/Dashboard/AutonomousMonitorModal';
+import AtmosphericCargoTruck from './components/CargoTruck/AtmosphericCargoTruck';
 import { ShieldCheck, FileText } from 'lucide-react';
 
 export default function App() {
@@ -107,6 +108,9 @@ export default function App() {
       <div ref={heatmapRef}>
         <DelhiAqiHeatmap />
       </div>
+
+      {/* 3. ATMOSPHERIC LOGISTICS & MASS CARGO TRUCK */}
+      <AtmosphericCargoTruck />
 
       {/* Autonomous Atmospheric Shield & Emergency Monitor Test Bench */}
       <AutonomousMonitorModal

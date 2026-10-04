@@ -1,0 +1,872 @@
+/* AtmosphericCargoTruck.css */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+.cargo-section {
+  position: relative;
+  width: 100%;
+  background: radial-gradient(ellipse at 50% 20%, rgba(15, 23, 42, 0.95) 0%, rgba(6, 10, 18, 0.98) 70%, #030712 100%);
+  padding: 5rem 1.5rem 6rem;
+  overflow: hidden;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Background atmospheric particulate grid */
+.cargo-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.cargo-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
+}
+
+/* Section Header */
+.cargo-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.cargo-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 9999px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+}
+
+.cargo-badge-pill .pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: pulse-dot-anim 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse-dot-anim {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.4); }
+}
+
+.cargo-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.15;
+  margin-bottom: 0.85rem;
+  letter-spacing: -0.02em;
+}
+
+.cargo-title .highlight-gradient {
+  background: linear-gradient(135deg, #f97316 0%, #ef4444 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.cargo-description {
+  max-width: 760px;
+  margin: 0 auto;
+  color: #94a3b8;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Preset Switcher Bar */
+.cargo-controls-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.cargo-presets-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cargo-preset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(30, 41, 59, 0.5);
+  color: #cbd5e1;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.cargo-preset-btn:hover {
+  background: rgba(51, 65, 85, 0.7);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.cargo-preset-btn.active {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(249, 115, 22, 0.2) 100%);
+  border-color: rgba(249, 115, 22, 0.6);
+  color: #fed7aa;
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.25);
+}
+
+.cargo-preset-btn.active.green-theme {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%);
+  border-color: rgba(16, 185, 129, 0.6);
+  color: #a7f3d0;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
+}
+
+.cargo-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.cargo-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(30, 41, 59, 0.6);
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cargo-action-btn:hover {
+  background: rgba(51, 65, 85, 0.8);
+  color: #f8fafc;
+}
+
+.cargo-action-btn.purge-btn {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+  border-color: rgba(6, 182, 212, 0.4);
+  color: #67e8f9;
+}
+
+.cargo-action-btn.purge-btn:hover {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.35) 0%, rgba(59, 130, 246, 0.35) 100%);
+  box-shadow: 0 0 18px rgba(6, 182, 212, 0.3);
+  color: #ffffff;
+}
+
+/* Weighbridge Platform Canvas */
+.weighbridge-stage {
+  position: relative;
+  width: 100%;
+  border-radius: 24px;
+  background: radial-gradient(ellipse at 50% 60%, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.8) 60%, rgba(9, 13, 22, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2.5rem 1.5rem 2rem;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+/* Stage Lighting Effects */
+.weighbridge-spotlight {
+  position: absolute;
+  top: -15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 75%;
+  height: 60%;
+  background: radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Scale Scanner Line */
+.weighbridge-scanner-beam {
+  position: absolute;
+  top: 10%;
+  bottom: 25%;
+  width: 2px;
+  background: linear-gradient(180deg, transparent 0%, rgba(6, 182, 212, 0.8) 50%, rgba(239, 68, 68, 0.8) 100%);
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.6);
+  pointer-events: none;
+  z-index: 25;
+  animation: scan-beam-anim 6s infinite ease-in-out;
+}
+
+@keyframes scan-beam-anim {
+  0% { left: 32%; opacity: 0; }
+  10% { opacity: 0.8; }
+  90% { opacity: 0.8; }
+  100% { left: 92%; opacity: 0; }
+}
+
+/* Truck Wrapper (Preserves 1024x576 Aspect Ratio) */
+.truck-viewport {
+  position: relative;
+  width: 100%;
+  max-width: 1050px;
+  margin: 0 auto;
+  aspect-ratio: 1024 / 576;
+  user-select: none;
+}
+
+/* Suspension Vibration and Sag */
+.truck-chassis {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.34, 1.4, 0.64, 1);
+  animation: engine-idle-rumble 0.22s infinite ease-in-out alternate;
+}
+
+@keyframes engine-idle-rumble {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(-0.8px) rotate(-0.04deg); }
+}
+
+/* The Base Scania Truck Flatbed PNG */
+.truck-base-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 15;
+  filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.7));
+}
+
+/* Exhaust Stack Smoke Emitter */
+.exhaust-smoke-generator {
+  position: absolute;
+  top: 14%;
+  left: 25.5%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.smoke-puff {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(203, 213, 225, 0.35) 0%, rgba(148, 163, 184, 0.1) 60%, transparent 100%);
+  filter: blur(4px);
+  animation: exhaust-puff-anim 2.8s infinite ease-out;
+}
+
+.smoke-puff:nth-child(2) {
+  animation-delay: 0.9s;
+}
+
+.smoke-puff:nth-child(3) {
+  animation-delay: 1.8s;
+}
+
+@keyframes exhaust-puff-anim {
+  0% {
+    width: 8px;
+    height: 8px;
+    transform: translate(0, 0) scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.45;
+  }
+  100% {
+    width: 48px;
+    height: 48px;
+    transform: translate(-35px, -55px) scale(3.5);
+    opacity: 0;
+  }
+}
+
+/* Cabin Interior Glow & Headlight Beam */
+.truck-headlight-cone {
+  position: absolute;
+  left: -20%;
+  top: 60%;
+  width: 25%;
+  height: 35%;
+  background: linear-gradient(250deg, rgba(255, 237, 213, 0.18) 0%, transparent 80%);
+  clip-path: polygon(100% 30%, 0% 0%, 0% 100%, 100% 70%);
+  pointer-events: none;
+  z-index: 12;
+}
+
+/* Underglow Neon Strip */
+.truck-underglow {
+  position: absolute;
+  bottom: 23%;
+  left: 10%;
+  right: 8%;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, var(--underglow-color, rgba(249, 115, 22, 0.45)) 0%, transparent 75%);
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: 5;
+  transition: background 0.8s ease;
+}
+
+/* ==========================================================
+   CARGO CONTAINERS FLATBED MOUNTING DECK
+   Deck Geometry:
+   - x: 31.8% to 92.4% (width: 60.6%)
+   - y (flatbed surface): 57.64% from top => bottom: 42.36%
+   ========================================================== */
+.containers-flatbed-deck {
+  position: absolute;
+  left: 31.8%;
+  width: 60.5%;
+  bottom: 42.36%;
+  height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.65%;
+  z-index: 18; /* Sits right over the flatbed rails cleanly */
+  pointer-events: auto;
+}
+
+/* Individual Cargo Pod */
+.pollutant-container-unit {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.pollutant-container-unit:hover {
+  transform: translateY(-4px) scale(1.02);
+  z-index: 40;
+}
+
+.pollutant-container-unit.selected {
+  transform: translateY(-6px) scale(1.03);
+  z-index: 45;
+}
+
+/* Dynamic Physical Container Box */
+.container-box {
+  position: relative;
+  width: 100%;
+  border-radius: 4px 4px 1px 1px;
+  background: var(--cont-bg, #1e293b);
+  border: 1px solid var(--cont-border, rgba(255, 255, 255, 0.2));
+  box-shadow: 
+    0 -4px 15px var(--cont-glow, rgba(0, 0, 0, 0.4)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 0 12px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0.2rem 0.25rem;
+  overflow: hidden;
+  transition: height 0.85s cubic-bezier(0.34, 1.4, 0.64, 1), background 0.5s ease, border-color 0.5s ease;
+}
+
+/* Corrugated Vertical Ribs Overlay (Simulating Freight Shipping Container) */
+.container-box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.08) 0px,
+    rgba(255, 255, 255, 0.08) 2px,
+    transparent 2px,
+    transparent 5px,
+    rgba(0, 0, 0, 0.35) 5px,
+    rgba(0, 0, 0, 0.35) 8px
+  );
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+/* Corner Reinforced Castings */
+.container-box::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+/* Top Warning Strobe Beacon */
+.container-beacon-mount {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.beacon-bulb {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--beacon-color, #10b981);
+  box-shadow: 0 0 8px var(--beacon-color, #10b981);
+}
+
+.beacon-bulb.strobe {
+  animation: warning-strobe-flash 0.85s infinite ease-in-out;
+}
+
+@keyframes warning-strobe-flash {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.4;
+    box-shadow: 0 0 4px var(--beacon-color, #ef4444);
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+    box-shadow: 0 0 16px var(--beacon-color, #ef4444), 0 0 28px var(--beacon-color, #ef4444);
+  }
+}
+
+/* Digital LED Display Matrix on Container Face */
+.container-lcd-panel {
+  position: relative;
+  z-index: 2;
+  width: 90%;
+  background: rgba(10, 15, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  padding: 0.2rem 0.15rem;
+  text-align: center;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+.container-chemical-code {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: clamp(0.65rem, 1.1vw, 0.85rem);
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+}
+
+.container-value-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: clamp(0.55rem, 0.95vw, 0.75rem);
+  color: var(--cont-text-color, #f87171);
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+.container-unit-text {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(0.42rem, 0.7vw, 0.55rem);
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* Capacity Gauge Bar */
+.container-capacity-track {
+  position: relative;
+  z-index: 2;
+  width: 82%;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.container-capacity-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--cont-text-color, #ef4444);
+  transition: width 0.6s ease;
+}
+
+/* Foot Pad Clamps anchoring to Flatbed */
+.container-foot-clamp {
+  position: absolute;
+  bottom: -3px;
+  width: 85%;
+  height: 3px;
+  background: #0f172a;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1px;
+}
+
+/* Road Weighbridge Surface & Markings */
+.weighbridge-road-bed {
+  margin-top: -3%;
+  position: relative;
+  width: 100%;
+  height: 36px;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 60%, #030712 100%);
+  border-radius: 6px;
+  border-top: 2px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.road-curb-stripes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: repeating-linear-gradient(
+    -45deg,
+    #f59e0b 0px,
+    #f59e0b 12px,
+    #0f172a 12px,
+    #0f172a 24px
+  );
+  opacity: 0.85;
+}
+
+.road-center-dashes {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  justify-content: center;
+}
+
+.road-dash {
+  width: 32px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 1px;
+}
+
+/* Telemetry Dashboard Below Truck */
+.cargo-telemetry-hud {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.75rem;
+}
+
+.telemetry-card {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1rem 1.15rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.25s ease;
+}
+
+.telemetry-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.telemetry-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+}
+
+.telemetry-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.telemetry-big-number {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.1;
+}
+
+.telemetry-unit {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.telemetry-subtext {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-top: 0.35rem;
+}
+
+.telemetry-gauge-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 0.6rem;
+}
+
+.telemetry-gauge-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.7s ease, background 0.7s ease;
+}
+
+/* Active Selected Chemical Detail Card */
+.cargo-chemical-inspector {
+  margin-top: 1.75rem;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 1.5rem;
+  position: relative;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 768px) {
+  .cargo-chemical-inspector {
+    grid-template-columns: 1fr;
+  }
+}
+
+.inspector-chemical-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--inspect-accent, rgba(239, 68, 68, 0.4));
+  border-radius: 14px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  box-shadow: 0 0 20px var(--inspect-glow, rgba(239, 68, 68, 0.15));
+}
+
+.inspector-formula {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.inspector-chem-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  margin-top: 0.4rem;
+}
+
+.inspector-status-pill {
+  margin-top: 0.75rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: var(--inspect-pill-bg, rgba(239, 68, 68, 0.2));
+  color: var(--inspect-accent, #ef4444);
+  border: 1px solid var(--inspect-accent, #ef4444);
+}
+
+.inspector-details-pane {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.inspector-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.inspector-stat-box {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+}
+
+.inspector-stat-lbl {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+}
+
+.inspector-stat-val {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-top: 2px;
+}
+
+.inspector-sources-block {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.inspector-sources-block strong {
+  color: #cbd5e1;
+}
+
+/* Manual Sliders Drawer (Expandable) */
+.cargo-sliders-drawer {
+  margin-top: 1.5rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  backdrop-filter: blur(12px);
+}
+
+.sliders-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.sliders-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sliders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.slider-unit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.slider-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.slider-current-val {
+  font-family: 'JetBrains Mono', monospace;
+  color: #f59e0b;
+}
+
+.cargo-range-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  outline: none;
+}
+
+.cargo-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f97316;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.6);
+  transition: transform 0.15s ease;
+}
+
+.cargo-range-input::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .cargo-section {
+    padding: 3.5rem 1rem 4rem;
+  }
+  .weighbridge-stage {
+    padding: 1.5rem 0.75rem 1rem;
+  }
+  .cargo-controls-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cargo-presets-group {
+    justify-content: center;
+  }
+  .cargo-actions-group {
+    justify-content: center;
+  }
+}
