@@ -259,7 +259,13 @@ function computeRawSpatialGrid(stationsList, pollutantType = 'aqi', bounds = IND
   const stData = (stationsList || []).map((s) => ({
     lat: s.lat,
     lon: s.lon,
-    val: pollutantType === 'pm25' ? s.pm25 : pollutantType === 'pm10' ? s.pm10 : s.aqi,
+    val: pollutantType === 'pm25' ? (Number(s.pm25) || Number(s.aqi) || 50) :
+         pollutantType === 'pm10' ? (Number(s.pm10) || Number(s.aqi) || 80) :
+         pollutantType === 'no2' ? (Number(s.no2) || 24) :
+         pollutantType === 'so2' ? (Number(s.so2) || 10) :
+         pollutantType === 'co' ? (Number(s.co) || 0.8) :
+         pollutantType === 'o3' ? (Number(s.o3) || 30) :
+         (Number(s.aqi) || 100),
   }));
 
   if (stData.length === 0) {
@@ -306,6 +312,14 @@ function computeRawSpatialGrid(stationsList, pollutantType = 'aqi', bounds = IND
         effectiveAqi = calculateUncappedAqi(interpolatedVal);
       } else if (pollutantType === 'pm10') {
         effectiveAqi = interpolatedVal * 0.9;
+      } else if (pollutantType === 'no2') {
+        effectiveAqi = interpolatedVal * 2.5;
+      } else if (pollutantType === 'so2') {
+        effectiveAqi = interpolatedVal * 3.0;
+      } else if (pollutantType === 'co') {
+        effectiveAqi = interpolatedVal * 50;
+      } else if (pollutantType === 'o3') {
+        effectiveAqi = interpolatedVal * 2.0;
       }
 
       rawGrid[idx] = effectiveAqi;
@@ -2539,23 +2553,29 @@ export default function DelhiAqiHeatmap() {
                 display: 'flex',
                 padding: '3px',
                 borderRadius: '9999px',
+                gap: '2px',
               }}
             >
               {[
                 { id: 'aqi', label: 'AQI' },
-                { id: 'pm25', label: 'PM2.5' },
-                { id: 'pm10', label: 'PM10' },
+                { id: 'pm25', label: 'PM 2.5' },
+                { id: 'pm10', label: 'PM 10' },
+                { id: 'no2', label: 'NO2' },
+                { id: 'so2', label: 'SO2' },
+                { id: 'co', label: 'CO' },
+                { id: 'o3', label: 'O3' },
               ].map((m) => (
                 <button
                   key={m.id}
                   onClick={() => setActivePollutant(m.id)}
                   className={`glass-pill ${activePollutant === m.id ? 'glass-pill-active' : ''}`}
                   style={{
-                    padding: '3px 11px',
+                    padding: '3px 9px',
                     borderRadius: '9999px',
-                    fontSize: '0.7rem',
+                    fontSize: '0.69rem',
                     fontWeight: 600,
                     cursor: 'pointer',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {m.label}
@@ -2658,46 +2678,6 @@ export default function DelhiAqiHeatmap() {
               {isSidebarOpen ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
               <span>{isSidebarOpen ? 'Hide Telemetry' : 'Show Telemetry'}</span>
               <Activity size={13} color={isSidebarOpen ? '#94a3b8' : '#10b981'} />
-            </button>
-
-            {/* Section 10: Civic Action & Formal Petition Generator */}
-            <button
-              onClick={() => {
-                setPetitionStation(displayStation?.name || 'DTU (Delhi Technological University)');
-                setPetitionLocality(displayStation?.zone ? `${displayStation.name}, ${displayStation.zone}` : 'Rohini Sector 16, North Delhi');
-                setPetitionPm25(displayStation?.pm25 || displayStation?.aqi || 142);
-                setIsPetitionModalOpen(true);
-              }}
-              id="petition-action-deck-btn"
-              title="Transform air quality telemetry into a formal civic complaint or school petition"
-              className="glass-pill"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                color: '#34d399',
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(6, 182, 212, 0.22) 100%)',
-                border: '1px solid rgba(52, 211, 153, 0.45)',
-                padding: '5px 13px',
-                borderRadius: '9999px',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                boxShadow: '0 0 14px rgba(16, 185, 129, 0.25)',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 0 18px rgba(16, 185, 129, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 0 14px rgba(16, 185, 129, 0.25)';
-              }}
-            >
-              <FileText size={13} color="#34d399" />
-              <span>Petition & Action</span>
             </button>
           </div>
         </div>
@@ -2856,46 +2836,6 @@ export default function DelhiAqiHeatmap() {
         </div>
       </div>
 
-      {/* 360° Cinematic Tour Floating HUD Banner */}
-      {isOrbiting360 && (
-        <div
-          className="glass-panel-master"
-          style={{
-            position: 'absolute',
-            top: '125px',
-            left: isSidebarOpen ? 'calc((100% - 420px) / 2)' : '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 25,
-            padding: '7px 16px',
-            borderRadius: '9999px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            transition: 'left 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
-          }}
-        >
-          <RotateCw size={14} className="animate-spin" color="#38bdf8" />
-          <span style={{ fontSize: '0.76rem', color: '#f8fafc', fontWeight: 600 }}>
-            360° Slanted Horizon Tour · Orbiting Live Position
-          </span>
-          <button
-            onClick={cancelCinematic360Tour}
-            className="glass-pill"
-            style={{
-              color: '#f87171',
-              padding: '2px 8px',
-              borderRadius: '9999px',
-              fontSize: '0.68rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              marginLeft: '4px',
-            }}
-          >
-            Skip
-          </button>
-        </div>
-      )}
-
       {/* ============================================================== */}
       {/* 4. BOTTOM-LEFT FLOATING CONTROLS HUD (LAYERS & OPACITY)        */}
       {/* ============================================================== */}
@@ -2905,13 +2845,15 @@ export default function DelhiAqiHeatmap() {
           position: 'absolute',
           bottom: '24px',
           left: '24px',
+          right: isSidebarOpen ? '444px' : 'auto',
+          maxWidth: isSidebarOpen ? 'calc(100% - 468px)' : 'calc(100% - 48px)',
           zIndex: 25,
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
-          padding: '10px 14px',
+          padding: '11px 16px',
           borderRadius: '16px',
-          maxWidth: 'calc(100% - 48px)',
+          transition: 'right 0.32s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
         {/* Click hint */}
@@ -2923,27 +2865,18 @@ export default function DelhiAqiHeatmap() {
         <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', width: '100%' }} />
 
         {/* TIER 1: PRIMARY MAP LAYERS & DISPLAY MODES */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.66rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '2px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '2px' }}>
             Layers:
           </span>
 
           {/* Heatmap Layer Toggle */}
           <button
             onClick={() => setShowHeatmapLayer((v) => !v)}
-            className={`glass-pill ${showHeatmapLayer ? 'glass-pill-active' : ''}`}
-            style={{
-              padding: '4px 9px',
-              borderRadius: '7px',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-            }}
+            className={`glass-cuboid-btn ${showHeatmapLayer ? 'glass-cuboid-btn-active' : ''}`}
+            title="Toggle spatial continuous IDW air quality heatmap layer"
           >
-            <Layers size={13} color={showHeatmapLayer ? '#38bdf8' : '#94a3b8'} />
+            <Layers size={14} color={showHeatmapLayer ? '#38bdf8' : '#94a3b8'} />
             <span>Heat: {showHeatmapLayer ? 'ON' : 'OFF'}</span>
           </button>
 
@@ -2951,19 +2884,9 @@ export default function DelhiAqiHeatmap() {
           <button
             onClick={() => setIsAdaptiveMode((v) => !v)}
             title="Dynamically recalibrate palette: lowest visible AQI becomes green, highest becomes bright red as you zoom in"
-            className={`glass-pill ${isAdaptiveMode ? 'glass-pill-success' : ''}`}
-            style={{
-              padding: '4px 9px',
-              borderRadius: '7px',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-            }}
+            className={`glass-cuboid-btn ${isAdaptiveMode ? 'glass-cuboid-btn-success' : ''}`}
           >
-            <Sparkles size={13} color={isAdaptiveMode ? '#34d399' : '#94a3b8'} />
+            <Sparkles size={14} color={isAdaptiveMode ? '#34d399' : '#94a3b8'} />
             <span>Adaptive: {isAdaptiveMode ? 'ON' : 'OFF'}</span>
             {isAdaptiveMode && activeRange.isZoomed && (
               <span
@@ -2985,38 +2908,20 @@ export default function DelhiAqiHeatmap() {
           {/* State Borders Toggle */}
           <button
             onClick={() => setShowStateBorders((v) => !v)}
-            className={`glass-pill ${showStateBorders ? 'glass-pill-active' : ''}`}
-            style={{
-              padding: '4px 9px',
-              borderRadius: '7px',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-            }}
+            className={`glass-cuboid-btn ${showStateBorders ? 'glass-cuboid-btn-active' : ''}`}
+            title="Toggle official Survey of India administrative state borders"
           >
-            <MapIcon size={13} color={showStateBorders ? '#38bdf8' : '#94a3b8'} />
+            <MapIcon size={14} color={showStateBorders ? '#38bdf8' : '#94a3b8'} />
             <span>Borders</span>
           </button>
 
           {/* 108 Monitoring Pins Toggle */}
           <button
             onClick={() => setShowStationPins((v) => !v)}
-            className={`glass-pill ${showStationPins ? 'glass-pill-active' : ''}`}
-            style={{
-              padding: '4px 9px',
-              borderRadius: '7px',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-            }}
+            className={`glass-cuboid-btn ${showStationPins ? 'glass-cuboid-btn-active' : ''}`}
+            title="Toggle 108 nationwide ground/CAAQMS monitoring stations"
           >
-            {showStationPins ? <Eye size={13} color="#38bdf8" /> : <EyeOff size={13} color="#94a3b8" />}
+            {showStationPins ? <Eye size={14} color="#38bdf8" /> : <EyeOff size={14} color="#94a3b8" />}
             <span>108 Pins</span>
           </button>
 
@@ -3032,66 +2937,10 @@ export default function DelhiAqiHeatmap() {
                 return next;
               });
             }}
-            className={`glass-pill ${is3DBuildings ? 'glass-pill-active' : ''}`}
-            style={{
-              padding: '4px 9px',
-              borderRadius: '7px',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
+            className={`glass-cuboid-btn ${is3DBuildings ? 'glass-cuboid-btn-active' : ''}`}
+            title="Toggle 3D urban building extrusions and tilt camera"
           >
-            3D Urban
-          </button>
-
-          {/* 360° Slanted Cinematic Orbit Button */}
-          <button
-            onClick={() => {
-              if (isOrbiting360) {
-                cancelCinematic360Tour();
-              } else {
-                playCinematic360Tour();
-              }
-            }}
-            title={isOrbiting360 ? 'Cancel 360° orbital animation' : 'Replay cinematic 360° 3D slanted orbital flyaround'}
-            className={`glass-pill ${isOrbiting360 ? 'glass-pill-active' : ''}`}
-            style={{
-              padding: '4px 9px',
-              borderRadius: '7px',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-            }}
-          >
-            <RotateCw size={13} className={isOrbiting360 ? 'animate-spin' : ''} color={isOrbiting360 ? '#38bdf8' : '#cbd5e1'} />
-            <span>{isOrbiting360 ? 'Stop Orbit' : '360° Orbit'}</span>
-          </button>
-
-          {/* Autonomous Shield Test Bench Modal Trigger */}
-          <button
-            onClick={() => setIsMonitorModalOpen(true)}
-            title="Interactive Test Bench for Autonomous Atmospheric Monitor (Pillars 1, 2, 3)"
-            className="glass-pill glass-pill-active"
-            style={{
-              padding: '4px 10px',
-              borderRadius: '7px',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.45) 0%, rgba(14, 165, 233, 0.3) 100%)',
-              border: '1px solid rgba(56, 189, 248, 0.6)',
-              color: '#38bdf8',
-              boxShadow: '0 0 14px rgba(56, 189, 248, 0.25)',
-            }}
-          >
-            <ShieldCheck size={13} color="#38bdf8" />
-            <span>Test Autonomous Shield</span>
+            <span>3D Urban</span>
           </button>
         </div>
 
@@ -3130,13 +2979,11 @@ export default function DelhiAqiHeatmap() {
                 <button
                   key={p.label}
                   onClick={() => setHeatIntensity(p.val)}
-                  className={`glass-pill ${isSelected ? 'glass-pill-active' : ''}`}
+                  className={`glass-cuboid-btn ${isSelected ? 'glass-cuboid-btn-active' : ''}`}
                   style={{
-                    padding: '2px 8px',
-                    borderRadius: '6px',
-                    fontSize: '0.68rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
+                    padding: '3px 9px',
+                    borderRadius: '7px',
+                    fontSize: '0.70rem',
                   }}
                 >
                   {p.label}
@@ -3604,7 +3451,7 @@ export default function DelhiAqiHeatmap() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <Sparkles size={13} color="#38bdf8" />
                     <strong style={{ color: '#38bdf8', fontSize: '0.74rem', letterSpacing: '0.03em', textTransform: 'uppercase' }}>
-                      Gemini 3.8 Flash Advisory
+                      Gemini Flash Advisory
                     </strong>
                   </div>
                   <span
@@ -3623,46 +3470,6 @@ export default function DelhiAqiHeatmap() {
                   {isLoadingAdvisory ? 'Generating localized medical & commute advisory...' : geminiAdvisory}
                 </p>
               </div>
-
-              {/* Section 10: Launch Petition & Action from selected station */}
-              <button
-                onClick={() => {
-                  setPetitionStation(displayStation.name);
-                  setPetitionLocality(`${displayStation.name}, ${displayStation.zone || displayStation.state || 'Delhi'}`);
-                  setPetitionPm25(displayStation.pm25 || displayStation.aqi || 142);
-                  setIsPetitionModalOpen(true);
-                }}
-                id="station-card-petition-btn"
-                style={{
-                  marginTop: '12px',
-                  width: '100%',
-                  padding: '9px 14px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%)',
-                  border: '1px solid rgba(52, 211, 153, 0.4)',
-                  color: '#34d399',
-                  fontSize: '0.76rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.15)',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.35) 0%, rgba(6, 182, 212, 0.35) 100%)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                <FileText size={14} />
-                <span>Draft Civic Petition for this Station</span>
-              </button>
             </div>
 
             {/* 3. CALIBRATED SEAMLESS ZOOM-ADAPTIVE SPECTRUM LEGEND */}
