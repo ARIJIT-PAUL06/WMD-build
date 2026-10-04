@@ -63,7 +63,7 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         uTime: { value: 0.0 },
         uScroll: { value: 0.0 },
         uParallax: { value: 0.0 },
-        uCurvature: { value: 0.28 }, // Authentic CRT spherical faceplate bulge
+        uCurvature: { value: width < 600 ? 0.04 : 0.28 }, // Authentic CRT faceplate bulge on desktop, subtle on mobile
         uAspect: { value: width / height },
         uResolution: { value: new THREE.Vector2(width, height) },
       },
@@ -281,25 +281,26 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       ctx.lineTo(x + cardW - 6, y + cardH - 6 - markLen);
       ctx.stroke();
 
-      // Glitch Physics: Authentic analog electron gun convergence wobble & burst twitch
-      const isBurstGlitch = (Math.sin(time * 8.5) > 0.82) || (Math.cos(time * 21.3) > 0.86);
-      const glitchShiftX = isBurstGlitch
-        ? (Math.sin(time * 70.0) * 4.2 + (Math.sin(time * 110.0)) * 3.2)
-        : (Math.sin(time * 14.0) * 1.2);
+      // Glitch Physics: Authentic analog electron gun convergence wobble on desktop (disabled on mobile for crisp clarity)
+      const isBurstGlitch = !isMobile && ((Math.sin(time * 8.5) > 0.82) || (Math.cos(time * 21.3) > 0.86));
+      const glitchShiftX = isMobile ? 0 : (isBurstGlitch
+        ? (Math.sin(time * 70.0) * 3.5 + (Math.sin(time * 110.0)) * 2.5)
+        : (Math.sin(time * 14.0) * 1.0));
 
-      let curY = y + paddingY + 6;
+      let curY = y + paddingY + (isMobile ? 12 : 16);
 
       // Row 1: Channel OSD Badge (Bold monospace with blinking phosphor terminal cursor)
-      const badgeFont = isMobile ? 13 : 16;
+      const badgeFont = isMobile ? 12 : 15;
       ctx.font = `700 ${badgeFont}px "Share Tech Mono", "JetBrains Mono", monospace`;
       ctx.fillStyle = badgeColor;
       const blinker = Math.floor(time * 3.5) % 2 === 0 ? '█' : ' ';
       ctx.fillText(`${badgeText} ${blinker}`, x + paddingX, curY);
 
-      curY += isMobile ? 22 : 28;
+      curY += badgeFont + (isMobile ? 8 : 14);
 
       // Row 2: The Striking Line (Dynamic headline with RGB chromatic convergence glitch filter)
-      const fontSize = cardW < 360 ? 18 : cardW < 460 ? 21 : cardW < 600 ? 26 : 34;
+      const fontSize = cardW < 360 ? 15 : cardW < 460 ? 18 : cardW < 600 ? 21 : 32;
+      const lineHeight = fontSize + (isMobile ? 4 : 6);
       ctx.font = `800 ${fontSize}px "Share Tech Mono", "JetBrains Mono", monospace`;
 
       const words = strikingLine.split(' ');
@@ -318,43 +319,46 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
 
       for (let i = 0; i < lines.length; i++) {
         const lineText = lines[i];
-        const lineY = curY + (i + 1) * (fontSize + (isMobile ? 4 : 6));
+        const lineBaselineY = curY + (i + 1) * lineHeight - 3;
 
-        // RGB Electron Gun Convergence Misalignment (Chromatic Glitch Filter)
-        ctx.fillStyle = 'rgba(34, 211, 238, 0.8)';
-        ctx.fillText(lineText, x + paddingX - glitchShiftX * 1.5, lineY);
+        // RGB Electron Gun Convergence Misalignment (Chromatic Glitch Filter on desktop only)
+        if (glitchShiftX > 0.1) {
+          ctx.fillStyle = 'rgba(34, 211, 238, 0.8)';
+          ctx.fillText(lineText, x + paddingX - glitchShiftX * 1.5, lineBaselineY);
 
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.8)';
-        ctx.fillText(lineText, x + paddingX + glitchShiftX * 1.5, lineY + (isBurstGlitch ? 0.9 : 0));
+          ctx.fillStyle = 'rgba(239, 68, 68, 0.8)';
+          ctx.fillText(lineText, x + paddingX + glitchShiftX * 1.5, lineBaselineY + (isBurstGlitch ? 0.9 : 0));
+        }
 
         ctx.save();
         ctx.shadowColor = accentGlow;
-        ctx.shadowBlur = isBurstGlitch ? 26 : 14;
+        ctx.shadowBlur = isBurstGlitch ? 26 : (isMobile ? 8 : 14);
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(lineText, x + paddingX, lineY);
+        ctx.fillText(lineText, x + paddingX, lineBaselineY);
         ctx.restore();
 
         if (isBurstGlitch && i === 0) {
           ctx.fillStyle = accentColor;
-          ctx.fillRect(x + paddingX - 4, lineY - fontSize * 0.35, innerW * 0.45, 2.2);
+          ctx.fillRect(x + paddingX - 4, lineBaselineY - fontSize * 0.35, innerW * 0.45, 2.2);
         }
       }
 
-      curY += lines.length * (fontSize + (isMobile ? 4 : 6)) + (isMobile ? 12 : 16);
+      curY += lines.length * lineHeight + (isMobile ? 8 : 14);
 
       // Row 3: Bold Single Telemetry Stat Callout (Clean, high impact, prominent AQI readability)
-      const pillFont = isMobile ? 13 : 17;
+      const pillFont = isMobile ? 12 : 16;
       ctx.font = `800 ${pillFont}px "Outfit", "Inter", sans-serif`;
       const pillW = Math.min(innerW, ctx.measureText(statPillText).width + (isMobile ? 26 : 36));
-      const pillH = isMobile ? 28 : 34;
+      const pillH = isMobile ? 26 : 32;
+      const pillTopY = curY;
 
       // Pill Background with high contrast dark plate
       ctx.fillStyle = 'rgba(10, 15, 29, 0.88)';
       ctx.beginPath();
       if (ctx.roundRect) {
-        ctx.roundRect(x + paddingX, curY - (isMobile ? 16 : 20), pillW, pillH, 7);
+        ctx.roundRect(x + paddingX, pillTopY, pillW, pillH, 7);
       } else {
-        ctx.rect(x + paddingX, curY - (isMobile ? 16 : 20), pillW, pillH);
+        ctx.rect(x + paddingX, pillTopY, pillW, pillH);
       }
       ctx.fill();
 
@@ -372,32 +376,35 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       ctx.shadowColor = accentGlow;
       ctx.shadowBlur = 8;
       ctx.beginPath();
-      ctx.arc(x + paddingX + (isMobile ? 12 : 16), curY - (isMobile ? 2 : 3), isMobile ? 4 : 5, 0, Math.PI * 2);
+      ctx.arc(x + paddingX + (isMobile ? 11 : 16), pillTopY + pillH / 2, isMobile ? 3.5 : 5, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
-      // Sharp, bright, easily readable text
+      // Sharp, bright, easily readable text centered vertically in pill
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(statPillText, x + paddingX + (isMobile ? 22 : 28), curY + (isMobile ? 3 : 3));
+      ctx.textBaseline = 'middle';
+      ctx.fillText(statPillText, x + paddingX + (isMobile ? 20 : 28), pillTopY + pillH / 2);
+      ctx.textBaseline = 'alphabetic';
 
-      curY += isMobile ? 28 : 38;
+      curY = pillTopY + pillH + (isMobile ? 10 : 14);
 
       // Row 4: Bottom Action Strip
       const btnW = innerW;
       const btnH = isMobile ? 32 : 38;
+      const btnTopY = curY;
 
       if (isInteractiveButton) {
         // Phase 3: Interactive CTA Button
-        const btnGrad = ctx.createLinearGradient(x + paddingX, curY, x + paddingX + btnW, curY);
+        const btnGrad = ctx.createLinearGradient(x + paddingX, btnTopY, x + paddingX + btnW, btnTopY);
         btnGrad.addColorStop(0, '#059669');
         btnGrad.addColorStop(1, '#10b981');
 
         ctx.fillStyle = btnGrad;
         ctx.beginPath();
         if (ctx.roundRect) {
-          ctx.roundRect(x + paddingX, curY, btnW, btnH, 6);
+          ctx.roundRect(x + paddingX, btnTopY, btnW, btnH, 6);
         } else {
-          ctx.rect(x + paddingX, curY, btnW, btnH);
+          ctx.rect(x + paddingX, btnTopY, btnW, btnH);
         }
         ctx.fill();
 
@@ -412,7 +419,7 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         // Register button screen hitbox for pointer clicks
         buttonBounds.current = {
           x: x + paddingX,
-          y: curY,
+          y: btnTopY,
           w: btnW,
           h: btnH,
           active: opacity > 0.5,
@@ -421,8 +428,10 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         ctx.font = `700 ${isMobile ? 13 : 16}px "Share Tech Mono", "JetBrains Mono", monospace`;
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
-        ctx.fillText(`${actionText}  ►`, x + paddingX + btnW / 2, curY + (isMobile ? 20 : 24));
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${actionText}  ►`, x + paddingX + btnW / 2, btnTopY + btnH / 2);
         ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
       } else {
         // Phase 1 & 2: Matching Status Bar of identical size
         ctx.fillStyle = 'rgba(15, 23, 42, 0.68)';
@@ -430,9 +439,9 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         ctx.lineWidth = 1.2;
         ctx.beginPath();
         if (ctx.roundRect) {
-          ctx.roundRect(x + paddingX, curY, btnW, btnH, 6);
+          ctx.roundRect(x + paddingX, btnTopY, btnW, btnH, 6);
         } else {
-          ctx.rect(x + paddingX, curY, btnW, btnH);
+          ctx.rect(x + paddingX, btnTopY, btnW, btnH);
         }
         ctx.fill();
         ctx.stroke();
@@ -440,8 +449,10 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         ctx.font = `700 ${isMobile ? 12 : 15}px "Share Tech Mono", "JetBrains Mono", monospace`;
         ctx.fillStyle = '#94a3b8';
         ctx.textAlign = 'center';
-        ctx.fillText(actionText, x + paddingX + btnW / 2, curY + (isMobile ? 20 : 24));
+        ctx.textBaseline = 'middle';
+        ctx.fillText(actionText, x + paddingX + btnW / 2, btnTopY + btnH / 2);
         ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
       }
 
       ctx.restore();
@@ -604,6 +615,7 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       reqId = requestAnimationFrame(animate);
       const time = clock.getElapsedTime();
       crtMaterial.uniforms.uTime.value = time;
+      crtMaterial.uniforms.uCurvature.value = width < 600 ? 0.04 : 0.28;
       updateTextTexture(scrollRef.current, time);
       renderer.render(scene, camera);
     };
@@ -615,6 +627,7 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       renderer.setSize(width, height);
       crtMaterial.uniforms.uAspect.value = width / height;
       crtMaterial.uniforms.uResolution.value.set(width, height);
+      crtMaterial.uniforms.uCurvature.value = width < 600 ? 0.04 : 0.28;
 
       textCanvas.width = width * dpr;
       textCanvas.height = height * dpr;

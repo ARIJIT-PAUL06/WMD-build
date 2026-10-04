@@ -31,7 +31,9 @@ import {
   ChevronDown,
   Activity,
   FileText,
-  ShieldCheck
+  ShieldCheck,
+  Menu,
+  X
 } from 'lucide-react';
 import PetitionModal from '../Petition/PetitionModal';
 import AutonomousMonitorModal from '../Dashboard/AutonomousMonitorModal';
@@ -603,7 +605,7 @@ function getAqiColor(val, activeRange) {
   return { hex, label, textHex, badgeBg };
 }
 
-export default function DelhiAqiHeatmap() {
+export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
@@ -639,19 +641,71 @@ export default function DelhiAqiHeatmap() {
   // Cinematic 360° 3D Slanted Orbital Tour State & Refs
   const [isOrbiting360, setIsOrbiting360] = useState(false);
   const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 1024 : false));
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : true));
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      if (hash === '#hud' || hash === '#telemetry' || params.get('hud') === 'true') return true;
+      return window.innerWidth >= 1024;
+    }
+    return true;
+  });
   const [isGlideDropdownOpen, setIsGlideDropdownOpen] = useState(false);
+  const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      return hash === '#controls' || hash === '#burger' || params.get('controls') === 'true';
+    }
+    return false;
+  });
 
-  // Dynamic window resize listener for seamless responsive layout transitions
+  // Dynamic window resize listener & URL hash sync for responsive drawers
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
     };
+    const handleHash = () => {
+      const hash = window.location.hash.toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      if (hash === '#controls' || hash === '#burger' || params.get('controls') === 'true') {
+        setIsMobileControlsOpen(true);
+      } else if (hash === '#hud' || hash === '#telemetry' || params.get('hud') === 'true') {
+        setIsSidebarOpen(true);
+      }
+    };
     handleResize();
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('hashchange', handleHash);
+    window.addEventListener('popstate', handleHash);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('hashchange', handleHash);
+      window.removeEventListener('popstate', handleHash);
+    };
   }, []);
+
+  const handleCloseMobileControls = () => {
+    setIsMobileControlsOpen(false);
+    if (typeof window !== 'undefined' && (window.location.hash === '#controls' || window.location.hash === '#burger')) {
+      window.history.replaceState(null, '', window.location.pathname + '#map');
+    }
+  };
+
+  const handleCloseSidebar = () => {
+    setIsSidebarOpen(false);
+    if (typeof window !== 'undefined' && (window.location.hash === '#hud' || window.location.hash === '#telemetry')) {
+      window.history.replaceState(null, '', window.location.pathname + '#map');
+    }
+  };
+
+  useEffect(() => {
+    if (typeof onDrawerChange === 'function') {
+      onDrawerChange(Boolean(isMobile && (isMobileControlsOpen || isSidebarOpen)));
+    }
+  }, [isMobile, isMobileControlsOpen, isSidebarOpen, onDrawerChange]);
+
   const sectionContainerRef = useRef(null);
   const hasPlayedIntroOrbitRef = useRef(false);
   const orbitAnimIdRef = useRef(null);
@@ -2433,8 +2487,8 @@ export default function DelhiAqiHeatmap() {
         position: 'relative',
         zIndex: 40,
         width: '100%',
-        height: '100vh',
-        minHeight: '780px',
+        height: isMobile ? '100%' : '100vh',
+        minHeight: isMobile ? '100%' : '780px',
         background: '#070a12',
         color: '#f8fafc',
         overflow: 'hidden',
@@ -2530,228 +2584,310 @@ export default function DelhiAqiHeatmap() {
         }}
       >
         {/* Tier 1: Branding, Telemetry Switcher, GPS Tracker & Telemetry Toggle */}
-        <div
-          className="glass-panel-master"
-          style={{
-            pointerEvents: 'auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: isMobile ? '8px' : '12px',
-            flexWrap: 'wrap',
-            padding: isMobile ? '8px 10px' : '8px 16px',
-            borderRadius: '14px',
-          }}
-        >
-          {/* Engine Title & Last Updated */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span
-              style={{
-                width: '7px',
-                height: '7px',
-                borderRadius: '50%',
-                background: '#38bdf8',
-                boxShadow: '0 0 10px #38bdf8',
-              }}
-            />
-            <span style={{ fontSize: '0.76rem', fontWeight: 800, letterSpacing: '0.04em', color: '#f8fafc' }}>
-              INDIA AQI ENGINE
-            </span>
-            <span style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>•</span>
-            <span style={{ fontSize: '0.7rem', color: '#e2e8f0', fontWeight: 500 }}>{lastUpdated}</span>
-
-            {/* Mapbox Live Toggle / Show Map Button */}
-            <button
-              onClick={() => setShowMap((prev) => !prev)}
-              id="show-map-btn"
-              className={`glass-pill ${showMap ? 'glass-pill-active' : 'glass-pill-success'}`}
-              title={
-                showMap
-                  ? 'Mapbox Live is active. Click to pause map and save Mapbox credits.'
-                  : 'Mapbox is paused to save credits. Click to load live 3D Mapbox map.'
-              }
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '3px 11px',
-                borderRadius: '9999px',
-                fontSize: '0.68rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                background: showMap
-                  ? 'rgba(56, 189, 248, 0.18)'
-                  : 'linear-gradient(135deg, rgba(2, 132, 199, 0.35) 0%, rgba(37, 99, 235, 0.35) 100%)',
-                border: showMap
-                  ? '1px solid rgba(56, 189, 248, 0.4)'
-                  : '1px solid rgba(56, 189, 248, 0.5)',
-                boxShadow: showMap
-                  ? '0 0 8px rgba(56, 189, 248, 0.25)'
-                  : '0 0 10px rgba(56, 189, 248, 0.3)',
-                color: '#f8fafc',
-              }}
-            >
+        {isMobile ? (
+          /* Mobile Sleek Compact Header Bar */
+          <div
+            className="glass-panel-master"
+            style={{
+              pointerEvents: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '6px 10px',
+              borderRadius: '12px',
+              gap: '6px',
+            }}
+          >
+            {/* Brand & Status Indicator */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
               <span
                 style={{
-                  width: '6px',
-                  height: '6px',
+                  width: '7px',
+                  height: '7px',
                   borderRadius: '50%',
-                  background: showMap ? '#60a5fa' : '#38bdf8',
-                  boxShadow: showMap ? '0 0 6px #60a5fa' : '0 0 6px #38bdf8',
-                  animation: !showMap ? 'pulse 2s infinite' : 'none',
+                  background: '#38bdf8',
+                  boxShadow: '0 0 10px #38bdf8',
+                  animation: 'pulse 1.8s infinite',
                 }}
               />
-              <span>{showMap ? 'Mapbox Live' : 'Show Map'}</span>
-            </button>
-
-            {/* Glide Dropdown Button with Search Icon */}
-            <button
-              onClick={() => setIsGlideDropdownOpen((prev) => !prev)}
-              className={`glass-cuboid-btn ${isGlideDropdownOpen ? 'glass-cuboid-btn-active' : ''}`}
-              style={{
-                padding: '6px 14px',
-                borderRadius: '9px',
-                fontSize: '0.78rem',
-              }}
-              title="Toggle Glide cities and search bar dropdown"
-            >
-              <Search size={13} color="#38bdf8" />
-              <span>Glide & Search</span>
-              <ChevronDown
-                size={13}
-                style={{
-                  transform: isGlideDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                }}
-              />
-            </button>
-          </div>
-
-          {/* Action Buttons: Metrics, Refresh, GPS & Integrated Telemetry Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            {/* Metric Selector Tabs */}
-            <div
-              className="glass-panel-sub"
-              style={{
-                display: 'flex',
-                padding: '3px',
-                borderRadius: '10px',
-                gap: '3px',
-                background: 'rgba(15, 23, 42, 0.65)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                overflowX: 'auto',
-                maxWidth: isMobile ? '100%' : 'none',
-                WebkitOverflowScrolling: 'touch',
-                scrollbarWidth: 'none',
-              }}
-            >
-              {[
-                { id: 'aqi', label: 'AQI' },
-                { id: 'pm25', label: 'PM 2.5' },
-                { id: 'pm10', label: 'PM 10' },
-                { id: 'no2', label: 'NO2' },
-                { id: 'so2', label: 'SO2' },
-                { id: 'co', label: 'CO' },
-                { id: 'o3', label: 'O3' },
-              ].map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => setActivePollutant(m.id)}
-                  className={`glass-cuboid-btn ${activePollutant === m.id ? 'glass-cuboid-btn-active' : ''}`}
-                  style={{
-                    padding: '5px 11px',
-                    borderRadius: '7px',
-                    fontSize: '0.74rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {m.label}
-                </button>
-              ))}
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.04em', color: '#f8fafc' }}>
+                INDIA AQI
+              </span>
             </div>
 
-            {/* Refresh Live Button - Fixed width & constant label to eliminate sizing jitter */}
-            <button
-              onClick={() => fetchLiveNationalData(userLocation.lat, userLocation.lon)}
-              disabled={isLoadingLive}
-              className="glass-cuboid-btn"
-              style={{
-                minWidth: '96px',
-                justifyContent: 'center',
-                padding: '6px 14px',
-                borderRadius: '9px',
-                fontSize: '0.78rem',
-              }}
-            >
-              <RefreshCw size={13} className={isLoadingLive ? 'animate-spin' : ''} />
-              <span>Refresh</span>
-            </button>
-
-            {/* Live GPS Tracking Controller */}
-            <button
-              onClick={handleCenterOnUser}
-              title={userLocation.isLiveGps ? 'Center camera on your live GPS position' : 'Start live GPS tracking'}
-              className={`glass-cuboid-btn ${userLocation.isLiveGps ? 'glass-cuboid-btn-success' : ''}`}
-              style={{
-                padding: '6px 14px',
-                borderRadius: '9px',
-                fontSize: '0.78rem',
-              }}
-            >
-              {isLocating ? (
-                <RefreshCw size={13} className="animate-spin" color="#38bdf8" />
-              ) : userLocation.isLiveGps ? (
-                <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981', animation: 'pulse 1.2s infinite' }} />
-              ) : (
-                <Navigation size={13} color="#38bdf8" />
-              )}
-              <span>
-                {isLocating
-                  ? 'Acquiring...'
-                  : userLocation.isLiveGps
-                  ? `GPS Lock${userLocation.accuracy ? ` (±${userLocation.accuracy}m)` : ''}`
-                  : 'Track My Location'}
-              </span>
-            </button>
-
-            {userLocation.isLiveGps && (
+            {/* Quick Actions: GPS, Refresh & Burger Menu Toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
               <button
-                onClick={() => setIsFollowingUser((f) => !f)}
-                title="Toggle automatic camera tracking as you move"
-                className={`glass-cuboid-btn ${isFollowingUser ? 'glass-cuboid-btn-active' : ''}`}
+                onClick={handleCenterOnUser}
+                title="GPS Location"
+                className={`glass-cuboid-btn glass-btn-compact ${userLocation.isLiveGps ? 'glass-cuboid-btn-success' : ''}`}
+                style={{ padding: '5px 8px', borderRadius: '7px' }}
+              >
+                <Navigation size={12} color={userLocation.isLiveGps ? '#10b981' : '#38bdf8'} />
+              </button>
+
+              <button
+                onClick={() => fetchLiveNationalData(userLocation.lat, userLocation.lon)}
+                disabled={isLoadingLive}
+                title="Refresh Live Data"
+                className="glass-cuboid-btn glass-btn-compact"
+                style={{ padding: '5px 8px', borderRadius: '7px' }}
+              >
+                <RefreshCw size={12} className={isLoadingLive ? 'animate-spin' : ''} color="#38bdf8" />
+              </button>
+
+              {/* The Mobile Burger Menu Button */}
+              <button
+                id="mobile-burger-menu-btn"
+                onClick={() => {
+                  setIsMobileControlsOpen(true);
+                  if (typeof window !== 'undefined') window.history.replaceState(null, '', '#controls');
+                }}
+                className="glass-pill glass-pill-active"
                 style={{
-                  padding: '6px 12px',
-                  borderRadius: '9px',
-                  fontSize: '0.76rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '5px 10px',
+                  borderRadius: '9999px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.45) 0%, rgba(14, 165, 233, 0.35) 100%)',
+                  border: '1px solid rgba(56, 189, 248, 0.5)',
+                  boxShadow: '0 0 12px rgba(56, 189, 248, 0.3)',
+                  color: '#ffffff',
                 }}
               >
-                <LocateFixed size={13} color={isFollowingUser ? '#38bdf8' : '#94a3b8'} />
-                <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
+                <Menu size={13} color="#38bdf8" />
+                <span>Controls</span>
               </button>
-            )}
-
-            {/* Seamless Telemetry Toggle Button */}
-            <button
-              onClick={() => setIsSidebarOpen((v) => !v)}
-              title={isSidebarOpen ? 'Hide telemetry panel to maximize map' : 'Show telemetry & advisory HUD'}
-              className={`glass-cuboid-btn ${!isSidebarOpen ? 'glass-cuboid-btn-active' : ''}`}
-              style={{
-                padding: '6px 14px',
-                borderRadius: '9px',
-                fontSize: '0.78rem',
-                color: isSidebarOpen ? '#cbd5e1' : '#38bdf8',
-              }}
-            >
-              {isSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-              <span>{isSidebarOpen ? 'Hide Telemetry' : 'Show Telemetry'}</span>
-              <Activity size={14} color={isSidebarOpen ? '#94a3b8' : '#10b981'} />
-            </button>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div
+            className="glass-panel-master"
+            style={{
+              pointerEvents: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              flexWrap: 'wrap',
+              padding: '8px 16px',
+              borderRadius: '14px',
+            }}
+          >
+            {/* Engine Title & Last Updated */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  width: '7px',
+                  height: '7px',
+                  borderRadius: '50%',
+                  background: '#38bdf8',
+                  boxShadow: '0 0 10px #38bdf8',
+                }}
+              />
+              <span style={{ fontSize: '0.76rem', fontWeight: 800, letterSpacing: '0.04em', color: '#f8fafc' }}>
+                INDIA AQI ENGINE
+              </span>
+              <span style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>•</span>
+              <span style={{ fontSize: '0.7rem', color: '#e2e8f0', fontWeight: 500 }}>{lastUpdated}</span>
+
+              {/* Mapbox Live Toggle / Show Map Button */}
+              <button
+                onClick={() => setShowMap((prev) => !prev)}
+                id="show-map-btn"
+                className={`glass-pill ${showMap ? 'glass-pill-active' : 'glass-pill-success'}`}
+                title={
+                  showMap
+                    ? 'Mapbox Live is active. Click to pause map and save Mapbox credits.'
+                    : 'Mapbox is paused to save credits. Click to load live 3D Mapbox map.'
+                }
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '3px 11px',
+                  borderRadius: '9999px',
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: showMap
+                    ? 'rgba(56, 189, 248, 0.18)'
+                    : 'linear-gradient(135deg, rgba(2, 132, 199, 0.35) 0%, rgba(37, 99, 235, 0.35) 100%)',
+                  border: showMap
+                    ? '1px solid rgba(56, 189, 248, 0.4)'
+                    : '1px solid rgba(56, 189, 248, 0.5)',
+                  boxShadow: showMap
+                    ? '0 0 8px rgba(56, 189, 248, 0.25)'
+                    : '0 0 10px rgba(56, 189, 248, 0.3)',
+                  color: '#f8fafc',
+                }}
+              >
+                <span
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: showMap ? '#60a5fa' : '#38bdf8',
+                    boxShadow: showMap ? '0 0 6px #60a5fa' : '0 0 6px #38bdf8',
+                    animation: !showMap ? 'pulse 2s infinite' : 'none',
+                  }}
+                />
+                <span>{showMap ? 'Mapbox Live' : 'Show Map'}</span>
+              </button>
+
+              {/* Glide Dropdown Button with Search Icon */}
+              <button
+                onClick={() => setIsGlideDropdownOpen((prev) => !prev)}
+                className={`glass-cuboid-btn ${isGlideDropdownOpen ? 'glass-cuboid-btn-active' : ''}`}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '9px',
+                  fontSize: '0.78rem',
+                }}
+                title="Toggle Glide cities and search bar dropdown"
+              >
+                <Search size={13} color="#38bdf8" />
+                <span>Glide & Search</span>
+                <ChevronDown
+                  size={13}
+                  style={{
+                    transform: isGlideDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                />
+              </button>
+            </div>
+
+            {/* Action Buttons: Metrics, Refresh, GPS & Integrated Telemetry Toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              {/* Metric Selector Tabs */}
+              <div
+                className="glass-panel-sub"
+                style={{
+                  display: 'flex',
+                  padding: '3px',
+                  borderRadius: '10px',
+                  gap: '3px',
+                  background: 'rgba(15, 23, 42, 0.65)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  overflowX: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  scrollbarWidth: 'none',
+                }}
+              >
+                {[
+                  { id: 'aqi', label: 'AQI' },
+                  { id: 'pm25', label: 'PM 2.5' },
+                  { id: 'pm10', label: 'PM 10' },
+                  { id: 'no2', label: 'NO2' },
+                  { id: 'so2', label: 'SO2' },
+                  { id: 'co', label: 'CO' },
+                  { id: 'o3', label: 'O3' },
+                ].map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => setActivePollutant(m.id)}
+                    className={`glass-cuboid-btn ${activePollutant === m.id ? 'glass-cuboid-btn-active' : ''}`}
+                    style={{
+                      padding: '5px 11px',
+                      borderRadius: '7px',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Refresh Live Button - Fixed width & constant label to eliminate sizing jitter */}
+              <button
+                onClick={() => fetchLiveNationalData(userLocation.lat, userLocation.lon)}
+                disabled={isLoadingLive}
+                className="glass-cuboid-btn"
+                style={{
+                  minWidth: '96px',
+                  justifyContent: 'center',
+                  padding: '6px 14px',
+                  borderRadius: '9px',
+                  fontSize: '0.78rem',
+                }}
+              >
+                <RefreshCw size={13} className={isLoadingLive ? 'animate-spin' : ''} />
+                <span>Refresh</span>
+              </button>
+
+              {/* Live GPS Tracking Controller */}
+              <button
+                onClick={handleCenterOnUser}
+                title={userLocation.isLiveGps ? 'Center camera on your live GPS position' : 'Start live GPS tracking'}
+                className={`glass-cuboid-btn ${userLocation.isLiveGps ? 'glass-cuboid-btn-success' : ''}`}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '9px',
+                  fontSize: '0.78rem',
+                }}
+              >
+                {isLocating ? (
+                  <RefreshCw size={13} className="animate-spin" color="#38bdf8" />
+                ) : userLocation.isLiveGps ? (
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981', animation: 'pulse 1.2s infinite' }} />
+                ) : (
+                  <Navigation size={13} color="#38bdf8" />
+                )}
+                <span>
+                  {isLocating
+                    ? 'Acquiring...'
+                    : userLocation.isLiveGps
+                    ? `GPS Lock${userLocation.accuracy ? ` (±${userLocation.accuracy}m)` : ''}`
+                    : 'Track My Location'}
+                </span>
+              </button>
+
+              {userLocation.isLiveGps && (
+                <button
+                  onClick={() => setIsFollowingUser((f) => !f)}
+                  title="Toggle automatic camera tracking as you move"
+                  className={`glass-cuboid-btn ${isFollowingUser ? 'glass-cuboid-btn-active' : ''}`}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '9px',
+                    fontSize: '0.76rem',
+                  }}
+                >
+                  <LocateFixed size={13} color={isFollowingUser ? '#38bdf8' : '#94a3b8'} />
+                  <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
+                </button>
+              )}
+
+              {/* Seamless Telemetry Toggle Button */}
+              <button
+                onClick={() => setIsSidebarOpen((v) => !v)}
+                title={isSidebarOpen ? 'Hide telemetry panel to maximize map' : 'Show telemetry & advisory HUD'}
+                className={`glass-cuboid-btn ${!isSidebarOpen ? 'glass-cuboid-btn-active' : ''}`}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '9px',
+                  fontSize: '0.78rem',
+                  color: isSidebarOpen ? '#cbd5e1' : '#38bdf8',
+                }}
+              >
+                {isSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                <span>{isSidebarOpen ? 'Hide Telemetry' : 'Show Telemetry'}</span>
+                <Activity size={14} color={isSidebarOpen ? '#94a3b8' : '#10b981'} />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Tier 2: Animated Dropdown - Capital City Shortcuts + Autocomplete Search Bar */}
+        {!isMobile && (
         <div
           style={{
             pointerEvents: isGlideDropdownOpen ? 'auto' : 'none',
@@ -2916,11 +3052,104 @@ export default function DelhiAqiHeatmap() {
             </div>
           </div>
         </div>
+        )}
       </div>
+
+      {/* ============================================================== */}
+      {/* MOBILE FLOATING BOTTOM BAR: POLLUTANT PILLS + HUD BUTTON       */}
+      {/* ============================================================== */}
+      {isMobile && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '76px',
+            left: '12px',
+            right: '12px',
+            zIndex: 25,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            pointerEvents: 'none',
+          }}
+        >
+          {/* Horizontally scrollable pollutant pills */}
+          <div
+            className="glass-panel-master"
+            style={{
+              flex: 1,
+              minWidth: 0,
+              pointerEvents: 'auto',
+              display: 'flex',
+              padding: '4px',
+              borderRadius: '12px',
+              gap: '4px',
+              overflowX: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'none',
+            }}
+          >
+            {[
+              { id: 'aqi', label: 'AQI' },
+              { id: 'pm25', label: 'PM 2.5' },
+              { id: 'pm10', label: 'PM 10' },
+              { id: 'no2', label: 'NO2' },
+              { id: 'so2', label: 'SO2' },
+              { id: 'co', label: 'CO' },
+              { id: 'o3', label: 'O3' },
+            ].map((m) => (
+              <button
+                key={m.id}
+                onClick={() => setActivePollutant(m.id)}
+                className={`glass-cuboid-btn ${activePollutant === m.id ? 'glass-cuboid-btn-active' : ''}`}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Telemetry HUD Launch Button */}
+          <button
+            id="mobile-telemetry-hud-btn"
+            onClick={() => {
+              setIsSidebarOpen(true);
+              if (typeof window !== 'undefined') window.history.replaceState(null, '', '#hud');
+            }}
+            className="glass-pill glass-pill-active"
+            style={{
+              pointerEvents: 'auto',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '8px 14px',
+              borderRadius: '12px',
+              fontSize: '0.74rem',
+              fontWeight: 800,
+              flexShrink: 0,
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.45) 0%, rgba(5, 150, 105, 0.35) 100%)',
+              border: '1px solid rgba(52, 211, 153, 0.5)',
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
+              color: '#ffffff',
+              cursor: 'pointer',
+            }}
+          >
+            <Activity size={14} color="#34d399" />
+            <span>HUD</span>
+          </button>
+        </div>
+      )}
 
       {/* ============================================================== */}
       {/* 4. BOTTOM-LEFT FLOATING CONTROLS HUD (LAYERS & OPACITY)        */}
       {/* ============================================================== */}
+      {!isMobile && (
       <div
         className="glass-panel-master"
         style={{
@@ -3077,11 +3306,354 @@ export default function DelhiAqiHeatmap() {
           </div>
         </div>
       </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* MOBILE BURGER MENU CONTROLS DRAWER                             */}
+      {/* ============================================================== */}
+      {isMobile && isMobileControlsOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9000,
+            background: 'rgba(3, 7, 18, 0.75)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+            animation: 'fadeIn 0.2s ease-out',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) handleCloseMobileControls();
+          }}
+        >
+          <div
+            className="glass-panel-master"
+            style={{
+              width: '100%',
+              maxHeight: '85vh',
+              borderTopLeftRadius: '22px',
+              borderTopRightRadius: '22px',
+              borderBottomLeftRadius: 0,
+              borderBottomRightRadius: 0,
+              border: '1px solid rgba(56, 189, 248, 0.3)',
+              borderBottom: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 -15px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.15)',
+              overflow: 'hidden',
+              animation: 'slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          >
+            {/* Drawer Header */}
+            <div
+              style={{
+                padding: '14px 18px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(255, 255, 255, 0.02)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sliders size={16} color="#38bdf8" />
+                <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  Map Controls & Layers
+                </span>
+              </div>
+              <button
+                id="close-mobile-controls-btn"
+                onClick={handleCloseMobileControls}
+                className="glass-pill"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  color: '#cbd5e1',
+                  padding: '4px 10px',
+                  borderRadius: '9999px',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                <X size={14} />
+                <span>Close</span>
+              </button>
+            </div>
+
+            {/* Drawer Body (Scrollable) */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+                WebkitOverflowScrolling: 'touch',
+              }}
+            >
+              {/* Section 1: Map Display Mode & GPS */}
+              <div>
+                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                  Engine & Location Mode
+                </span>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => setShowMap((prev) => !prev)}
+                    className={`glass-cuboid-btn ${showMap ? 'glass-cuboid-btn-active' : ''}`}
+                    style={{ flex: 1, minWidth: '140px', padding: '8px 12px', justifyContent: 'center' }}
+                  >
+                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: showMap ? '#38bdf8' : '#f87171' }} />
+                    <span>{showMap ? 'Mapbox Live (Active)' : 'Token Saver (Paused)'}</span>
+                  </button>
+
+                  <button
+                    onClick={handleCenterOnUser}
+                    className={`glass-cuboid-btn ${userLocation.isLiveGps ? 'glass-cuboid-btn-success' : ''}`}
+                    style={{ flex: 1, minWidth: '140px', padding: '8px 12px', justifyContent: 'center' }}
+                  >
+                    <Navigation size={14} color={userLocation.isLiveGps ? '#10b981' : '#38bdf8'} />
+                    <span>{userLocation.isLiveGps ? 'GPS Centered' : 'Lock Live GPS'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Section 2: Capital City Glide */}
+              <div>
+                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                  Quick Glide Regions
+                </span>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {INDIA_REGION_PRESETS.map((preset) => {
+                    const isActive = activePreset.id === preset.id;
+                    return (
+                      <button
+                        key={preset.id}
+                        onClick={() => {
+                          handleGlideToRegion(preset);
+                          setIsMobileControlsOpen(false);
+                        }}
+                        className={`glass-pill ${isActive ? 'glass-pill-active' : ''}`}
+                        style={{
+                          padding: '5px 11px',
+                          borderRadius: '9999px',
+                          fontSize: '0.7rem',
+                          fontWeight: isActive ? 700 : 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {preset.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Section 3: Place Search Bar */}
+              <div>
+                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                  Search Location
+                </span>
+                <div
+                  className="glass-input"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    borderRadius: '10px',
+                    padding: '8px 12px',
+                  }}
+                >
+                  <Search size={14} color="#94a3b8" />
+                  <input
+                    type="text"
+                    placeholder="Search Indian city, district, or town..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearchInput(e.target.value)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      color: '#ffffff',
+                      fontSize: '0.8rem',
+                      width: '100%',
+                    }}
+                  />
+                  {isSearching && <RefreshCw size={12} className="animate-spin" color="#38bdf8" />}
+                </div>
+
+                {searchResults.length > 0 && (
+                  <div
+                    className="glass-panel-sub"
+                    style={{
+                      marginTop: '6px',
+                      borderRadius: '10px',
+                      maxHeight: '160px',
+                      overflowY: 'auto',
+                    }}
+                  >
+                    {searchResults.map((f) => (
+                      <div
+                        key={f.id}
+                        onClick={() => {
+                          handleSelectSearchResult(f);
+                          setIsMobileControlsOpen(false);
+                        }}
+                        style={{
+                          padding: '8px 12px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                          fontSize: '0.74rem',
+                        }}
+                      >
+                        <MapPin size={13} color="#38bdf8" style={{ flexShrink: 0 }} />
+                        <div style={{ minWidth: 0 }}>
+                          <strong style={{ color: '#ffffff', display: 'block' }}>{f.text}</strong>
+                          <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {f.place_name}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Section 4: Map Layers */}
+              <div>
+                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                  Map Layers
+                </span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <button
+                    onClick={() => setShowHeatmapLayer((v) => !v)}
+                    className={`glass-cuboid-btn ${showHeatmapLayer ? 'glass-cuboid-btn-active' : ''}`}
+                    style={{ padding: '8px 12px', justifyContent: 'center' }}
+                  >
+                    <Layers size={14} color={showHeatmapLayer ? '#38bdf8' : '#94a3b8'} />
+                    <span>Heatmap: {showHeatmapLayer ? 'ON' : 'OFF'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => setIsAdaptiveMode((v) => !v)}
+                    className={`glass-cuboid-btn ${isAdaptiveMode ? 'glass-cuboid-btn-success' : ''}`}
+                    style={{ padding: '8px 12px', justifyContent: 'center' }}
+                  >
+                    <Sparkles size={14} color={isAdaptiveMode ? '#34d399' : '#94a3b8'} />
+                    <span>Adaptive: {isAdaptiveMode ? 'ON' : 'OFF'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => setShowStateBorders((v) => !v)}
+                    className={`glass-cuboid-btn ${showStateBorders ? 'glass-cuboid-btn-active' : ''}`}
+                    style={{ padding: '8px 12px', justifyContent: 'center' }}
+                  >
+                    <MapIcon size={14} color={showStateBorders ? '#38bdf8' : '#94a3b8'} />
+                    <span>State Borders</span>
+                  </button>
+
+                  <button
+                    onClick={() => setShowStationPins((v) => !v)}
+                    className={`glass-cuboid-btn ${showStationPins ? 'glass-cuboid-btn-active' : ''}`}
+                    style={{ padding: '8px 12px', justifyContent: 'center' }}
+                  >
+                    {showStationPins ? <Eye size={14} color="#38bdf8" /> : <EyeOff size={14} color="#94a3b8" />}
+                    <span>108 Station Pins</span>
+                  </button>
+
+                  <button
+                    onClick={() => setIs3DBuildings((v) => !v)}
+                    className={`glass-cuboid-btn ${is3DBuildings ? 'glass-cuboid-btn-active' : ''}`}
+                    style={{ gridColumn: 'span 2', padding: '8px 12px', justifyContent: 'center' }}
+                  >
+                    <span>3D Urban Extrusions: {is3DBuildings ? 'ON' : 'OFF'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Section 5: Atmospheric Heat Opacity */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                    Heat Layer Opacity
+                  </span>
+                  <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.8rem' }}>
+                    {Math.round(heatIntensity * 100)}%
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0.10"
+                  max="0.85"
+                  step="0.02"
+                  value={heatIntensity}
+                  onChange={(e) => setHeatIntensity(parseFloat(e.target.value))}
+                  style={{ width: '100%', accentColor: '#38bdf8', cursor: 'pointer', marginBottom: '8px' }}
+                />
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {[
+                    { label: '35% Subtle', val: 0.35 },
+                    { label: '55% Balanced', val: 0.55 },
+                    { label: '75% Vivid', val: 0.75 },
+                  ].map((p) => (
+                    <button
+                      key={p.val}
+                      onClick={() => setHeatIntensity(p.val)}
+                      className={`glass-pill ${Math.abs(heatIntensity - p.val) < 0.05 ? 'glass-pill-active' : ''}`}
+                      style={{ flex: 1, padding: '4px 6px', fontSize: '0.68rem', textAlign: 'center', cursor: 'pointer' }}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section 6: Autonomous Shield Test Bench */}
+              <div style={{ marginTop: '8px' }}>
+                <button
+                  id="mobile-launch-shield-btn"
+                  onClick={() => {
+                    setIsMobileControlsOpen(false);
+                    setIsMonitorModalOpen(true);
+                  }}
+                  className="glass-pill glass-pill-active"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.4) 0%, rgba(3, 105, 161, 0.4) 100%)',
+                    border: '1px solid rgba(56, 189, 248, 0.5)',
+                    color: '#ffffff',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <ShieldCheck size={16} color="#38bdf8" />
+                  <span>Launch Autonomous Shield Test Bench ►</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile backdrop overlay to tap-to-close drawer */}
       {isMobile && isSidebarOpen && (
         <div
-          onClick={() => setIsSidebarOpen(false)}
+          onClick={handleCloseSidebar}
           style={{
             position: 'absolute',
             inset: 0,
@@ -3141,7 +3713,7 @@ export default function DelhiAqiHeatmap() {
             </div>
 
             <button
-              onClick={() => setIsSidebarOpen(false)}
+              onClick={handleCloseSidebar}
               title="Hide telemetry panel to maximize map view"
               className="glass-pill"
               style={{
