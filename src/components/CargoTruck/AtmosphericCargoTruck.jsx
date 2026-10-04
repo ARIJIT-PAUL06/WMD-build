@@ -2,14 +2,9 @@ import React, { useState, useMemo } from 'react';
 import {
   Truck,
   AlertTriangle,
-  ShieldCheck,
   Activity,
-  Sliders,
-  ChevronDown,
-  ChevronUp,
   Radio,
-  Wind,
-  RotateCcw
+  Wind
 } from 'lucide-react';
 import './AtmosphericCargoTruck.css';
 
@@ -119,7 +114,7 @@ const POLLUTANT_SPECS = [
 const PRESETS = {
   india_avg: {
     id: 'india_avg',
-    name: '🇮🇳 Pan-India National Average',
+    name: 'Pan-India National Average',
     subtitle: 'CPCB 2026 Continental Subcontinent Aggregate',
     values: {
       pm25: 54.2,
@@ -133,7 +128,7 @@ const PRESETS = {
   },
   delhi_hotspot: {
     id: 'delhi_hotspot',
-    name: '🚨 Delhi Winter Smog Overload',
+    name: 'Delhi Winter Smog Overload',
     subtitle: 'Anand Vihar / Jahangirpuri Severe Emergency',
     values: {
       pm25: 342.0,
@@ -147,7 +142,7 @@ const PRESETS = {
   },
   pristine: {
     id: 'pristine',
-    name: '🌿 Pristine Mountain Baseline',
+    name: 'Pristine Mountain Baseline',
     subtitle: 'Ladakh High-Altitude Clean Reference',
     values: {
       pm25: 11.2,
@@ -165,7 +160,6 @@ export default function AtmosphericCargoTruck() {
   const [activePreset, setActivePreset] = useState('india_avg');
   const [pollutantValues, setPollutantValues] = useState(PRESETS.india_avg.values);
   const [selectedPollutantId, setSelectedPollutantId] = useState('pm25');
-  const [isTunerOpen, setIsTunerOpen] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
   const [isLiveLoading, setIsLiveLoading] = useState(false);
 
@@ -294,15 +288,6 @@ export default function AtmosphericCargoTruck() {
     }, 900);
   };
 
-  // Slider change for manual pollutant injection
-  const handleSliderChange = (pollutantId, newValue) => {
-    setActivePreset('custom');
-    setPollutantValues(prev => ({
-      ...prev,
-      [pollutantId]: parseFloat(newValue)
-    }));
-  };
-
   // Geometry configuration based on user-provided master truck (2095x751)
   const truckImageSrc = '/assets/truck_cargo_master.png';
   const truckAspectRatio = '2095 / 751';
@@ -316,18 +301,10 @@ export default function AtmosphericCargoTruck() {
 
       <div className="cargo-container">
         {/* Section Header */}
-        <div className="cargo-header">
-          <div className="cargo-badge-pill">
-            <span className="pulse-dot"></span>
-            <span>03 • Industrial Atmospheric Logistics</span>
-          </div>
-          <h2 className="cargo-title">
+        <div className="cargo-header" style={{ marginBottom: '1.75rem' }}>
+          <h2 className="cargo-title" style={{ marginBottom: 0 }}>
             VayuVitals <span className="highlight-gradient">Atmospheric Cargo Hauler</span>
           </h2>
-          <p className="cargo-description">
-            Physicalizing airborne molecular mass into a standardized freight container payload. Container heights,
-            warning strobes, and trailer suspension physics dynamically react to current chemical pollutant densities across India.
-          </p>
         </div>
 
         {/* Top Control Deck: Presets & Purge */}
@@ -338,8 +315,7 @@ export default function AtmosphericCargoTruck() {
               onClick={() => handleSelectPreset('india_avg')}
               title="Pan-India National Average from CPCB CAAQMS Network"
             >
-              <span>🇮🇳</span>
-              <span>All-India National Avg</span>
+              <span>National Average</span>
             </button>
 
             <button
@@ -347,8 +323,7 @@ export default function AtmosphericCargoTruck() {
               onClick={() => handleSelectPreset('delhi_hotspot')}
               title="Delhi Winter Severe Hotspot (Anand Vihar/Jahangirpuri)"
             >
-              <span>🚨</span>
-              <span>Delhi Hotspot Overload</span>
+              <span>Delhi Hotspot</span>
             </button>
 
             <button
@@ -356,7 +331,6 @@ export default function AtmosphericCargoTruck() {
               onClick={() => handleSelectPreset('pristine')}
               title="Pristine mountain air baseline (Ladakh)"
             >
-              <span>🌿</span>
               <span>Pristine Baseline</span>
             </button>
 
@@ -367,7 +341,7 @@ export default function AtmosphericCargoTruck() {
               title="Query real-time 108 CAAQMS station stream"
             >
               <Radio size={14} className={isLiveLoading ? 'animate-spin' : ''} />
-              <span>{isLiveLoading ? 'Connecting...' : 'Live CAAQMS Stream'}</span>
+              <span>{isLiveLoading ? 'Connecting...' : 'Live Stream'}</span>
             </button>
           </div>
 
@@ -380,16 +354,6 @@ export default function AtmosphericCargoTruck() {
             >
               <Wind size={15} />
               <span>{isPurging ? 'Venting Cargo...' : 'Atmospheric Purge'}</span>
-            </button>
-
-            <button
-              className="cargo-action-btn"
-              onClick={() => setIsTunerOpen(!isTunerOpen)}
-              title="Toggle manual chemical payload sliders"
-            >
-              <Sliders size={15} />
-              <span>{isTunerOpen ? 'Hide Sliders' : 'Payload Sliders'}</span>
-              {isTunerOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
           </div>
         </div>
@@ -523,8 +487,8 @@ export default function AtmosphericCargoTruck() {
           </div>
         </div>
 
-        {/* Telemetry Readout Grid Below Truck */}
-        <div className="cargo-telemetry-hud">
+        {/* Telemetry Readout Grid Below Truck (Clean, Minimal, High-Impact) */}
+        <div className="cargo-telemetry-hud" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', marginTop: '2rem' }}>
           <div className="telemetry-card">
             <div className="telemetry-label">
               <Truck size={14} />
@@ -532,19 +496,17 @@ export default function AtmosphericCargoTruck() {
             </div>
             <div className="telemetry-value-row">
               <span className="telemetry-big-number">{payloadStats.grossTons}</span>
-              <span className="telemetry-unit">Tons / km³ column</span>
+              <span className="telemetry-unit">Tons</span>
             </div>
-            <p className="telemetry-subtext">Estimated mass in active troposphere</p>
           </div>
 
           <div className="telemetry-card">
             <div className="telemetry-label">
               <Activity size={14} />
-              <span>Trailer Suspension Load</span>
+              <span>Trailer Load</span>
             </div>
             <div className="telemetry-value-row">
               <span className="telemetry-big-number">{payloadStats.suspensionLoad}%</span>
-              <span className="telemetry-unit">Axle Rating</span>
             </div>
             <div className="telemetry-gauge-bar">
               <div
@@ -560,141 +522,18 @@ export default function AtmosphericCargoTruck() {
           <div className="telemetry-card">
             <div className="telemetry-label">
               <AlertTriangle size={14} />
-              <span>Dominant Hazard Factor</span>
+              <span>Dominant Hazard</span>
             </div>
             <div className="telemetry-value-row">
               <span className="telemetry-big-number" style={{ color: payloadStats.worstPollutant.accentColor }}>
                 {payloadStats.worstPollutant.symbol}
               </span>
-              <span className="telemetry-unit">
-                {Math.round(payloadStats.maxOverloadRatio * 100)}% of Limit
+              <span className="telemetry-unit" style={{ fontSize: '0.82rem', color: '#94a3b8' }}>
+                {payloadStats.hazardTier}
               </span>
             </div>
-            <p className="telemetry-subtext">{payloadStats.hazardTier}</p>
-          </div>
-
-          <div className="telemetry-card">
-            <div className="telemetry-label">
-              <ShieldCheck size={14} />
-              <span>Standard Protocol</span>
-            </div>
-            <div className="telemetry-value-row">
-              <span className="telemetry-big-number" style={{ fontSize: '1.25rem', color: '#38bdf8' }}>
-                NAAQS 2026
-              </span>
-              <span className="telemetry-unit">CPCB Standard</span>
-            </div>
-            <p className="telemetry-subtext">Automated 24-hr regulatory ceiling</p>
           </div>
         </div>
-
-        {/* Selected Chemical Deep Inspector Card */}
-        {activePollutant && (
-          <div
-            className="cargo-chemical-inspector"
-            style={{
-              '--inspect-accent': activePollutant.accentColor,
-              '--inspect-glow': `${activePollutant.accentColor}33`,
-              '--inspect-pill-bg': `${activePollutant.accentColor}22`
-            }}
-          >
-            <div className="inspector-chemical-badge">
-              <span className="inspector-formula">{activePollutant.symbol}</span>
-              <span className="inspector-chem-name">{activePollutant.name}</span>
-              <span className="inspector-status-pill">
-                {((pollutantValues[activePollutant.id] || 0) / activePollutant.naaqsLimit) > 1.0 ? '🚨 CEILING EXCEEDED' : '✅ WITHIN SAFE CEILING'}
-              </span>
-            </div>
-
-            <div className="inspector-details-pane">
-              <div className="inspector-stats-grid">
-                <div className="inspector-stat-box">
-                  <span className="inspector-stat-lbl">Current Load</span>
-                  <div className="inspector-stat-val">
-                    {pollutantValues[activePollutant.id] || 0} {activePollutant.unit}
-                  </div>
-                </div>
-
-                <div className="inspector-stat-box">
-                  <span className="inspector-stat-lbl">India NAAQS Ceiling</span>
-                  <div className="inspector-stat-val">
-                    {activePollutant.naaqsLimit} {activePollutant.unit}
-                  </div>
-                </div>
-
-                <div className="inspector-stat-box">
-                  <span className="inspector-stat-lbl">WHO 2021 Guideline</span>
-                  <div className="inspector-stat-val">
-                    {activePollutant.whoLimit} {activePollutant.unit}
-                  </div>
-                </div>
-
-                <div className="inspector-stat-box">
-                  <span className="inspector-stat-lbl">Load Ratio</span>
-                  <div className="inspector-stat-val" style={{ color: activePollutant.accentColor }}>
-                    {Math.round(((pollutantValues[activePollutant.id] || 0) / activePollutant.naaqsLimit) * 100)}%
-                  </div>
-                </div>
-              </div>
-
-              <div className="inspector-sources-block">
-                <p style={{ marginBottom: '0.4rem' }}>
-                  <strong>Key Anthropogenic & Environmental Sources: </strong>
-                  {activePollutant.source}
-                </p>
-                <p>
-                  <strong>Cellular & Pathological Health Impact: </strong>
-                  {activePollutant.healthImpact}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Manual Sliders Drawer (Expandable) */}
-        {isTunerOpen && (
-          <div className="cargo-sliders-drawer">
-            <div className="sliders-drawer-header">
-              <span className="sliders-title">
-                <Sliders size={16} />
-                <span>Manual Chemical Payload Injector</span>
-              </span>
-              <button
-                className="cargo-action-btn"
-                onClick={() => handleSelectPreset('india_avg')}
-              >
-                <RotateCcw size={13} />
-                <span>Reset to Pan-India</span>
-              </button>
-            </div>
-
-            <div className="sliders-grid">
-              {POLLUTANT_SPECS.map(p => {
-                const val = pollutantValues[p.id] || 0;
-                const maxSlider = p.id === 'co' ? 10.0 : p.naaqsLimit * 4;
-                const step = p.id === 'co' ? 0.1 : 1;
-
-                return (
-                  <div key={p.id} className="slider-unit">
-                    <div className="slider-label-row">
-                      <span>{p.symbol} ({p.name.split(' ')[0]})</span>
-                      <span className="slider-current-val">{val} {p.unit}</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={maxSlider}
-                      step={step}
-                      value={val}
-                      onChange={(e) => handleSliderChange(p.id, e.target.value)}
-                      className="cargo-range-input"
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </section>
   );
