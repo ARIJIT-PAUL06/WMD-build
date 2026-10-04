@@ -2,42 +2,39 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* ==========================================================
-   FULL-SCREEN ATMOSPHERIC CARGO SECTION (100vh / Seamless Blend)
+   FULL-SCREEN BORDERLESS ATMOSPHERIC CARGO SECTION
+   Directly matching the 100vh borderless architecture of the Map
    ========================================================== */
-.cargo-section-fullscreen {
+.cargo-fullscreen-viewport {
   position: relative;
   width: 100%;
   height: 100vh;
-  min-height: 840px;
+  min-height: 820px;
   background: #070a12;
   color: #f8fafc;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 1.5rem 2rem 1.75rem;
   box-sizing: border-box;
 }
 
-/* Background Atmospheric Mesh & Subtle Volumetric Depth */
-.cargo-section-fullscreen::before {
+/* Atmospheric Ambient Vignette & Volumetric Depth */
+.cargo-fullscreen-viewport::before {
   content: '';
   position: absolute;
   inset: 0;
   background-image: 
-    radial-gradient(circle at 50% 30%, rgba(56, 189, 248, 0.04) 0%, transparent 60%),
-    radial-gradient(circle at 15% 75%, rgba(239, 68, 68, 0.035) 0%, transparent 45%),
-    radial-gradient(circle at 85% 75%, rgba(6, 182, 212, 0.04) 0%, transparent 45%),
-    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+    radial-gradient(ellipse 70% 50% at 50% 45%, rgba(56, 189, 248, 0.05) 0%, transparent 70%),
+    radial-gradient(circle at 10% 80%, rgba(239, 68, 68, 0.04) 0%, transparent 45%),
+    radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.045) 0%, transparent 45%),
+    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 54px 54px, 54px 54px;
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
 }
 
 /* ==========================================================
-   BUTTER-SMOOTH PERIMETER SCENE FADE (Exact Match to Map)
-   Ensures 100% continuous, seamless scroll from Map to Truck
+   BUTTER-SMOOTH PERIMETER SCENE FADE (FEATHERED & BORDERLESS)
+   Exact match to the Mapbox map perimeter fade for 100% seamless transition
    ========================================================== */
 .cargo-perimeter-fade {
   position: absolute;
@@ -45,262 +42,101 @@
   z-index: 22;
   pointer-events: none;
   background: 
-    linear-gradient(to bottom, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) top / 100% 56px no-repeat,
-    linear-gradient(to top, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) bottom / 100% 56px no-repeat,
-    linear-gradient(to right, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) left / 52px 100% no-repeat,
-    linear-gradient(to left, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) right / 52px 100% no-repeat;
+    linear-gradient(to bottom, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) top / 100% 70px no-repeat,
+    linear-gradient(to top, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) bottom / 100% 70px no-repeat,
+    linear-gradient(to right, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) left / 64px 100% no-repeat,
+    linear-gradient(to left, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) right / 64px 100% no-repeat;
 }
 
 /* ==========================================================
-   UNIQUE HOLOGRAPHIC HUD CORNER BRACKETS & TELEMETRY LABELS
+   UNIQUE HOLOGRAPHIC HUD CORNER BRACKETS
    ========================================================== */
-.cargo-hud-corner {
+.cargo-hud-bracket {
   position: absolute;
   z-index: 24;
   pointer-events: none;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   letter-spacing: 0.08em;
-  color: rgba(56, 189, 248, 0.5);
+  color: rgba(56, 189, 248, 0.45);
   display: flex;
   align-items: center;
   gap: 6px;
   text-transform: uppercase;
 }
 
-.cargo-hud-corner.top-left {
+.cargo-hud-bracket.top-left {
   top: 18px;
-  left: 24px;
+  left: 20px;
 }
 
-.cargo-hud-corner.top-right {
+.cargo-hud-bracket.top-right {
   top: 18px;
-  right: 24px;
+  right: 20px;
   flex-direction: row-reverse;
 }
 
-.cargo-hud-corner.bottom-left {
+.cargo-hud-bracket.bottom-left {
   bottom: 18px;
-  left: 24px;
+  left: 20px;
 }
 
-.cargo-hud-corner.bottom-right {
+.cargo-hud-bracket.bottom-right {
   bottom: 18px;
-  right: 24px;
+  right: 20px;
   flex-direction: row-reverse;
 }
 
-.corner-bracket-svg {
-  width: 24px;
-  height: 24px;
+.bracket-icon-svg {
+  width: 22px;
+  height: 22px;
   stroke: rgba(56, 189, 248, 0.45);
   fill: none;
   stroke-width: 1.5;
-  filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.3));
+  filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.3));
 }
 
-/* Animated Volumetric Aerosol Fog Drifting */
-.cargo-aerosol-fog-drift {
+/* Volumetric Atmospheric Fog Drifting across the ground */
+.cargo-volumetric-haze {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 3;
-  opacity: 0.35;
-  background: radial-gradient(ellipse 60% 40% at 50% 60%, rgba(148, 163, 184, 0.12) 0%, transparent 70%);
-  animation: fog-drift-anim 14s infinite alternate ease-in-out;
+  opacity: 0.4;
+  background: radial-gradient(ellipse 65% 35% at 50% 65%, rgba(148, 163, 184, 0.14) 0%, transparent 75%);
+  animation: haze-drift-anim 16s infinite alternate ease-in-out;
 }
 
-@keyframes fog-drift-anim {
-  0% { transform: translateX(-40px) scale(1); opacity: 0.25; }
-  100% { transform: translateX(40px) scale(1.08); opacity: 0.45; }
-}
-
-/* ==========================================================
-   TOP FLOATING COMMAND DECK
-   ========================================================== */
-.cargo-top-command-deck {
-  position: relative;
-  z-index: 25;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  max-width: 1240px;
-  margin: 0 auto;
-}
-
-.cargo-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.cargo-title-group {
-  display: flex;
-  align-items: baseline;
-  gap: 0.85rem;
-}
-
-.cargo-main-title {
-  font-family: 'Outfit', sans-serif;
-  font-size: 1.55rem;
-  font-weight: 800;
-  color: #f8fafc;
-  letter-spacing: -0.02em;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.cargo-main-title .title-accent {
-  background: linear-gradient(135deg, #f97316 0%, #ef4444 50%, #ec4899 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.cargo-subtitle-tag {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #94a3b8;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  background: rgba(15, 23, 42, 0.6);
-  padding: 3px 9px;
-  border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* Translucent Glass Pill Control Dock */
-.cargo-controls-dock {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  padding: 0.5rem 0.85rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.cargo-presets-pills {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-}
-
-.cargo-preset-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.42rem 0.85rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(30, 41, 59, 0.5);
-  color: #cbd5e1;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.cargo-preset-chip:hover {
-  background: rgba(51, 65, 85, 0.75);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-}
-
-.cargo-preset-chip.active {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(249, 115, 22, 0.25) 100%);
-  border-color: rgba(249, 115, 22, 0.65);
-  color: #fed7aa;
-  box-shadow: 0 0 16px rgba(249, 115, 22, 0.25);
-}
-
-.cargo-preset-chip.active.green-theme {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.25) 100%);
-  border-color: rgba(16, 185, 129, 0.65);
-  color: #a7f3d0;
-  box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
-}
-
-.cargo-dock-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.cargo-dock-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.42rem 0.8rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(30, 41, 59, 0.55);
-  color: #94a3b8;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.cargo-dock-btn:hover {
-  background: rgba(51, 65, 85, 0.8);
-  color: #f8fafc;
-  transform: translateY(-1px);
-}
-
-.cargo-dock-btn.purge-action {
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
-  border-color: rgba(6, 182, 212, 0.45);
-  color: #67e8f9;
-}
-
-.cargo-dock-btn.purge-action:hover {
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.35) 0%, rgba(59, 130, 246, 0.35) 100%);
-  box-shadow: 0 0 16px rgba(6, 182, 212, 0.35);
-  color: #ffffff;
+@keyframes haze-drift-anim {
+  0% { transform: translateX(-50px) scale(1); opacity: 0.3; }
+  100% { transform: translateX(50px) scale(1.1); opacity: 0.5; }
 }
 
 /* ==========================================================
-   CENTER CINEMA WEIGHBRIDGE & TRUCK HERO VIEWPORT
+   FULL-BLEED TRUCK HERO STAGE (Edge-to-Edge)
    ========================================================== */
-.cargo-center-stage {
-  position: relative;
-  z-index: 10;
+.cargo-fullbleed-stage {
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1;
-  min-height: 380px;
-  max-height: 540px;
+  z-index: 10;
+  pointer-events: none;
 }
 
-/* Laser Scanning Horizon Beam */
-.stage-laser-scanner {
+/* Laser Horizon Scanner */
+.stage-laser-sweep {
   position: absolute;
-  top: 10%;
+  top: 15%;
   bottom: 25%;
   width: 2px;
   background: linear-gradient(180deg, transparent 0%, rgba(56, 189, 248, 0.85) 40%, rgba(239, 68, 68, 0.85) 80%, transparent 100%);
   box-shadow: 0 0 18px rgba(56, 189, 248, 0.7), 0 0 35px rgba(56, 189, 248, 0.35);
   pointer-events: none;
-  z-index: 21;
+  z-index: 19;
   animation: laser-scan-sweep 7s infinite ease-in-out;
 }
 
@@ -311,18 +147,17 @@
   100% { left: 94%; opacity: 0; }
 }
 
-/* Truck Viewport (Maintains precise aspect-ratio with high-res render) */
-.cargo-truck-canvas {
+/* The Truck Canvas (Scaled to fit seamlessly in full-bleed viewport) */
+.cargo-hero-canvas {
   position: relative;
-  width: 92%;
-  max-width: 1260px;
+  width: 95vw;
+  max-width: 1480px;
+  height: auto;
+  max-height: calc(100vh - 165px);
   aspect-ratio: 1376 / 768;
-  max-height: 52vh;
   margin: 0 auto;
+  pointer-events: auto;
   user-select: none;
-  /* Smooth radial dissolve at outer edges so truck melts seamlessly into dark background */
-  mask-image: radial-gradient(ellipse 96% 90% at 50% 50%, black 78%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 96% 90% at 50% 50%, black 78%, transparent 100%);
 }
 
 .cargo-chassis-rig {
@@ -338,26 +173,26 @@
   100% { transform: translateY(-0.8px); }
 }
 
-.cargo-base-render {
+/* Base Truck Image (Edges feathered to exact #070a12) */
+.cargo-truck-image {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   pointer-events: none;
   z-index: 12;
-  filter: drop-shadow(0 25px 35px rgba(0, 0, 0, 0.85));
 }
 
 .cargo-underglow-aura {
   position: absolute;
-  bottom: 26%;
+  bottom: 25%;
   left: 8%;
   right: 6%;
-  height: 16px;
+  height: 18px;
   border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 50%, var(--underglow-color, rgba(6, 182, 212, 0.4)) 0%, transparent 75%);
-  filter: blur(14px);
+  background: radial-gradient(ellipse at 50% 50%, var(--underglow-color, rgba(6, 182, 212, 0.45)) 0%, transparent 75%);
+  filter: blur(16px);
   pointer-events: none;
   z-index: 6;
   transition: background 0.8s ease;
@@ -569,25 +404,186 @@
 }
 
 /* ==========================================================
-   BOTTOM FLOATING TELEMETRY STRIP & INSPECTION DOCK
+   TOP FLOATING COMMAND DECK
+   Positioned like the Mapbox floating bar (top: 18px; left: 60px; right: 60px)
    ========================================================== */
-.cargo-bottom-dock {
-  position: relative;
+.cargo-floating-top-bar {
+  position: absolute;
+  top: 18px;
+  left: 60px;
+  right: 60px;
   z-index: 25;
-  width: 100%;
-  max-width: 1240px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.cargo-glass-panel-top {
+  pointer-events: auto;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 8px 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cargo-branding-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cargo-title-text {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cargo-title-text .accent-orange {
+  background: linear-gradient(135deg, #f97316 0%, #ef4444 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.cargo-bullet-dot {
+  font-size: 0.68rem;
+  color: #cbd5e1;
+}
+
+.cargo-subtitle-label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+}
+
+/* Preset Chips */
+.cargo-preset-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cargo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(30, 41, 59, 0.5);
+  color: #cbd5e1;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cargo-chip:hover {
+  background: rgba(51, 65, 85, 0.8);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.cargo-chip.active {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(249, 115, 22, 0.25) 100%);
+  border-color: rgba(249, 115, 22, 0.65);
+  color: #fed7aa;
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.25);
+}
+
+.cargo-chip.active.green-theme {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.25) 100%);
+  border-color: rgba(16, 185, 129, 0.65);
+  color: #a7f3d0;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
+}
+
+/* Action Buttons Right */
+.cargo-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cargo-action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(30, 41, 59, 0.55);
+  color: #94a3b8;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cargo-action-pill:hover {
+  background: rgba(51, 65, 85, 0.8);
+  color: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.cargo-action-pill.purge-pill {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+  border-color: rgba(6, 182, 212, 0.45);
+  color: #67e8f9;
+}
+
+.cargo-action-pill.purge-pill:hover {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.35) 0%, rgba(59, 130, 246, 0.35) 100%);
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.35);
+  color: #ffffff;
+}
+
+/* ==========================================================
+   BOTTOM FLOATING TELEMETRY STRIP
+   Positioned like the Mapbox HUD (bottom: 20px; left: 60px; right: 60px)
+   ========================================================== */
+.cargo-floating-bottom-dock {
+  position: absolute;
+  bottom: 20px;
+  left: 60px;
+  right: 60px;
+  z-index: 25;
+  pointer-events: none;
 }
 
 .cargo-telemetry-grid {
+  pointer-events: auto;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0.85rem;
+  gap: 10px;
 }
 
 @media (max-width: 900px) {
   .cargo-telemetry-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .cargo-floating-top-bar, .cargo-floating-bottom-dock {
+    left: 16px;
+    right: 16px;
   }
 }
 
@@ -597,39 +593,39 @@
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  padding: 0.75rem 1rem;
+  padding: 8px 14px;
   position: relative;
   overflow: hidden;
   transition: all 0.25s ease;
 }
 
 .cargo-hud-card:hover {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.22);
   transform: translateY(-2px);
 }
 
 .cargo-hud-lbl {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 5px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
   color: #94a3b8;
   letter-spacing: 0.05em;
-  margin-bottom: 0.25rem;
+  margin-bottom: 2px;
 }
 
 .cargo-hud-val-row {
   display: flex;
   align-items: baseline;
-  gap: 0.35rem;
+  gap: 5px;
 }
 
 .cargo-hud-number {
   font-family: 'Outfit', sans-serif;
-  font-size: 1.45rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: #f8fafc;
   line-height: 1.1;
@@ -637,24 +633,24 @@
 
 .cargo-hud-unit {
   font-family: 'Inter', sans-serif;
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   color: #64748b;
   font-weight: 500;
 }
 
 .cargo-hud-subtext {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: #94a3b8;
-  margin-top: 0.2rem;
+  margin-top: 2px;
 }
 
 .cargo-hud-bar {
   width: 100%;
-  height: 5px;
+  height: 4px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 999px;
   overflow: hidden;
-  margin-top: 0.45rem;
+  margin-top: 4px;
 }
 
 .cargo-hud-bar-fill {
@@ -663,22 +659,23 @@
   transition: width 0.7s ease, background 0.7s ease;
 }
 
-/* Selected Chemical Deep Inspector Card (Floating/Docked) */
+/* Floating Selected Chemical Detail Flyout */
 .cargo-detail-flyout {
   position: absolute;
-  bottom: calc(100% + 12px);
+  bottom: calc(100% + 10px);
   left: 0;
   right: 0;
+  pointer-events: auto;
   background: linear-gradient(135deg, rgba(20, 29, 48, 0.95) 0%, rgba(10, 15, 26, 0.98) 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
-  padding: 1rem 1.25rem;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 1.25rem;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
   z-index: 30;
   animation: slide-up-flyout 0.25s ease-out;
@@ -703,21 +700,21 @@
   background: rgba(15, 23, 42, 0.7);
   border: 1px solid var(--inspect-accent, rgba(239, 68, 68, 0.4));
   border-radius: 10px;
-  padding: 0.5rem 0.85rem;
-  min-width: 80px;
+  padding: 4px 12px;
+  min-width: 75px;
   box-shadow: 0 0 15px var(--inspect-glow, rgba(239, 68, 68, 0.2));
 }
 
 .flyout-symbol {
   font-family: 'Outfit', sans-serif;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 800;
   color: #ffffff;
 }
 
 .flyout-stats-row {
   display: flex;
-  gap: 1.5rem;
+  gap: 1.25rem;
   flex-wrap: wrap;
 }
 
@@ -728,25 +725,25 @@
 
 .flyout-stat-lbl {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   color: #94a3b8;
   text-transform: uppercase;
 }
 
 .flyout-stat-val {
   font-family: 'Outfit', sans-serif;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #f1f5f9;
 }
 
 .flyout-right-desc {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: #cbd5e1;
   max-width: 480px;
-  line-height: 1.45;
+  line-height: 1.4;
   border-left: 1px solid rgba(255, 255, 255, 0.1);
-  padding-left: 1.25rem;
+  padding-left: 1rem;
 }
 
 .flyout-close-btn {
@@ -762,18 +759,19 @@
   color: #ffffff;
 }
 
-/* Manual Sliders Flyout Drawer */
+/* Floating Manual Sliders Drawer */
 .cargo-sliders-flyout {
   position: absolute;
-  bottom: calc(100% + 12px);
+  bottom: calc(100% + 10px);
   left: 0;
   right: 0;
+  pointer-events: auto;
   background: rgba(15, 23, 42, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
-  padding: 1rem 1.25rem;
+  padding: 10px 16px;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
   z-index: 30;
   animation: slide-up-flyout 0.25s ease-out;
@@ -783,25 +781,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .sliders-flyout-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.85rem;
 }
 
 .slider-flyout-item {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 2px;
 }
 
 .slider-flyout-lbl-row {
   display: flex;
   justify-content: space-between;
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: #cbd5e1;
 }
@@ -824,8 +822,8 @@
 .slider-flyout-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: #f97316;
   cursor: pointer;
@@ -835,17 +833,4 @@
 
 .slider-flyout-range::-webkit-slider-thumb:hover {
   transform: scale(1.3);
-}
-
-/* Responsive adjustments */
-@media (max-width: 1024px) {
-  .cargo-section-fullscreen {
-    height: auto;
-    min-height: 100vh;
-    padding: 3rem 1rem 3rem;
-    gap: 1.5rem;
-  }
-  .cargo-center-stage {
-    min-height: 320px;
-  }
 }

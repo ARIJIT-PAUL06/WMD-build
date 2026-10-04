@@ -11,8 +11,7 @@ import {
   Wind,
   Layers,
   RotateCcw,
-  X,
-  Crosshair
+  X
 } from 'lucide-react';
 import './AtmosphericCargoTruck.css';
 
@@ -316,153 +315,56 @@ export default function AtmosphericCargoTruck() {
     : { left: '31.8%', width: '60.5%', bottom: '42.36%' };
 
   return (
-    <section className="cargo-section-fullscreen" id="atmospheric-cargo-section">
+    <section className="cargo-fullscreen-viewport" id="atmospheric-cargo-section">
       {/* ============================================================== */}
-      {/* 1. BUTTER-SMOOTH PERIMETER SCENE FADE (EXACT MATCH TO MAP)     */}
+      {/* 1. BUTTER-SMOOTH PERIMETER SCENE FADE (MATCHING MAP OVERLAY)   */}
       {/* ============================================================== */}
       <div className="cargo-perimeter-fade" />
 
       {/* ============================================================== */}
-      {/* 2. UNIQUE HOLOGRAPHIC HUD CORNER BRACKETS & TELEMETRY LABELS   */}
+      {/* 2. UNIQUE HOLOGRAPHIC HUD CORNER BRACKETS                      */}
       {/* ============================================================== */}
-      <div className="cargo-hud-corner top-left">
-        <svg className="corner-bracket-svg" viewBox="0 0 24 24">
+      <div className="cargo-hud-bracket top-left">
+        <svg className="bracket-icon-svg" viewBox="0 0 24 24">
           <path d="M22 2H2v20" />
         </svg>
-        <span>SYS // LAT 28.6139°N</span>
+        <span>LAT 28.6139°N</span>
       </div>
 
-      <div className="cargo-hud-corner top-right">
-        <svg className="corner-bracket-svg" viewBox="0 0 24 24">
+      <div className="cargo-hud-bracket top-right">
+        <svg className="bracket-icon-svg" viewBox="0 0 24 24">
           <path d="M2 2h20v20" />
         </svg>
-        <span>ORBITAL SENSOR LOCK // ACTIVE</span>
+        <span>SENSOR LOCK</span>
       </div>
 
-      <div className="cargo-hud-corner bottom-left">
-        <svg className="corner-bracket-svg" viewBox="0 0 24 24">
+      <div className="cargo-hud-bracket bottom-left">
+        <svg className="bracket-icon-svg" viewBox="0 0 24 24">
           <path d="M22 22H2V2" />
         </svg>
-        <span>CARGO MANIFEST // CPCB-IND-01</span>
+        <span>MANIFEST // CPCB</span>
       </div>
 
-      <div className="cargo-hud-corner bottom-right">
-        <svg className="corner-bracket-svg" viewBox="0 0 24 24">
+      <div className="cargo-hud-bracket bottom-right">
+        <svg className="bracket-icon-svg" viewBox="0 0 24 24">
           <path d="M2 22h20V2" />
         </svg>
-        <span>ELEV 216M // AEROSOL COLUMN</span>
+        <span>ELEV 216M</span>
       </div>
 
-      {/* Volumetric Atmospheric Fog Drift */}
-      <div className="cargo-aerosol-fog-drift" />
+      {/* Volumetric Atmospheric Fog Drifting */}
+      <div className="cargo-volumetric-haze" />
 
       {/* ============================================================== */}
-      {/* 3. TOP FLOATING COMMAND DECK                                   */}
+      {/* 3. FULL-BLEED TRUCK HERO STAGE (EDGE-TO-EDGE)                  */}
       {/* ============================================================== */}
-      <div className="cargo-top-command-deck">
-        <div className="cargo-header-row">
-          <div className="cargo-title-group">
-            <h2 className="cargo-main-title">
-              <Truck size={20} color="#38bdf8" />
-              <span>VayuVitals <span className="title-accent">Atmospheric Cargo Hauler</span></span>
-            </h2>
-            <span className="cargo-subtitle-tag">03 • National Atmospheric Freight</span>
-          </div>
+      <div className="cargo-fullbleed-stage">
+        {/* Laser Horizon Sweep Line */}
+        <div className="stage-laser-sweep" />
 
-          <div className="cargo-dock-actions">
-            {/* Model switcher */}
-            <button
-              className="cargo-dock-btn"
-              onClick={() => setTruckModel(isCyber ? 'classic_scania' : 'vayu_cyber')}
-              title="Switch Truck Design"
-            >
-              <Layers size={13} />
-              <span>{isCyber ? 'Cyber Hauler' : 'Classic Scania'}</span>
-            </button>
-
-            <button
-              className="cargo-dock-btn purge-action"
-              onClick={handlePurgePayload}
-              disabled={isPurging}
-              title="Discharge airborne chemical payload down to zero"
-            >
-              <Wind size={13} />
-              <span>{isPurging ? 'Venting Cargo...' : 'Atmospheric Purge'}</span>
-            </button>
-
-            <button
-              className="cargo-dock-btn"
-              onClick={() => {
-                setIsTunerOpen(!isTunerOpen);
-                if (selectedPollutantId) setSelectedPollutantId(null);
-              }}
-              title="Toggle manual chemical payload sliders"
-            >
-              <Sliders size={13} />
-              <span>{isTunerOpen ? 'Hide Sliders' : 'Payload Sliders'}</span>
-              {isTunerOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-            </button>
-          </div>
-        </div>
-
-        {/* Translucent Glass Pill Control Dock */}
-        <div className="cargo-controls-dock">
-          <div className="cargo-presets-pills">
-            <button
-              className={`cargo-preset-chip ${activePreset === 'india_avg' ? 'active' : ''}`}
-              onClick={() => handleSelectPreset('india_avg')}
-              title="Pan-India National Average from CPCB CAAQMS Network"
-            >
-              <span>🇮🇳</span>
-              <span>All-India National Avg</span>
-            </button>
-
-            <button
-              className={`cargo-preset-chip ${activePreset === 'delhi_hotspot' ? 'active' : ''}`}
-              onClick={() => handleSelectPreset('delhi_hotspot')}
-              title="Delhi Winter Severe Hotspot (Anand Vihar/Jahangirpuri)"
-            >
-              <span>🚨</span>
-              <span>Delhi Hotspot Overload</span>
-            </button>
-
-            <button
-              className={`cargo-preset-chip ${activePreset === 'pristine' ? 'active green-theme' : ''}`}
-              onClick={() => handleSelectPreset('pristine')}
-              title="Pristine mountain air baseline (Ladakh)"
-            >
-              <span>🌿</span>
-              <span>Pristine Baseline</span>
-            </button>
-
-            <button
-              className={`cargo-preset-chip ${activePreset === 'live' ? 'active' : ''}`}
-              onClick={handleFetchLiveTelemetry}
-              disabled={isLiveLoading}
-              title="Query real-time 108 CAAQMS station stream"
-            >
-              <Radio size={13} className={isLiveLoading ? 'animate-spin' : ''} />
-              <span>{isLiveLoading ? 'Connecting...' : 'Live CAAQMS Stream'}</span>
-            </button>
-          </div>
-
-          <div style={{ fontSize: '0.74rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Crosshair size={12} color="#38bdf8" />
-            <span>Interactive Cargo Pods • Click any container to inspect</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ============================================================== */}
-      {/* 4. CENTER CINEMA WEIGHBRIDGE & TRUCK HERO VIEWPORT            */}
-      {/* ============================================================== */}
-      <div className="cargo-center-stage">
-        {/* Laser Scanning Horizon Beam */}
-        <div className="stage-laser-scanner" />
-
-        {/* Truck Canvas (Exact 16:9 Aspect Ratio) */}
+        {/* The Truck Canvas (16:9 Aspect Ratio) */}
         <div
-          className="cargo-truck-canvas"
+          className="cargo-hero-canvas"
           style={{ aspectRatio: truckAspectRatio }}
         >
           <div
@@ -472,35 +374,32 @@ export default function AtmosphericCargoTruck() {
               '--underglow-color': payloadStats.underglowColor
             }}
           >
-            {/* Underglow Aura */}
+            {/* Reactive Underglow Aura */}
             <div className="cargo-underglow-aura" />
 
-            {/* Base Truck High-Res Render */}
+            {/* Base Truck Image (Feathered seamlessly to #070a12) */}
             <img
               src={truckImageSrc}
               alt="VayuVitals Flatbed Heavy Hauler Truck"
-              className="cargo-base-render"
+              className="cargo-truck-image"
             />
 
             {/* =======================================================
                 CARGO CONTAINERS FLATBED MOUNTING DECK
-                Mounted directly on flatbed deck surface
                 ======================================================= */}
             <div className="cargo-flatbed-deck" style={deckStyle}>
               {POLLUTANT_SPECS.map(p => {
                 const val = pollutantValues[p.id] || 0;
                 const ratio = val / p.naaqsLimit;
 
-                // Dynamic height calculation scaled to truck viewport height
                 const heightPercent = isCyber
-                  ? Math.min(34, Math.max(9, 10 + ratio * 10)) // Cyber hauler scale
-                  : Math.min(44, Math.max(9, 11 + ratio * 15)); // Scania scale
+                  ? Math.min(34, Math.max(9, 10 + ratio * 10))
+                  : Math.min(44, Math.max(9, 11 + ratio * 15));
 
                 const heightPx = isCyber
                   ? heightPercent * 7.68
                   : heightPercent * 5.76;
 
-                // Severity & Strobe Logic
                 let beaconColor, isStrobe = false;
                 if (ratio > 1.8) {
                   beaconColor = '#ef4444';
@@ -578,9 +477,101 @@ export default function AtmosphericCargoTruck() {
       </div>
 
       {/* ============================================================== */}
+      {/* 4. TOP FLOATING COMMAND DECK (TRANSLUCENT & STREAMLINED)        */}
+      {/* ============================================================== */}
+      <div className="cargo-floating-top-bar">
+        <div className="cargo-glass-panel-top">
+          {/* Branding Left */}
+          <div className="cargo-branding-left">
+            <span className="cargo-title-text">
+              <Truck size={17} color="#38bdf8" />
+              <span>VayuVitals <span className="accent-orange">Atmospheric Cargo Hauler</span></span>
+            </span>
+            <span className="cargo-bullet-dot">•</span>
+            <span className="cargo-subtitle-label">03 // National Freight Telemetry</span>
+          </div>
+
+          {/* Preset Chips */}
+          <div className="cargo-preset-chips-row">
+            <button
+              className={`cargo-chip ${activePreset === 'india_avg' ? 'active' : ''}`}
+              onClick={() => handleSelectPreset('india_avg')}
+              title="Pan-India National Average from CPCB CAAQMS Network"
+            >
+              <span>🇮🇳</span>
+              <span>All-India National Avg</span>
+            </button>
+
+            <button
+              className={`cargo-chip ${activePreset === 'delhi_hotspot' ? 'active' : ''}`}
+              onClick={() => handleSelectPreset('delhi_hotspot')}
+              title="Delhi Winter Severe Hotspot (Anand Vihar/Jahangirpuri)"
+            >
+              <span>🚨</span>
+              <span>Delhi Hotspot Overload</span>
+            </button>
+
+            <button
+              className={`cargo-chip ${activePreset === 'pristine' ? 'active green-theme' : ''}`}
+              onClick={() => handleSelectPreset('pristine')}
+              title="Pristine mountain air baseline (Ladakh)"
+            >
+              <span>🌿</span>
+              <span>Pristine Baseline</span>
+            </button>
+
+            <button
+              className={`cargo-chip ${activePreset === 'live' ? 'active' : ''}`}
+              onClick={handleFetchLiveTelemetry}
+              disabled={isLiveLoading}
+              title="Query real-time 108 CAAQMS station stream"
+            >
+              <Radio size={12} className={isLiveLoading ? 'animate-spin' : ''} />
+              <span>{isLiveLoading ? 'Connecting...' : 'Live Stream'}</span>
+            </button>
+          </div>
+
+          {/* Actions Right */}
+          <div className="cargo-actions-right">
+            <button
+              className="cargo-action-pill"
+              onClick={() => setTruckModel(isCyber ? 'classic_scania' : 'vayu_cyber')}
+              title="Switch Truck Design"
+            >
+              <Layers size={12} />
+              <span>{isCyber ? 'Cyber' : 'Scania'}</span>
+            </button>
+
+            <button
+              className="cargo-action-pill purge-pill"
+              onClick={handlePurgePayload}
+              disabled={isPurging}
+              title="Discharge airborne chemical payload down to zero"
+            >
+              <Wind size={12} />
+              <span>{isPurging ? 'Venting...' : 'Purge'}</span>
+            </button>
+
+            <button
+              className="cargo-action-pill"
+              onClick={() => {
+                setIsTunerOpen(!isTunerOpen);
+                if (selectedPollutantId) setSelectedPollutantId(null);
+              }}
+              title="Toggle manual chemical payload sliders"
+            >
+              <Sliders size={12} />
+              <span>{isTunerOpen ? 'Hide' : 'Sliders'}</span>
+              {isTunerOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ============================================================== */}
       {/* 5. BOTTOM FLOATING TELEMETRY STRIP & FLYOUTS                   */}
       {/* ============================================================== */}
-      <div className="cargo-bottom-dock">
+      <div className="cargo-floating-bottom-dock">
         {/* Selected Chemical Deep Inspector Flyout */}
         {activePollutant && (
           <div
@@ -593,7 +584,7 @@ export default function AtmosphericCargoTruck() {
             <div className="flyout-left">
               <div className="flyout-chem-pill">
                 <span className="flyout-symbol">{activePollutant.symbol}</span>
-                <span style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 600 }}>{activePollutant.name.split(' ')[0]}</span>
+                <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 600 }}>{activePollutant.name.split(' ')[0]}</span>
               </div>
 
               <div className="flyout-stats-row">
@@ -634,7 +625,7 @@ export default function AtmosphericCargoTruck() {
               onClick={() => setSelectedPollutantId(null)}
               title="Close detail card"
             >
-              <X size={16} />
+              <X size={15} />
             </button>
           </div>
         )}
@@ -643,15 +634,15 @@ export default function AtmosphericCargoTruck() {
         {isTunerOpen && (
           <div className="cargo-sliders-flyout">
             <div className="sliders-flyout-header">
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Sliders size={14} color="#38bdf8" />
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Sliders size={13} color="#38bdf8" />
                 <span>Manual Chemical Payload Injector</span>
               </span>
               <button
-                className="cargo-dock-btn"
+                className="cargo-action-pill"
                 onClick={() => handleSelectPreset('india_avg')}
               >
-                <RotateCcw size={12} />
+                <RotateCcw size={11} />
                 <span>Reset to Pan-India</span>
               </button>
             </div>
@@ -688,7 +679,7 @@ export default function AtmosphericCargoTruck() {
         <div className="cargo-telemetry-grid">
           <div className="cargo-hud-card">
             <div className="cargo-hud-lbl">
-              <Truck size={13} color="#38bdf8" />
+              <Truck size={12} color="#38bdf8" />
               <span>Gross Payload Mass</span>
             </div>
             <div className="cargo-hud-val-row">
@@ -700,7 +691,7 @@ export default function AtmosphericCargoTruck() {
 
           <div className="cargo-hud-card">
             <div className="cargo-hud-lbl">
-              <Activity size={13} color="#f59e0b" />
+              <Activity size={12} color="#f59e0b" />
               <span>Trailer Suspension Load</span>
             </div>
             <div className="cargo-hud-val-row">
@@ -720,7 +711,7 @@ export default function AtmosphericCargoTruck() {
 
           <div className="cargo-hud-card">
             <div className="cargo-hud-lbl">
-              <AlertTriangle size={13} color="#ef4444" />
+              <AlertTriangle size={12} color="#ef4444" />
               <span>Dominant Hazard Factor</span>
             </div>
             <div className="cargo-hud-val-row">
@@ -736,11 +727,11 @@ export default function AtmosphericCargoTruck() {
 
           <div className="cargo-hud-card">
             <div className="cargo-hud-lbl">
-              <ShieldCheck size={13} color="#34d399" />
+              <ShieldCheck size={12} color="#34d399" />
               <span>Regulatory Standard</span>
             </div>
             <div className="cargo-hud-val-row">
-              <span className="cargo-hud-number" style={{ fontSize: '1.25rem', color: '#38bdf8' }}>
+              <span className="cargo-hud-number" style={{ fontSize: '1.2rem', color: '#38bdf8' }}>
                 NAAQS 2026
               </span>
               <span className="cargo-hud-unit">CPCB Standard</span>
