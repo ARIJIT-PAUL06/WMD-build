@@ -40,9 +40,10 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
     const crtMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTexture: { value: panoramicTex },
+        uTime: { value: 0.0 },
         uScroll: { value: 0.0 },
         uParallax: { value: 0.0 },
-        uCurvature: { value: 0.18 }, // Well-balanced, organic CRT faceplate swell (not overwhelming)
+        uCurvature: { value: 0.22 }, // Crisp, authentic CRT spherical faceplate bulge
         uAspect: { value: width / height },
         uResolution: { value: new THREE.Vector2(width, height) },
       },
@@ -55,10 +56,12 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       `,
       fragmentShader: `
         uniform sampler2D uTexture;
+        uniform float uTime;
         uniform float uScroll;
         uniform float uParallax;
         uniform float uCurvature;
         uniform float uAspect;
+        uniform vec2 uResolution;
         varying vec2 vUv;
 
         // Balanced spherical CRT barrel distortion math
@@ -67,56 +70,106 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
           centered.x *= uAspect;
 
           float r2 = dot(centered, centered);
-          // Refined barrel distortion: larger visible aperture, gentle swell in center
-          vec2 distorted = centered * (1.0 + uCurvature * r2 * 0.35);
+          vec2 distorted = centered * (1.0 + uCurvature * r2 * 0.38);
           distorted.x /= uAspect;
 
           return distorted * 0.5 + 0.5;
         }
 
+        // Fast hash for analog TV noise
+        float hash12(vec2 p) {
+          vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+          p3 += dot(p3, p3.yzx + 33.33);
+          return fract((p3.x + p3.y) * p3.z);
+        }
+
         void main() {
-          // 1. Calculate curved screen UV
+          // 1. Calculate physical curved CRT screen UV
           vec2 screenUv = curveFaceplate(vUv);
 
-          // 2. Soft, progressive boundary feather (NO abrupt cut-offs!)
-          // Creates a cinematic, seamless dissolution into the dark canvas background
-          float edgeAlpha = smoothstep(0.0, 0.055, screenUv.x) *
-                            smoothstep(1.0, 0.945, screenUv.x) *
-                            smoothstep(0.0, 0.055, screenUv.y) *
-                            smoothstep(1.0, 0.945, screenUv.y);
+          // 2. Crisp aperture boundary: Sharp 2.5% micro-bevel drop-off into dark bezel
+          float edgeAlpha = smoothstep(0.0, 0.025, screenUv.x) *
+                            smoothstep(1.0, 0.975, screenUv.x) *
+                            smoothstep(0.0, 0.025, screenUv.y) *
+                            smoothstep(1.0, 0.975, screenUv.y);
 
-          // If completely out of lens bounds, smoothly return dark background
           if (edgeAlpha <= 0.001) {
             gl_FragColor = vec4(0.027, 0.039, 0.07, 1.0);
             return;
           }
 
-          // 3. Map panoramic 32:9 image: The texture slides horizontally behind the fixed lens
-          // Clamp sampling cleanly to avoid UV seam wraps
+          // 3. PHYSICAL SPHERICAL CURVATURE ARCH FOR HORIZONTAL LINES
+          // On a curved spherical CRT tube, horizontal raster lines bow in a 3D parabola:
+          // In upper half (y > 0.5), it arches upwards toward the corners;
+          // In lower half (y < 0.5), it arches downwards toward the corners.
+          float domeBow = (screenUv.x - 0.5) * (screenUv.x - 0.5) * (screenUv.y - 0.5) * 0.52;
+          float curvedY = screenUv.y + domeBow;
+
+          // 4. AUTHENTIC TV VERTICAL SYNC ROLL (Steady, natural analog drift ~7.5s cycle)
+          float rollSpeed = 0.13;
+          float rollPos = fract(uTime * rollSpeed);
+
+          // Shortest wrapped distance to the rolling sync bar (seamless looping)
+          float dY = mod(curvedY - rollPos + 0.5, 1.0) - 0.5;
+
+          // 5. HORIZONTAL SYNC JITTER / ANALOG TEAR SLIP
+          // When the vertical blanking bar sweeps across, the analog horizontal PLL briefly slips,
+          // creating an authentic horizontal jitter/tear right through the passing bar!
+          float syncSlipZone = exp(-pow(dY * 34.0, 2.0));
+          float hJitter = (sin(curvedY * 140.0 + uTime * 48.0) * 0.0035 + 
+                           sin(uTime * 32.0) * 0.002 + 
+                           (hash12(vec2(floor(curvedY * 350.0), floor(uTime * 22.0))) - 0.5) * 0.0028) * syncSlipZone;
+
+          // 6. Map panoramic 32:9 image texture behind the curved faceplate with jitter
           float uOffset = uScroll * 0.5 + uParallax;
           vec2 clampedScreen = clamp(screenUv, 0.0, 1.0);
-          vec2 texUv = vec2(clamp(clampedScreen.x * 0.5 + uOffset, 0.001, 0.999), clampedScreen.y);
+          vec2 texUv = vec2(clamp(clampedScreen.x * 0.5 + uOffset + hJitter, 0.001, 0.999), clampedScreen.y);
 
-          // 4. Subtle chromatic dispersion at peripheral edges
+          // 7. Chromatic dispersion: RGB electron gun separation (stronger at lens periphery & sync tear)
           float distFromCenter = distance(screenUv, vec2(0.5));
-          float rgbSplit = distFromCenter * 0.0022;
+          float rgbSplit = distFromCenter * 0.0022 + syncSlipZone * 0.003;
 
           vec4 colR = texture2D(uTexture, vec2(clamp(texUv.x + rgbSplit, 0.0, 1.0), texUv.y));
           vec4 colG = texture2D(uTexture, texUv);
           vec4 colB = texture2D(uTexture, vec2(clamp(texUv.x - rgbSplit, 0.0, 1.0), texUv.y));
           vec4 color = vec4(colR.r, colG.g, colB.b, 1.0);
 
-          // 5. Authentic CRT bulb specular edge vignette (Gentle, elegant falloff)
-          float edgeVignette = smoothstep(0.0, 0.12, screenUv.x) *
-                               smoothstep(1.0, 0.88, screenUv.x) *
-                               smoothstep(0.0, 0.12, screenUv.y) *
-                               smoothstep(1.0, 0.88, screenUv.y);
-          color.rgb *= mix(0.55, 1.0, edgeVignette);
+          // 8. AUTHENTIC RETRACE BAR & VERTICAL BLANKING INTERVAL COMPOSITION
+          // A. The Dark Vertical Blanking Interval Bar (the black bar that rolls when V-hold slips):
+          float blankingBar = smoothstep(0.048, 0.0, abs(dY)) * 0.42;
+          color.rgb *= (1.0 - blankingBar);
 
-          // 6. Contrast & Saturation balance
-          color.rgb = pow(color.rgb, vec3(0.94)) * 1.04;
+          // B. Sharp Phosphor Electron Retrace Beam (Luminous glowing line leading the roll):
+          float beamDist = dY - 0.024;
+          float sharpCore = exp(-pow(beamDist * 95.0, 2.0));      // Razor-sharp electron line
+          float radiantBloom = exp(-pow(beamDist * 24.0, 2.0)) * 0.45; // Surrounding phosphor glow
+          vec3 retraceColor = vec3(0.88, 0.96, 1.0) * (sharpCore * 0.72 + radiantBloom * 0.4);
+          color.rgb += retraceColor;
 
-          // 7. Blend seamlessly into the dark background (#070a12) at the edges
+          // C. Secondary phosphor ghost echo:
+          float trailingDist = dY + 0.026;
+          float trailingLine = exp(-pow(trailingDist * 75.0, 2.0)) * 0.16;
+          color.rgb += vec3(0.78, 0.92, 1.0) * trailingLine;
+
+          // D. Subtle 50/60Hz AC ground hum roll:
+          float humBar = sin(curvedY * 6.28318 * 2.0 - uTime * 1.1) * 0.02;
+          color.rgb += humBar;
+
+          // 9. Curved phosphor interlace scanlines across entire screen (physically curved with glass)
+          float rasterLines = sin(curvedY * uResolution.y * 1.3) * 0.5 + 0.5;
+          color.rgb *= mix(0.88, 1.0, rasterLines);
+
+          // 10. Authentic CRT bulb edge vignette (Gentle falloff at perimeter)
+          float edgeVignette = smoothstep(0.0, 0.06, screenUv.x) *
+                               smoothstep(1.0, 0.94, screenUv.x) *
+                               smoothstep(0.0, 0.06, screenUv.y) *
+                               smoothstep(1.0, 0.94, screenUv.y);
+          color.rgb *= mix(0.74, 1.0, edgeVignette);
+
+          // 11. Contrast & Color Grading
+          color.rgb = pow(color.rgb, vec3(0.95)) * 1.03;
+
+          // 12. Blend seamlessly into the dark background (#070a12) at the edges
           vec3 bgCol = vec3(0.027, 0.039, 0.07);
           gl_FragColor = vec4(mix(bgCol, color.rgb, edgeAlpha), 1.0);
         }
@@ -127,9 +180,11 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), crtMaterial);
     scene.add(quad);
 
+    const clock = new THREE.Clock();
     let reqId;
     const animate = () => {
       reqId = requestAnimationFrame(animate);
+      crtMaterial.uniforms.uTime.value = clock.getElapsedTime();
       renderer.render(scene, camera);
     };
     animate();
