@@ -40,10 +40,9 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
     const crtMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTexture: { value: panoramicTex },
-        uTime: { value: 0.0 },
         uScroll: { value: 0.0 },
         uParallax: { value: 0.0 },
-        uCurvature: { value: 0.22 }, // Crisp, authentic CRT spherical faceplate bulge
+        uCurvature: { value: 0.18 }, // Well-balanced, organic CRT faceplate swell (not overwhelming)
         uAspect: { value: width / height },
         uResolution: { value: new THREE.Vector2(width, height) },
       },
@@ -56,7 +55,6 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       `,
       fragmentShader: `
         uniform sampler2D uTexture;
-        uniform float uTime;
         uniform float uScroll;
         uniform float uParallax;
         uniform float uCurvature;
@@ -69,7 +67,7 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
           centered.x *= uAspect;
 
           float r2 = dot(centered, centered);
-          // Barrel distortion equation: pushes outer pixels inward & bulges center outward
+          // Refined barrel distortion: larger visible aperture, gentle swell in center
           vec2 distorted = centered * (1.0 + uCurvature * r2 * 0.35);
           distorted.x /= uAspect;
 
@@ -77,38 +75,29 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         }
 
         void main() {
-          // 1. Calculate curved screen UV (Fixed to the physical CRT screen!)
+          // 1. Calculate curved screen UV
           vec2 screenUv = curveFaceplate(vUv);
 
-          // 2. SHARP & CRISP EDGE FADE: Tight 2.5% bevel margin (no more wide foggy blur!)
-          float edgeAlpha = smoothstep(0.0, 0.025, screenUv.x) *
-                            smoothstep(1.0, 0.975, screenUv.x) *
-                            smoothstep(0.0, 0.025, screenUv.y) *
-                            smoothstep(1.0, 0.975, screenUv.y);
+          // 2. Soft, progressive boundary feather (NO abrupt cut-offs!)
+          // Creates a cinematic, seamless dissolution into the dark canvas background
+          float edgeAlpha = smoothstep(0.0, 0.055, screenUv.x) *
+                            smoothstep(1.0, 0.945, screenUv.x) *
+                            smoothstep(0.0, 0.055, screenUv.y) *
+                            smoothstep(1.0, 0.945, screenUv.y);
 
-          // If completely out of lens bounds, cleanly return dark background
+          // If completely out of lens bounds, smoothly return dark background
           if (edgeAlpha <= 0.001) {
             gl_FragColor = vec4(0.027, 0.039, 0.07, 1.0);
             return;
           }
 
-          // 3. CURVED CRT ROLLING SCANLINE TEAR BAND (Inherits the exact spherical glass curvature!)
-          // Sweeps down and up smoothly over time
-          float rollPos = fract(uTime * 0.16); // 0 to 1 continuous sweep
-          // Parabolic ping-pong for top-to-bottom and bottom-to-top sweep
-          float sweepY = (sin(uTime * 0.9) * 0.5 + 0.5); 
-          float rollDist = abs(screenUv.y - sweepY);
-          float rollingBeam = smoothstep(0.12, 0.0, rollDist) * 0.22;
-
-          // High-frequency curved horizontal interlace scanlines
-          float scanline = sin(screenUv.y * uResolution.y * 1.5) * 0.04;
-
-          // 4. Map panoramic 32:9 image: The texture slides horizontally behind the fixed lens
+          // 3. Map panoramic 32:9 image: The texture slides horizontally behind the fixed lens
+          // Clamp sampling cleanly to avoid UV seam wraps
           float uOffset = uScroll * 0.5 + uParallax;
           vec2 clampedScreen = clamp(screenUv, 0.0, 1.0);
           vec2 texUv = vec2(clamp(clampedScreen.x * 0.5 + uOffset, 0.001, 0.999), clampedScreen.y);
 
-          // 5. Subtle chromatic dispersion at peripheral edges
+          // 4. Subtle chromatic dispersion at peripheral edges
           float distFromCenter = distance(screenUv, vec2(0.5));
           float rgbSplit = distFromCenter * 0.0022;
 
@@ -117,21 +106,17 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
           vec4 colB = texture2D(uTexture, vec2(clamp(texUv.x - rgbSplit, 0.0, 1.0), texUv.y));
           vec4 color = vec4(colR.r, colG.g, colB.b, 1.0);
 
-          // Apply curved rolling beam + curved scanlines onto the image
-          color.rgb += vec3(rollingBeam * 0.85, rollingBeam * 1.15, rollingBeam * 1.3);
-          color.rgb -= scanline;
+          // 5. Authentic CRT bulb specular edge vignette (Gentle, elegant falloff)
+          float edgeVignette = smoothstep(0.0, 0.12, screenUv.x) *
+                               smoothstep(1.0, 0.88, screenUv.x) *
+                               smoothstep(0.0, 0.12, screenUv.y) *
+                               smoothstep(1.0, 0.88, screenUv.y);
+          color.rgb *= mix(0.55, 1.0, edgeVignette);
 
-          // 6. Crisp CRT bulb specular edge vignette (Tight 6% margin)
-          float edgeVignette = smoothstep(0.0, 0.06, screenUv.x) *
-                               smoothstep(1.0, 0.94, screenUv.x) *
-                               smoothstep(0.0, 0.06, screenUv.y) *
-                               smoothstep(1.0, 0.94, screenUv.y);
-          color.rgb *= mix(0.75, 1.0, edgeVignette);
+          // 6. Contrast & Saturation balance
+          color.rgb = pow(color.rgb, vec3(0.94)) * 1.04;
 
-          // 7. Contrast & Saturation balance
-          color.rgb = pow(color.rgb, vec3(0.95)) * 1.04;
-
-          // 8. Sharp bevel transition into dark background (#070a12)
+          // 7. Blend seamlessly into the dark background (#070a12) at the edges
           vec3 bgCol = vec3(0.027, 0.039, 0.07);
           gl_FragColor = vec4(mix(bgCol, color.rgb, edgeAlpha), 1.0);
         }
@@ -142,11 +127,9 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), crtMaterial);
     scene.add(quad);
 
-    const clock = new THREE.Clock();
     let reqId;
     const animate = () => {
       reqId = requestAnimationFrame(animate);
-      crtMaterial.uniforms.uTime.value = clock.getElapsedTime();
       renderer.render(scene, camera);
     };
     animate();

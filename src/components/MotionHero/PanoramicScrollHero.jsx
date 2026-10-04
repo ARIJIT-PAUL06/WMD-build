@@ -166,13 +166,19 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
           <div className="hero-crt-glass-glare" />
         </div>
 
-        {/* 2. Analog Phosphor Micro-Flicker Layer */}
+        {/* 2. Vintage TV Rolling Screen Tear Band (Sweeps up and down) */}
+        <div className="hero-crt-rolling-bar" aria-hidden="true" />
+
+        {/* 3. Analog Phosphor Micro-Flicker Layer */}
         <div className="hero-crt-flicker-layer" aria-hidden="true" />
 
-        {/* 3. Procedural Film Grain Overlay */}
+        {/* 4. Procedural Film Grain Overlay */}
         <div className="hero-grain-overlay" aria-hidden="true" />
 
-        {/* 4. Calm Floating Particulate Field (Soot & Spores) */}
+        {/* 5. Micro-Scanline Optical Matrix (Crisp 1px CRT interlace lines) */}
+        <div className="hero-scanline-matrix" aria-hidden="true" />
+
+        {/* 6. Calm Floating Particulate Field (Soot & Spores) */}
         <canvas ref={canvasRef} className="hero-particles-canvas" />
 
         {/* 7. Mouse-reactive Volumetric Lens Spotlight */}
