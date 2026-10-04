@@ -31,10 +31,10 @@
   position: absolute;
   inset: 0;
   background-image: 
-    radial-gradient(circle at 15% 25%, rgba(239, 68, 68, 0.035) 0%, transparent 40%),
-    radial-gradient(circle at 85% 65%, rgba(6, 182, 212, 0.045) 0%, transparent 45%),
-    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+    radial-gradient(circle at 15% 25%, rgba(239, 68, 68, 0.045) 0%, transparent 40%),
+    radial-gradient(circle at 85% 65%, rgba(6, 182, 212, 0.055) 0%, transparent 45%),
+    linear-gradient(rgba(255, 255, 255, 0.038) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.038) 1px, transparent 1px);
   background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
   pointer-events: none;
   z-index: 1;
@@ -236,35 +236,76 @@
   filter: blur(20px);
 }
 
-/* Laser Scanning Beam Sweeping the Payload */
+/* Laser Scanning Beam Sweeping Over Cargo Deck */
 .weighbridge-scanner-beam {
   position: absolute;
-  top: 10%;
-  bottom: 24%;
+  top: 13.5%;
+  bottom: 48.3%;
   width: 2px;
-  background: linear-gradient(180deg, transparent 0%, rgba(6, 182, 212, 0.95) 40%, rgba(239, 68, 68, 0.95) 80%, transparent 100%);
-  box-shadow: 0 0 20px rgba(6, 182, 212, 0.8), 0 0 40px rgba(6, 182, 212, 0.5);
+  background: linear-gradient(
+    180deg,
+    rgba(56, 189, 248, 0) 0%,
+    rgba(56, 189, 248, 0.4) 15%,
+    rgba(6, 182, 212, 0.95) 50%,
+    rgba(239, 68, 68, 0.9) 85%,
+    rgba(239, 68, 68, 0) 100%
+  );
+  box-shadow: 
+    0 0 12px rgba(6, 182, 212, 0.9),
+    0 0 25px rgba(6, 182, 212, 0.5),
+    -3px 0 15px rgba(6, 182, 212, 0.35);
   pointer-events: none;
   z-index: 25;
-  animation: scan-beam-anim 6.5s infinite ease-in-out;
+  animation: scan-beam-sweep 5.5s infinite ease-in-out;
 }
 
-@keyframes scan-beam-anim {
-  0% { left: 38%; opacity: 0; }
-  10% { opacity: 0.95; }
-  88% { opacity: 0.95; }
-  100% { left: 94%; opacity: 0; }
+/* Pulsing scanner laser focus emitter at bottom of crate deck */
+.scanner-beam-glow-head {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 12px #38bdf8, 0 0 24px #06b6d4, 0 0 35px rgba(6, 182, 212, 0.8);
+}
+
+@keyframes scan-beam-sweep {
+  0% {
+    left: 34.3%;
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  50% {
+    left: 94.5%;
+    opacity: 1;
+  }
+  54% {
+    opacity: 0.8;
+  }
+  92% {
+    left: 34.3%;
+    opacity: 1;
+  }
+  100% {
+    left: 34.3%;
+    opacity: 0;
+  }
 }
 
 /* ==========================================================
-   TRUCK VIEWPORT (16:9 Aspect Ratio)
+   TRUCK VIEWPORT (2095x751 Aspect Ratio)
    ========================================================== */
 .truck-viewport {
   position: relative;
   width: 100%;
-  max-width: 1150px;
+  max-width: 1200px;
   margin: 0 auto;
-  aspect-ratio: 1376 / 768;
+  aspect-ratio: 2095 / 751;
   user-select: none;
   overflow: visible;
 }
@@ -292,22 +333,19 @@
   object-fit: cover;
   pointer-events: none;
   z-index: 10;
-  /* Dual-sided soft gradient mask to ensure zero abrupt edges at front and back */
-  mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.5) 3.5%, black 6.5%, black 93%, rgba(0, 0, 0, 0.5) 95%, transparent 97.5%);
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.5) 3.5%, black 6.5%, black 93%, rgba(0, 0, 0, 0.5) 95%, transparent 97.5%);
   /* Deep, soft atmospheric drop shadow blending with dark road */
-  filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.9));
+  filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.95));
 }
 
-/* Ground Shadow Contact Patch */
+/* Ground Shadow Contact Patch (Directly under tire plane y=608 => bottom: 19%) */
 .truck-ground-shadow {
   position: absolute;
-  bottom: 14%;
-  left: 6%;
-  right: 6%;
-  height: 30px;
-  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.45) 55%, transparent 90%);
-  filter: blur(14px);
+  bottom: 15.5%;
+  left: 4%;
+  right: 4%;
+  height: 28px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.98) 0%, rgba(0, 0, 0, 0.6) 55%, transparent 92%);
+  filter: blur(12px);
   pointer-events: none;
   z-index: 4;
 }
@@ -315,10 +353,10 @@
 /* Reactive Underglow Neon Strip */
 .truck-underglow {
   position: absolute;
-  bottom: 26%;
-  left: 8%;
-  right: 6%;
-  height: 16px;
+  bottom: 19%;
+  left: 5%;
+  right: 5%;
+  height: 18px;
   border-radius: 50%;
   background: radial-gradient(ellipse at 50% 50%, var(--underglow-color, rgba(6, 182, 212, 0.45)) 0%, transparent 75%);
   filter: blur(15px);
@@ -327,30 +365,39 @@
   transition: background 0.8s ease;
 }
 
-/* Highway Ground Surface & Runway Markings */
+/* Highway Ground Surface & Runway Markings - Shifted below truck wheels */
 .weighbridge-runway-line {
   position: absolute;
-  bottom: 12%;
-  left: 4%;
-  right: 4%;
+  bottom: 12.8%;
+  left: 1%;
+  right: 1%;
   height: 2px;
-  background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.3) 20%, rgba(56, 189, 248, 0.5) 50%, rgba(56, 189, 248, 0.3) 80%, transparent 100%);
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+  background: linear-gradient(
+    90deg, 
+    transparent 0%, 
+    rgba(56, 189, 248, 0.25) 12%, 
+    rgba(56, 189, 248, 0.65) 50%, 
+    rgba(56, 189, 248, 0.25) 88%, 
+    transparent 100%
+  );
+  box-shadow: 
+    0 0 10px rgba(56, 189, 248, 0.4), 
+    0 0 20px rgba(6, 182, 212, 0.25);
   pointer-events: none;
   z-index: 3;
 }
 
 /* ==========================================================
    CARGO CONTAINERS FLATBED MOUNTING DECK
-   Measured Flatbed Geometry on 1376x768 Vayu Truck:
-   - x: 38.88% to 94.11% (width: 55.23%)
-   - y (flatbed deck): 47.14% from top => bottom: 52.86%
+   Measured Flatbed Geometry on 2095x751 Master Truck:
+   - x: 34.37% to 94.51% (width: 60.14%)
+   - y (flatbed deck): y = 388 => bottom: 48.34%
    ========================================================== */
 .containers-flatbed-deck {
   position: absolute;
-  left: 38.88%;
-  width: 55.23%;
-  bottom: 52.86%;
+  left: 34.37%;
+  width: 60.14%;
+  bottom: 48.34%;
   height: 0;
   display: flex;
   align-items: flex-end;
