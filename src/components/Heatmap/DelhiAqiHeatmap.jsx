@@ -29,9 +29,11 @@ import {
   ChevronRight,
   ChevronLeft,
   Activity,
-  FileText
+  FileText,
+  ShieldCheck
 } from 'lucide-react';
 import PetitionModal from '../Petition/PetitionModal';
+import AutonomousMonitorModal from '../Dashboard/AutonomousMonitorModal';
 
 // Import official India national boundary GeoJSON (MultiPolygon covering mainland + islands)
 import indiaBoundaryGeoJson from '../../data/indiaBoundary.json';
@@ -609,6 +611,9 @@ export default function DelhiAqiHeatmap() {
   const [petitionStation, setPetitionStation] = useState('DTU (Delhi Technological University)');
   const [petitionLocality, setPetitionLocality] = useState('Rohini Sector 16, North Delhi');
   const [petitionPm25, setPetitionPm25] = useState(142);
+
+  // Autonomous Atmospheric Shield & Emergency Monitor Test Bench State
+  const [isMonitorModalOpen, setIsMonitorModalOpen] = useState(false);
 
   // DEFAULT OPACITY: Balanced translucent 0.45 so the map beneath (roads, cities, terrain) is clearly visible
   const [heatIntensity, setHeatIntensity] = useState(0.45);
@@ -3064,6 +3069,30 @@ export default function DelhiAqiHeatmap() {
             <RotateCw size={13} className={isOrbiting360 ? 'animate-spin' : ''} color={isOrbiting360 ? '#38bdf8' : '#cbd5e1'} />
             <span>{isOrbiting360 ? 'Stop Orbit' : '360° Orbit'}</span>
           </button>
+
+          {/* Autonomous Shield Test Bench Modal Trigger */}
+          <button
+            onClick={() => setIsMonitorModalOpen(true)}
+            title="Interactive Test Bench for Autonomous Atmospheric Monitor (Pillars 1, 2, 3)"
+            className="glass-pill glass-pill-active"
+            style={{
+              padding: '4px 10px',
+              borderRadius: '7px',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.45) 0%, rgba(14, 165, 233, 0.3) 100%)',
+              border: '1px solid rgba(56, 189, 248, 0.6)',
+              color: '#38bdf8',
+              boxShadow: '0 0 14px rgba(56, 189, 248, 0.25)',
+            }}
+          >
+            <ShieldCheck size={13} color="#38bdf8" />
+            <span>Test Autonomous Shield</span>
+          </button>
         </div>
 
         {/* HAIRLINE DIVIDER */}
@@ -3717,6 +3746,12 @@ export default function DelhiAqiHeatmap() {
         initialStation={petitionStation}
         initialLocality={petitionLocality}
         initialPm25={petitionPm25}
+      />
+
+      {/* Autonomous Atmospheric Shield & Emergency Monitor Test Bench */}
+      <AutonomousMonitorModal
+        isOpen={isMonitorModalOpen}
+        onClose={() => setIsMonitorModalOpen(false)}
       />
     </section>
   );
