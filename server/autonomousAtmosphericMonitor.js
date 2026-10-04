@@ -176,15 +176,31 @@ export async function runPredictiveAdvisoryEvaluation({
       // RULE 2: Inversion spike predicted. Build advisory and dispatch to institution's designated recipient.
       const advisory = await generate630Advisory({ facilityId: facility.id, basePm25: peakArrival });
       const actualRecipient = resolveRecipientForFacility(facility.id);
+      const commandCenterEmail = process.env.COMMAND_CENTRE_EMAIL || 'psubai2006@gmail.com';
 
       let sesResult = null;
       if (dispatchViaSes) {
+        // 1. PRIMARY MONITORING REQUIREMENT: Always deliver advisory to psubai2006@gmail.com
         sesResult = await sendEmailViaSES({
-          to: actualRecipient,
+          to: commandCenterEmail,
           subject: sanitizeHeader(`[VayuVitals Forecast • ${facility.name}] ${advisory.emailPayload.subject}`),
           htmlBody: advisory.emailPayload.html,
           fromEmail: process.env.AWS_SES_VERIFIED_SENDER || 'vayuvitals@gmail.com'
         });
+
+        // 2. If mapped to another recipient, ALSO dispatch to them
+        if (actualRecipient && actualRecipient !== commandCenterEmail) {
+          try {
+            await sendEmailViaSES({
+              to: actualRecipient,
+              subject: sanitizeHeader(`[VayuVitals Forecast • ${facility.name}] ${advisory.emailPayload.subject}`),
+              htmlBody: advisory.emailPayload.html,
+              fromEmail: process.env.AWS_SES_VERIFIED_SENDER || 'vayuvitals@gmail.com'
+            });
+          } catch (e) {
+            // Non-fatal
+          }
+        }
       }
 
       monitorState.lastPredictiveAdvisoryByFacility[facility.id] = now;

@@ -598,22 +598,33 @@ export async function testDispatch630Advisory({ facilityId, testEmail = null, is
 
   const actualRecipient = resolveRecipientForFacility(facilityId, testEmail);
   
+  const commandCenterEmail = process.env.COMMAND_CENTRE_EMAIL || 'psubai2006@gmail.com';
   let sesResponse = null;
+
   if (!isSandbox || dispatchViaSes) {
     try {
-      sesResponse = await sendEmailViaSES({
-        to: actualRecipient,
+      // 1. PRIMARY MONITORING REQUIREMENT: Always deliver every single school advisory to psubai2006@gmail.com
+      const commandRes = await sendEmailViaSES({
+        to: commandCenterEmail,
         subject: `[VayuVitals Forecast • ${advisory.facility.name}] ${advisory.emailPayload.subject}`,
         htmlBody: advisory.emailPayload.html
       });
-      // Zero-Loss Guard: If delivery failed because recipient is pending verification in SES Sandbox, route copy to command center
-      if (!sesResponse?.success && sesResponse?.error?.includes('not verified') && actualRecipient !== 'psubai2006@gmail.com') {
-        console.warn(`[SES Fallback] ${actualRecipient} is pending SES verification. Delivering alert copy to verified command center (psubai2006@gmail.com)...`);
-        sesResponse = await sendEmailViaSES({
-          to: 'psubai2006@gmail.com',
-          subject: `[VayuVitals Forecast • ${advisory.facility.name} (Delivered to Command Center - ${actualRecipient} Pending SES Verification)] ${advisory.emailPayload.subject}`,
-          htmlBody: advisory.emailPayload.html
-        });
+      sesResponse = commandRes;
+
+      // 2. If the facility is assigned to another address (e.g. Siddharth or Deep), ALSO dispatch to them
+      if (actualRecipient && actualRecipient !== commandCenterEmail) {
+        try {
+          const directRes = await sendEmailViaSES({
+            to: actualRecipient,
+            subject: `[VayuVitals Forecast • ${advisory.facility.name}] ${advisory.emailPayload.subject}`,
+            htmlBody: advisory.emailPayload.html
+          });
+          if (directRes?.success) {
+            sesResponse = directRes;
+          }
+        } catch (targetErr) {
+          console.warn(`[SES Dispatch] Note: Advisory to ${actualRecipient} failed or pending, but successfully delivered to command inbox ${commandCenterEmail}.`);
+        }
       }
     } catch (err) {
       sesResponse = { success: false, error: err.message };
@@ -881,22 +892,33 @@ Keep it strictly under 150 words. Do not include introductory pleasantries or ma
 
   const actualRecipient = resolveRecipientForFacility(facility.id, testEmail);
 
+  const commandCenterEmail = process.env.COMMAND_CENTRE_EMAIL || 'psubai2006@gmail.com';
   let sesResponse = null;
+
   if (!isSandbox || dispatchViaSes) {
     try {
-      sesResponse = await sendEmailViaSES({
-        to: actualRecipient,
+      // 1. PRIMARY MONITORING REQUIREMENT: Always deliver every single school alert to psubai2006@gmail.com
+      const commandRes = await sendEmailViaSES({
+        to: commandCenterEmail,
         subject: `[VayuVitals Alert • ${facility.name}] ${subject}`,
         htmlBody
       });
-      // Zero-Loss Guard: If delivery failed because recipient is pending verification in SES Sandbox, route copy to command center
-      if (!sesResponse?.success && sesResponse?.error?.includes('not verified') && actualRecipient !== 'psubai2006@gmail.com') {
-        console.warn(`[SES Fallback] ${actualRecipient} is pending SES verification. Delivering alert copy to verified command center (psubai2006@gmail.com)...`);
-        sesResponse = await sendEmailViaSES({
-          to: 'psubai2006@gmail.com',
-          subject: `[VayuVitals Alert • ${facility.name} (Delivered to Command Center - ${actualRecipient} Pending SES Verification)] ${subject}`,
-          htmlBody
-        });
+      sesResponse = commandRes;
+
+      // 2. If the facility is assigned to another address (e.g. Siddharth or Deep), ALSO dispatch to them
+      if (actualRecipient && actualRecipient !== commandCenterEmail) {
+        try {
+          const directRes = await sendEmailViaSES({
+            to: actualRecipient,
+            subject: `[VayuVitals Alert • ${facility.name}] ${subject}`,
+            htmlBody
+          });
+          if (directRes?.success) {
+            sesResponse = directRes;
+          }
+        } catch (targetErr) {
+          console.warn(`[SES Dispatch] Note: Alert to ${actualRecipient} failed or pending, but successfully delivered to command inbox ${commandCenterEmail}.`);
+        }
       }
     } catch (err) {
       sesResponse = { success: false, error: err.message };
