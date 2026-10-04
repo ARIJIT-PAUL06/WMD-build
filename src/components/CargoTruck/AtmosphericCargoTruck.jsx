@@ -315,6 +315,10 @@ export default function AtmosphericCargoTruck() {
 
   return (
     <section className="cargo-section" id="atmospheric-cargo-section">
+      {/* 1. Seamless Atmospheric Gradient Bridge (Connecting map to 3rd page with zero harsh seam) */}
+      <div className="cargo-transition-bridge" aria-hidden="true" />
+      <div className="cargo-ambient-grid" aria-hidden="true" />
+
       <div className="cargo-container">
         {/* Section Header */}
         <div className="cargo-header">
@@ -409,6 +413,7 @@ export default function AtmosphericCargoTruck() {
         <div className="weighbridge-stage">
           <div className="weighbridge-spotlight"></div>
           <div className="weighbridge-scanner-beam"></div>
+          <div className="weighbridge-runway-line"></div>
 
           {/* Truck Viewport */}
           <div
