@@ -219,16 +219,95 @@ export async function fetchLiveTelemetryForGrid(gridId, lat, lon, daysPast = 14)
 }
 
 /**
- * Synchronize live empirical telemetry across all populated spatial grids in Delhi-NCR
+ * Fetch and synchronize live empirical telemetry in multi-location batches from Open-Meteo
+ * Open-Meteo supports comma-separated coordinates, allowing 30+ blocks in a single HTTP request!
+ */
+export async function fetchLiveTelemetryBatch(gridsChunk, daysPast = 14) {
+  if (!gridsChunk || gridsChunk.length === 0) return [];
+  try {
+    const lats = gridsChunk.map(g => g.centroid.lat).join(',');
+    const lons = gridsChunk.map(g => g.centroid.lon).join(',');
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lons}&hourly=pm2_5,pm10,nitrogen_dioxide,carbon_monoxide&past_days=${daysPast}`;
+
+    const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+    if (!res.ok) return [];
+
+    const json = await res.json();
+    const locations = Array.isArray(json) ? json : [json];
+    const results = [];
+
+    for (let i = 0; i < gridsChunk.length && i < locations.length; i++) {
+      const grid = gridsChunk[i];
+      const data = locations[i];
+      const gridId = grid.grid_id;
+
+      const times = data.hourly?.time || [];
+      const pm25s = data.hourly?.pm2_5 || [];
+      const pm10s = data.hourly?.pm10 || [];
+      const no2s = data.hourly?.nitrogen_dioxide || [];
+
+      if (!grid14DayBuffer[gridId]) {
+        grid14DayBuffer[gridId] = {
+          gridId,
+          hourlyBuffer: [],
+          dailyHistory: []
+        };
+      }
+
+      const buffer = [];
+      for (let j = 0; j < times.length; j++) {
+        if (pm25s[j] !== null && pm25s[j] !== undefined) {
+          buffer.push({
+            timestamp: times[j],
+            pm25: Math.round(pm25s[j] * 10) / 10,
+            pm10: pm10s[j] !== null ? Math.round(pm10s[j] * 10) / 10 : null,
+            no2: no2s[j] !== null ? Math.round(no2s[j] * 10) / 10 : null,
+            source: 'OPEN_METEO_EMPIRICAL_API'
+          });
+        }
+      }
+
+      grid14DayBuffer[gridId].hourlyBuffer = buffer;
+
+      results.push({
+        gridId,
+        recordsSynced: buffer.length,
+        avgPm25: buffer.length ? Math.round(buffer.reduce((acc, r) => acc + r.pm25, 0) / buffer.length) : null
+      });
+    }
+
+    return results;
+  } catch (err) {
+    console.warn('[GridTelemetryService] Batch sync failed:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Synchronize live empirical telemetry across all populated spatial grids in Delhi-NCR (all 60 blocks)
+ * Uses high-performance batching: 60 blocks synced in just 2 polite HTTP requests!
  */
 export async function syncAllPopulatedGrids(daysPast = 14) {
-  const populated = Object.values(spatialGrids).filter(g => g.facility_count > 0 || g.centroid);
+  const populated = Object.values(spatialGrids).filter(g => (g.facility_count > 0 || g.centroid) && g.centroid?.lat && g.centroid?.lon);
   const results = [];
-  for (const grid of populated.slice(0, 15)) { // Prioritize primary educational blocks
-    const r = await fetchLiveTelemetryForGrid(grid.grid_id, grid.centroid.lat, grid.centroid.lon, daysPast);
-    if (r) results.push(r);
-    await new Promise(res => setTimeout(res, 150)); // Polite rate limit
+  const BATCH_SIZE = 30;
+
+  for (let i = 0; i < populated.length; i += BATCH_SIZE) {
+    const chunk = populated.slice(i, i + BATCH_SIZE);
+    const chunkResults = await fetchLiveTelemetryBatch(chunk, daysPast);
+    results.push(...chunkResults);
+    if (i + BATCH_SIZE < populated.length) {
+      await new Promise(res => setTimeout(res, 200)); // Polite pause between batches
+    }
   }
+
+  // Persist buffer to disk if environment allows
+  try {
+    fs.writeFileSync(BUFFER_PATH, JSON.stringify(grid14DayBuffer, null, 2));
+  } catch (e) {
+    // Non-fatal (e.g. read-only Lambda /tmp or in-memory)
+  }
+
   return results;
 }
 

@@ -528,7 +528,7 @@ export function getMonitorStatus() {
   let recentAudit = [];
   try {
     if (fs.existsSync(AUDIT_LOG_FILE)) {
-      recentAudit = JSON.parse(fs.readFileSync(AUDIT_LOG_FILE, 'utf8')).slice(-10);
+      recentAudit = JSON.parse(fs.readFileSync(AUDIT_LOG_FILE, 'utf8')).slice(-150);
     }
   } catch (e) {
     // Non-fatal
