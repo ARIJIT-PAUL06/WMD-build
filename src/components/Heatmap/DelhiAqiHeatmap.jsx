@@ -619,8 +619,23 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
   const [isLoadingLive, setIsLoadingLive] = useState(false);
   const [lastUpdated, setLastUpdated] = useState('Fetching live national telemetry...');
 
-  // Development Token Saver Gate: defaults to false so page reloads consume 0 Mapbox credits
+  // Dynamic map loading & electric CRT TV boot state
   const [showMap, setShowMap] = useState(false);
+  const [isTvTurningOn, setIsTvTurningOn] = useState(false);
+  const hasTriggeredActivationRef = useRef(false);
+
+  const triggerMapActivation = useCallback(() => {
+    if (hasTriggeredActivationRef.current) return;
+    hasTriggeredActivationRef.current = true;
+    setShowMap(true);
+    setIsTvTurningOn(true);
+    setTimeout(() => {
+      setIsTvTurningOn(false);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.resize();
+      }
+    }, 1150);
+  }, []);
 
   // User live GPS location coordinates (NO DEMO DATA - initialized null until real device GPS locks)
   const [userLocation, setUserLocation] = useState({
@@ -641,14 +656,15 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
   // Cinematic 360° 3D Slanted Orbital Tour State & Refs
   const [isOrbiting360, setIsOrbiting360] = useState(false);
   const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 1024 : false));
+  // Telemetry Window defaults to OFF initially per user design
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.toLowerCase();
       const params = new URLSearchParams(window.location.search);
       if (hash === '#hud' || hash === '#telemetry' || params.get('hud') === 'true') return true;
-      return window.innerWidth >= 1024;
+      return false;
     }
-    return true;
+    return false;
   });
   const [isGlideDropdownOpen, setIsGlideDropdownOpen] = useState(false);
   const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(() => {
@@ -1126,9 +1142,9 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     setSearchQuery('');
     setShowSearchDropdown(false);
 
-    // If map was paused/hidden in dev mode, auto-show the map immediately
+    // If map was not yet loaded, auto-activate immediately
     if (!showMap) {
-      setShowMap(true);
+      triggerMapActivation();
     }
 
     if (feature.isStation && feature.station) {
@@ -2138,29 +2154,40 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     };
   }, [showMap]);
 
-  // Trigger 360° slanted orbital flyaround when user scrolls down from hero into map section
+  // Scroll-down trigger for Electric CRT TV-On Map Reveal & Map Initialization
   useEffect(() => {
-    if (!showMap) return;
     if (!sectionContainerRef.current) return;
+
+    // Check if directly linked or already in viewport
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.toLowerCase();
+      if (hash === '#map' || hash === '#delhi-aqi-heatmap' || hash === '#hud' || hash === '#telemetry') {
+        triggerMapActivation();
+      }
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
-        if (entry.isIntersecting && !hasPlayedIntroOrbitRef.current) {
-          if (mapLoadedRef.current && mapInstanceRef.current) {
-            playCinematic360TourRef.current?.();
-          } else {
-            pendingOrbitOnScrollRef.current = true;
+        if (entry.isIntersecting) {
+          triggerMapActivation();
+          if (!hasPlayedIntroOrbitRef.current) {
+            if (mapLoadedRef.current && mapInstanceRef.current) {
+              playCinematic360TourRef.current?.();
+            } else {
+              pendingOrbitOnScrollRef.current = true;
+            }
           }
         }
       },
       {
-        threshold: 0.25,
+        threshold: 0.15,
       }
     );
 
     observer.observe(sectionContainerRef.current);
     return () => observer.disconnect();
-  }, [showMap]);
+  }, [triggerMapActivation]);
 
   // Update GeoJSON source when stations update
   useEffect(() => {
@@ -2510,39 +2537,13 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           pointerEvents: 'auto',
         }}
       >
-        {!showMap && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              pointerEvents: 'none',
-              zIndex: 1,
-              background: 'radial-gradient(ellipse at 50% 50%, #0d1527 0%, #040711 80%)',
-            }}
-          >
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 18px',
-                borderRadius: '9999px',
-                background: 'rgba(15, 23, 42, 0.75)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(56, 189, 248, 0.2)',
-                color: '#94a3b8',
-                fontSize: '0.74rem',
-                fontWeight: 600,
-                letterSpacing: '0.02em',
-                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)',
-              }}
-            >
-              <MapIcon size={14} color="#38bdf8" />
-              <span>Mapbox Paused (0 credits used) • Click <strong style={{ color: '#38bdf8' }}>"Show Map"</strong> in the top bar to load</span>
+        {/* Electric CRT TV-On Boot Animation Overlay */}
+        {isTvTurningOn && (
+          <div className="crt-tv-turnon-overlay">
+            <div className="crt-tv-scanlines" />
+            <div className="crt-tv-beam-stage">
+              <div className="crt-tv-lens-flare" />
+              <div className="crt-tv-star-core" />
             </div>
           </div>
         )}
@@ -2694,50 +2695,10 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
               </span>
               <span style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>•</span>
               <span style={{ fontSize: '0.7rem', color: '#e2e8f0', fontWeight: 500 }}>{lastUpdated}</span>
+            </div>
 
-              {/* Mapbox Live Toggle / Show Map Button */}
-              <button
-                onClick={() => setShowMap((prev) => !prev)}
-                id="show-map-btn"
-                className={`glass-pill ${showMap ? 'glass-pill-active' : 'glass-pill-success'}`}
-                title={
-                  showMap
-                    ? 'Mapbox Live is active. Click to pause map and save Mapbox credits.'
-                    : 'Mapbox is paused to save credits. Click to load live 3D Mapbox map.'
-                }
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '3px 11px',
-                  borderRadius: '9999px',
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  background: showMap
-                    ? 'rgba(56, 189, 248, 0.18)'
-                    : 'linear-gradient(135deg, rgba(2, 132, 199, 0.35) 0%, rgba(37, 99, 235, 0.35) 100%)',
-                  border: showMap
-                    ? '1px solid rgba(56, 189, 248, 0.4)'
-                    : '1px solid rgba(56, 189, 248, 0.5)',
-                  boxShadow: showMap
-                    ? '0 0 8px rgba(56, 189, 248, 0.25)'
-                    : '0 0 10px rgba(56, 189, 248, 0.3)',
-                  color: '#f8fafc',
-                }}
-              >
-                <span
-                  style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    background: showMap ? '#60a5fa' : '#38bdf8',
-                    boxShadow: showMap ? '0 0 6px #60a5fa' : '0 0 6px #38bdf8',
-                    animation: !showMap ? 'pulse 2s infinite' : 'none',
-                  }}
-                />
-                <span>{showMap ? 'Mapbox Live' : 'Show Map'}</span>
-              </button>
+            {/* Right Deck: Controls, Location, Glide, Orbit & Telemetry Toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
 
               {/* Glide Dropdown Button with Search Icon */}
               <button
@@ -3156,7 +3117,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           position: 'absolute',
           bottom: isMobile ? '12px' : '24px',
           left: isMobile ? '12px' : '24px',
-          right: isMobile ? '12px' : (isSidebarOpen ? '444px' : 'auto'),
+          right: isMobile ? '12px' : (isSidebarOpen ? '444px' : '24px'),
           maxWidth: isMobile ? 'calc(100% - 24px)' : (isSidebarOpen ? 'calc(100% - 468px)' : 'calc(100% - 48px)'),
           zIndex: 25,
           display: 'flex',
@@ -3166,13 +3127,23 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           borderRadius: '16px',
           maxHeight: isMobile ? '38vh' : 'none',
           overflowY: isMobile ? 'auto' : 'visible',
-          transition: 'right 0.32s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
+          transition: 'right 0.35s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
-        {/* Click hint */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: '#cbd5e1' }}>
-          <Crosshair size={12} color="#f43f5e" />
-          <span>Click anywhere on map for <strong style={{ color: '#f43f5e' }}>micro-zone AQI</strong></span>
+        {/* Click hint & Telemetry status row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: '#cbd5e1' }}>
+            <Crosshair size={12} color="#f43f5e" />
+            <span>Click anywhere on map for <strong style={{ color: '#f43f5e' }}>micro-zone AQI</strong></span>
+          </div>
+          {!isSidebarOpen && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.68rem', color: '#94a3b8' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
+                108 National Ground Telemetry Stations Active
+              </span>
+            </div>
+          )}
         </div>
 
         <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', width: '100%' }} />
@@ -3397,28 +3368,19 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 WebkitOverflowScrolling: 'touch',
               }}
             >
-              {/* Section 1: Map Display Mode & GPS */}
+              {/* Section 1: Location & GPS Lock */}
               <div>
                 <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
-                  Engine & Location Mode
+                  Location Mode
                 </span>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  <button
-                    onClick={() => setShowMap((prev) => !prev)}
-                    className={`glass-cuboid-btn ${showMap ? 'glass-cuboid-btn-active' : ''}`}
-                    style={{ flex: 1, minWidth: '140px', padding: '8px 12px', justifyContent: 'center' }}
-                  >
-                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: showMap ? '#38bdf8' : '#f87171' }} />
-                    <span>{showMap ? 'Mapbox Live (Active)' : 'Token Saver (Paused)'}</span>
-                  </button>
-
+                <div style={{ display: 'flex', gap: '8px' }}>
                   <button
                     onClick={handleCenterOnUser}
                     className={`glass-cuboid-btn ${userLocation.isLiveGps ? 'glass-cuboid-btn-success' : ''}`}
-                    style={{ flex: 1, minWidth: '140px', padding: '8px 12px', justifyContent: 'center' }}
+                    style={{ flex: 1, padding: '8px 12px', justifyContent: 'center' }}
                   >
                     <Navigation size={14} color={userLocation.isLiveGps ? '#10b981' : '#38bdf8'} />
-                    <span>{userLocation.isLiveGps ? 'GPS Centered' : 'Lock Live GPS'}</span>
+                    <span>{userLocation.isLiveGps ? 'GPS Centered (Active)' : 'Lock Live GPS'}</span>
                   </button>
                 </div>
               </div>
@@ -3664,6 +3626,38 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             transition: 'opacity 0.25s ease',
           }}
         />
+      )}
+
+      {/* Sleek Floating Edge Tab to Open Telemetry when closed */}
+      {!isMobile && !isSidebarOpen && (
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          title="Open Telemetry & Advisory HUD"
+          className="glass-panel-master"
+          style={{
+            position: 'absolute',
+            right: '24px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 24,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '9px 14px',
+            borderRadius: '12px',
+            cursor: 'pointer',
+            border: '1px solid rgba(56, 189, 248, 0.35)',
+            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.2)',
+            color: '#38bdf8',
+            fontSize: '0.78rem',
+            fontWeight: 700,
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <ChevronLeft size={16} color="#38bdf8" />
+          <span>Telemetry</span>
+          <Activity size={14} color="#10b981" />
+        </button>
       )}
 
       {/* ============================================================== */}
