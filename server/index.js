@@ -872,7 +872,7 @@ app.post('/api/ses/verify-identity', async (req, res) => {
   }
 });
 
-if (!process.env.VERCEL) {
+if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
   app.listen(PORT, () => {
     console.log(`=======================================================`);
     console.log(`🌿 AWS Environmental Hacks API Server running on port ${PORT}`);
@@ -887,8 +887,12 @@ if (!process.env.VERCEL) {
     console.log(`   - POST /api/monitor/block-emergency`);
     console.log(`=======================================================`);
 
-    // Start background atmospheric monitoring daemon (Interval: 30 minutes)
-    startAutonomousDaemon(30);
+    // Start background atmospheric monitoring daemon only if explicitly enabled locally
+    if (process.env.ENABLE_LOCAL_DAEMON === 'true') {
+      startAutonomousDaemon(30);
+    } else {
+      console.log('☁️  Local background daemon idle — AWS EventBridge handles scheduled monitoring in the cloud.');
+    }
   });
 }
 

@@ -458,7 +458,7 @@ export async function evaluate14DayChronicBlockPetitions({
  * Runs automatically in background or manually on-demand
  * ============================================================================
  */
-export async function runAutonomousMonitoringCycle({ dispatchViaSes = true, isSandbox = true }) {
+export async function runAutonomousMonitoringCycle({ dispatchViaSes = true, isSandbox = true } = {}) {
   console.log(`[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #${monitorState.totalCyclesExecuted + 1}...`);
   monitorState.lastCycleAt = new Date().toISOString();
   monitorState.totalCyclesExecuted++;
