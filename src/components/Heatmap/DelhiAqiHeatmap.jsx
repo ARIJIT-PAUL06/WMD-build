@@ -949,40 +949,87 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
   const debounceTimerRef = useRef(null);
 
-  // Debounced Remote Geocoding Worker (High-Accuracy OpenStreetMap Photon + Nominatim Engine)
+  // Debounced Remote Geocoding Worker (Mapbox Places High-Precision + Nationwide Photon & Nominatim Engine)
   const executeRemoteGeocode = useCallback(async (normalizedQuery, seenNames, currentCombined) => {
     setIsSearching(true);
     try {
       const remoteMatches = [];
+      const token = mapboxgl.accessToken || import.meta.env.VITE_MAPBOX_TOKEN;
+      const map = mapInstanceRef.current;
+      const currentCenter = map ? map.getCenter() : { lat: 28.6139, lng: 77.2090 };
 
-      // 1. High-Accuracy OpenStreetMap Photon Engine with Delhi Proximity Bias
-      const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(normalizedQuery)}&lat=28.6139&lon=77.2090&limit=8`;
-      const res = await fetch(photonUrl);
-      if (res.ok) {
-        const json = await res.json();
-        if (json.features) {
-          json.features.forEach((f) => {
-            const p = f.properties;
-            const title = p.name || normalizedQuery;
-            const nameKey = title.toLowerCase();
-            if (!seenNames.has(nameKey)) {
-              seenNames.add(nameKey);
-              const subtitle = [p.name, p.street, p.district, p.city, p.state, p.country].filter(Boolean).join(', ');
-              remoteMatches.push({
-                id: p.osm_id || Math.random().toString(),
-                text: title,
-                place_name: subtitle,
-                center: f.geometry.coordinates,
+      // 1. High-Precision Mapbox Places Geocoding Engine (Societies, house addresses, PIN codes, POIs across all India)
+      if (token) {
+        try {
+          const mbUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(normalizedQuery)}.json?access_token=${token}&country=in&proximity=${currentCenter.lng},${currentCenter.lat}&types=address,poi,neighborhood,locality,place,postcode,district&autocomplete=true&limit=8`;
+          const mbRes = await fetch(mbUrl);
+          if (mbRes.ok) {
+            const mbJson = await mbRes.json();
+            if (mbJson.features && mbJson.features.length > 0) {
+              mbJson.features.forEach((f) => {
+                const title = f.text || (f.place_name ? f.place_name.split(',')[0].trim() : normalizedQuery);
+                const nameKey = (f.place_name || title).toLowerCase();
+                if (!seenNames.has(nameKey)) {
+                  seenNames.add(nameKey);
+                  const isAddress = f.place_type?.includes('address') || f.place_type?.includes('poi');
+                  const isPostcode = f.place_type?.includes('postcode');
+                  const isLocality = f.place_type?.includes('neighborhood') || f.place_type?.includes('locality');
+                  remoteMatches.push({
+                    id: f.id || Math.random().toString(),
+                    text: title,
+                    place_name: f.place_name,
+                    center: f.center,
+                    bbox: f.bbox,
+                    place_type: f.place_type,
+                    isPinpoint: isAddress,
+                    badge: isAddress ? '🏠 House / Address' : isPostcode ? '📮 PIN Code' : isLocality ? '🏘️ Locality' : '📍 Location',
+                  });
+                }
               });
             }
-          });
+          }
+        } catch (mErr) {
+          console.warn('Mapbox places query warning:', mErr.message);
         }
       }
 
-      // 2. OpenStreetMap Nominatim Deep Search (Campus polygons, institutions, and landmarks)
+      // 2. High-Accuracy Photon Engine across India (Dynamic proximity from current map viewport)
       if (remoteMatches.length + currentCombined.length < 5) {
         try {
-          const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(normalizedQuery)}&format=json&polygon_geojson=1&countrycodes=in&viewbox=76.8,28.9,77.4,28.4&bounded=0&limit=6`;
+          const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(normalizedQuery)}&lat=${currentCenter.lat}&lon=${currentCenter.lng}&limit=8`;
+          const res = await fetch(photonUrl);
+          if (res.ok) {
+            const json = await res.json();
+            if (json.features) {
+              json.features.forEach((f) => {
+                const p = f.properties;
+                const title = p.name || normalizedQuery;
+                const nameKey = title.toLowerCase();
+                if (!seenNames.has(nameKey)) {
+                  seenNames.add(nameKey);
+                  const subtitle = [p.name, p.street, p.district, p.city, p.state, p.country].filter(Boolean).join(', ');
+                  const isHouse = Boolean(p.housenumber || p.street);
+                  remoteMatches.push({
+                    id: p.osm_id || Math.random().toString(),
+                    text: title,
+                    place_name: subtitle || title,
+                    center: f.geometry.coordinates,
+                    isPinpoint: isHouse,
+                    badge: isHouse ? '🏠 House / Address' : '📍 Location',
+                  });
+                }
+              });
+            }
+          }
+        } catch (pErr) {
+          // Non-fatal fallback
+        }
+      }
+
+      // 3. OpenStreetMap Nominatim Deep Search (Nationwide India)
+      if (remoteMatches.length + currentCombined.length < 4) {
+        try {
+          const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(normalizedQuery)}&format=json&polygon_geojson=1&countrycodes=in&limit=6`;
           const nomRes = await fetch(nomUrl, { headers: { 'User-Agent': 'WMD-AQI-App/1.0' } });
           if (nomRes.ok) {
             const nomJson = await nomRes.json();
@@ -999,6 +1046,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   center: [parseFloat(n.lon), parseFloat(n.lat)],
                   bbox: n.boundingbox ? [parseFloat(n.boundingbox[2]), parseFloat(n.boundingbox[0]), parseFloat(n.boundingbox[3]), parseFloat(n.boundingbox[1])] : null,
                   boundaryGeo: pGeo,
+                  badge: '📍 Landmark',
                 });
               }
             });
@@ -1191,8 +1239,13 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       nearestStation: nearestSt ? nearestSt.name : 'Indian Subcontinent Ground Station',
       nearestState: nearestSt?.state || 'India',
       distanceKm: minDist,
-      label: feature.text || feature.place_name || feature.name || 'Searched Location',
+      label: feature.place_name || feature.text || feature.name || 'Searched Location',
+      isPinpoint: feature.isPinpoint,
+      badge: feature.badge,
     });
+
+    // Auto-open Telemetry HUD with the micro-zone pinpoint reading
+    setIsSidebarOpen(true);
 
     const map = mapInstanceRef.current;
     if (!map) {
@@ -1208,7 +1261,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     let boundaryGeo = feature.boundaryGeo || null;
     let targetBbox = feature.bbox || null;
 
-    if (!boundaryGeo) {
+    if (!boundaryGeo && !feature.isPinpoint) {
       try {
         const queryTerm = feature.text || feature.name || searchQuery;
         const nomGeoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queryTerm)}&format=geojson&polygon_geojson=1&countrycodes=in&limit=1`;
@@ -1230,9 +1283,10 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       }
     }
 
-    // If still no polygon, create an elegant soft campus perimeter
+    // If house/apartment pinpoint, generate a tight 130-meter residential perimeter; otherwise soft 450m campus perimeter
     if (!boundaryGeo) {
-      boundaryGeo = createSoftPerimeterGeoJson(lon, lat, 450);
+      const radius = feature.isPinpoint ? 130 : 450;
+      boundaryGeo = createSoftPerimeterGeoJson(lon, lat, radius);
     } else if (boundaryGeo.type !== 'FeatureCollection' && boundaryGeo.type !== 'Feature') {
       boundaryGeo = {
         type: 'FeatureCollection',
@@ -1246,14 +1300,23 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       };
     }
 
-    // 3. Step 1: Smooth Glide & Zoom into the selected institution/zone
-    const targetZoom = targetBbox ? 14.8 : 15.2;
+    // 3. Step 1: Smooth Glide & Adaptive Zoom: House-level (16.4), Locality/PIN (14.8), or City (12.0)
+    let targetZoom = 15.2;
+    let targetPitch = 36;
+    if (feature.isPinpoint || feature.place_type?.includes('address') || feature.place_type?.includes('poi')) {
+      targetZoom = 16.4;
+      targetPitch = 48;
+    } else if (targetBbox) {
+      targetZoom = 14.8;
+      targetPitch = 30;
+    }
+
     map.flyTo({
       center: [lon, lat],
       zoom: targetZoom,
-      pitch: 34,
+      pitch: targetPitch,
       bearing: 12,
-      speed: 1.15,
+      speed: 1.25,
       curve: 1.3,
       padding: getCameraPadding(),
       essential: true,
@@ -2932,7 +2995,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 <Search size={12} color="#94a3b8" />
                 <input
                   type="text"
-                  placeholder="Search city, district, or town..."
+                  placeholder="Search house, society, PIN code, landmark across India..."
                   value={searchQuery}
                   onChange={(e) => handleSearchInput(e.target.value)}
                   onFocus={() => {
@@ -3003,8 +3066,24 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
                       <MapPin size={13} color="#38bdf8" style={{ flexShrink: 0 }} />
-                      <div style={{ minWidth: 0 }}>
-                        <strong style={{ color: '#ffffff', display: 'block' }}>{f.text}</strong>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'space-between' }}>
+                          <strong style={{ color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.text}</strong>
+                          {f.badge && (
+                            <span style={{
+                              fontSize: '0.6rem',
+                              padding: '1px 6px',
+                              borderRadius: '999px',
+                              background: 'rgba(56, 189, 248, 0.15)',
+                              color: '#38bdf8',
+                              border: '1px solid rgba(56, 189, 248, 0.3)',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0
+                            }}>
+                              {f.badge}
+                            </span>
+                          )}
+                        </div>
                         <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {f.place_name}
                         </span>
@@ -3437,7 +3516,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   <Search size={14} color="#94a3b8" />
                   <input
                     type="text"
-                    placeholder="Search Indian city, district, or town..."
+                    placeholder="Search house, society, PIN code across India..."
                     value={searchQuery}
                     onChange={(e) => handleSearchInput(e.target.value)}
                     style={{
@@ -3480,8 +3559,24 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                         }}
                       >
                         <MapPin size={13} color="#38bdf8" style={{ flexShrink: 0 }} />
-                        <div style={{ minWidth: 0 }}>
-                          <strong style={{ color: '#ffffff', display: 'block' }}>{f.text}</strong>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'space-between' }}>
+                            <strong style={{ color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.text}</strong>
+                            {f.badge && (
+                              <span style={{
+                                fontSize: '0.6rem',
+                                padding: '1px 6px',
+                                borderRadius: '999px',
+                                background: 'rgba(56, 189, 248, 0.15)',
+                                color: '#38bdf8',
+                                border: '1px solid rgba(56, 189, 248, 0.3)',
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0
+                              }}>
+                                {f.badge}
+                              </span>
+                            )}
+                          </div>
                           <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {f.place_name}
                           </span>
