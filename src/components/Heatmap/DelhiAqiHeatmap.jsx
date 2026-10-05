@@ -634,7 +634,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.resize();
       }
-    }, 1250);
+    }, 1150);
   }, []);
 
   // User live GPS location coordinates (NO DEMO DATA - initialized null until real device GPS locks)
@@ -2170,11 +2170,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       (entries) => {
         const [entry] = entries;
         if (entry.isIntersecting) {
-          // Time gap: hold black screen for 70ms after entering view so user experiences the cold tube before ignition
-          setTimeout(() => {
-            triggerMapActivation();
-          }, 70);
-
+          triggerMapActivation();
           if (!hasPlayedIntroOrbitRef.current) {
             if (mapLoadedRef.current && mapInstanceRef.current) {
               playCinematic360TourRef.current?.();
@@ -2185,7 +2181,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         }
       },
       {
-        threshold: 0.22,
+        threshold: 0.15,
       }
     );
 
@@ -2541,14 +2537,13 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           pointerEvents: 'auto',
         }}
       >
-        {/* Authentic Retro CRT TV-On Boot Animation Overlay */}
+        {/* Electric CRT TV-On Boot Animation Overlay */}
         {isTvTurningOn && (
           <div className="crt-tv-turnon-overlay">
             <div className="crt-tv-scanlines" />
-            <div className="crt-tv-tube-vignette" />
             <div className="crt-tv-beam-stage">
-              <div className="crt-tv-horizontal-line" />
-              <div className="crt-tv-center-dot" />
+              <div className="crt-tv-lens-flare" />
+              <div className="crt-tv-star-core" />
             </div>
           </div>
         )}
