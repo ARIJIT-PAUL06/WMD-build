@@ -27,11 +27,20 @@ if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
       region: sagemakerRegion,
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        ...(process.env.AWS_SESSION_TOKEN ? { sessionToken: process.env.AWS_SESSION_TOKEN } : {})
       }
     });
   } catch (err) {
     console.warn('[SageMakerService] Failed to initialize SageMakerRuntimeClient:', err.message);
+  }
+}
+
+if (!sagemakerClient) {
+  try {
+    sagemakerClient = new SageMakerRuntimeClient({ region: sagemakerRegion });
+  } catch (err) {
+    console.warn('[SageMakerService] Failed to initialize default SageMakerRuntimeClient:', err.message);
   }
 }
 

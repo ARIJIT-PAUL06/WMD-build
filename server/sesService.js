@@ -16,17 +16,28 @@ const defaultSender = process.env.SES_SENDER_EMAIL || 'vayuvitals@gmail.com';
 
 let sesClient = null;
 
+const sessionToken = process.env.AWS_SESSION_TOKEN;
+
 if (accessKeyId && secretAccessKey) {
   try {
     sesClient = new SESClient({
       region,
       credentials: {
         accessKeyId,
-        secretAccessKey
+        secretAccessKey,
+        ...(sessionToken ? { sessionToken } : {})
       }
     });
   } catch (err) {
     console.warn('[SES Service] Could not initialize SESClient:', err.message);
+  }
+}
+
+if (!sesClient) {
+  try {
+    sesClient = new SESClient({ region });
+  } catch (err) {
+    console.warn('[SES Service] Could not initialize default SESClient:', err.message);
   }
 }
 
