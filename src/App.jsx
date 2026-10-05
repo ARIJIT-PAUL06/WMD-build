@@ -176,8 +176,8 @@ export default function App() {
     return (
       <div style={{ width: '100%', minHeight: '100vh', background: '#070a12', position: 'relative', overflowX: 'hidden' }}>
         {activeMobileTab === 'story' && (
-          <div style={{ paddingBottom: '74px' }}>
-            <PanoramicScrollHero onExploreTwin={() => setActiveMobileTab('map')} />
+          <div style={{ width: '100%', height: '100vh', position: 'relative', overflow: 'hidden' }}>
+            <PanoramicScrollHero onExploreTwin={() => setActiveMobileTab('map')} isMobile={true} />
           </div>
         )}
 
