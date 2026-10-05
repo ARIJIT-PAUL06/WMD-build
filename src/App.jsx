@@ -174,7 +174,7 @@ export default function App() {
   // Mobile Experience: Tabbed View Switcher to eliminate touch-scroll traps
   if (isMobile) {
     return (
-      <div style={{ width: '100%', minHeight: '100vh', background: '#070a12', position: 'relative', overflowX: 'hidden' }}>
+      <div style={{ width: '100%', minHeight: '100vh', background: '#070a12', position: 'relative' }}>
         {activeMobileTab === 'story' && (
           <div style={{ paddingBottom: '74px' }}>
             <PanoramicScrollHero onExploreTwin={() => setActiveMobileTab('map')} />
