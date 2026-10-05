@@ -259,9 +259,24 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 .mapboxgl-ctrl-bottom-right {
   margin-right: 24px !important;
-  margin-bottom: 24px !important;
+  margin-bottom: 165px !important;
   pointer-events: auto !important;
-  z-index: 25 !important;
+  z-index: 35 !important;
+  transition: margin-right 0.35s cubic-bezier(0.16, 1, 0.3, 1), margin-bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+#delhi-aqi-heatmap.sidebar-open .mapboxgl-ctrl-bottom-right {
+  margin-right: 444px !important;
+}
+
+@media (max-width: 1023px) {
+  .mapboxgl-ctrl-bottom-right {
+    margin-right: 12px !important;
+    margin-bottom: 140px !important;
+  }
+  #delhi-aqi-heatmap.sidebar-open .mapboxgl-ctrl-bottom-right {
+    margin-right: 12px !important;
+  }
 }
 
 .mapboxgl-ctrl-group {

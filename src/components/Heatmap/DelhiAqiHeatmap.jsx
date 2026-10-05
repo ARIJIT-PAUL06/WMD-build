@@ -2071,6 +2071,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           distanceKm: minD,
           label: `Pinpoint Inspection (${lat.toFixed(3)}°N, ${lng.toFixed(3)}°E)`,
         });
+        setIsSidebarOpen(true);
       });
 
       mapInstanceRef.current = map;
@@ -2310,6 +2311,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         e.stopPropagation();
         setSelectedStation(st);
         setInspectedPoint(null);
+        setIsSidebarOpen(true);
       });
 
       const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
@@ -2510,6 +2512,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     <section
       ref={sectionContainerRef}
       id="delhi-aqi-heatmap"
+      className={isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}
       style={{
         position: 'relative',
         zIndex: 40,
