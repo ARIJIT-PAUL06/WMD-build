@@ -307,6 +307,12 @@
         "pm25": 221,
         "schoolName": "Springdales School, Dhaula Kuan",
         "schoolId": "springdales_dhaula_kuan"
+      },
+      {
+        "timestamp": "2026-10-05T20:18:48.157Z",
+        "pm25": 265,
+        "schoolName": "Delhi Public School, R.K. Puram",
+        "schoolId": "dps_rk_puram"
       }
     ],
     "dailyHistory": []
@@ -365,6 +371,30 @@
       {
         "timestamp": "2026-10-05T00:37:36.534Z",
         "pm25": 280,
+        "schoolName": "Delhi Public School, Rohini",
+        "schoolId": "dps_rohini"
+      },
+      {
+        "timestamp": "2026-10-05T20:11:06.736Z",
+        "pm25": 111,
+        "schoolName": "Delhi Public School, Rohini",
+        "schoolId": "dps_rohini"
+      },
+      {
+        "timestamp": "2026-10-05T20:11:09.027Z",
+        "pm25": 111,
+        "schoolName": "Delhi Public School, Rohini",
+        "schoolId": "dps_rohini"
+      },
+      {
+        "timestamp": "2026-10-05T20:11:25.344Z",
+        "pm25": 30,
+        "schoolName": "Delhi Public School, Rohini",
+        "schoolId": "dps_rohini"
+      },
+      {
+        "timestamp": "2026-10-05T20:11:26.298Z",
+        "pm25": 30,
         "schoolName": "Delhi Public School, Rohini",
         "schoolId": "dps_rohini"
       }

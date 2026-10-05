@@ -34,7 +34,7 @@ import {
   ShieldCheck,
   Menu,
   X,
-  School
+  Building2
 } from 'lucide-react';
 import PetitionModal from '../Petition/PetitionModal';
 import AutonomousMonitorModal from '../Dashboard/AutonomousMonitorModal';
@@ -612,7 +612,9 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
   const markersRef = useRef([]);
   const userMarkerRef = useRef(null);
   const targetMarkerRef = useRef(null);
+  const lastInspectedCoordsRef = useRef(null);
   const pendingSearchTargetRef = useRef(null);
+  const userRequestedZoomRef = useRef(false);
   const handleSelectSearchedPlaceRef = useRef(null);
 
   // 108 Nationwide stations state across all states and union territories
@@ -623,19 +625,55 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
   // Dynamic map loading & electric CRT TV boot state
   const [showMap, setShowMap] = useState(false);
   const [isTvTurningOn, setIsTvTurningOn] = useState(false);
+  const [uiBootStage, setUiBootStage] = useState(0); // 0 = hidden, 1 = left-to-right flicker cascade, 2 = settled
   const hasTriggeredActivationRef = useRef(false);
+
+  // Helper for glass panel background wipe & flicker
+  const getPanelClass = useCallback(() => {
+    if (uiBootStage === 0) return 'crt-ui-hidden';
+    if (uiBootStage === 1) return 'crt-panel-flicker';
+    return '';
+  }, [uiBootStage]);
+
+  // Helper for button flicker class
+  const getBtnFlickerClass = useCallback(() => {
+    if (uiBootStage === 0) return 'crt-ui-hidden';
+    if (uiBootStage === 1) return 'crt-btn-flicker';
+    return '';
+  }, [uiBootStage]);
+
+  // Helper for sequential left-to-right button flicker timing
+  const getBtnFlickerStyle = useCallback((delayMs) => {
+    if (uiBootStage === 0) return { opacity: 0, visibility: 'hidden' };
+    if (uiBootStage === 1) return { animationDelay: `${delayMs}ms` };
+    return {};
+  }, [uiBootStage]);
 
   const triggerMapActivation = useCallback(() => {
     if (hasTriggeredActivationRef.current) return;
     hasTriggeredActivationRef.current = true;
     setShowMap(true);
     setIsTvTurningOn(true);
+    setUiBootStage(0); // UI hidden while CRT ignites
+
+    // At 800ms: The CRT phosphor raster has bloomed and the map is rotating.
+    // Glass panels wipe/flicker first, then buttons flicker from left to right!
+    setTimeout(() => {
+      setUiBootStage(1);
+    }, 800);
+
+    // At 1350ms: CRT TV curtain animation finishes
     setTimeout(() => {
       setIsTvTurningOn(false);
       if (mapInstanceRef.current) {
         mapInstanceRef.current.resize();
       }
-    }, 1150);
+    }, 1350);
+
+    // At 3200ms: All buttons across top, bottom, and right edge have finished their slow left-to-right flicker and settled permanently!
+    setTimeout(() => {
+      setUiBootStage(2);
+    }, 3200);
   }, []);
 
   // User live GPS location coordinates (NO DEMO DATA - initialized null until real device GPS locks)
@@ -1583,7 +1621,18 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         // Smooth Mapbox viewport tracking
         const map = mapInstanceRef.current;
         if (map) {
-          if (!hasCenteredOnGpsRef.current) {
+          if (userRequestedZoomRef.current) {
+            userRequestedZoomRef.current = false;
+            hasCenteredOnGpsRef.current = true;
+            map.flyTo({
+              center: [longitude, latitude],
+              zoom: 17.0,
+              pitch: 42,
+              speed: 1.35,
+              curve: 1.25,
+              padding: getCameraPadding(),
+            });
+          } else if (!hasCenteredOnGpsRef.current) {
             hasCenteredOnGpsRef.current = true;
             if (hasPlayedIntroOrbitRef.current) {
               map.flyTo({
@@ -1627,7 +1676,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         maximumAge: 2000,
       }
     );
-  }, [playCinematic360Tour]);
+  }, [playCinematic360Tour, getCameraPadding]);
 
   // Auto-start GPS tracking on mount
   useEffect(() => {
@@ -1640,22 +1689,25 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     };
   }, [startLiveGpsTracking]);
 
-  // Center or re-center map on user's live position
+  // Center or re-center map on user's live position (zooming in much closer)
   const handleCenterOnUser = useCallback(() => {
     cancelCinematic360Tour();
     if (!userLocation.isLiveGps || !userLocation.lat || !userLocation.lon) {
+      userRequestedZoomRef.current = true;
       startLiveGpsTracking();
       return;
     }
     setIsFollowingUser(true);
     const map = mapInstanceRef.current;
     if (map) {
+      const currentZoom = map.getZoom();
+      const targetZoom = currentZoom >= 16.5 ? 18.5 : 17.0;
       map.flyTo({
         center: [userLocation.lon, userLocation.lat],
-        zoom: 13,
-        pitch: 26,
-        speed: 1.4,
-        curve: 1.2,
+        zoom: targetZoom,
+        pitch: 42,
+        speed: 1.35,
+        curve: 1.25,
         padding: getCameraPadding(),
       });
     }
@@ -1782,10 +1834,12 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     }
 
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-    const initialLng = urlParams && urlParams.get('lng') ? parseFloat(urlParams.get('lng')) : 78.9629;
-    const initialLat = urlParams && urlParams.get('lat') ? parseFloat(urlParams.get('lat')) : 22.5937;
-    const initialZoom = urlParams && urlParams.get('zoom') ? parseFloat(urlParams.get('zoom')) : 4.6;
-    const initialPitch = urlParams && urlParams.get('pitch') ? parseFloat(urlParams.get('pitch')) : 16;
+    const targetLon = userLocationRef.current?.lon ?? 75.76;
+    const targetLat = userLocationRef.current?.lat ?? 26.85;
+    const initialLng = urlParams && urlParams.get('lng') ? parseFloat(urlParams.get('lng')) : targetLon;
+    const initialLat = urlParams && urlParams.get('lat') ? parseFloat(urlParams.get('lat')) : targetLat;
+    const initialZoom = urlParams && urlParams.get('zoom') ? parseFloat(urlParams.get('zoom')) : 4.85;
+    const initialPitch = urlParams && urlParams.get('pitch') ? parseFloat(urlParams.get('pitch')) : 58;
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
@@ -1793,7 +1847,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       center: [initialLng, initialLat],
       zoom: initialZoom,
       minZoom: 3.8,
-      maxZoom: 16.5,
+      maxZoom: 21.0,
       pitch: initialPitch,
       maxPitch: 85, // Allows high-pitch 3D slanted perspective
       bearing: 0,
@@ -1838,11 +1892,14 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       // 2. LAYER POSITIONING: Insert raster underneath roads, state borders, and labels
       // This ensures roads, national highways, and state lines render crisply ON TOP of the heatmap!
       const layers = map.getStyle().layers || [];
+      const buildingLayerId = layers.find((l) => (l.id.includes('building') || l['source-layer'] === 'building') && l.type !== 'symbol')?.id;
       const roadLayerId = layers.find((l) => (l.id.startsWith('road') || l.id.startsWith('highway_')) && l.type === 'line')?.id;
       const adminLayerId = layers.find((l) => l.id === 'admin-1-boundary-bg' || l.id === 'admin-1-boundary' || l.id === 'boundary_state')?.id;
-      const symbolLayerId = layers.find((l) => l.type === 'symbol' && (l.layout?.['text-field'] || l.id.startsWith('place_') || l.id.startsWith('highway_name') || l.id.startsWith('water_name')) )?.id;
-      const labelLayerId = layers.find((l) => l.type === 'symbol' && (l.id.startsWith('place_') || l.id.startsWith('poi_') || l.id.includes('settlement')) )?.id;
-      const beforeLayerId = roadLayerId || adminLayerId || symbolLayerId;
+      const firstSymbolLayerId = layers.find((l) => l.type === 'symbol')?.id;
+      const symbolLayerId = layers.find((l) => l.type === 'symbol' && (l.layout?.['text-field'] || l.id.startsWith('place') || l.id.startsWith('highway_name') || l.id.startsWith('water_name')) )?.id;
+      const labelLayerId = layers.find((l) => l.type === 'symbol' && (l.id.startsWith('place') || l.id.startsWith('poi') || l.id.includes('settlement')) )?.id;
+      // The heatmap is placed beneath buildings and roads so it stays strictly on the ground terrain without tinting buildings
+      const beforeLayerId = buildingLayerId || roadLayerId || adminLayerId || firstSymbolLayerId || symbolLayerId;
 
       // Real GPS Accuracy Radar Radius Layer (rendered beneath roads & borders)
       map.addSource('user-gps-accuracy-source', {
@@ -1856,8 +1913,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           type: 'fill',
           source: 'user-gps-accuracy-source',
           paint: {
-            'fill-color': '#10b981',
-            'fill-opacity': 0.12,
+            'fill-color': '#06b6d4',
+            'fill-opacity': 0.10,
           },
         },
         beforeLayerId
@@ -1869,10 +1926,10 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           type: 'line',
           source: 'user-gps-accuracy-source',
           paint: {
-            'line-color': '#10b981',
-            'line-width': 1.6,
-            'line-opacity': 0.65,
-            'line-dasharray': [3, 2],
+            'line-color': '#38bdf8',
+            'line-width': 2,
+            'line-opacity': 0.85,
+            'line-dasharray': [5, 4],
           },
         },
         beforeLayerId
@@ -1961,41 +2018,42 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
               'fill-extrusion-color': [
                 'interpolate', ['linear'],
                 ['coalesce', ['get', 'render_height'], ['get', 'height'], 14],
-                0, '#273b52',
-                12, '#324b69',
-                25, '#3f5e84',
-                50, '#5077a5',
-                90, '#6493cd',
-                150, '#79b0f2'
+                0, '#191b20',
+                12, '#23262d',
+                25, '#2f333c',
+                50, '#3e434d',
+                90, '#505662',
+                150, '#656c7a'
               ],
               'fill-extrusion-height': [
-                'interpolate', ['linear'], ['zoom'],
-                13.5, 0,
-                14.2, [
-                  'max',
-                  ['coalesce', ['get', 'render_height'], ['get', 'height'], 14],
-                  8
-                ],
-                16.0, [
-                  'max',
-                  ['*', ['coalesce', ['get', 'render_height'], ['get', 'height'], 14], 1.2],
-                  12
-                ]
+                'coalesce',
+                ['get', 'render_height'],
+                ['get', 'height'],
+                14
               ],
               'fill-extrusion-base': [
-                'interpolate', ['linear'], ['zoom'],
-                13.5, 0,
-                14.2, [
-                  'coalesce', ['get', 'render_min_height'], ['get', 'min_height'], 0
-                ]
+                'coalesce',
+                ['get', 'render_min_height'],
+                ['get', 'min_height'],
+                0
               ],
-              'fill-extrusion-opacity': 0.95,
+              'fill-extrusion-opacity': 1.0,
             },
           };
           if (buildingSource === 'composite') {
             building3DLayer.filter = ['==', 'extrude', 'true'];
           }
-          map.addLayer(building3DLayer, labelLayerId);
+          map.addLayer(building3DLayer, firstSymbolLayerId || labelLayerId);
+
+          // Elevate all building, landmark, and street text labels above 3D building rooftops
+          layers.forEach((l) => {
+            if (l.type === 'symbol') {
+              try {
+                map.setLayoutProperty(l.id, 'symbol-z-elevate', true);
+                map.setLayoutProperty(l.id, 'symbol-z-order', 'auto');
+              } catch {}
+            }
+          });
         } catch (err) {
           console.warn('Could not add 3d-buildings layer:', err);
         }
@@ -2007,7 +2065,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           map.setLight({
             anchor: 'viewport',
             color: '#e2e8f0',
-            intensity: 0.75,
+            intensity: 0.60,
             position: [1.3, 215, 42]
           });
         }
@@ -2188,9 +2246,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         }, 400);
       } else if (pendingOrbitOnScrollRef.current && !hasPlayedIntroOrbitRef.current) {
         pendingOrbitOnScrollRef.current = false;
-        setTimeout(() => {
-          playCinematic360TourRef.current?.();
-        }, 300);
+        playCinematic360TourRef.current?.();
       }
     });
 
@@ -2228,13 +2284,43 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       const hash = window.location.hash.toLowerCase();
       if (hash === '#map' || hash === '#delhi-aqi-heatmap' || hash === '#hud' || hash === '#telemetry') {
         triggerMapActivation();
+        if (!hasPlayedIntroOrbitRef.current) {
+          pendingOrbitOnScrollRef.current = true;
+        }
       }
     }
 
+    let lastScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+    let hasSnapped = false;
+
+    // Fluid magnetic scroll-assist: when user scrolls down and is almost reaching the map section,
+    // gently and smoothly snap the map section to full screen without trapping or locking normal scrolling.
+    const handleScrollSnapCheck = () => {
+      if (hasSnapped || hasTriggeredActivationRef.current || !sectionContainerRef.current) return;
+
+      const currentScrollY = window.scrollY;
+      const scrollingDown = currentScrollY > lastScrollY;
+      lastScrollY = currentScrollY;
+
+      if (!scrollingDown) return;
+
+      const rect = sectionContainerRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+
+      // When the top of the map section approaches ~42% into the viewport (almost reaching full map UI)
+      if (rect.top > 0 && rect.top <= windowHeight * 0.42 && rect.bottom > windowHeight * 0.6) {
+        hasSnapped = true;
+        sectionContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    };
+
+    window.addEventListener('scroll', handleScrollSnapCheck, { passive: true });
+
+    // CRT TV Boot Trigger: Fires ONLY when the map is substantially framed on screen (>= 68% visible)
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.68) {
           triggerMapActivation();
           if (!hasPlayedIntroOrbitRef.current) {
             if (mapLoadedRef.current && mapInstanceRef.current) {
@@ -2246,12 +2332,15 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         }
       },
       {
-        threshold: 0.15,
+        threshold: [0.35, 0.68, 0.9],
       }
     );
 
     observer.observe(sectionContainerRef.current);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', handleScrollSnapCheck);
+    };
   }, [triggerMapActivation]);
 
   // Update GeoJSON source when stations update
@@ -2334,12 +2423,67 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
       inner.innerHTML = `
         <div style="
-          filter: drop-shadow(0 3px 6px rgba(0,0,0,0.7));
-          transition: transform 0.2s ease;
+          filter: drop-shadow(0 4px 10px rgba(0,0,0,0.65));
+          transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         ">
-          <svg width="${isSelected ? '24' : '18'}" height="${isSelected ? '32' : '24'}" viewBox="0 0 24 32" fill="none">
-            <path d="M12 0C5.373 0 0 5.373 0 12c0 9.25 12 20 12 20s12-10.75 12-20c0-6.627-5.373-12-12-12z" fill="#f43f5e" stroke="#ffffff" stroke-width="${isSelected ? '1.8' : '1.2'}"/>
-            <circle cx="12" cy="11" r="${isSelected ? '4.8' : '3.4'}" fill="#ffffff"/>
+          <svg width="${isSelected ? '26' : '20'}" height="${isSelected ? '36' : '28'}" viewBox="0 0 28 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="shadow-${st.id}" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#000000" stop-opacity="0.75" />
+                <stop offset="60%" stop-color="#000000" stop-opacity="0.3" />
+                <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+              </radialGradient>
+              <radialGradient id="pinHead3D-${st.id}" cx="32%" cy="26%" r="68%">
+                <stop offset="0%" stop-color="#fda4af" />
+                <stop offset="22%" stop-color="#f43f5e" />
+                <stop offset="60%" stop-color="#e11d48" />
+                <stop offset="85%" stop-color="#9f1239" />
+                <stop offset="100%" stop-color="#4c0519" />
+              </radialGradient>
+              <linearGradient id="pinStem3D-${st.id}" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#fb7185" />
+                <stop offset="28%" stop-color="#f43f5e" />
+                <stop offset="65%" stop-color="#be123c" />
+                <stop offset="100%" stop-color="#4c0519" />
+              </linearGradient>
+              <linearGradient id="glossGrad-${st.id}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
+                <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
+              </linearGradient>
+              <radialGradient id="lensCore-${st.id}" cx="35%" cy="32%" r="65%">
+                <stop offset="0%" stop-color="#ffffff" />
+                <stop offset="40%" stop-color="#f1f5f9" />
+                <stop offset="75%" stop-color="#cbd5e1" />
+                <stop offset="100%" stop-color="#64748b" />
+              </radialGradient>
+              <linearGradient id="tipMetal-${st.id}" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#94a3b8" />
+                <stop offset="45%" stop-color="#ffffff" />
+                <stop offset="100%" stop-color="#475569" />
+              </linearGradient>
+            </defs>
+
+            <!-- 1. Ground Contact Shadow -->
+            <ellipse cx="14" cy="35.5" rx="7.5" ry="2.2" fill="url(#shadow-${st.id})" />
+
+            <!-- 2. Main 3D Pin Shell -->
+            <path d="M 14 34.5 L 5.1 17.5 A 10 10 0 1 1 22.9 17.5 Z" fill="url(#pinHead3D-${st.id})" stroke="rgba(255, 255, 255, 0.4)" stroke-width="0.75" />
+
+            <!-- 3. Lower Stem 3D Cylindrical Shadow Overlay -->
+            <path d="M 14 34.5 L 7.5 19.5 C 10 22.5 18 22.5 20.5 19.5 Z" fill="url(#pinStem3D-${st.id})" opacity="0.65" />
+
+            <!-- 4. Upper Specular Curved Gloss Arc -->
+            <ellipse cx="10.8" cy="8.8" rx="4.8" ry="2.4" transform="rotate(-30 10.8 8.8)" fill="url(#glossGrad-${st.id})" />
+
+            <!-- 5. 3D Beveled Lens Center Ring -->
+            <circle cx="14" cy="13" r="5.2" fill="#4c0519" opacity="0.65" />
+            <circle cx="14" cy="12.8" r="4.6" fill="#881337" opacity="0.85" />
+            <circle cx="14" cy="12.5" r="3.8" fill="url(#lensCore-${st.id})" />
+            <circle cx="14" cy="12.5" r="2.0" fill="#e11d48" />
+            <circle cx="13.3" cy="11.8" r="0.7" fill="#ffffff" opacity="0.9" />
+
+            <!-- 6. Sharp Chrome Needle Tip Glint -->
+            <polygon points="13.2,32 14.8,32 14,35" fill="url(#tipMetal-${st.id})" />
           </svg>
         </div>
         ${isSelected ? `
@@ -2386,25 +2530,62 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     });
   }, [stations, selectedStation, showStationPins]);
 
-  // Update Pinpoint Target Marker when user clicks anywhere on map
+  // Update Pinpoint Target Marker with adaptive color updates on zoom without animation disruption
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
+
+    if (!inspectedPoint) {
+      if (targetMarkerRef.current) {
+        targetMarkerRef.current.remove();
+        targetMarkerRef.current = null;
+      }
+      lastInspectedCoordsRef.current = null;
+      return;
+    }
+
+    const color = getAqiColor(inspectedPoint.aqi, activeRange);
+
+    const isSamePoint =
+      targetMarkerRef.current &&
+      lastInspectedCoordsRef.current &&
+      lastInspectedCoordsRef.current.lat === inspectedPoint.lat &&
+      lastInspectedCoordsRef.current.lon === inspectedPoint.lon;
+
+    if (isSamePoint) {
+      // Adaptively update colors on zoom without destroying DOM element or restarting animations
+      const el = targetMarkerRef.current.getElement();
+      if (el) {
+        el.style.setProperty('--aqi-color', color.hex);
+        el.style.setProperty('--aqi-badge-bg', color.badgeBg);
+        el.style.setProperty('--aqi-text-color', color.textHex);
+        const badgeLabel = el.querySelector('#pinpoint-badge-label');
+        if (badgeLabel) {
+          badgeLabel.textContent = color.label;
+          badgeLabel.style.background = color.badgeBg;
+          badgeLabel.style.color = color.textHex;
+          badgeLabel.style.borderColor = color.hex + '44';
+        }
+      }
+      return;
+    }
 
     if (targetMarkerRef.current) {
       targetMarkerRef.current.remove();
       targetMarkerRef.current = null;
     }
 
-    if (!inspectedPoint) return;
+    lastInspectedCoordsRef.current = { lat: inspectedPoint.lat, lon: inspectedPoint.lon };
 
     const targetEl = document.createElement('div');
+    targetEl.className = 'aqi-target-pinpoint-marker';
     targetEl.style.display = 'flex';
     targetEl.style.flexDirection = 'column';
     targetEl.style.alignItems = 'center';
     targetEl.style.pointerEvents = 'none';
-
-    const color = getAqiColor(inspectedPoint.aqi, activeRange);
+    targetEl.style.setProperty('--aqi-color', color.hex);
+    targetEl.style.setProperty('--aqi-badge-bg', color.badgeBg);
+    targetEl.style.setProperty('--aqi-text-color', color.textHex);
 
     targetEl.innerHTML = `
       <div style="
@@ -2415,52 +2596,143 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         align-items: center;
         justify-content: center;
       ">
+        <!-- Soft Ambient Light Halo (Adaptive Color) -->
         <span style="
           position: absolute;
-          width: 30px;
-          height: 30px;
+          width: 28px;
+          height: 28px;
           border-radius: 50%;
-          border: 2px solid ${color.hex};
-          animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
-          opacity: 0.8;
+          background: radial-gradient(circle, var(--aqi-color) 0%, transparent 70%);
+          opacity: 0.35;
+          animation: pointLightPulse 2.8s ease-in-out infinite;
+          pointer-events: none;
+          transition: background 0.35s ease;
+        "></span>
+
+        <!-- Emitted Light Particles (Adaptive Color) -->
+        <span style="
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 3.5px;
+          height: 3.5px;
+          border-radius: 50%;
+          background: #ffffff;
+          box-shadow: 0 0 5px #ffffff, 0 0 10px var(--aqi-color);
+          animation: pointParticleEmit1 2.4s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+          pointer-events: none;
+          transition: box-shadow 0.35s ease;
         "></span>
         <span style="
           position: absolute;
-          width: 14px;
-          height: 14px;
+          top: 50%;
+          left: 50%;
+          width: 3px;
+          height: 3px;
           border-radius: 50%;
-          background: ${color.hex};
-          box-shadow: 0 0 12px ${color.hex};
+          background: var(--aqi-color);
+          box-shadow: 0 0 5px var(--aqi-color), 0 0 10px var(--aqi-color);
+          animation: pointParticleEmit2 2.4s cubic-bezier(0.2, 0.8, 0.4, 1) infinite 0.4s;
+          pointer-events: none;
+          transition: background 0.35s ease, box-shadow 0.35s ease;
+        "></span>
+        <span style="
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 3.5px;
+          height: 3.5px;
+          border-radius: 50%;
+          background: #ffffff;
+          box-shadow: 0 0 5px #ffffff, 0 0 10px var(--aqi-color);
+          animation: pointParticleEmit3 2.4s cubic-bezier(0.2, 0.8, 0.4, 1) infinite 0.8s;
+          pointer-events: none;
+          transition: box-shadow 0.35s ease;
+        "></span>
+        <span style="
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 3px;
+          height: 3px;
+          border-radius: 50%;
+          background: var(--aqi-color);
+          box-shadow: 0 0 5px var(--aqi-color), 0 0 10px var(--aqi-color);
+          animation: pointParticleEmit4 2.4s cubic-bezier(0.2, 0.8, 0.4, 1) infinite 1.2s;
+          pointer-events: none;
+          transition: background 0.35s ease, box-shadow 0.35s ease;
+        "></span>
+        <span style="
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 3px;
+          height: 3px;
+          border-radius: 50%;
+          background: #ffffff;
+          box-shadow: 0 0 5px #ffffff, 0 0 10px var(--aqi-color);
+          animation: pointParticleEmit5 2.4s cubic-bezier(0.2, 0.8, 0.4, 1) infinite 1.6s;
+          pointer-events: none;
+          transition: box-shadow 0.35s ease;
+        "></span>
+        <span style="
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 3px;
+          height: 3px;
+          border-radius: 50%;
+          background: var(--aqi-color);
+          box-shadow: 0 0 5px var(--aqi-color), 0 0 10px var(--aqi-color);
+          animation: pointParticleEmit6 2.4s cubic-bezier(0.2, 0.8, 0.4, 1) infinite 1.9s;
+          pointer-events: none;
+          transition: background 0.35s ease, box-shadow 0.35s ease;
+        "></span>
+
+        <!-- Luminous Point (Adaptive Color) -->
+        <span style="
+          position: relative;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: var(--aqi-color);
+          box-shadow: 0 0 10px var(--aqi-color), 0 0 20px var(--aqi-color);
           border: 2px solid #ffffff;
+          z-index: 2;
+          transition: background 0.35s ease, box-shadow 0.35s ease;
         "></span>
       </div>
       <div style="
-        margin-top: 4px;
-        background: rgba(15, 23, 42, 0.95);
-        backdrop-filter: blur(8px);
-        border: 1px solid ${color.hex};
-        padding: 4px 10px;
-        border-radius: 8px;
+        margin-top: 6px;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.92) 100%);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid var(--aqi-color);
+        border-top: 1px solid rgba(255, 255, 255, 0.35);
+        padding: 5px 12px;
+        border-radius: 10px;
         font-size: 11px;
         font-weight: 700;
         color: #ffffff;
         white-space: nowrap;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65), 0 0 18px var(--aqi-color);
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
+        z-index: 5;
+        transition: border-color 0.35s ease, box-shadow 0.35s ease;
       ">
-        <span style="width: 7px; height: 7px; border-radius: 50%; background: ${color.hex};"></span>
-        <span>Pinpoint AQI: <strong style="color: ${color.hex}">${inspectedPoint.aqi}</strong></span>
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--aqi-color); box-shadow: 0 0 8px var(--aqi-color); flex-shrink: 0; transition: background 0.35s ease, box-shadow 0.35s ease;"></span>
+        <span style="letter-spacing: 0.02em;">AQI <strong style="color: var(--aqi-color); font-size: 12.5px; transition: color 0.35s ease;">${inspectedPoint.aqi}</strong></span>
+        <span id="pinpoint-badge-label" style="background: var(--aqi-badge-bg); color: var(--aqi-text-color); padding: 2px 7px; border-radius: 9999px; font-size: 9.5px; font-weight: 800; border: 1px solid var(--aqi-color); text-transform: uppercase; transition: all 0.35s ease;">${color.label}</span>
       </div>
     `;
-
     targetMarkerRef.current = new mapboxgl.Marker({ element: targetEl, anchor: 'center' })
       .setLngLat([inspectedPoint.lon, inspectedPoint.lat])
       .addTo(map);
   }, [inspectedPoint, activeRange]);
 
-  // Update User Location Live Beacon Marker
+  // Update User Location Live Beacon Marker with adaptive color updates on zoom
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -2479,6 +2751,10 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       return;
     }
 
+    const liveColor = userAqiEstimate !== null
+      ? getAqiColor(userAqiEstimate, activeRange)
+      : { hex: '#38bdf8', label: 'Measuring...', textHex: '#38bdf8', badgeBg: 'rgba(56, 189, 248, 0.2)' };
+
     if (!userMarkerRef.current) {
       const userEl = document.createElement('div');
       userEl.className = 'mapbox-user-beacon';
@@ -2486,65 +2762,130 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       userEl.style.flexDirection = 'column';
       userEl.style.alignItems = 'center';
       userEl.style.pointerEvents = 'none';
+      userEl.style.setProperty('--user-color', liveColor.hex);
 
       userEl.innerHTML = `
         <div style="
           position: relative;
-          width: 44px;
-          height: 44px;
+          width: 32px;
+          height: 32px;
           display: flex;
           align-items: center;
           justify-content: center;
         ">
-          <!-- Expanding Radar Pulse Wave -->
+          <!-- Soft Atmospheric Light Halo (Adaptive) -->
           <span style="
             position: absolute;
-            width: 42px;
-            height: 42px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
-            background: rgba(16, 185, 129, 0.22);
-            border: 2px solid #10b981;
-            animation: pulse 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+            background: radial-gradient(circle, var(--user-color) 0%, transparent 70%);
+            opacity: 0.35;
+            animation: pointLightPulse 3s ease-in-out infinite;
+            pointer-events: none;
+            transition: background 0.35s ease;
+          "></span>
+
+          <!-- Gentle Emitting Light Particles (Adaptive) -->
+          <span style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 3.5px;
+            height: 3.5px;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 0 5px #ffffff, 0 0 10px var(--user-color);
+            animation: liveParticleDrift1 2.6s ease-out infinite;
+            pointer-events: none;
+            transition: box-shadow 0.35s ease;
           "></span>
           <span style="
             position: absolute;
-            width: 24px;
-            height: 24px;
+            top: 50%;
+            left: 50%;
+            width: 3px;
+            height: 3px;
             border-radius: 50%;
-            background: rgba(56, 189, 248, 0.35);
-            border: 1.5px solid #38bdf8;
-            animation: ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+            background: var(--user-color);
+            box-shadow: 0 0 5px var(--user-color), 0 0 10px var(--user-color);
+            animation: liveParticleDrift2 2.6s ease-out infinite 0.5s;
+            pointer-events: none;
+            transition: background 0.35s ease, box-shadow 0.35s ease;
           "></span>
-          <!-- Core GPS Satellite Target -->
           <span style="
             position: absolute;
-            width: 15px;
-            height: 15px;
+            top: 50%;
+            left: 50%;
+            width: 3px;
+            height: 3px;
             border-radius: 50%;
-            background: #0284c7;
-            box-shadow: 0 0 18px #38bdf8, 0 0 30px rgba(16, 185, 129, 0.6);
+            background: #10b981;
+            box-shadow: 0 0 5px #10b981, 0 0 10px #10b981;
+            animation: liveParticleDrift3 2.6s ease-out infinite 1.0s;
+            pointer-events: none;
+          "></span>
+          <span style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: var(--user-color);
+            box-shadow: 0 0 5px var(--user-color), 0 0 10px var(--user-color);
+            animation: liveParticleDrift4 2.6s ease-out infinite 1.5s;
+            pointer-events: none;
+            transition: background 0.35s ease, box-shadow 0.35s ease;
+          "></span>
+          <span style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 5px #10b981, 0 0 10px #10b981;
+            animation: liveParticleDrift5 2.6s ease-out infinite 2.0s;
+            pointer-events: none;
+          "></span>
+
+          <!-- The Live Location Point -->
+          <span style="
+            position: relative;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: var(--user-color);
+            box-shadow: 0 0 12px var(--user-color), 0 0 22px var(--user-color);
             border: 2.5px solid #ffffff;
+            z-index: 2;
+            transition: background 0.35s ease, box-shadow 0.35s ease;
           "></span>
         </div>
         <div id="user-live-beacon-badge" style="
-          margin-top: 4px;
-          background: rgba(11, 17, 32, 0.96);
-          backdrop-filter: blur(10px);
-          border: 1px solid #10b981;
-          padding: 4px 10px;
-          border-radius: 8px;
+          margin-top: 6px;
+          background: linear-gradient(135deg, rgba(11, 17, 32, 0.95) 0%, rgba(26, 36, 56, 0.92) 100%);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          border: 1px solid var(--user-color);
+          border-top: 1px solid rgba(255, 255, 255, 0.4);
+          padding: 5px 12px;
+          border-radius: 10px;
           font-size: 11px;
           font-weight: 800;
           color: #ffffff;
           white-space: nowrap;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 15px rgba(16, 185, 129, 0.3);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px var(--user-color);
           display: flex;
           align-items: center;
-          gap: 6px;
-          z-index: 2;
+          gap: 8px;
+          z-index: 5;
+          transition: border-color 0.35s ease, box-shadow 0.35s ease;
         ">
-          <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981; animation: pulse 1s infinite;"></span>
-          <span>LIVE GPS: <strong style="color: #38bdf8;">${userAqiEstimate !== null ? userAqiEstimate + ' AQI' : 'Measuring...'}</strong>${userLocation.accuracy ? ` (±${userLocation.accuracy}m)` : ''}</span>
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981; animation: pulse 1s infinite; flex-shrink: 0;"></span>
+          <span>LIVE GPS: <strong style="color: var(--user-color); transition: color 0.35s ease;">${userAqiEstimate !== null ? userAqiEstimate + ' AQI' : 'Measuring...'}</strong>${userLocation.accuracy ? ` <span style="color: #94a3b8; font-weight: 500; font-size: 10px;">(±${userLocation.accuracy}m)</span>` : ''}</span>
         </div>
       `;
 
@@ -2553,11 +2894,15 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         .addTo(map);
     } else {
       userMarkerRef.current.setLngLat([userLocation.lon, userLocation.lat]);
+      const userEl = userMarkerRef.current.getElement();
+      if (userEl) {
+        userEl.style.setProperty('--user-color', liveColor.hex);
+      }
       const badge = document.getElementById('user-live-beacon-badge');
       if (badge) {
         badge.innerHTML = `
-          <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981; animation: pulse 1s infinite;"></span>
-          <span>LIVE GPS: <strong style="color: #38bdf8;">${userAqiEstimate !== null ? userAqiEstimate + ' AQI' : 'Measuring...'}</strong>${userLocation.accuracy ? ` (±${userLocation.accuracy}m)` : ''}</span>
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981; animation: pulse 1s infinite; flex-shrink: 0;"></span>
+          <span>LIVE GPS: <strong style="color: var(--user-color); transition: color 0.35s ease;">${userAqiEstimate !== null ? userAqiEstimate + ' AQI' : 'Measuring...'}</strong>${userLocation.accuracy ? ` <span style="color: #94a3b8; font-weight: 500; font-size: 10px;">(±${userLocation.accuracy}m)</span>` : ''}</span>
         `;
       }
     }
@@ -2570,7 +2915,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         features: [circlePoly],
       });
     }
-  }, [userLocation, userAqiEstimate]);
+  }, [userLocation, userAqiEstimate, activeRange]);
 
   return (
     <section
@@ -2593,6 +2938,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       {/* ============================================================== */}
       <div
         ref={mapContainerRef}
+        className={uiBootStage === 0 ? 'crt-mapbox-ctrl-hidden' : (uiBootStage === 1 ? 'crt-mapbox-ctrl-flicker' : '')}
         style={{
           position: 'absolute',
           inset: 0,
@@ -2603,18 +2949,20 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           cursor: showMap ? 'grab' : 'default',
           pointerEvents: 'auto',
         }}
-      >
-        {/* Electric CRT TV-On Boot Animation Overlay */}
-        {isTvTurningOn && (
-          <div className="crt-tv-turnon-overlay">
-            <div className="crt-tv-scanlines" />
-            <div className="crt-tv-beam-stage">
-              <div className="crt-tv-lens-flare" />
-              <div className="crt-tv-star-core" />
-            </div>
+      />
+
+      {/* Electric CRT TV-On Boot Animation Overlay (Elevated at zIndex 35 above map canvas) */}
+      {isTvTurningOn && (
+        <div className="crt-tv-turnon-overlay">
+          <div className="crt-tv-vignette" />
+          <div className="crt-tv-scanlines" />
+          <div className="crt-tv-beam-stage">
+            <div className="crt-tv-electron-raster" />
+            <div className="crt-tv-lens-flare" />
+            <div className="crt-tv-star-core" />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ============================================================== */}
       {/* 2. BUTTER-SMOOTH PERIMETER SCENE FADE (FEATHERED & UNOBTRUSIVE)*/}
@@ -2655,7 +3003,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         {isMobile ? (
           /* Mobile Sleek Compact Header Bar */
           <div
-            className="glass-panel-master"
+            className={`glass-panel-master ${getPanelClass()}`}
             style={{
               pointerEvents: 'auto',
               display: 'flex',
@@ -2667,7 +3015,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             }}
           >
             {/* Brand & Status Indicator */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            <div className={getBtnFlickerClass()} style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, ...getBtnFlickerStyle(500) }}>
               <span
                 style={{
                   width: '7px',
@@ -2688,8 +3036,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
               <button
                 onClick={handleCenterOnUser}
                 title="GPS Location"
-                className={`glass-cuboid-btn glass-btn-compact ${userLocation.isLiveGps ? 'glass-cuboid-btn-success' : ''}`}
-                style={{ padding: '5px 8px', borderRadius: '7px' }}
+                className={`glass-cuboid-btn glass-btn-compact ${userLocation.isLiveGps ? 'glass-cuboid-btn-success' : ''} ${getBtnFlickerClass()}`}
+                style={{ padding: '5px 8px', borderRadius: '7px', ...getBtnFlickerStyle(650) }}
               >
                 <Navigation size={12} color={userLocation.isLiveGps ? '#10b981' : '#38bdf8'} />
               </button>
@@ -2698,8 +3046,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 onClick={() => fetchLiveNationalData(userLocation.lat, userLocation.lon)}
                 disabled={isLoadingLive}
                 title="Refresh Live Data"
-                className="glass-cuboid-btn glass-btn-compact"
-                style={{ padding: '5px 8px', borderRadius: '7px' }}
+                className={`glass-cuboid-btn glass-btn-compact ${getBtnFlickerClass()}`}
+                style={{ padding: '5px 8px', borderRadius: '7px', ...getBtnFlickerStyle(800) }}
               >
                 <RefreshCw size={12} className={isLoadingLive ? 'animate-spin' : ''} color="#38bdf8" />
               </button>
@@ -2711,7 +3059,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   setIsMobileControlsOpen(true);
                   if (typeof window !== 'undefined') window.history.replaceState(null, '', '#controls');
                 }}
-                className="glass-pill glass-pill-active"
+                className={`glass-pill glass-pill-active ${getBtnFlickerClass()}`}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -2725,6 +3073,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   border: '1px solid rgba(56, 189, 248, 0.5)',
                   boxShadow: '0 0 12px rgba(56, 189, 248, 0.3)',
                   color: '#ffffff',
+                  ...getBtnFlickerStyle(950),
                 }}
               >
                 <Menu size={13} color="#38bdf8" />
@@ -2734,7 +3083,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           </div>
         ) : (
           <div
-            className="glass-panel-master"
+            className={`glass-panel-master ${getPanelClass()}`}
             style={{
               pointerEvents: 'auto',
               display: 'flex',
@@ -2747,7 +3096,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             }}
           >
             {/* Engine Title & Last Updated */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <div className={getBtnFlickerClass()} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', ...getBtnFlickerStyle(500) }}>
               <span
                 style={{
                   width: '7px',
@@ -2770,11 +3119,12 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
               {/* Glide Dropdown Button with Search Icon */}
               <button
                 onClick={() => setIsGlideDropdownOpen((prev) => !prev)}
-                className={`glass-cuboid-btn ${isGlideDropdownOpen ? 'glass-cuboid-btn-active' : ''}`}
+                className={`glass-cuboid-btn ${isGlideDropdownOpen ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
                 style={{
                   padding: '6px 14px',
                   borderRadius: '9px',
                   fontSize: '0.78rem',
+                  ...getBtnFlickerStyle(640),
                 }}
                 title="Toggle Glide cities and search bar dropdown"
               >
@@ -2794,14 +3144,14 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               {/* Metric Selector Tabs */}
               <div
-                className="glass-panel-sub"
+                className={`glass-panel-sub ${getPanelClass()}`}
                 style={{
                   display: 'flex',
                   padding: '3px',
                   borderRadius: '10px',
                   gap: '3px',
-                  background: 'rgba(15, 23, 42, 0.65)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  background: 'rgba(28, 41, 62, 0.65)',
+                  border: '1px solid rgba(148, 163, 184, 0.25)',
                   overflowX: 'auto',
                   WebkitOverflowScrolling: 'touch',
                   scrollbarWidth: 'none',
@@ -2815,11 +3165,11 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   { id: 'so2', label: 'SO2' },
                   { id: 'co', label: 'CO' },
                   { id: 'o3', label: 'O3' },
-                ].map((m) => (
+                ].map((m, idx) => (
                   <button
                     key={m.id}
                     onClick={() => setActivePollutant(m.id)}
-                    className={`glass-cuboid-btn ${activePollutant === m.id ? 'glass-cuboid-btn-active' : ''}`}
+                    className={`glass-cuboid-btn ${activePollutant === m.id ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
                     style={{
                       padding: '5px 11px',
                       borderRadius: '7px',
@@ -2827,6 +3177,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                       fontWeight: 700,
                       cursor: 'pointer',
                       whiteSpace: 'nowrap',
+                      ...getBtnFlickerStyle(760 + idx * 100),
                     }}
                   >
                     {m.label}
@@ -2834,141 +3185,72 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 ))}
               </div>
 
-              {/* Refresh Live Button - Fixed width & constant label to eliminate sizing jitter */}
-              <button
-                onClick={() => fetchLiveNationalData(userLocation.lat, userLocation.lon)}
-                disabled={isLoadingLive}
-                className="glass-cuboid-btn"
-                style={{
-                  minWidth: '96px',
-                  justifyContent: 'center',
-                  padding: '6px 14px',
-                  borderRadius: '9px',
-                  fontSize: '0.78rem',
-                }}
-              >
-                <RefreshCw size={13} className={isLoadingLive ? 'animate-spin' : ''} />
-                <span>Refresh</span>
-              </button>
-
-              {/* Live GPS Tracking Controller */}
-              <button
-                onClick={handleCenterOnUser}
-                title={userLocation.isLiveGps ? 'Center camera on your live GPS position' : 'Start live GPS tracking'}
-                className={`glass-cuboid-btn ${userLocation.isLiveGps ? 'glass-cuboid-btn-success' : ''}`}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '9px',
-                  fontSize: '0.78rem',
-                }}
-              >
-                {isLocating ? (
-                  <RefreshCw size={13} className="animate-spin" color="#38bdf8" />
-                ) : userLocation.isLiveGps ? (
-                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981', animation: 'pulse 1.2s infinite' }} />
-                ) : (
-                  <Navigation size={13} color="#38bdf8" />
-                )}
-                <span>
-                  {isLocating
-                    ? 'Acquiring...'
-                    : userLocation.isLiveGps
-                    ? `GPS Lock${userLocation.accuracy ? ` (±${userLocation.accuracy}m)` : ''}`
-                    : 'Track My Location'}
-                </span>
-              </button>
-
-              {userLocation.isLiveGps && (
+              {/* Action Buttons: Refresh, GPS & Follow */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {/* Refresh Live Button - Fixed width & constant label to eliminate sizing jitter */}
                 <button
-                  onClick={() => setIsFollowingUser((f) => !f)}
-                  title="Toggle automatic camera tracking as you move"
-                  className={`glass-cuboid-btn ${isFollowingUser ? 'glass-cuboid-btn-active' : ''}`}
+                  onClick={() => fetchLiveNationalData(userLocation.lat, userLocation.lon)}
+                  disabled={isLoadingLive}
+                  className={`glass-cuboid-btn ${getBtnFlickerClass()}`}
                   style={{
-                    padding: '6px 12px',
+                    minWidth: '96px',
+                    justifyContent: 'center',
+                    padding: '6px 14px',
                     borderRadius: '9px',
-                    fontSize: '0.76rem',
+                    fontSize: '0.78rem',
+                    ...getBtnFlickerStyle(1500),
                   }}
                 >
-                  <LocateFixed size={13} color={isFollowingUser ? '#38bdf8' : '#94a3b8'} />
-                  <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
+                  <RefreshCw size={13} className={isLoadingLive ? 'animate-spin' : ''} />
+                  <span>Refresh</span>
                 </button>
-              )}
 
-              {/* Section 10: Civic Action & Formal Petition Generator */}
-              <button
-                onClick={() => {
-                  setPetitionStation(displayStation?.name || 'DTU (Delhi Technological University)');
-                  setPetitionLocality(displayStation?.zone ? `${displayStation.name}, ${displayStation.zone}` : 'Rohini Sector 16, North Delhi');
-                  setPetitionPm25(displayStation?.pm25 || displayStation?.aqi || 142);
-                  setIsPetitionModalOpen(true);
-                }}
-                id="petition-action-deck-btn"
-                title="Transform air quality telemetry into a formal civic complaint or school petition"
-                className="glass-cuboid-btn"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  color: '#34d399',
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(6, 182, 212, 0.22) 100%)',
-                  border: '1px solid rgba(52, 211, 153, 0.45)',
-                  padding: '6px 13px',
-                  borderRadius: '9px',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                <FileText size={13} color="#34d399" />
-                <span>Petition & Action</span>
-              </button>
+                {/* Live GPS Tracking Controller */}
+                <button
+                  onClick={handleCenterOnUser}
+                  title={userLocation.isLiveGps ? 'Center camera on your live GPS position' : 'Start live GPS tracking'}
+                  className={`glass-cuboid-btn ${userLocation.isLiveGps ? 'glass-cuboid-btn-success' : ''} ${getBtnFlickerClass()}`}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '9px',
+                    fontSize: '0.78rem',
+                    ...getBtnFlickerStyle(1620),
+                  }}
+                >
+                  {isLocating ? (
+                    <RefreshCw size={13} className="animate-spin" color="#38bdf8" />
+                  ) : userLocation.isLiveGps ? (
+                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981', animation: 'pulse 1.2s infinite' }} />
+                  ) : (
+                    <Navigation size={13} color="#38bdf8" />
+                  )}
+                  <span>
+                    {isLocating
+                      ? 'Acquiring...'
+                      : userLocation.isLiveGps
+                      ? `GPS Lock${userLocation.accuracy ? ` (±${userLocation.accuracy}m)` : ''}`
+                      : 'Track My Location'}
+                  </span>
+                </button>
 
-              {/* School Safety Feature Launcher */}
-              <button
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    window.location.search = '?view=school';
-                  }
-                }}
-                id="school-safety-deck-btn"
-                title="SafeRecess™ School Safety Dashboard & Activity Guidance"
-                className="glass-cuboid-btn"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  color: '#38bdf8',
-                  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.22) 0%, rgba(99, 102, 241, 0.22) 100%)',
-                  border: '1px solid rgba(56, 189, 248, 0.45)',
-                  padding: '6px 13px',
-                  borderRadius: '9px',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                <School size={13} color="#38bdf8" />
-                <span>School Safety</span>
-              </button>
+                {userLocation.isLiveGps && (
+                  <button
+                    onClick={() => setIsFollowingUser((f) => !f)}
+                    title="Toggle automatic camera tracking as you move"
+                    className={`glass-cuboid-btn ${isFollowingUser ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '9px',
+                      fontSize: '0.76rem',
+                      ...getBtnFlickerStyle(1740),
+                    }}
+                  >
+                    <LocateFixed size={13} color={isFollowingUser ? '#38bdf8' : '#94a3b8'} />
+                    <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
+                  </button>
+                )}
+              </div>
 
-              {/* Seamless Telemetry Toggle Button */}
-              <button
-                onClick={() => setIsSidebarOpen((v) => !v)}
-                title={isSidebarOpen ? 'Hide telemetry panel to maximize map' : 'Show telemetry & advisory HUD'}
-                className={`glass-cuboid-btn ${!isSidebarOpen ? 'glass-cuboid-btn-active' : ''}`}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '9px',
-                  fontSize: '0.78rem',
-                  color: isSidebarOpen ? '#cbd5e1' : '#38bdf8',
-                }}
-              >
-                {isSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-                <span>{isSidebarOpen ? 'Hide Telemetry' : 'Show Telemetry'}</span>
-                <Activity size={14} color={isSidebarOpen ? '#94a3b8' : '#10b981'} />
-              </button>
             </div>
           </div>
         )}
@@ -3165,7 +3447,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         <div
           style={{
             position: 'absolute',
-            bottom: '76px',
+            bottom: '88px',
             left: '12px',
             right: '12px',
             zIndex: 25,
@@ -3177,7 +3459,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         >
           {/* Horizontally scrollable pollutant pills */}
           <div
-            className="glass-panel-master"
+            className={`glass-panel-master ${getPanelClass()}`}
             style={{
               flex: 1,
               minWidth: 0,
@@ -3199,11 +3481,11 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
               { id: 'so2', label: 'SO2' },
               { id: 'co', label: 'CO' },
               { id: 'o3', label: 'O3' },
-            ].map((m) => (
+            ].map((m, idx) => (
               <button
                 key={m.id}
                 onClick={() => setActivePollutant(m.id)}
-                className={`glass-cuboid-btn ${activePollutant === m.id ? 'glass-cuboid-btn-active' : ''}`}
+                className={`glass-cuboid-btn ${activePollutant === m.id ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
                 style={{
                   padding: '6px 12px',
                   borderRadius: '8px',
@@ -3211,6 +3493,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   fontWeight: 700,
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
+                  ...getBtnFlickerStyle(520 + idx * 100),
                 }}
               >
                 {m.label}
@@ -3225,7 +3508,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
               setIsSidebarOpen(true);
               if (typeof window !== 'undefined') window.history.replaceState(null, '', '#hud');
             }}
-            className="glass-pill glass-pill-active"
+            className={`glass-pill glass-pill-active ${getBtnFlickerClass()}`}
             style={{
               pointerEvents: 'auto',
               display: 'inline-flex',
@@ -3241,6 +3524,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
               boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
               color: '#ffffff',
               cursor: 'pointer',
+              ...getBtnFlickerStyle(1300),
             }}
           >
             <Activity size={14} color="#34d399" />
@@ -3254,10 +3538,10 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       {/* ============================================================== */}
       {!isMobile && (
       <div
-        className="glass-panel-master"
+        className={`glass-panel-master ${getPanelClass()}`}
         style={{
           position: 'absolute',
-          bottom: isMobile ? '12px' : '24px',
+          bottom: isMobile ? '20px' : '52px',
           left: isMobile ? '12px' : '24px',
           right: isMobile ? '12px' : (isSidebarOpen ? '444px' : '24px'),
           maxWidth: isMobile ? 'calc(100% - 24px)' : (isSidebarOpen ? 'calc(100% - 468px)' : 'calc(100% - 48px)'),
@@ -3273,7 +3557,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         }}
       >
         {/* Click hint & Telemetry status row */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+        <div className={getBtnFlickerClass()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap', ...getBtnFlickerStyle(520) }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: '#cbd5e1' }}>
             <Crosshair size={12} color="#f43f5e" />
             <span>Click anywhere on map for <strong style={{ color: '#f43f5e' }}>micro-zone AQI</strong></span>
@@ -3282,7 +3566,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.68rem', color: '#94a3b8' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
-                108 National Ground Telemetry Stations Active
+                108 Ground Monitoring Stations Active
               </span>
             </div>
           )}
@@ -3292,28 +3576,30 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
         {/* TIER 1: PRIMARY MAP LAYERS & DISPLAY MODES */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '2px' }}>
+          <span className={getBtnFlickerClass()} style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '2px', ...getBtnFlickerStyle(640) }}>
             Layers:
           </span>
 
           {/* Heatmap Layer Toggle */}
           <button
             onClick={() => setShowHeatmapLayer((v) => !v)}
-            className={`glass-cuboid-btn ${showHeatmapLayer ? 'glass-cuboid-btn-active' : ''}`}
+            className={`glass-cuboid-btn ${showHeatmapLayer ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
+            style={getBtnFlickerStyle(760)}
             title="Toggle spatial continuous IDW air quality heatmap layer"
           >
             <Layers size={14} color={showHeatmapLayer ? '#38bdf8' : '#94a3b8'} />
-            <span>Heat: {showHeatmapLayer ? 'ON' : 'OFF'}</span>
+            <span>Heatmap</span>
           </button>
 
           {/* Adaptive Contrast Mode Toggle */}
           <button
             onClick={() => setIsAdaptiveMode((v) => !v)}
             title="Dynamically recalibrate palette: lowest visible AQI becomes green, highest becomes bright red as you zoom in"
-            className={`glass-cuboid-btn ${isAdaptiveMode ? 'glass-cuboid-btn-success' : ''}`}
+            className={`glass-cuboid-btn ${isAdaptiveMode ? 'glass-cuboid-btn-success' : ''} ${getBtnFlickerClass()}`}
+            style={getBtnFlickerStyle(880)}
           >
             <Sparkles size={14} color={isAdaptiveMode ? '#34d399' : '#94a3b8'} />
-            <span>Adaptive: {isAdaptiveMode ? 'ON' : 'OFF'}</span>
+            <span>Adaptive</span>
             {isAdaptiveMode && activeRange.isZoomed && (
               <span
                 style={{
@@ -3334,7 +3620,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           {/* State Borders Toggle */}
           <button
             onClick={() => setShowStateBorders((v) => !v)}
-            className={`glass-cuboid-btn ${showStateBorders ? 'glass-cuboid-btn-active' : ''}`}
+            className={`glass-cuboid-btn ${showStateBorders ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
+            style={getBtnFlickerStyle(1000)}
             title="Toggle official Survey of India administrative state borders"
           >
             <MapIcon size={14} color={showStateBorders ? '#38bdf8' : '#94a3b8'} />
@@ -3344,11 +3631,12 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           {/* 108 Monitoring Pins Toggle */}
           <button
             onClick={() => setShowStationPins((v) => !v)}
-            className={`glass-cuboid-btn ${showStationPins ? 'glass-cuboid-btn-active' : ''}`}
-            title="Toggle 108 nationwide ground/CAAQMS monitoring stations"
+            className={`glass-cuboid-btn ${showStationPins ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
+            style={getBtnFlickerStyle(1120)}
+            title="Toggle 108 nationwide ground monitoring stations"
           >
-            {showStationPins ? <Eye size={14} color="#38bdf8" /> : <EyeOff size={14} color="#94a3b8" />}
-            <span>108 Pins</span>
+            <MapPin size={13} color={showStationPins ? '#38bdf8' : '#94a3b8'} />
+            <span>Stations</span>
           </button>
 
           {/* 3D Buildings Toggle */}
@@ -3363,10 +3651,12 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 return next;
               });
             }}
-            className={`glass-cuboid-btn ${is3DBuildings ? 'glass-cuboid-btn-active' : ''}`}
+            className={`glass-cuboid-btn ${is3DBuildings ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
+            style={getBtnFlickerStyle(1240)}
             title="Toggle 3D urban building extrusions and tilt camera"
           >
-            <span>3D Urban</span>
+            <Building2 size={13} color={is3DBuildings ? '#38bdf8' : '#94a3b8'} />
+            <span>3D City</span>
           </button>
         </div>
 
@@ -3375,7 +3665,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
         {/* TIER 2: ATMOSPHERIC HEAT OPACITY CONTROLS & PRESETS */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+          <div className={getBtnFlickerClass()} style={{ display: 'flex', alignItems: 'center', gap: '7px', ...getBtnFlickerStyle(1380) }}>
             <Sliders size={13} color="#38bdf8" />
             <span style={{ color: '#cbd5e1', fontWeight: 600, fontSize: '0.72rem' }}>Heat Opacity:</span>
             <input
@@ -3394,22 +3684,23 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
           {/* Quick Opacity Presets */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ color: '#cbd5e1', fontSize: '0.68rem', marginRight: '2px', fontWeight: 600 }}>Presets:</span>
+            <span className={getBtnFlickerClass()} style={{ color: '#cbd5e1', fontSize: '0.68rem', marginRight: '2px', fontWeight: 600, ...getBtnFlickerStyle(1500) }}>Presets:</span>
             {[
               { label: 'Subtle', val: 0.28 },
               { label: 'Balanced', val: 0.45 },
               { label: 'Vivid', val: 0.68 },
-            ].map((p) => {
+            ].map((p, pIdx) => {
               const isSelected = Math.abs(heatIntensity - p.val) < 0.05;
               return (
                 <button
                   key={p.label}
                   onClick={() => setHeatIntensity(p.val)}
-                  className={`glass-cuboid-btn ${isSelected ? 'glass-cuboid-btn-active' : ''}`}
+                  className={`glass-cuboid-btn ${isSelected ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
                   style={{
                     padding: '3px 9px',
                     borderRadius: '7px',
                     fontSize: '0.70rem',
+                    ...getBtnFlickerStyle(1600 + pIdx * 100),
                   }}
                 >
                   {p.label}
@@ -3786,12 +4077,12 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         />
       )}
 
-      {/* Sleek Floating Edge Tab to Open Telemetry when closed */}
+      {/* Sleek Floating Edge Tab to Open HUD when closed */}
       {!isMobile && !isSidebarOpen && (
         <button
           onClick={() => setIsSidebarOpen(true)}
-          title="Open Telemetry & Advisory HUD"
-          className="glass-panel-master"
+          title="Open Air Quality & Advisory HUD"
+          className={`glass-panel-master ${getBtnFlickerClass()}`}
           style={{
             position: 'absolute',
             right: '24px',
@@ -3810,10 +4101,11 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             fontSize: '0.78rem',
             fontWeight: 700,
             transition: 'all 0.2s ease',
+            ...getBtnFlickerStyle(1950),
           }}
         >
           <ChevronLeft size={16} color="#38bdf8" />
-          <span>Telemetry</span>
+          <span>HUD</span>
           <Activity size={14} color="#10b981" />
         </button>
       )}
@@ -3837,7 +4129,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         }}
       >
         <div
-          className="glass-panel-master"
+          className={`glass-panel-master ${uiBootStage === 0 ? 'crt-ui-hidden' : ''}`}
           style={{
             height: '100%',
             display: 'flex',
@@ -3860,7 +4152,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Activity size={16} color="#38bdf8" />
               <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                Telemetry & Advisory HUD
+                Air Quality & Advisory HUD
               </span>
             </div>
 

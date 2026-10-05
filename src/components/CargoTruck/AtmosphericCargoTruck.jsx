@@ -532,17 +532,7 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
             </div>
           </div>
 
-          {/* Subtle Editorial Cue to Enter Documentary */}
-          <div style={{ textAlign: 'center', marginTop: '22px' }}>
-            <button
-              id="explore-atmospheric-cargo-cue"
-              className="truck-documentary-cue"
-              onClick={handleTruckClick}
-              title="Open full-screen atmospheric air documentary"
-            >
-              <span>Explore the atmospheric cargo →</span>
-            </button>
-          </div>
+
         </div>
 
         {/* Mobile Quick-Select Pollutant Bar (Optimized for finger touch on small screens) */}
