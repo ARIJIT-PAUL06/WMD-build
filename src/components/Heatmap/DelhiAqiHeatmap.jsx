@@ -33,7 +33,8 @@ import {
   FileText,
   ShieldCheck,
   Menu,
-  X
+  X,
+  School
 } from 'lucide-react';
 import PetitionModal from '../Petition/PetitionModal';
 import AutonomousMonitorModal from '../Dashboard/AutonomousMonitorModal';
@@ -2892,6 +2893,65 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
                 </button>
               )}
+
+              {/* Section 10: Civic Action & Formal Petition Generator */}
+              <button
+                onClick={() => {
+                  setPetitionStation(displayStation?.name || 'DTU (Delhi Technological University)');
+                  setPetitionLocality(displayStation?.zone ? `${displayStation.name}, ${displayStation.zone}` : 'Rohini Sector 16, North Delhi');
+                  setPetitionPm25(displayStation?.pm25 || displayStation?.aqi || 142);
+                  setIsPetitionModalOpen(true);
+                }}
+                id="petition-action-deck-btn"
+                title="Transform air quality telemetry into a formal civic complaint or school petition"
+                className="glass-cuboid-btn"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: '#34d399',
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(6, 182, 212, 0.22) 100%)',
+                  border: '1px solid rgba(52, 211, 153, 0.45)',
+                  padding: '6px 13px',
+                  borderRadius: '9px',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <FileText size={13} color="#34d399" />
+                <span>Petition & Action</span>
+              </button>
+
+              {/* School Safety Feature Launcher */}
+              <button
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.location.search = '?view=school';
+                  }
+                }}
+                id="school-safety-deck-btn"
+                title="SafeRecess™ School Safety Dashboard & Activity Guidance"
+                className="glass-cuboid-btn"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: '#38bdf8',
+                  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.22) 0%, rgba(99, 102, 241, 0.22) 100%)',
+                  border: '1px solid rgba(56, 189, 248, 0.45)',
+                  padding: '6px 13px',
+                  borderRadius: '9px',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <School size={13} color="#38bdf8" />
+                <span>School Safety</span>
+              </button>
 
               {/* Seamless Telemetry Toggle Button */}
               <button

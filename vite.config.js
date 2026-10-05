@@ -13,4 +13,21 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('pollutantDocumentaries') || id.includes('PollutantDocumentary')) {
+            return 'pollutant-documentary';
+          }
+          if (id.includes('three') || id.includes('@react-three')) {
+            return 'three-vendor';
+          }
+          if (id.includes('jspdf') || id.includes('html2canvas')) {
+            return 'pdf-vendor';
+          }
+        },
+      },
+    },
+  },
 })

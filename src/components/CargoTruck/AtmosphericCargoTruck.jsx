@@ -156,12 +156,27 @@ const PRESETS = {
   }
 };
 
-export default function AtmosphericCargoTruck({ onSelectPollutant }) {
+export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumentary }) {
   const [activePreset, setActivePreset] = useState('india_avg');
   const [pollutantValues, setPollutantValues] = useState(PRESETS.india_avg.values);
   const [selectedPollutantId, setSelectedPollutantId] = useState('pm25');
   const [isPurging, setIsPurging] = useState(false);
   const [isLiveLoading, setIsLiveLoading] = useState(false);
+
+  const handleTruckClick = (e) => {
+    if (onOpenDocumentary) {
+      onOpenDocumentary(null);
+    } else if (onSelectPollutant) {
+      onSelectPollutant(null);
+    }
+  };
+
+  const handleTruckKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleTruckClick(e);
+    }
+  };
 
   // Active selected pollutant object
   const activePollutant = useMemo(() => {
@@ -364,8 +379,15 @@ export default function AtmosphericCargoTruck({ onSelectPollutant }) {
 
           {/* Truck Viewport */}
           <div
-            className="truck-viewport"
-            style={{ aspectRatio: truckAspectRatio }}
+            id="atmospheric-cargo-truck-interactive"
+            className="truck-viewport truck-clickable-container"
+            style={{ aspectRatio: truckAspectRatio, cursor: 'pointer' }}
+            onClick={handleTruckClick}
+            onKeyDown={handleTruckKeyDown}
+            role="button"
+            tabIndex={0}
+            aria-label="Explore the atmospheric cargo documentary"
+            title="Explore the atmospheric cargo documentary"
           >
             {/* Ground Highway Runway Line (Positioned below the wheels on the road plane) */}
             <div className="weighbridge-runway-line"></div>
@@ -432,12 +454,30 @@ export default function AtmosphericCargoTruck({ onSelectPollutant }) {
                     <div
                       key={p.id}
                       className={`pollutant-container-unit ${isSelected ? 'selected' : ''}`}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setSelectedPollutantId(p.id);
-                        if (onSelectPollutant) {
+                        if (onOpenDocumentary) {
+                          onOpenDocumentary(p.id);
+                        } else if (onSelectPollutant) {
                           onSelectPollutant(p.id);
                         }
                       }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedPollutantId(p.id);
+                          if (onOpenDocumentary) {
+                            onOpenDocumentary(p.id);
+                          } else if (onSelectPollutant) {
+                            onSelectPollutant(p.id);
+                          }
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Explore ${p.name} (${p.symbol}) documentary`}
                       title={`Click to open full ${p.name} (${p.symbol}) deep-dive investigation & health analysis`}
                       style={{ cursor: 'pointer' }}
                     >
@@ -491,6 +531,18 @@ export default function AtmosphericCargoTruck({ onSelectPollutant }) {
               </div>
             </div>
           </div>
+
+          {/* Subtle Editorial Cue to Enter Documentary */}
+          <div style={{ textAlign: 'center', marginTop: '22px' }}>
+            <button
+              id="explore-atmospheric-cargo-cue"
+              className="truck-documentary-cue"
+              onClick={handleTruckClick}
+              title="Open full-screen atmospheric air documentary"
+            >
+              <span>Explore the atmospheric cargo →</span>
+            </button>
+          </div>
         </div>
 
         {/* Mobile Quick-Select Pollutant Bar (Optimized for finger touch on small screens) */}
@@ -505,9 +557,14 @@ export default function AtmosphericCargoTruck({ onSelectPollutant }) {
               return (
                 <button
                   key={p.id}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setSelectedPollutantId(p.id);
-                    if (onSelectPollutant) onSelectPollutant(p.id);
+                    if (onOpenDocumentary) {
+                      onOpenDocumentary(p.id);
+                    } else if (onSelectPollutant) {
+                      onSelectPollutant(p.id);
+                    }
                   }}
                   className={`cargo-mobile-pill-btn ${isSelected ? 'active' : ''}`}
                   style={{

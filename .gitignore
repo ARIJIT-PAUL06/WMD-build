@@ -29,3 +29,4 @@ dist-ssr
 .vercel
 __pycache__/
 *.pyc
+*.pdf

@@ -331,7 +331,7 @@ app.get('/api/petition/forecast', async (req, res) => {
  */
 app.post('/api/petition/generate-draft', (req, res) => {
   try {
-    const { evidence, authority, forecast, senderName, senderRole, senderContact, selectedDemands } = req.body;
+    const { evidence, authority, forecast, senderName, senderRole, senderContact, selectedDemands, schoolEvidencePackage } = req.body;
     if (!evidence || !authority) {
       return res.status(400).json({ success: false, error: 'evidence and authority objects are required' });
     }
@@ -342,7 +342,8 @@ app.post('/api/petition/generate-draft', (req, res) => {
       senderName,
       senderRole,
       senderContact,
-      selectedDemands
+      selectedDemands,
+      schoolEvidencePackage
     });
     res.json({ success: true, ...result });
   } catch (err) {

@@ -5,14 +5,16 @@ import DelhiAqiHeatmap from './components/Heatmap/DelhiAqiHeatmap';
 import AutonomousMonitorModal from './components/Dashboard/AutonomousMonitorModal';
 import AtmosphericCargoTruck from './components/CargoTruck/AtmosphericCargoTruck';
 import PollutantDetailPage from './components/PollutantDetail/PollutantDetailPage';
+import SchoolSafetyContainer from './components/SchoolSafety/SchoolSafetyContainer';
+import PollutantDocumentary from './components/PollutantDocumentary/PollutantDocumentary';
 
 export default function App() {
   const heatmapRef = useRef(null);
   const checkIsMonitorRequested = () => {
     if (typeof window === 'undefined') return false;
     const params = new URLSearchParams(window.location.search);
-    const hash = window.location.hash.toLowerCase();
-    const path = window.location.pathname.toLowerCase();
+    const hash = (window.location.hash || '').toLowerCase();
+    const path = (window.location.pathname || '').toLowerCase();
     return (
       params.get('shield') === 'true' ||
       params.get('testbench') === 'true' ||
@@ -58,12 +60,36 @@ export default function App() {
     return null;
   });
 
+  // Cinematic Pollutant Documentary State
+  const checkDocumentaryState = () => {
+    if (typeof window === 'undefined') return { isOpen: false, pollutantId: null };
+    const params = new URLSearchParams(window.location.search);
+    const hash = (window.location.hash || '').toLowerCase();
+    const docParam = params.get('documentary');
+    const viewParam = params.get('view');
+    const pollutantParam = params.get('pollutant');
+
+    if (docParam != null || viewParam === 'documentary' || hash.startsWith('#documentary')) {
+      let polId = null;
+      if (docParam && docParam !== 'true' && docParam !== 'landing') {
+        polId = docParam;
+      } else if (pollutantParam) {
+        polId = pollutantParam;
+      }
+      return { isOpen: true, pollutantId: polId };
+    }
+    return { isOpen: false, pollutantId: null };
+  };
+
+  const [documentaryState, setDocumentaryState] = useState(checkDocumentaryState);
+
   // Synchronize browser history (back / forward navigation)
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash.toLowerCase();
       setActivePollutant(params.get('pollutant') || null);
+      setDocumentaryState(checkDocumentaryState());
       setIsGlobalMonitorOpen(checkIsMonitorRequested());
       if (hash === '#heatmap' || hash === '#map' || hash === '#controls' || hash === '#hud' || hash === '#burger') {
         setActiveMobileTab('map');
@@ -127,6 +153,63 @@ export default function App() {
     }
   };
 
+  const handleOpenDocumentary = (pollutantId = null) => {
+    setDocumentaryState({ isOpen: true, pollutantId });
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location);
+      if (pollutantId) {
+        url.searchParams.set('documentary', pollutantId);
+      } else {
+        url.searchParams.set('documentary', 'true');
+      }
+      window.history.pushState({}, '', url);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleCloseDocumentary = () => {
+    setDocumentaryState({ isOpen: false, pollutantId: null });
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location);
+      url.searchParams.delete('documentary');
+      if (url.searchParams.get('view') === 'documentary') {
+        url.searchParams.delete('view');
+      }
+      if (url.hash.startsWith('#documentary')) {
+        url.hash = '';
+      }
+      window.history.pushState({}, '', url);
+      if (isMobile) {
+        setActiveMobileTab('cargo');
+      } else {
+        setTimeout(() => {
+          const truckEl = document.getElementById('atmospheric-cargo-section');
+          if (truckEl) {
+            truckEl.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      }
+    }
+  };
+
+  const handleDocumentarySelectPollutant = (pollutantId) => {
+    setDocumentaryState({ isOpen: true, pollutantId });
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location);
+      if (pollutantId) {
+        url.searchParams.set('documentary', pollutantId);
+      } else {
+        url.searchParams.set('documentary', 'true');
+      }
+      window.history.pushState({}, '', url);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const isSchoolView = typeof window !== 'undefined' && (
+    window.location.search.includes('view=school') ||
+    window.location.hash === '#school'
+  );
   const isMapOnly = typeof window !== 'undefined' && (
     window.location.search.includes('view=map') ||
     window.location.search.includes('map=true') ||
@@ -141,6 +224,29 @@ export default function App() {
       heatmapRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  if (isSchoolView) {
+    return (
+      <SchoolSafetyContainer
+        onBackToMap={() => {
+          if (typeof window !== 'undefined') {
+            window.location.search = '?view=map';
+          }
+        }}
+      />
+    );
+  }
+
+  // Render Full-Screen Cinematic Pollutant Documentary Experience when active
+  if (documentaryState.isOpen) {
+    return (
+      <PollutantDocumentary
+        pollutantId={documentaryState.pollutantId}
+        onBack={handleCloseDocumentary}
+        onSelectPollutant={handleDocumentarySelectPollutant}
+      />
+    );
+  }
 
   if (isMapOnly) {
     return (
@@ -189,7 +295,10 @@ export default function App() {
 
         {activeMobileTab === 'cargo' && (
           <div style={{ paddingBottom: '74px' }}>
-            <AtmosphericCargoTruck onSelectPollutant={handleSelectPollutant} />
+            <AtmosphericCargoTruck
+              onSelectPollutant={handleSelectPollutant}
+              onOpenDocumentary={handleOpenDocumentary}
+            />
           </div>
         )}
 
@@ -256,7 +365,10 @@ export default function App() {
       </div>
 
       {/* 3. ATMOSPHERIC LOGISTICS & MASS CARGO TRUCK */}
-      <AtmosphericCargoTruck onSelectPollutant={handleSelectPollutant} />
+      <AtmosphericCargoTruck
+        onSelectPollutant={handleSelectPollutant}
+        onOpenDocumentary={handleOpenDocumentary}
+      />
 
       {/* Autonomous Atmospheric Shield & Emergency Monitor Test Bench */}
       <AutonomousMonitorModal
