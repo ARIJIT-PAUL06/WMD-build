@@ -66,8 +66,6 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         uCurvature: { value: width < 600 ? 0.04 : 0.28 }, // Authentic CRT faceplate bulge on desktop, subtle on mobile
         uAspect: { value: width / height },
         uResolution: { value: new THREE.Vector2(width, height) },
-        uTexAspect: { value: 2117 / 743 },
-        uIsMobile: { value: width < 1024 ? 1.0 : 0.0 },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -84,8 +82,6 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
         uniform float uParallax;
         uniform float uCurvature;
         uniform float uAspect;
-        uniform float uTexAspect;
-        uniform float uIsMobile;
         uniform vec2 uResolution;
         varying vec2 vUv;
 
@@ -139,11 +135,9 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
                            (hash12(vec2(floor(curvedY * 350.0), floor(uTime * 22.0))) - 0.5) * 0.0028) * syncSlipZone;
 
           // 6. Map panoramic 32:9 image texture behind the curved faceplate with jitter
-          float visibleTexW = uIsMobile > 0.5 ? clamp(uAspect / uTexAspect, 0.14, 0.40) : 0.5;
-          float maxOffset = max(0.0, 1.0 - visibleTexW);
-          float uOffset = clamp(uScroll * maxOffset + uParallax, 0.0, maxOffset);
+          float uOffset = uScroll * 0.5 + uParallax;
           vec2 clampedScreen = clamp(screenUv, 0.0, 1.0);
-          vec2 texUv = vec2(clamp(clampedScreen.x * visibleTexW + uOffset + hJitter, 0.001, 0.999), clampedScreen.y);
+          vec2 texUv = vec2(clamp(clampedScreen.x * 0.5 + uOffset + hJitter, 0.001, 0.999), clampedScreen.y);
 
           // 7. Chromatic dispersion: RGB electron gun separation
           float distFromCenter = distance(screenUv, vec2(0.5));
@@ -483,11 +477,11 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
 
       // Strictly equal dimensions for Template 1, Template 2, and Template 3
       const isMobile = width < 600;
-      const cardW = Math.min(520, width * (isMobile ? 0.92 : 0.88));
-      const cardH = isMobile ? (height < 700 ? 195 : 220) : 250;
+      const cardW = Math.min(560, width * (isMobile ? 0.92 : 0.88));
+      const cardH = isMobile ? 225 : 250;
 
       // Common vertical levels for symmetrical opposite motion
-      const restingY = height * (isMobile ? (height < 700 ? 0.32 : 0.36) : 0.44);
+      const restingY = height * (isMobile ? 0.38 : 0.44);
       const bottomOffscreenY = height * 1.08;
       const travelDist = bottomOffscreenY - restingY;
 
@@ -634,7 +628,6 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
       crtMaterial.uniforms.uAspect.value = width / height;
       crtMaterial.uniforms.uResolution.value.set(width, height);
       crtMaterial.uniforms.uCurvature.value = width < 600 ? 0.04 : 0.28;
-      crtMaterial.uniforms.uIsMobile.value = width < 1024 ? 1.0 : 0.0;
 
       textCanvas.width = width * dpr;
       textCanvas.height = height * dpr;

@@ -667,3 +667,4 @@ export default function PollutantDetailPage({ pollutantId = 'pm25', onBack, onSe
     </div>
   );
 }
+ 
