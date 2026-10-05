@@ -12,7 +12,8 @@ export function generatePetitionPdf({
   _language = 'en',
   senderName,
   senderRole,
-  senderContact
+  senderContact,
+  schoolEvidencePackage = null
 }) {
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -194,24 +195,49 @@ export function generatePetitionPdf({
 
   let appY = 28;
 
+  // School Information & 14-Day Monitoring Metadata Header
+  if (schoolEvidencePackage) {
+    const sName = schoolEvidencePackage.school?.name || evidence.schoolName || 'Campus';
+    const sLoc = schoolEvidencePackage.school?.locality || evidence.locality || 'Delhi NCR';
+    const pStart = schoolEvidencePackage.monitoringPeriod?.startDate || evidence.startDate || '';
+    const pEnd = schoolEvidencePackage.monitoringPeriod?.endDate || evidence.endDate || '';
+    const covObs = schoolEvidencePackage.coverage?.observedDays ?? 14;
+    const covDays = schoolEvidencePackage.coverage?.daysInWindow ?? 14;
+    const covPct = schoolEvidencePackage.coverage?.coveragePercent ?? 100;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(30, 41, 59);
+    doc.text(`Institution: ${sName} (${sLoc})`, margin, appY);
+    appY += 4.5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`14-Day Monitoring Window: ${pStart} to ${pEnd} | Evidence Coverage: ${covObs}/${covDays} Days Observed (${covPct}%)`, margin, appY);
+    appY += 6.5;
+  }
+
   // Metric KPI Cards
   const cardWidth = (contentWidth - 6) / 3;
   const cardHeight = 18;
 
-  // Card 1: Exceedance Ratio
+  // Card 1: Exceedance Ratio / Observed Days
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
   doc.roundedRect(margin, appY, cardWidth, cardHeight, 1.5, 1.5, 'FD');
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(100, 116, 139);
-  doc.text('EXCEEDANCE DAYS', margin + 3, appY + 5);
+  doc.text(schoolEvidencePackage ? 'OBSERVED DAYS' : 'EXCEEDANCE DAYS', margin + 3, appY + 5);
   doc.setFontSize(14);
   doc.setTextColor(239, 68, 68);
-  doc.text(`${evidence.exceedanceCount} / ${evidence.schoolDaysTotal}`, margin + 3, appY + 12);
+  const ratioText = schoolEvidencePackage
+    ? `${schoolEvidencePackage.coverage?.observedDays ?? 14} / ${schoolEvidencePackage.coverage?.daysInWindow ?? 14}`
+    : `${evidence.exceedanceCount} / ${evidence.schoolDaysTotal}`;
+  doc.text(ratioText, margin + 3, appY + 12);
   doc.setFontSize(6.5);
   doc.setTextColor(148, 163, 184);
-  doc.text(`>${evidence.threshold} µg/m³ threshold`, margin + 3, appY + 16);
+  doc.text(schoolEvidencePackage ? 'Verified monitoring days' : `>${evidence.threshold} µg/m³ threshold`, margin + 3, appY + 16);
 
   // Card 2: Peak PM2.5
   doc.setFillColor(248, 250, 252);
@@ -219,76 +245,139 @@ export function generatePetitionPdf({
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(100, 116, 139);
-  doc.text('PEAK RECORDED PM2.5', margin + cardWidth + 6, appY + 5);
+  doc.text('PEAK DAILY PM2.5', margin + cardWidth + 6, appY + 5);
   doc.setFontSize(14);
   doc.setTextColor(185, 28, 28);
-  doc.text(`${evidence.peakPm25} µg/m³`, margin + cardWidth + 6, appY + 12);
+  const peakVal = schoolEvidencePackage?.summary?.highestDailyPm25 ?? evidence.peakPm25;
+  doc.text(`${peakVal} µg/m³`, margin + cardWidth + 6, appY + 12);
   doc.setFontSize(6.5);
   doc.setTextColor(148, 163, 184);
-  doc.text(`On ${evidence.peakDate}`, margin + cardWidth + 6, appY + 16);
+  doc.text(schoolEvidencePackage ? 'Highest daily average' : `On ${evidence.peakDate}`, margin + cardWidth + 6, appY + 16);
 
-  // Card 3: School Window Avg
+  // Card 3: School Window Avg / 14-Day Average PM2.5
   doc.setFillColor(248, 250, 252);
   doc.roundedRect(margin + (cardWidth * 2) + 6, appY, cardWidth, cardHeight, 1.5, 1.5, 'FD');
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(100, 116, 139);
-  doc.text('SCHOOL WINDOW (7-13h)', margin + (cardWidth * 2) + 9, appY + 5);
+  doc.text(schoolEvidencePackage ? '14-DAY AVG (ESTIMATED)' : 'SCHOOL WINDOW (7-13h)', margin + (cardWidth * 2) + 9, appY + 5);
   doc.setFontSize(14);
   doc.setTextColor(245, 158, 11);
-  doc.text(`${evidence.avgMorningPm25} µg/m³`, margin + (cardWidth * 2) + 9, appY + 12);
+  const avgVal = schoolEvidencePackage?.summary?.averagePm25 ?? evidence.avgMorningPm25;
+  doc.text(`${avgVal} µg/m³`, margin + (cardWidth * 2) + 9, appY + 12);
   doc.setFontSize(6.5);
   doc.setTextColor(148, 163, 184);
-  doc.text(`Overall average concentration`, margin + (cardWidth * 2) + 9, appY + 16);
+  doc.text(schoolEvidencePackage ? 'Estimated around school (IDW)' : `Overall average concentration`, margin + (cardWidth * 2) + 9, appY + 16);
 
   appY += 24;
 
   // Build Table Data
-  const tableData = evidence.dailyLogs.map(log => [
-    log.displayDate,
-    log.dayOfWeek,
-    `${log.morningAvgPm25} µg/m³`,
-    `${log.peakPm25} µg/m³`,
-    log.category,
-    log.disruption
-  ]);
+  if (schoolEvidencePackage && Array.isArray(schoolEvidencePackage.dailyEvidence) && schoolEvidencePackage.dailyEvidence.length > 0) {
+    const tableData = schoolEvidencePackage.dailyEvidence.map(log => [
+      log.date,
+      log.status,
+      log.observationCount ? `${log.observationCount} obs` : '0 obs',
+      log.status !== 'NO_DATA' && log.averagePm25 !== null ? `${log.averagePm25} µg/m³` : 'NO DATA',
+      log.status !== 'NO_DATA' ? `${log.dataQuality || 'HIGH'} Quality` : 'Unmonitored',
+      log.status === 'NO_DATA' ? 'No observations recorded' : 'Estimated around school (IDW)'
+    ]);
 
-  autoTable(doc, {
-    startY: appY,
-    head: [['Date', 'Day', '07-13h Avg', 'Peak PM2.5', 'NAQI Status', 'Operational Disruption on Campus']],
-    body: tableData,
-    margin: { left: margin, right: margin },
-    theme: 'grid',
-    styles: {
-      fontSize: 7.5,
-      cellPadding: 2,
-      textColor: [51, 65, 85],
-      font: 'helvetica'
-    },
-    headStyles: {
-      fillColor: [15, 23, 42],
-      textColor: [255, 255, 255],
-      fontStyle: 'bold',
-      fontSize: 7.5
-    },
-    columnStyles: {
-      0: { cellWidth: 26 },
-      1: { cellWidth: 12 },
-      2: { cellWidth: 22 },
-      3: { cellWidth: 22 },
-      4: { cellWidth: 24 },
-      5: { cellWidth: 'auto' }
-    },
-    didParseCell: function(data) {
-      if (data.section === 'body') {
-        const rowData = evidence.dailyLogs[data.row.index];
-        if (rowData && rowData.exceeded && data.column.index === 2) {
-          data.cell.styles.textColor = [220, 38, 38];
-          data.cell.styles.fontStyle = 'bold';
+    autoTable(doc, {
+      startY: appY,
+      head: [['Date', 'Day Status', 'Observations', 'Avg PM2.5', 'Data Quality', 'Evidence Provenance']],
+      body: tableData,
+      margin: { left: margin, right: margin },
+      theme: 'grid',
+      styles: {
+        fontSize: 7.5,
+        cellPadding: 2,
+        textColor: [51, 65, 85],
+        font: 'helvetica'
+      },
+      headStyles: {
+        fillColor: [15, 23, 42],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 7.5
+      },
+      columnStyles: {
+        0: { cellWidth: 24 },
+        1: { cellWidth: 22 },
+        2: { cellWidth: 22 },
+        3: { cellWidth: 24 },
+        4: { cellWidth: 24 },
+        5: { cellWidth: 'auto' }
+      },
+      didParseCell: function(data) {
+        if (data.section === 'body') {
+          const rowData = schoolEvidencePackage.dailyEvidence[data.row.index];
+          if (rowData && rowData.status === 'NO_DATA') {
+            data.cell.styles.textColor = [148, 163, 184];
+          } else if (rowData && rowData.averagePm25 > (evidence.threshold || 60) && data.column.index === 3) {
+            data.cell.styles.textColor = [220, 38, 38];
+            data.cell.styles.fontStyle = 'bold';
+          }
         }
       }
-    }
-  });
+    });
+
+    const finalY = doc.lastAutoTable?.finalY || (appY + 65);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(7);
+    doc.setTextColor(100, 116, 139);
+    doc.text(
+      'Methodology Note: School PM2.5 values are spatial estimates derived from nearby monitoring stations and are not direct measurements at the school.',
+      margin,
+      finalY + 5
+    );
+  } else {
+    // Existing Default Table
+    const tableData = (evidence.dailyLogs || []).map(log => [
+      log.displayDate,
+      log.dayOfWeek,
+      `${log.morningAvgPm25} µg/m³`,
+      `${log.peakPm25} µg/m³`,
+      log.category,
+      log.disruption
+    ]);
+
+    autoTable(doc, {
+      startY: appY,
+      head: [['Date', 'Day', '07-13h Avg', 'Peak PM2.5', 'NAQI Status', 'Operational Disruption on Campus']],
+      body: tableData,
+      margin: { left: margin, right: margin },
+      theme: 'grid',
+      styles: {
+        fontSize: 7.5,
+        cellPadding: 2,
+        textColor: [51, 65, 85],
+        font: 'helvetica'
+      },
+      headStyles: {
+        fillColor: [15, 23, 42],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 7.5
+      },
+      columnStyles: {
+        0: { cellWidth: 26 },
+        1: { cellWidth: 12 },
+        2: { cellWidth: 22 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 24 },
+        5: { cellWidth: 'auto' }
+      },
+      didParseCell: function(data) {
+        if (data.section === 'body') {
+          const rowData = (evidence.dailyLogs || [])[data.row.index];
+          if (rowData && rowData.exceeded && data.column.index === 2) {
+            data.cell.styles.textColor = [220, 38, 38];
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
+      }
+    });
+  }
 
   addFooter(doc, 2, totalPages);
 

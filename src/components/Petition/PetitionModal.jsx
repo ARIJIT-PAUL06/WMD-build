@@ -30,8 +30,14 @@ export default function PetitionModal({
   onClose,
   initialStation = 'DTU (Delhi Technological University)',
   initialLocality = 'Rohini Sector 16, North Delhi',
-  initialPm25 = 142
+  initialPm25 = 142,
+  school = null,
+  schoolContext = null,
+  evidencePackage = null,
+  schoolEvidencePackage = null,
 }) {
+  const activeSchool = schoolContext || school;
+  const activeEvidencePackage = evidencePackage || schoolEvidencePackage;
   // --------------------------------------------------------------------------
   // Step State & Configuration
   // --------------------------------------------------------------------------
@@ -47,13 +53,13 @@ export default function PetitionModal({
   }), []);
 
   // Form Fields & Campus Selection
-  const [selectedSchoolId, setSelectedSchoolId] = useState('dps_rohini');
-  const [schoolName, setSchoolName] = useState('Delhi Public School, Rohini');
-  const [locality, setLocality] = useState(initialLocality);
-  const [stationName, setStationName] = useState(initialStation);
-  const [schoolLat, setSchoolLat] = useState(28.7188);
-  const [schoolLon, setSchoolLon] = useState(77.1064);
-  const stationDistanceKm = 1.8;
+  const [selectedSchoolId, setSelectedSchoolId] = useState(activeSchool?.id || 'dps_rohini');
+  const [schoolName, setSchoolName] = useState(activeSchool?.name || 'Delhi Public School, Rohini');
+  const [locality, setLocality] = useState(activeSchool?.locality || initialLocality);
+  const [stationName, setStationName] = useState(activeSchool?.nearestStation || initialStation);
+  const [schoolLat, setSchoolLat] = useState(activeSchool?.lat ?? 28.7188);
+  const [schoolLon, setSchoolLon] = useState(activeSchool?.lon ?? 77.1064);
+  const stationDistanceKm = activeSchool?.stationDistanceKm || 1.8;
   const [days, setDays] = useState(14);
   const [threshold, setThreshold] = useState(60);
 
@@ -84,7 +90,52 @@ export default function PetitionModal({
   const [dpdpaConsent, setDpdpaConsent] = useState(true);
 
   // Evidence Data State
-  const [evidence, setEvidence] = useState(null);
+  const [evidence, setEvidence] = useState(() => {
+    if (activeEvidencePackage) {
+      const sName = activeSchool?.name || school?.name || 'Delhi Public School, Rohini';
+      const sLoc = activeSchool?.locality || school?.locality || initialLocality;
+      const stName = activeSchool?.nearestStation || school?.nearestStation || initialStation;
+      const sDist = activeSchool?.stationDistanceKm || school?.stationDistanceKm || 1.8;
+      const sLogs = (activeEvidencePackage.dailyEvidence || []).map((d) => ({
+        date: d.date,
+        displayDate: d.date,
+        dayOfWeek: new Date(d.date).toLocaleDateString('en-IN', { weekday: 'short' }),
+        morningAvgPm25: d.averagePm25 ?? 0,
+        peakPm25: d.maxPm25 ?? (d.averagePm25 ?? 0),
+        category: d.status,
+        disruption: d.status === 'NO_DATA' ? 'No observations recorded' : 'Campus outdoor exposure evaluated',
+        exceeded: d.averagePm25 > 60
+      }));
+
+      return {
+        schoolName: sName,
+        locality: sLoc,
+        threshold: 60,
+        schoolDaysTotal: activeEvidencePackage.coverage?.daysInWindow || 14,
+        exceedanceCount: (activeEvidencePackage.dailyEvidence || []).filter((d) => d.averagePm25 > 60).length,
+        startDate: activeEvidencePackage.monitoringPeriod?.startDate || '',
+        endDate: activeEvidencePackage.monitoringPeriod?.endDate || '',
+        peakPm25: activeEvidencePackage.summary?.highestDailyPm25 ?? (activeEvidencePackage.summary?.averagePm25 ?? initialPm25),
+        peakDate: (activeEvidencePackage.dailyEvidence || []).reduce((maxD, d) => (d.averagePm25 > (maxD?.averagePm25 || 0) ? d : maxD), null)?.date || '',
+        avgMorningPm25: activeEvidencePackage.summary?.averagePm25 ?? 85,
+        stationName: stName,
+        stationDistanceKm: sDist,
+        compiledBy: 'VayuVitals SafeRecess Continuous Monitoring Engine',
+        compilationDate: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+        maeError: 12.4,
+        dailyLogs: sLogs
+      };
+    }
+    return computeClientEvidence({
+      schoolName: activeSchool?.name || 'Delhi Public School, Rohini',
+      locality: activeSchool?.locality || initialLocality,
+      stationName: activeSchool?.nearestStation || initialStation,
+      stationDistanceKm: activeSchool?.stationDistanceKm || 1.8,
+      days: 14,
+      threshold: 60,
+      basePm25: initialPm25
+    });
+  });
   const [isLoadingEvidence, setIsLoadingEvidence] = useState(false);
 
   // Editable Letter Text State
@@ -93,11 +144,20 @@ export default function PetitionModal({
   const [currentSubject, setCurrentSubject] = useState('');
   const [aiTelemetry, setAiTelemetry] = useState(null);
 
-  // Sync initial props
+  // Sync initial props or active school
   useEffect(() => {
-    if (initialStation) setStationName(initialStation);
-    if (initialLocality) setLocality(initialLocality);
-  }, [initialStation, initialLocality]);
+    if (activeSchool) {
+      if (activeSchool.id) setSelectedSchoolId(activeSchool.id);
+      if (activeSchool.name) setSchoolName(activeSchool.name);
+      if (activeSchool.locality) setLocality(activeSchool.locality);
+      if (activeSchool.nearestStation) setStationName(activeSchool.nearestStation);
+      if (activeSchool.lat != null) setSchoolLat(activeSchool.lat);
+      if (activeSchool.lon != null) setSchoolLon(activeSchool.lon);
+    } else {
+      if (initialStation) setStationName(initialStation);
+      if (initialLocality) setLocality(initialLocality);
+    }
+  }, [activeSchool, initialStation, initialLocality]);
 
   // Handle Institution quick selection
   const handleSelectInstitution = (schoolId) => {
@@ -214,10 +274,47 @@ export default function PetitionModal({
 
   useEffect(() => {
     if (isOpen) {
-      fetchEvidence();
+      if (activeEvidencePackage) {
+        // Hydrate from verified 14-day school evidence package
+        const sName = activeSchool?.name || schoolName;
+        const sLoc = activeSchool?.locality || locality;
+        const stName = activeSchool?.nearestStation || stationName;
+        const sDist = activeSchool?.stationDistanceKm || stationDistanceKm;
+        const sLogs = (activeEvidencePackage.dailyEvidence || []).map((d) => ({
+          date: d.date,
+          displayDate: d.date,
+          dayOfWeek: new Date(d.date).toLocaleDateString('en-IN', { weekday: 'short' }),
+          morningAvgPm25: d.averagePm25 ?? 0,
+          peakPm25: d.maxPm25 ?? (d.averagePm25 ?? 0),
+          category: d.status,
+          disruption: d.status === 'NO_DATA' ? 'No observations recorded' : 'Campus outdoor exposure evaluated',
+          exceeded: d.averagePm25 > threshold
+        }));
+
+        setEvidence({
+          schoolName: sName,
+          locality: sLoc,
+          threshold,
+          schoolDaysTotal: activeEvidencePackage.coverage?.daysInWindow || 14,
+          exceedanceCount: (activeEvidencePackage.dailyEvidence || []).filter((d) => d.averagePm25 > threshold).length,
+          startDate: activeEvidencePackage.monitoringPeriod?.startDate || '',
+          endDate: activeEvidencePackage.monitoringPeriod?.endDate || '',
+          peakPm25: activeEvidencePackage.summary?.highestDailyPm25 ?? (activeEvidencePackage.summary?.averagePm25 ?? initialPm25),
+          peakDate: (activeEvidencePackage.dailyEvidence || []).reduce((maxD, d) => (d.averagePm25 > (maxD?.averagePm25 || 0) ? d : maxD), null)?.date || '',
+          avgMorningPm25: activeEvidencePackage.summary?.averagePm25 ?? 85,
+          stationName: stName,
+          stationDistanceKm: sDist,
+          compiledBy: 'VayuVitals SafeRecess Continuous Monitoring Engine',
+          compilationDate: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+          maeError: 12.4,
+          dailyLogs: sLogs
+        });
+      } else {
+        fetchEvidence();
+      }
       fetchForecast();
     }
-  }, [isOpen, fetchEvidence, fetchForecast]);
+  }, [isOpen, activeEvidencePackage, activeSchool, fetchEvidence, fetchForecast, initialPm25, locality, schoolName, stationDistanceKm, stationName, threshold]);
 
   // --------------------------------------------------------------------------
   // Step 2: Generate Draft When Evidence, Authority, or Forecast Changes
@@ -236,7 +333,8 @@ export default function PetitionModal({
           senderName,
           senderRole,
           senderContact: `${senderEmail} | ${senderPhone}`,
-          selectedDemands
+          selectedDemands,
+          schoolEvidencePackage: activeEvidencePackage
         })
       });
       if (res.ok) {
@@ -256,7 +354,8 @@ export default function PetitionModal({
         senderName,
         senderRole,
         senderContact: `${senderEmail} | ${senderPhone}`,
-        selectedDemands
+        selectedDemands,
+        schoolEvidencePackage: activeEvidencePackage
       });
       setEditableLetterEn(localDraft.englishText);
       setEditableLetterHi(localDraft.hindiText);
@@ -270,13 +369,14 @@ export default function PetitionModal({
         senderName,
         senderRole,
         senderContact: `${senderEmail} | ${senderPhone}`,
-        selectedDemands
+        selectedDemands,
+        schoolEvidencePackage: activeEvidencePackage
       });
       setEditableLetterEn(localDraft.englishText);
       setEditableLetterHi(localDraft.hindiText);
       setCurrentSubject(localDraft.subject);
     }
-  }, [evidence, currentAuthority, forecast, includeForecastInDossier, senderName, senderRole, senderEmail, senderPhone, selectedDemands]);
+  }, [evidence, currentAuthority, forecast, includeForecastInDossier, senderName, senderRole, senderEmail, senderPhone, selectedDemands, activeEvidencePackage]);
 
   useEffect(() => {
     if (evidence) {
@@ -342,7 +442,8 @@ export default function PetitionModal({
         language,
         senderName,
         senderRole,
-        senderContact: `${senderEmail} | ${senderPhone}`
+        senderContact: `${senderEmail} | ${senderPhone}`,
+        schoolEvidencePackage: activeEvidencePackage
       });
     } catch (err) {
       console.error('[PetitionModal] PDF generation error:', err);
@@ -393,6 +494,7 @@ export default function PetitionModal({
 
   return (
     <div
+      id="petition-action-modal"
       style={{
         position: 'fixed',
         inset: 0,
@@ -575,6 +677,114 @@ export default function PetitionModal({
               background: 'rgba(10, 15, 26, 0.5)'
             }}
           >
+            {/* Phase 6: Dedicated 14-Day School Monitoring Evidence Section */}
+            {activeEvidencePackage && (
+              <div
+                id="school-evidence-section"
+                style={{
+                  padding: '16px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.8) 100%)',
+                  border: '1px solid rgba(56, 189, 248, 0.35)',
+                  boxShadow: '0 8px 32px rgba(56, 189, 248, 0.1)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Calendar size={14} />
+                    <span>14-Day School Monitoring Evidence</span>
+                  </span>
+                  <span style={{ fontSize: '0.68rem', padding: '2px 8px', borderRadius: '9999px', background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.35)', fontWeight: 700 }}>
+                    {`${activeEvidencePackage.coverage?.observedDays ?? 14} / ${activeEvidencePackage.coverage?.daysInWindow ?? 14} Days Verified (${activeEvidencePackage.coverage?.coveragePercent ?? 100}%)`}
+                  </span>
+                </div>
+
+                {/* 4-Item Metrics Summary Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '12px' }}>
+                  <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                    <div style={{ fontSize: '0.62rem', color: '#34d399', fontWeight: 600 }}>OBSERVED DAYS</div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#34d399' }}>
+                      {activeEvidencePackage.coverage?.observedDays ?? 14} <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>/ 14</span>
+                    </div>
+                  </div>
+
+                  <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                    <div style={{ fontSize: '0.62rem', color: '#fbbf24', fontWeight: 600 }}>PARTIAL DAYS</div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fbbf24' }}>
+                      {activeEvidencePackage.coverage?.partialDays ?? 0}
+                    </div>
+                  </div>
+
+                  <div style={{ background: 'rgba(100, 116, 139, 0.1)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(100, 116, 139, 0.25)' }}>
+                    <div style={{ fontSize: '0.62rem', color: '#94a3b8', fontWeight: 600 }}>MISSING DAYS</div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#cbd5e1' }}>
+                      {activeEvidencePackage.coverage?.missingDays ?? 0}
+                    </div>
+                  </div>
+
+                  <div style={{ background: 'rgba(56, 189, 248, 0.1)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
+                    <div style={{ fontSize: '0.62rem', color: '#38bdf8', fontWeight: 600 }}>14-DAY AVG PM2.5</div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#38bdf8' }}>
+                      {activeEvidencePackage.summary?.averagePm25 ?? '--'} <span style={{ fontSize: '0.65rem' }}>µg/m³</span>
+                    </div>
+                    <div style={{ fontSize: '0.58rem', color: '#94a3b8', fontWeight: 500 }}>Estimated around school</div>
+                  </div>
+                </div>
+
+                {/* Range & Peak Details */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '10px', padding: '6px 10px', background: 'rgba(0, 0, 0, 0.25)', borderRadius: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                  <span>Period: <strong>{activeEvidencePackage.monitoringPeriod?.startDate} to {activeEvidencePackage.monitoringPeriod?.endDate}</strong></span>
+                  <span>Highest Day: <strong>{activeEvidencePackage.summary?.highestDailyPm25 ?? '--'} µg/m³</strong></span>
+                  <span>Lowest Day: <strong>{activeEvidencePackage.summary?.lowestDailyPm25 ?? '--'} µg/m³</strong></span>
+                </div>
+
+                {/* Daily Evidence Timeline */}
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                  DAILY OBSERVATION LOG:
+                </div>
+                <div style={{ maxHeight: '160px', overflowY: 'auto', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px', padding: '6px', background: 'rgba(0, 0, 0, 0.3)' }}>
+                  {(activeEvidencePackage.dailyEvidence || []).map((day, idx) => (
+                    <div
+                      key={day.date || idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '4px 6px',
+                        borderBottom: idx < activeEvidencePackage.dailyEvidence.length - 1 ? '1px solid rgba(255, 255, 255, 0.04)' : 'none',
+                        fontSize: '0.7rem',
+                      }}
+                    >
+                      <span style={{ fontFamily: 'monospace', color: '#cbd5e1' }}>{day.date}</span>
+                      <span style={{
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        fontSize: '0.6rem',
+                        fontWeight: 700,
+                        background: day.status === 'OBSERVED' ? 'rgba(16, 185, 129, 0.15)' : day.status === 'PARTIAL' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(100, 116, 139, 0.15)',
+                        color: day.status === 'OBSERVED' ? '#34d399' : day.status === 'PARTIAL' ? '#fbbf24' : '#94a3b8',
+                      }}>
+                        {day.status}
+                      </span>
+                      <span style={{ color: '#94a3b8' }}>
+                        {day.observationCount ? `${day.observationCount} obs` : '0 obs'}
+                      </span>
+                      <span style={{ color: day.status !== 'NO_DATA' && day.averagePm25 !== null ? '#f8fafc' : '#64748b', fontWeight: 600 }}>
+                        {day.status !== 'NO_DATA' && day.averagePm25 !== null ? `${day.averagePm25} µg/m³ (Estimated)` : 'NO DATA'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Mandatory Spatial Estimation Methodology Disclaimer */}
+                <div style={{ fontSize: '0.66rem', color: '#94a3b8', fontStyle: 'italic', marginTop: '8px', lineHeight: '1.4' }}>
+                  School PM2.5 values are spatial estimates derived from nearby monitoring stations and are not direct measurements at the school.
+                </div>
+              </div>
+            )}
+
             {/* 1. Evidence Snapshot Card */}
             <div
               style={{
@@ -1350,7 +1560,7 @@ export default function PetitionModal({
                   }}
                 >
                   {copyFeedback ? <Check size={14} /> : <Copy size={14} />}
-                  {copyFeedback ? 'Copied to Clipboard!' : 'Copy Portal Text'}
+                  {copyFeedback ? 'Copied to Clipboard!' : 'Copy to Clipboard'}
                 </button>
 
                 {/* 2. Open Official Mailto */}

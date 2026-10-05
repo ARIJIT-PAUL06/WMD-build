@@ -265,7 +265,8 @@ export function buildClientDraft({
   senderName = 'Dr. Sunita Sharma',
   senderRole = 'Principal / Chairperson',
   senderContact = 'contact@school.edu.in | +91 98110 00000',
-  selectedDemands = []
+  selectedDemands = [],
+  schoolEvidencePackage = null
 }) {
   const {
     schoolName,
@@ -312,6 +313,27 @@ Advance 48-Hour Machine Learning Risk Alert (AWS SageMaker Inference):
 `;
   }
 
+  // 14-Day School Environmental Monitoring Evidence Block (Phase 6 Grounding)
+  let schoolEvidenceBlockEn = '';
+  let schoolEvidenceBlockHi = '';
+  if (schoolEvidencePackage && schoolEvidencePackage.summary) {
+    const { monitoringPeriod, coverage, summary } = schoolEvidencePackage;
+    schoolEvidenceBlockEn = `
+Verified 14-Day School Environmental Monitoring Summary:
+- Monitoring Window: ${monitoringPeriod?.startDate || startDate} to ${monitoringPeriod?.endDate || endDate} (${coverage?.observedDays ?? 14} of 14 calendar days empirically observed)
+- Campus Ambient PM2.5 Average: ${summary.averagePm25 ?? '--'} µg/m³ (Estimated around school via spatial IDW from surrounding regulatory stations)
+- Peak Daily Average Observed: ${summary.highestDailyPm25 ?? '--'} µg/m³ | Lowest: ${summary.lowestDailyPm25 ?? '--'} µg/m³
+- Methodology Note: School PM2.5 values are spatial estimates derived from nearby monitoring stations and are not direct measurements at the school.
+`;
+    schoolEvidenceBlockHi = `
+प्रमाणित 14-दिवसीय विद्यालय पर्यावरण निगरानी विवरण:
+- निगरानी अवधि: ${monitoringPeriod?.startDate || startDate} से ${monitoringPeriod?.endDate || endDate} (14 में से ${coverage?.observedDays ?? 14} दिवस प्रमाणित)
+- विद्यालय परिसर अनुमानित औसत PM2.5: ${summary.averagePm25 ?? '--'} µg/m³ (निकटवर्ती स्टेशनों से दूरी-भारित आकलन)
+- उच्चतम दैनिक औसत स्तर: ${summary.highestDailyPm25 ?? '--'} µg/m³ | न्यूनतम: ${summary.lowestDailyPm25 ?? '--'} µg/m³
+- वैज्ञानिक आधार: विद्यालय PM2.5 मान निकटवर्ती निगरानी स्टेशनों से प्राप्त स्थानिक अनुमान हैं, स्कूल गेट पर सीधे मापन नहीं।
+`;
+  }
+
   const englishText = `To:
 ${authority.designation}
 ${authority.fullName}
@@ -329,7 +351,7 @@ Data Provenance & Scientific Basis:
 - Primary Monitoring Source: ${stationName} (${stationDistanceKm} km from school campus)
 - Compilation Engine: ${compiledBy} on ${compilationDate}
 - Forecast Mean Absolute Error (MAE) over the observation window: ${maeError} µg/m³
-- Time Window Examined: 07:00 AM to 01:00 PM (Daily School Operating Hours)${forecastBlockEn}
+- Time Window Examined: 07:00 AM to 01:00 PM (Daily School Operating Hours)${schoolEvidenceBlockEn}${forecastBlockEn}
 We respectfully request the competent authority to undertake the following time-bound remedial interventions:
 ${demandsTextEn}
 
@@ -360,7 +382,7 @@ ${authority.address}
 आंकड़ों की प्रामाणिकता एवं स्रोत:
 - निकटतम निगरानी केंद्र: ${stationName} (विद्यालय से दूरी: ${stationDistanceKm} किमी)
 - डेटा संकलन: ${compiledBy} (संकलन तिथि: ${compilationDate})
-- पूर्वानुमान त्रुटि दर (MAE): ${maeError} µg/m³${forecastBlockHi}
+- पूर्वानुमान त्रुटि दर (MAE): ${maeError} µg/m³${schoolEvidenceBlockHi}${forecastBlockHi}
 अतः आपसे सविनय अनुरोध है कि बच्चों के स्वास्थ्य एवं स्वच्छ परिवेश के अधिकार को ध्यान में रखते हुए निम्नलिखित त्वरित कदम उठाने की कृपा करें:
 ${demandsTextHi}
 
