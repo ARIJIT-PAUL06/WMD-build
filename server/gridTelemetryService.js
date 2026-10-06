@@ -323,3 +323,30 @@ export async function syncAllPopulatedGrids(daysPast = 14) {
   return results;
 }
 
+/**
+ * Retrieve the most recent live empirical telemetry for a specific grid block
+ */
+export function getLatestTelemetryForGrid(gridId) {
+  const g = grid14DayBuffer[gridId];
+  if (!g || !g.hourlyBuffer || g.hourlyBuffer.length === 0) {
+    return null;
+  }
+  for (let i = g.hourlyBuffer.length - 1; i >= 0; i--) {
+    const reading = g.hourlyBuffer[i];
+    if (reading && reading.pm25 !== null && reading.pm25 !== undefined && !isNaN(reading.pm25)) {
+      return reading;
+    }
+  }
+  return null;
+}
+
+/**
+ * Retrieve the most recent live empirical telemetry for GPS coordinates
+ */
+export function getLatestTelemetryForCoordinates(lat, lon) {
+  const grid = findGridForCoordinates(lat, lon);
+  if (!grid) return null;
+  return getLatestTelemetryForGrid(grid.grid_id);
+}
+
+

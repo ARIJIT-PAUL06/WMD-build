@@ -31,7 +31,9 @@ import {
   findGridForCoordinates,
   fetchLiveTelemetryForGrid,
   syncAllPopulatedGrids,
-  get14DayCompliance
+  get14DayCompliance,
+  getLatestTelemetryForGrid,
+  getLatestTelemetryForCoordinates
 } from './gridTelemetryService.js';
 import { getSchoolAqiForecast } from './sagemakerService.js';
 import { sendEmailViaSES } from './sesService.js';
@@ -165,15 +167,22 @@ export async function runPredictiveAdvisoryEvaluation({
     }
 
     try {
+      const grid = findGridForCoordinates(facility.lat, facility.lon);
+      const liveReading = grid ? getLatestTelemetryForGrid(grid.grid_id) : null;
+      const liveBasePm25 = liveReading?.pm25 ?? null;
+
       let peakArrival = 0;
       if (simulatedPm25 !== null && simulatedPm25 !== undefined) {
         peakArrival = Number(simulatedPm25);
       } else {
         const forecast = await getSchoolAqiForecast({
+          schoolId: facility.id,
+          schoolName: facility.name,
           facilityId: facility.id,
           facilityName: facility.name,
           lat: facility.lat,
           lon: facility.lon,
+          basePm25: liveBasePm25,
           threshold: thresholdPm25
         });
         peakArrival = forecast.peakMorningArrival?.predictedPm25 || 0;
@@ -192,7 +201,8 @@ export async function runPredictiveAdvisoryEvaluation({
       }
 
       // RULE 2: Inversion spike predicted. Build advisory and dispatch to institution's designated recipient.
-      const advisory = await generate630Advisory({ facilityId: facility.id, basePm25: peakArrival });
+      // Pass the empirical ground base PM2.5 so the advisory starts from actual sensor telemetry
+      const advisory = await generate630Advisory({ facilityId: facility.id, basePm25: liveBasePm25 || peakArrival });
       const actualRecipient = resolveRecipientForFacility(facility.id);
       const commandCenterEmail = process.env.COMMAND_CENTRE_EMAIL || 'psubai2006@gmail.com';
 

@@ -9,7 +9,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { findGridForCoordinates, recordHourlyTelemetry, get14DayCompliance } from './gridTelemetryService.js';
+import { findGridForCoordinates, recordHourlyTelemetry, get14DayCompliance, getLatestTelemetryForGrid } from './gridTelemetryService.js';
 
 dotenv.config();
 
@@ -76,20 +76,26 @@ export function categorizePm25(pm25) {
 }
 
 /**
- * Fetch forward 48h meteorological conditions from Open-Meteo for coordinates
+ * Fetch forward 48h meteorological and chemical transport conditions from Open-Meteo for coordinates
  */
-async function fetchMeteoForecast(lat, lon) {
+async function fetchMeteoAndAqiForecast(lat, lon) {
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,surface_pressure&timezone=Asia%2FKolkata&forecast_days=3`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
-    if (res.ok) {
-      const data = await res.json();
-      return data.hourly || null;
-    }
+    const [meteoRes, aqiRes] = await Promise.allSettled([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,surface_pressure&timezone=Asia%2FKolkata&forecast_days=3`, { signal: AbortSignal.timeout(4500) }),
+      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm2_5,pm10&timezone=Asia%2FKolkata&forecast_days=3`, { signal: AbortSignal.timeout(4500) })
+    ]);
+
+    const meteoData = (meteoRes.status === 'fulfilled' && meteoRes.value.ok) ? await meteoRes.value.json() : null;
+    const aqiData = (aqiRes.status === 'fulfilled' && aqiRes.value.ok) ? await aqiRes.value.json() : null;
+
+    return {
+      meteo: meteoData?.hourly || null,
+      aqi: aqiData?.hourly || null
+    };
   } catch (err) {
-    console.warn('[SageMakerService] Open-Meteo forecast fetch timed out/failed, using physics model fallback:', err.message);
+    console.warn('[SageMakerService] Forecast fetch timed out/failed, using physics model fallback:', err.message);
+    return { meteo: null, aqi: null };
   }
-  return null;
 }
 
 /**
@@ -103,23 +109,30 @@ export async function getSchoolAqiForecast({
   facilityName = null,
   lat = 28.7188,
   lon = 77.1064,
-  basePm25 = 145,
+  basePm25 = null,
   threshold = 60
 }) {
   const latitude = parseFloat(lat) || 28.7188;
   const longitude = parseFloat(lon) || 77.1064;
   const targetThreshold = parseInt(threshold, 10) || 60;
-  const currentBase = Math.max(30, parseInt(basePm25, 10) || 145);
 
   // Map coordinates to Spatial Grid Block
   const spatialGrid = findGridForCoordinates(latitude, longitude);
   const gridId = spatialGrid ? spatialGrid.grid_id : 'GRID_CENTRAL';
+
+  // Dynamically ground prediction on live empirical telemetry if basePm25 is not supplied
+  let resolvedBase = (basePm25 !== null && basePm25 !== undefined && !isNaN(basePm25)) ? parseFloat(basePm25) : null;
+  if (!resolvedBase) {
+    const liveTelemetry = getLatestTelemetryForGrid(gridId);
+    if (liveTelemetry && liveTelemetry.pm25 !== null && liveTelemetry.pm25 !== undefined && !isNaN(liveTelemetry.pm25)) {
+      resolvedBase = liveTelemetry.pm25;
+    }
+  }
+  const currentBase = Math.max(25, Math.round(resolvedBase || 85));
   
-  // Record current reading into 14-day buffer
-  recordHourlyTelemetry(gridId, new Date().toISOString(), currentBase, { schoolName, schoolId });
   const compliance14Day = get14DayCompliance(gridId);
 
-  let hourlyMeteo = await fetchMeteoForecast(latitude, longitude);
+  const { meteo: hourlyMeteo, aqi: hourlyAqi } = await fetchMeteoAndAqiForecast(latitude, longitude);
 
   // If live SageMaker endpoint is configured and active:
   let executionMode = 'AWS_SAGEMAKER_REGISTERED_MODEL';
@@ -254,8 +267,27 @@ export async function getSchoolAqiForecast({
     const cosHour = Math.cos((2 * Math.PI * hour) / 24);
     const hourEffect = -18 * sinHour - 14 * cosHour;
 
-    const rawPrediction = baseProjected * seasonalMultiplier * morningInversionSurge * windStagnationPenalty * sootMultiplier + hourEffect;
-    const predictedPm25 = Math.max(25, Math.round(rawPrediction));
+    let predictedPm25;
+
+    // PRIMARY PATH: Ground prediction in Copernicus/Open-Meteo numerical atmospheric chemistry
+    // combined with Model Output Statistics (MOS) local bias correction anchored on the live ground reading
+    if (hourlyAqi && hourlyAqi.pm2_5 && hourlyAqi.pm2_5[step] !== null && hourlyAqi.pm2_5[step] !== undefined && !isNaN(hourlyAqi.pm2_5[step])) {
+      const camsVal = hourlyAqi.pm2_5[step];
+      const camsBase = hourlyAqi.pm2_5[0] || camsVal;
+      // Local observation ratio (constrained between 0.5 and 2.0 to avoid unbounded divergence)
+      const biasRatio = camsBase > 0 ? Math.min(2.0, Math.max(0.5, currentBase / camsBase)) : 1.0;
+      // Local ground innovation relaxes toward the numerical model over an 18-hour horizon
+      const alpha = Math.exp(-step / 18.0);
+      const mosCorrected = camsVal * (1.0 + (biasRatio - 1.0) * alpha);
+      
+      // Micro-urban boundary layer rush-hour adjustment (07:00 - 09:30 AM IST)
+      const morningRushFactor = (hour >= 7 && hour <= 9) ? 1.08 : 1.0;
+      predictedPm25 = Math.max(25, Math.round(mosCorrected * morningRushFactor));
+    } else {
+      // Deterministic physical simulation fallback with normalized multipliers
+      const rawPrediction = baseProjected * Math.min(1.35, seasonalMultiplier) * morningInversionSurge * Math.min(1.15, windStagnationPenalty) * sootMultiplier;
+      predictedPm25 = Math.max(25, Math.round(rawPrediction));
+    }
 
     // Cascading Horizon Ensemble Ladder Assignment
     let horizonKey = '24h_day_ahead';
