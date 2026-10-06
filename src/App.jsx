@@ -70,7 +70,7 @@ export default function App() {
     const pollutantParam = params.get('pollutant');
 
     if (docParam != null || viewParam === 'documentary' || hash.startsWith('#documentary')) {
-      let polId = null;
+      let polId = 'pm25';
       if (docParam && docParam !== 'true' && docParam !== 'landing') {
         polId = docParam;
       } else if (pollutantParam) {
@@ -153,15 +153,12 @@ export default function App() {
     }
   };
 
-  const handleOpenDocumentary = (pollutantId = null) => {
-    setDocumentaryState({ isOpen: true, pollutantId });
+  const handleOpenDocumentary = (pollutantId = 'pm25') => {
+    const targetPollutant = pollutantId && pollutantId !== 'true' && pollutantId !== 'landing' ? pollutantId : 'pm25';
+    setDocumentaryState({ isOpen: true, pollutantId: targetPollutant });
     if (typeof window !== 'undefined') {
       const url = new URL(window.location);
-      if (pollutantId) {
-        url.searchParams.set('documentary', pollutantId);
-      } else {
-        url.searchParams.set('documentary', 'true');
-      }
+      url.searchParams.set('documentary', targetPollutant);
       window.history.pushState({}, '', url);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -192,15 +189,12 @@ export default function App() {
     }
   };
 
-  const handleDocumentarySelectPollutant = (pollutantId) => {
-    setDocumentaryState({ isOpen: true, pollutantId });
+  const handleDocumentarySelectPollutant = (pollutantId = 'pm25') => {
+    const targetPollutant = pollutantId && pollutantId !== 'true' && pollutantId !== 'landing' ? pollutantId : 'pm25';
+    setDocumentaryState({ isOpen: true, pollutantId: targetPollutant });
     if (typeof window !== 'undefined') {
       const url = new URL(window.location);
-      if (pollutantId) {
-        url.searchParams.set('documentary', pollutantId);
-      } else {
-        url.searchParams.set('documentary', 'true');
-      }
+      url.searchParams.set('documentary', targetPollutant);
       window.history.pushState({}, '', url);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }

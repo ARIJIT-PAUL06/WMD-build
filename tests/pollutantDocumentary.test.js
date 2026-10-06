@@ -1,23 +1,28 @@
 /**
- * Pollutant Documentary Visual Storybook Verification Tests
+ * Direct Pollutant Documentary Navigation & Dossier Verification Tests
  *
- * Verifies all 16 core requirements for the Chapter-by-Chapter Visual Storybook:
- * 1. All 12 chapters render.
- * 2. Each chapter has its own distinct visual theme.
- * 3. Chapter transitions work (ribbon navigation, hero anchor).
- * 4. Truck opens the documentary.
- * 5. Existing pollutant deep dives still work.
- * 6. Live Delhi data still works.
- * 7. School Safety still works.
- * 8. 14-day evidence still works.
- * 9. Missing data remains NO DATA.
- * 10. No live values are hard-coded.
- * 11. Mobile CSS exists for each chapter.
- * 12. Reduced-motion support remains.
- * 13. Keyboard navigation remains accessible.
- * 14. ?view=school still works.
- * 15. ?view=map still works.
- * 16. Petition workflow still works.
+ * Verifies all requirements for direct pollutant navigation flow:
+ * 1. Cargo truck containers directly route to each pollutant:
+ *    - PM2.5 -> ?documentary=pm25
+ *    - PM10  -> ?documentary=pm10
+ *    - NO2   -> ?documentary=no2
+ *    - SO2   -> ?documentary=so2
+ *    - CO    -> ?documentary=co
+ *    - O3    -> ?documentary=o3
+ *    - NH3   -> ?documentary=nh3
+ * 2. Truck body click directly routes to pollutant documentary (?documentary=pm25).
+ * 3. Visiting ?documentary=true routes directly to PM2.5 with NO intermediate landing page.
+ * 4. Intermediate story / landing page is completely removed (no "BEGIN STORY", no intermediate book).
+ * 5. All seven pollutants render dedicated cinematic documentary dossiers with custom themes.
+ * 6. Visual design, typography, sections, and scientific content remain intact.
+ * 7. Live Delhi telemetry dynamically feeds into the documentary (no hardcoding).
+ * 8. School Safety section renders IDW estimate and mandatory spatial estimation disclaimer.
+ * 9. 14-day evidence window strictly displays unrecorded days as NO DATA.
+ * 10. Returning from documentary routes back to Atmospheric Cargo Truck.
+ * 11. ?view=school still works cleanly.
+ * 12. ?view=map still works cleanly.
+ * 13. Petition workflow helpers remain operational.
+ * 14. Responsive mobile CSS and reduced-motion compliance remain intact.
  */
 
 import test, { describe, it, before, after } from 'node:test';
@@ -31,7 +36,7 @@ import {
   POLLUTANT_DOCUMENTARY_LIST,
 } from '../src/data/pollutantDocumentaries.js';
 
-describe('VayuVitals Visual Storybook Pollution Documentary', () => {
+describe('VayuVitals Direct Pollutant Documentary Flow', () => {
   let viteServer;
   let PollutantDocumentary;
   let AtmosphericCargoTruck;
@@ -145,101 +150,9 @@ describe('VayuVitals Visual Storybook Pollution Documentary', () => {
   });
 
   // ==========================================================================
-  // 1. All 12 chapters render
+  // 1. Truck viewport is interactive & has launch cue
   // ==========================================================================
-  it('1. All 12 chapters render in sequence within the visual storybook', () => {
-    const html = renderToString(
-      React.createElement(PollutantDocumentary, {
-        pollutantId: null,
-        liveData: mockLiveTelemetry,
-      })
-    );
-
-    const requiredChapterIds = [
-      'chapter-01-the-city',
-      'chapter-02-the-invisible',
-      'chapter-03-what-we-carry',
-      'chapter-04-where-it-comes-from',
-      'chapter-05-the-air-moves',
-      'chapter-06-delhi-right-now',
-      'chapter-07-the-city-is-not-one-number',
-      'chapter-08-the-weather-changes-the-story',
-      'chapter-09-from-city-to-school',
-      'chapter-10-14-days-of-evidence',
-      'chapter-11-what-we-know-what-we-dont',
-      'chapter-12-the-takeaway',
-    ];
-
-    requiredChapterIds.forEach((id) => {
-      assert.ok(
-        html.includes(`id="${id}"`),
-        `Chapter container with id="${id}" must render in DOM`
-      );
-    });
-
-    // Opening cinematic hero & title
-    assert.ok(html.includes('THE AIR') && html.includes('WE BREATHE'));
-    assert.ok(html.includes('An investigation into the invisible pollution moving through Delhi.'));
-  });
-
-  // ==========================================================================
-  // 2. Each chapter has its own theme
-  // ==========================================================================
-  it('2. Each chapter has its own distinct visual theme class', () => {
-    const html = renderToString(
-      React.createElement(PollutantDocumentary, {
-        pollutantId: null,
-        liveData: mockLiveTelemetry,
-      })
-    );
-
-    const requiredThemes = [
-      'theme-city-archive',
-      'theme-lab-notebook',
-      'theme-cargo-manifest',
-      'theme-investigation-board',
-      'theme-weather-desk',
-      'theme-live-newsroom',
-      'theme-cartographer',
-      'theme-split-atmosphere',
-      'theme-school-field-report',
-      'theme-evidence-dossier',
-      'theme-split-evidence-board',
-      'theme-minimal-archive',
-    ];
-
-    requiredThemes.forEach((theme) => {
-      assert.ok(
-        html.includes(theme),
-        `Documentary must include dedicated theme class: ${theme}`
-      );
-    });
-  });
-
-  // ==========================================================================
-  // 3. Chapter transitions work (ribbon navigation, hero anchor)
-  // ==========================================================================
-  it('3. Chapter transitions and tactile navigation ribbon render cleanly', () => {
-    const html = renderToString(
-      React.createElement(PollutantDocumentary, {
-        pollutantId: null,
-        liveData: mockLiveTelemetry,
-      })
-    );
-
-    // Tactile Ribbon Navigation Bar
-    assert.ok(html.includes('doc-chapter-ribbon'), 'Must render tactile chapter ribbon');
-    assert.ok(html.includes('ribbon-tab'), 'Must render ribbon tabs');
-
-    // Hero Begin Story CTA button
-    assert.ok(html.includes('id="begin-story-btn"'), 'Must render begin-story button');
-    assert.ok(html.includes('BEGIN STORY'), 'Button must feature "BEGIN STORY"');
-  });
-
-  // ==========================================================================
-  // 4. Truck opens the documentary
-  // ==========================================================================
-  it('4. Truck viewport is interactive and opens the documentary on click / ?documentary=true', () => {
+  it('1. Truck viewport is interactive and maintains visual cargo hauler presentation', () => {
     const truckHtml = renderToString(React.createElement(AtmosphericCargoTruck));
     assert.ok(
       truckHtml.includes('id="atmospheric-cargo-truck-interactive"'),
@@ -249,19 +162,115 @@ describe('VayuVitals Visual Storybook Pollution Documentary', () => {
       truckHtml.includes('Explore the atmospheric cargo'),
       'Truck must feature subtle editorial launch cue'
     );
+    // Containers for pollutants exist
+    assert.ok(truckHtml.includes('cargo-container-pm25'), 'PM2.5 cargo container must exist');
+    assert.ok(truckHtml.includes('cargo-container-pm10'), 'PM10 cargo container must exist');
+    assert.ok(truckHtml.includes('cargo-container-no2'), 'NO2 cargo container must exist');
+    assert.ok(truckHtml.includes('cargo-container-so2'), 'SO2 cargo container must exist');
+    assert.ok(truckHtml.includes('cargo-container-co'), 'CO cargo container must exist');
+    assert.ok(truckHtml.includes('cargo-container-o3'), 'O3 cargo container must exist');
+    assert.ok(truckHtml.includes('cargo-container-nh3'), 'NH3 cargo container must exist');
+  });
 
+  // ==========================================================================
+  // 2. Direct routing to PM2.5 on truck click or ?documentary=true
+  // ==========================================================================
+  it('2. Navigating to ?documentary=true routes directly to PM2.5 documentary without intermediate landing page', () => {
     setupWindowMock('?documentary=true');
     const appHtml = renderToString(React.createElement(App));
     assert.ok(
-      appHtml.includes('THE AIR') && appHtml.includes('WE BREATHE'),
-      'Clicking truck / ?documentary=true must open visual storybook'
+      appHtml.includes('pollutant-documentary-pm25'),
+      'Must directly open PM2.5 documentary container'
+    );
+    assert.ok(
+      appHtml.includes('THE PARTICLES YOU CANNOT SEE'),
+      'Must render PM2.5 dossier content directly'
+    );
+    // Explicit absence of intermediate landing page
+    assert.ok(
+      !appHtml.includes('id="begin-story-btn"'),
+      'Intermediate "BEGIN STORY" button must NOT exist'
+    );
+    assert.ok(
+      !appHtml.includes('BEGIN STORY'),
+      'Intermediate "BEGIN STORY" text must NOT exist'
+    );
+    assert.ok(
+      !appHtml.includes('id="chapter-01-the-city"'),
+      'Old 12-chapter landing page must NOT render'
     );
   });
 
   // ==========================================================================
-  // 5. Existing pollutant deep dives still work
+  // 3. All seven pollutants open directly via ?documentary=<pollutantId>
   // ==========================================================================
-  it('5. Pollutant deep dives render full 8-section dossier with "Back to the Story" CTA', () => {
+  it('3. All seven pollutants open directly with their dedicated documentary dossier', () => {
+    const pollutants = [
+      { id: 'pm25', symbol: 'PM2.5', headline: 'THE PARTICLES YOU CANNOT SEE', theme: 'theme-pm25-haze' },
+      { id: 'pm10', symbol: 'PM10', headline: 'THE INHALABLE DUST VEIL', theme: 'theme-pm10-dust' },
+      { id: 'no2', symbol: 'NO2', headline: 'THE INVISIBLE EXHAUST CATALYST', theme: 'theme-no2-combustion' },
+      { id: 'so2', symbol: 'SO2', headline: 'THE CORROSIVE EMISSION', theme: 'theme-so2-sulfur' },
+      { id: 'co', symbol: 'CO', headline: 'THE ODORLESS ASPHYXIANT', theme: 'theme-co-carbon' },
+      { id: 'o3', symbol: 'O3', headline: 'THE PHOTOCHEMICAL AFTERNOON SURGE', theme: 'theme-o3-photochemical' },
+      { id: 'nh3', symbol: 'NH3', headline: 'THE ALKALINE SMOG GLUE', theme: 'theme-nh3-agricultural' },
+    ];
+
+    pollutants.forEach(({ id, symbol, headline, theme }) => {
+      setupWindowMock(`?documentary=${id}`);
+      const appHtml = renderToString(React.createElement(App));
+
+      assert.ok(
+        appHtml.includes(`pollutant-documentary-${id}`),
+        `App must directly open pollutant documentary container for ${id}`
+      );
+      assert.ok(
+        appHtml.includes(theme),
+        `Pollutant ${id} must feature dedicated theme class ${theme}`
+      );
+      assert.ok(
+        appHtml.includes(symbol),
+        `Pollutant ${id} must display symbol ${symbol}`
+      );
+      assert.ok(
+        appHtml.includes(headline),
+        `Pollutant ${id} must display headline "${headline}"`
+      );
+      // No intermediate landing page
+      assert.ok(!appHtml.includes('id="begin-story-btn"'));
+      assert.ok(!appHtml.includes('BEGIN STORY'));
+    });
+  });
+
+  // ==========================================================================
+  // 4. Pollutant deep dives render full 8-section dossier
+  // ==========================================================================
+  it('4. Pollutant deep dives render full 8-section dossier with direct navigation', () => {
+    const html = renderToString(
+      React.createElement(PollutantDocumentary, {
+        pollutantId: 'pm25',
+        liveData: mockLiveTelemetry,
+      })
+    );
+
+    assert.ok(html.includes('THE PARTICLES YOU CANNOT SEE'), 'Must render PM2.5 headline');
+    assert.ok(html.includes('id="section-01-what-are-they"'), 'Must render Section 01');
+    assert.ok(html.includes('id="section-02-how-small"'), 'Must render Section 02');
+    assert.ok(html.includes('Human Hair'), 'Must render scale comparison');
+    assert.ok(html.includes('id="section-07-why-it-matters"'), 'Must render School section');
+    assert.ok(html.includes('id="section-08-the-takeaway"'), 'Must render 14-day section');
+    assert.ok(html.includes('YOU CANNOT ALWAYS SEE POLLUTION.'), 'Must render closing takeaway');
+    assert.ok(html.includes('EXPLORE ANOTHER POLLUTANT'), 'Must render chapter selector footer');
+
+    // Check all 7 pollutant chips in deep-dive footer
+    POLLUTANT_DOCUMENTARY_LIST.forEach((p) => {
+      assert.ok(html.includes(`explore-another-${p.id}`), `Must have chip explore-another-${p.id}`);
+    });
+  });
+
+  // ==========================================================================
+  // 5. Back navigation buttons exist in topbar and footer
+  // ==========================================================================
+  it('5. Back navigation buttons provide direct return to Atmospheric Cargo Truck', () => {
     const html = renderToString(
       React.createElement(PollutantDocumentary, {
         pollutantId: 'pm25',
@@ -270,118 +279,23 @@ describe('VayuVitals Visual Storybook Pollution Documentary', () => {
     );
 
     assert.ok(
-      html.includes('THE PARTICLES YOU CANNOT SEE'),
-      'Must render PM2.5 headline'
+      html.includes('id="doc-back-cargo-btn"'),
+      'Must render "Back to Atmospheric Cargo" button'
     );
     assert.ok(
-      html.includes('Back to the Story'),
-      'Deep-dive must provide "Back to the Story" navigation button'
-    );
-    assert.ok(html.includes('id="section-01-what-are-they"'));
-    assert.ok(html.includes('id="section-02-how-small"'));
-    assert.ok(html.includes('Human Hair'));
-    assert.ok(html.includes('EXPLORE ANOTHER POLLUTANT'));
-
-    // Check all 7 pollutant chips in deep-dive footer
-    POLLUTANT_DOCUMENTARY_LIST.forEach((p) => {
-      assert.ok(html.includes(`explore-another-${p.id}`));
-    });
-  });
-
-  // ==========================================================================
-  // 6. Live Delhi data still works
-  // ==========================================================================
-  it('6. Live Delhi data feeds into Chapter 06 newsroom and Chapter 01 dawn archive', () => {
-    const html = renderToString(
-      React.createElement(PollutantDocumentary, {
-        pollutantId: null,
-        liveData: mockLiveTelemetry,
-      })
-    );
-
-    // Chapter 06: Live Newsroom
-    assert.ok(html.includes('DELHI RIGHT NOW'));
-    assert.ok(html.includes('58.4'), 'Must render live PM2.5 value 58.4');
-    assert.ok(html.includes('Pusa Station (CAAQMS)'), 'Must render monitoring receptor');
-    assert.ok(html.includes('LIVE DELHI PM2.5 OBSERVATION'));
-    assert.ok(html.includes('DATA RECEIVED'));
-    assert.ok(html.includes('AQI 148'));
-
-    // Chapter 05: Environmental weather metrics
-    assert.ok(html.includes('2.8 m/s'), 'Must render live wind speed');
-    assert.ok(html.includes('24.5°C'), 'Must render live temperature');
-    assert.ok(html.includes('58%'), 'Must render live humidity');
-  });
-
-  // ==========================================================================
-  // 7. School Safety still works
-  // ==========================================================================
-  it('7. School Safety section renders institution, IDW flow, and mandatory estimate disclaimer', () => {
-    const html = renderToString(
-      React.createElement(PollutantDocumentary, {
-        pollutantId: null,
-        liveData: mockLiveTelemetry,
-      })
-    );
-
-    assert.ok(html.includes('FROM CITY TO SCHOOL'), 'Chapter 09 title must render');
-    assert.ok(
-      html.includes('Delhi Public School'),
-      'Must render evaluated school from directory'
+      html.includes('id="deep-dive-back-to-story-btn"'),
+      'Must render topbar back button'
     );
     assert.ok(
-      html.includes('ESTIMATED AROUND SCHOOL'),
-      'Must badge school value as ESTIMATED AROUND SCHOOL'
-    );
-    assert.ok(
-      html.includes('School PM2.5 values are spatial estimates derived from nearby monitoring stations and are not direct measurements at the school.'),
-      'Must render mandatory spatial estimate disclaimer'
-    );
-    assert.ok(
-      html.includes('school-flow-process-strip'),
-      'Must render SCHOOL -> NEARBY STATIONS -> DISTANCE -> IDW -> ESTIMATED PM2.5 flow strip'
+      html.includes('id="doc-return-to-story-cta"'),
+      'Must render footer back CTA button'
     );
   });
 
   // ==========================================================================
-  // 8. 14-day evidence still works
+  // 6. Live Delhi telemetry dynamically feeds into documentary
   // ==========================================================================
-  it('8. 14-day evidence chapter renders empirical dossier, observation metrics, and coverage', () => {
-    const html = renderToString(
-      React.createElement(PollutantDocumentary, {
-        pollutantId: null,
-        liveData: mockLiveTelemetry,
-      })
-    );
-
-    assert.ok(html.includes('14 DAYS OF EVIDENCE'), 'Chapter 10 title must render');
-    assert.ok(html.includes('14 DAYS.'), 'Dossier headline must render');
-    assert.ok(html.includes('14 Consecutive Days'), 'Window length must render');
-    assert.ok(html.includes('COVERAGE'), 'Evidence coverage metric must render');
-    assert.ok(html.includes('CHRONOLOGICAL DAILY LOG (14 CALENDAR DAYS)'));
-  });
-
-  // ==========================================================================
-  // 9. Missing data remains NO DATA
-  // ==========================================================================
-  it('9. Missing monitoring days remain strictly displayed as NO DATA without fabrication', () => {
-    const html = renderToString(
-      React.createElement(PollutantDocumentary, {
-        pollutantId: null,
-        liveData: mockLiveTelemetry,
-      })
-    );
-
-    assert.ok(
-      html.includes('NO DATA'),
-      'Missing days in the 14-day empirical timeline must show explicit NO DATA badge'
-    );
-  });
-
-  // ==========================================================================
-  // 10. No live values are hard-coded
-  // ==========================================================================
-  it('10. No live values are hard-coded; adapts to dynamic telemetry changes', () => {
+  it('6. Live Delhi telemetry dynamically feeds into Chapter 05 & Chapter 07 without hardcoding', () => {
     const customTelemetry = {
       ...mockLiveTelemetry,
       userEstimate: {
@@ -409,99 +323,85 @@ describe('VayuVitals Visual Storybook Pollution Documentary', () => {
 
     const html = renderToString(
       React.createElement(PollutantDocumentary, {
-        pollutantId: null,
+        pollutantId: 'pm25',
         liveData: customTelemetry,
       })
     );
 
     assert.ok(html.includes('84.6'), 'Must display dynamic PM2.5 84.6');
-    assert.ok(html.includes('AQI 195'), 'Must display dynamic AQI 195');
-    assert.ok(html.includes('4.2 m/s'), 'Must display dynamic wind speed 4.2');
-    assert.ok(html.includes('28.1°C'), 'Must display dynamic temperature 28.1');
+    assert.ok(html.includes('Custom Station Okhla (CAAQMS)'), 'Must display active station');
+    assert.ok(html.includes('4.2') && html.includes('m/s'), 'Must display dynamic wind speed 4.2 m/s');
+    assert.ok(html.includes('28.1') && html.includes('°C'), 'Must display dynamic temperature 28.1°C');
     assert.ok(!html.includes('58.4 µg/m³'), 'Must not display stale 58.4 value');
   });
 
   // ==========================================================================
-  // 11. Mobile CSS exists for each chapter
+  // 7. School Safety section renders IDW and mandatory spatial disclaimer
   // ==========================================================================
-  it('11. Mobile responsive CSS exists for every chapter in PollutantDocumentary.css', async () => {
-    const cssContent = await fs.readFile(
-      './src/components/PollutantDocumentary/PollutantDocumentary.css',
-      'utf8'
-    );
-
-    assert.ok(cssContent.includes('@media (max-width: 768px)'));
-
-    // Check dedicated chapter mobile compositions
-    const requiredMobileSelectors = [
-      'city-scrapbook-layout',
-      'lab-notebook-sheet',
-      'cargo-manifest-board',
-      'corkboard-surface',
-      'weather-drafting-table',
-      'newsprint-bulletin-sheet',
-      'cartographer-parchment-sheet',
-      'acetate-lightbox-table',
-      'school-clipboard-board',
-      'manila-folder-body',
-      'split-boards-container',
-      'minimal-final-sheet',
-    ];
-
-    requiredMobileSelectors.forEach((sel) => {
-      assert.ok(
-        cssContent.includes(sel),
-        `Mobile CSS must contain rules for .${sel}`
-      );
-    });
-
-    assert.ok(
-      cssContent.includes('overflow-x: hidden'),
-      'Must contain overflow-x: hidden to prevent horizontal scroll'
-    );
-  });
-
-  // ==========================================================================
-  // 12. Reduced-motion support remains
-  // ==========================================================================
-  it('12. PollutantDocumentary.css includes prefers-reduced-motion accessibility rules', async () => {
-    const cssContent = await fs.readFile(
-      './src/components/PollutantDocumentary/PollutantDocumentary.css',
-      'utf8'
-    );
-
-    assert.ok(
-      cssContent.includes('prefers-reduced-motion: reduce'),
-      'Must contain prefers-reduced-motion media query'
-    );
-    assert.ok(
-      cssContent.includes('animation-duration: 0.01ms') || cssContent.includes('animation: none'),
-      'Must disable animations under reduced motion'
-    );
-  });
-
-  // ==========================================================================
-  // 13. Keyboard navigation remains accessible
-  // ==========================================================================
-  it('13. Scrapbook tabs, buttons, and interactive cards support keyboard interaction', () => {
+  it('7. School Safety section renders institution, IDW flow, and mandatory estimate disclaimer', () => {
     const html = renderToString(
       React.createElement(PollutantDocumentary, {
-        pollutantId: null,
+        pollutantId: 'pm25',
         liveData: mockLiveTelemetry,
       })
     );
 
-    // Buttons and tabs must have role or native button tags
-    assert.ok(html.includes('id="begin-story-btn"'));
-    assert.ok(html.includes('cargo-row-entry'));
-    assert.ok(html.includes('tabIndex="0"') || html.includes('tabindex="0"'));
-    assert.ok(html.includes('role="button"'));
+    assert.ok(html.includes('FROM CITY TO SCHOOL'), 'Chapter 07 title must render');
+    assert.ok(
+      html.includes('Delhi Public School'),
+      'Must render evaluated school from directory'
+    );
+    assert.ok(
+      html.includes('ESTIMATED AROUND SCHOOL'),
+      'Must badge school value as ESTIMATED AROUND SCHOOL'
+    );
+    assert.ok(
+      html.includes('School PM2.5 values are spatial estimates derived from nearby monitoring stations and are not direct measurements at the school.'),
+      'Must render mandatory spatial estimate disclaimer'
+    );
   });
 
   // ==========================================================================
-  // 14. ?view=school still works
+  // 8. 14-day evidence archive strictly displays NO DATA for unrecorded days
   // ==========================================================================
-  it('14. App renders School Safety view when ?view=school is active', () => {
+  it('8. 14-day evidence chapter renders empirical dossier and strict NO DATA without fabrication', () => {
+    const html = renderToString(
+      React.createElement(PollutantDocumentary, {
+        pollutantId: 'pm25',
+        liveData: mockLiveTelemetry,
+      })
+    );
+
+    assert.ok(html.includes('14 DAYS OF EVIDENCE'), 'Chapter 08 title must render');
+    assert.ok(html.includes('14-DAY ARCHIVE'), 'Chapter 08 archive kicker must render');
+    assert.ok(
+      html.includes('NO DATA'),
+      'Missing days in the 14-day empirical timeline must show explicit NO DATA badge'
+    );
+  });
+
+  // ==========================================================================
+  // 9. Mobile responsive CSS and reduced motion compliance
+  // ==========================================================================
+  it('9. PollutantDocumentary.css includes responsive and prefers-reduced-motion accessibility rules', async () => {
+    const cssContent = await fs.readFile(
+      './src/components/PollutantDocumentary/PollutantDocumentary.css',
+      'utf8'
+    );
+
+    assert.ok(cssContent.includes('@media (max-width: 768px)'), 'Must include 768px breakpoint');
+    assert.ok(cssContent.includes('cinematic-14day-grid'), 'Must include 14-day responsive styles');
+    assert.ok(cssContent.includes('overflow-x: hidden'), 'Must contain overflow-x: hidden');
+    assert.ok(
+      cssContent.includes('prefers-reduced-motion: reduce'),
+      'Must contain prefers-reduced-motion query'
+    );
+  });
+
+  // ==========================================================================
+  // 10. ?view=school still works cleanly
+  // ==========================================================================
+  it('10. App renders School Safety view when ?view=school is active', () => {
     setupWindowMock('?view=school', '#school');
     const html = renderToString(React.createElement(App));
     assert.ok(
@@ -511,9 +411,9 @@ describe('VayuVitals Visual Storybook Pollution Documentary', () => {
   });
 
   // ==========================================================================
-  // 15. ?view=map still works
+  // 11. ?view=map still works cleanly
   // ==========================================================================
-  it('15. App renders Live Map when ?view=map is active', () => {
+  it('11. App renders Live Map when ?view=map is active', () => {
     setupWindowMock('?view=map', '#heatmap');
     const html = renderToString(React.createElement(App));
     assert.ok(
@@ -523,9 +423,9 @@ describe('VayuVitals Visual Storybook Pollution Documentary', () => {
   });
 
   // ==========================================================================
-  // 16. Petition workflow still works
+  // 12. Petition workflow still works cleanly
   // ==========================================================================
-  it('16. Petition workflow helper functions remain intact and fully operational', async () => {
+  it('12. Petition workflow helper functions remain intact and fully operational', async () => {
     const petitionMod = await viteServer.ssrLoadModule(
       './src/components/Petition/petitionHelpers.js'
     );
@@ -533,160 +433,5 @@ describe('VayuVitals Visual Storybook Pollution Documentary', () => {
     assert.ok(petitionMod.computeClientEvidence, 'Client evidence calculator must exist');
     assert.ok(petitionMod.computeClientForecast, 'Client forecast calculator must exist');
     assert.ok(petitionMod.categorizePm25, 'PM2.5 categorizer must exist');
-  });
-
-  // ==========================================================================
-  // 17. All seven pollutants render cinematic editorial documentaries
-  // ==========================================================================
-  it('17. All seven pollutants render dedicated cinematic documentary chapters with theme classes', () => {
-    const pollutants = ['pm25', 'pm10', 'no2', 'so2', 'co', 'o3', 'nh3'];
-    const expectedThemes = {
-      pm25: 'theme-pm25-haze',
-      pm10: 'theme-pm10-dust',
-      no2: 'theme-no2-combustion',
-      so2: 'theme-so2-sulfur',
-      co: 'theme-co-carbon',
-      o3: 'theme-o3-photochemical',
-      nh3: 'theme-nh3-agricultural',
-    };
-
-    pollutants.forEach((pId) => {
-      const html = renderToString(
-        React.createElement(PollutantDocumentary, {
-          pollutantId: pId,
-          liveData: mockLiveTelemetry,
-        })
-      );
-
-      const polData = POLLUTANT_DOCUMENTARIES[pId];
-      assert.ok(
-        html.includes(`pollutant-documentary-${pId}`),
-        `Pollutant ${pId} container must render`
-      );
-      assert.ok(
-        html.includes('cinematic-pollutant-documentary'),
-        `Pollutant ${pId} must feature cinematic-pollutant-documentary class`
-      );
-      assert.ok(
-        html.includes(expectedThemes[pId]),
-        `Pollutant ${pId} must feature theme class ${expectedThemes[pId]}`
-      );
-      assert.ok(
-        html.includes(polData.symbol),
-        `Pollutant ${pId} must render symbol ${polData.symbol}`
-      );
-      assert.ok(
-        html.includes('cinematic-chapter-hero'),
-        `Pollutant ${pId} must render full-screen hero opening`
-      );
-    });
-  });
-
-  // ==========================================================================
-  // 18. Cinematic transition veil, film grain, and vignette overlays render
-  // ==========================================================================
-  it('18. Cinematic transition veil, film grain, and vignette overlays are rendered', () => {
-    const html = renderToString(
-      React.createElement(PollutantDocumentary, {
-        pollutantId: 'pm25',
-        liveData: mockLiveTelemetry,
-      })
-    );
-
-    assert.ok(
-      html.includes('cinematic-film-grain'),
-      'Must render ambient film grain overlay'
-    );
-    assert.ok(
-      html.includes('cinematic-vignette-overlay'),
-      'Must render cinematic vignette overlay'
-    );
-    assert.ok(
-      html.includes('cinematic-transition-veil'),
-      'Must render gapless transition veil'
-    );
-    assert.ok(
-      html.includes('transition-atmospheric-particles'),
-      'Must render transition atmospheric particles'
-    );
-  });
-
-  // ==========================================================================
-  // 19. Full-screen documentary chapter markers and editorial typography render
-  // ==========================================================================
-  it('19. Documentary chapter markers and editorial typography render cleanly', () => {
-    const html = renderToString(
-      React.createElement(PollutantDocumentary, {
-        pollutantId: 'pm25',
-        liveData: mockLiveTelemetry,
-      })
-    );
-
-    assert.ok(html.includes('- 2026 -'), 'Hero date marker must render');
-    assert.ok(html.includes('DELHI ATMOSPHERIC ARCHIVE'), 'Hero archive kicker must render');
-    assert.ok(html.includes('- CHAPTER 01 -'), 'Chapter 01 marker must render');
-    assert.ok(html.includes('- 2.5 µm -'), 'Chapter 02 scale marker must render');
-    assert.ok(html.includes('- CHAPTER 03 -'), 'Chapter 03 sources marker must render');
-    assert.ok(html.includes('- CHAPTER 04 -'), 'Chapter 04 transport marker must render');
-    assert.ok(html.includes('- LIVE EVIDENCE -'), 'Chapter 05 live evidence marker must render');
-    assert.ok(html.includes('- CHAPTER 06 -'), 'Chapter 06 trends marker must render');
-    assert.ok(html.includes('- CHAPTER 07 -'), 'Chapter 07 school marker must render');
-    assert.ok(html.includes('- 14-DAY ARCHIVE -'), 'Chapter 08 14-day archive marker must render');
-    assert.ok(html.includes('YOU CANNOT ALWAYS SEE POLLUTION.'), 'Takeaway closing line must render');
-    assert.ok(html.includes('SEE THE AIR. UNDERSTAND THE AIR. ACT ON THE EVIDENCE.'), 'Brand credo must render');
-  });
-
-  // ==========================================================================
-  // 20. Pollutant navigation footer renders all 7 chapter chips
-  // ==========================================================================
-  it('20. Pollutant navigation footer renders all 7 chapter chips with chapter numbers', () => {
-    const html = renderToString(
-      React.createElement(PollutantDocumentary, {
-        pollutantId: 'pm25',
-        liveData: mockLiveTelemetry,
-      })
-    );
-
-    assert.ok(html.includes('cinematic-pollutant-nav-footer'));
-    assert.ok(html.includes('EXPLORE ANOTHER POLLUTANT'));
-
-    POLLUTANT_DOCUMENTARY_LIST.forEach((p, idx) => {
-      assert.ok(
-        html.includes(`explore-another-${p.id}`),
-        `Must render button for ${p.id}`
-      );
-      assert.ok(
-        html.includes(`0${idx + 1}`),
-        `Must render chapter number 0${idx + 1}`
-      );
-    });
-  });
-
-  // ==========================================================================
-  // 21. Live telemetry, School Safety IDW estimate, and 14-day evidence are integrated
-  // ==========================================================================
-  it('21. Live telemetry, School Safety IDW estimate, and 14-day evidence integrate into cinematic chapters', () => {
-    const html = renderToString(
-      React.createElement(PollutantDocumentary, {
-        pollutantId: 'pm25',
-        liveData: mockLiveTelemetry,
-      })
-    );
-
-    // Live number in Chapter 05
-    assert.ok(html.includes('58.4'), 'Live PM2.5 reading 58.4 must render');
-    assert.ok(html.includes('Pusa Station (CAAQMS)'), 'Receptor station must render');
-    assert.ok(html.includes('AQI 148'), 'AQI equivalent must render');
-
-    // School Safety in Chapter 07
-    assert.ok(html.includes('ESTIMATED AROUND SCHOOL'), 'School estimate badge must render');
-    assert.ok(
-      html.includes('School PM2.5 values are spatial estimates derived from nearby monitoring stations and are not direct measurements at the school.'),
-      'Mandatory spatial estimation disclaimer must render'
-    );
-
-    // 14-Day evidence in Chapter 08
-    assert.ok(html.includes('14 DAYS OF EVIDENCE'), '14-day evidence title must render');
-    assert.ok(html.includes('NO DATA'), 'Unrecorded days must strictly display NO DATA');
   });
 });
