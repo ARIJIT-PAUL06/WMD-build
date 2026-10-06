@@ -13,9 +13,21 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const GRIDS_PATH = path.join(__dirname, '..', 'ml', 'data', 'spatial_grids.json');
-const BUFFER_PATH = path.join(__dirname, '..', 'ml', 'data', 'grid_14day_buffer.json');
-const THREE_YEAR_DAILY_CSV = path.join(__dirname, '..', 'ml', 'data', 'grid_3year_daily_train.csv');
+const isLambda = Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
+
+function resolveDataPath(relPath) {
+  const localPath = path.join(__dirname, '..', relPath);
+  if (fs.existsSync(localPath)) return localPath;
+  const lambdaPath = path.join(process.cwd(), relPath);
+  if (fs.existsSync(lambdaPath)) return lambdaPath;
+  return localPath;
+}
+
+const GRIDS_PATH = resolveDataPath('ml/data/spatial_grids.json');
+const BUFFER_PATH = isLambda
+  ? path.join('/tmp', 'grid_14day_buffer.json')
+  : resolveDataPath('ml/data/grid_14day_buffer.json');
+const THREE_YEAR_DAILY_CSV = resolveDataPath('ml/data/grid_3year_daily_train.csv');
 
 let spatialGrids = {};
 let grid14DayBuffer = {};

@@ -39,8 +39,22 @@ import { sendEmailViaSES } from './sesService.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const AUDIT_LOG_FILE = path.join(__dirname, '..', 'ml', 'data', 'autonomous_monitor_audit.json');
-const STATE_FILE = path.join(__dirname, '..', 'ml', 'data', 'monitor_state.json');
+const isLambda = Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
+
+function resolveDataPath(relPath) {
+  const localPath = path.join(__dirname, '..', relPath);
+  if (fs.existsSync(localPath)) return localPath;
+  const lambdaPath = path.join(process.cwd(), relPath);
+  if (fs.existsSync(lambdaPath)) return lambdaPath;
+  return localPath;
+}
+
+const AUDIT_LOG_FILE = isLambda
+  ? path.join('/tmp', 'autonomous_monitor_audit.json')
+  : resolveDataPath('ml/data/autonomous_monitor_audit.json');
+const STATE_FILE = isLambda
+  ? path.join('/tmp', 'monitor_state.json')
+  : resolveDataPath('ml/data/monitor_state.json');
 
 // In-Memory Debouncing & Rate Limiting State
 let monitorState = {

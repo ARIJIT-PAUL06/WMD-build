@@ -18,8 +18,16 @@ import { analyzeChemicalFingerprint, fetchLiveSourceAttribution, renderAttributi
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SCHOOLS_FILE = path.join(__dirname, '..', 'src', 'data', 'schoolsDirectory.json');
-const GRIDS_PATH = path.join(__dirname, '..', 'ml', 'data', 'spatial_grids.json');
+function resolveDataPath(relPath) {
+  const localPath = path.join(__dirname, '..', relPath);
+  if (fs.existsSync(localPath)) return localPath;
+  const lambdaPath = path.join(process.cwd(), relPath);
+  if (fs.existsSync(lambdaPath)) return lambdaPath;
+  return localPath;
+}
+
+const SCHOOLS_FILE = resolveDataPath('src/data/schoolsDirectory.json');
+const GRIDS_PATH = resolveDataPath('ml/data/spatial_grids.json');
 
 /**
  * Load directory data

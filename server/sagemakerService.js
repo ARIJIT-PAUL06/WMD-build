@@ -44,10 +44,18 @@ if (!sagemakerClient) {
   }
 }
 
+function resolveDataPath(relPath) {
+  const localPath = path.join(__dirname, '..', relPath);
+  if (fs.existsSync(localPath)) return localPath;
+  const lambdaPath = path.join(process.cwd(), relPath);
+  if (fs.existsSync(lambdaPath)) return lambdaPath;
+  return localPath;
+}
+
 // Load metadata if available
 let modelMetadata = null;
 try {
-  const metaPath = path.join(__dirname, '..', 'ml', 'model', 'sagemaker_model_metadata.json');
+  const metaPath = resolveDataPath('ml/model/sagemaker_model_metadata.json');
   if (fs.existsSync(metaPath)) {
     modelMetadata = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
   }
