@@ -164,10 +164,11 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
   const [isLiveLoading, setIsLiveLoading] = useState(false);
 
   const handleTruckClick = (e) => {
+    const target = selectedPollutantId || 'pm25';
     if (onOpenDocumentary) {
-      onOpenDocumentary(null);
+      onOpenDocumentary(target);
     } else if (onSelectPollutant) {
-      onSelectPollutant(null);
+      onSelectPollutant(target);
     }
   };
 
@@ -453,6 +454,7 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
                   return (
                     <div
                       key={p.id}
+                      id={`cargo-container-${p.id}`}
                       className={`pollutant-container-unit ${isSelected ? 'selected' : ''}`}
                       onClick={(e) => {
                         e.stopPropagation();
