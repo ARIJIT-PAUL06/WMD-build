@@ -617,6 +617,23 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
   const userRequestedZoomRef = useRef(false);
   const handleSelectSearchedPlaceRef = useRef(null);
 
+  // Safe Mapbox token missing & error detection
+  const [isTokenMissing, setIsTokenMissing] = useState(() => {
+    const envToken = typeof import.meta !== 'undefined' ? (import.meta.env?.VITE_MAPBOX_TOKEN || '') : '';
+    return !(mapboxgl.accessToken || envToken);
+  });
+  const [mapInitError, setMapInitError] = useState(null);
+  const [tempTokenInput, setTempTokenInput] = useState('');
+
+  const handleApplyTempToken = () => {
+    const trimmed = tempTokenInput.trim();
+    if (trimmed) {
+      mapboxgl.accessToken = trimmed;
+      setIsTokenMissing(false);
+      setMapInitError(null);
+    }
+  };
+
   // 108 Nationwide stations state across all states and union territories
   const [stations, setStations] = useState(initialIndiaStations);
   const [isLoadingLive, setIsLoadingLive] = useState(false);
@@ -1829,9 +1846,13 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     if (!mapContainerRef.current) return;
     if (mapInstanceRef.current) return;
 
-    if (!mapboxgl.accessToken) {
-      mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
+    const token = mapboxgl.accessToken || (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_MAPBOX_TOKEN : '') || '';
+    if (!token) {
+      console.warn('Mapbox GL: No access token provided in VITE_MAPBOX_TOKEN. Map rendering paused.');
+      setIsTokenMissing(true);
+      return;
     }
+    mapboxgl.accessToken = token;
 
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const targetLon = userLocationRef.current?.lon ?? 75.76;
@@ -1841,24 +1862,34 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     const initialZoom = urlParams && urlParams.get('zoom') ? parseFloat(urlParams.get('zoom')) : 4.85;
     const initialPitch = urlParams && urlParams.get('pitch') ? parseFloat(urlParams.get('pitch')) : 58;
 
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: MAPBOX_DARK_STYLE, // High-contrast night navigation
-      center: [initialLng, initialLat],
-      zoom: initialZoom,
-      minZoom: 3.8,
-      maxZoom: 21.0,
-      pitch: initialPitch,
-      maxPitch: 85, // Allows high-pitch 3D slanted perspective
-      bearing: 0,
-      attributionControl: false,
-      interactive: true,
-      dragPan: true,
-      dragRotate: true,
-      scrollZoom: true,
-      touchZoomRotate: true,
-      doubleClickZoom: true,
-    });
+    let map;
+    try {
+      map = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: MAPBOX_DARK_STYLE, // High-contrast night navigation
+        center: [initialLng, initialLat],
+        zoom: initialZoom,
+        minZoom: 3.8,
+        maxZoom: 21.0,
+        pitch: initialPitch,
+        maxPitch: 85, // Allows high-pitch 3D slanted perspective
+        bearing: 0,
+        attributionControl: false,
+        interactive: true,
+        dragPan: true,
+        dragRotate: true,
+        scrollZoom: true,
+        touchZoomRotate: true,
+        doubleClickZoom: true,
+      });
+      mapInstanceRef.current = map;
+      setIsTokenMissing(false);
+      setMapInitError(null);
+    } catch (err) {
+      console.warn('Failed to initialize Mapbox GL:', err);
+      setMapInitError(err.message || 'Failed to initialize Mapbox GL engine');
+      return;
+    }
 
     // Explicitly guarantee all interactive manipulation controls are active
     map.dragPan.enable();
@@ -2950,6 +2981,140 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           pointerEvents: 'auto',
         }}
       />
+
+      {/* Mapbox Token Missing or Error Fallback Banner */}
+      {(isTokenMissing || mapInitError) && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 30,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            background: 'radial-gradient(circle at center, rgba(15, 23, 42, 0.94) 0%, rgba(7, 10, 18, 0.98) 100%)',
+            backdropFilter: 'blur(16px)',
+            textAlign: 'center',
+            pointerEvents: 'auto',
+          }}
+        >
+          <div
+            style={{
+              maxWidth: '560px',
+              width: '90%',
+              padding: '32px 28px',
+              borderRadius: '20px',
+              background: 'rgba(30, 41, 59, 0.75)',
+              border: '1px solid rgba(56, 189, 248, 0.28)',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(56, 189, 248, 0.12)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '16px',
+            }}
+          >
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                background: 'rgba(56, 189, 248, 0.14)',
+                border: '1px solid rgba(56, 189, 248, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <MapPin size={28} color="#38bdf8" />
+            </div>
+
+            <div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f8fafc', marginBottom: '8px', letterSpacing: '-0.01em' }}>
+                Mapbox Public Token Required
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
+                To unlock the live interactive 3D spatial raster map of Delhi &amp; India, configure{' '}
+                <code style={{ color: '#38bdf8', background: 'rgba(56, 189, 248, 0.12)', padding: '2px 6px', borderRadius: '4px' }}>
+                  VITE_MAPBOX_TOKEN
+                </code>{' '}
+                in your <code style={{ color: '#cbd5e1' }}>.env</code> file.
+              </p>
+            </div>
+
+            {/* Instant Token Quick-Input */}
+            <div style={{ display: 'flex', width: '100%', gap: '8px', maxWidth: '420px', marginTop: '4px' }}>
+              <input
+                type="text"
+                placeholder="Paste token (pk.eyJ1...)"
+                value={tempTokenInput}
+                onChange={(e) => setTempTokenInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyTempToken(); }}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  background: 'rgba(15, 23, 42, 0.85)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#f8fafc',
+                  fontSize: '0.8rem',
+                  outline: 'none',
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleApplyTempToken}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Load Map
+              </button>
+            </div>
+
+            <div style={{ height: '1px', width: '100%', background: 'rgba(255, 255, 255, 0.08)', margin: '4px 0' }} />
+
+            <p style={{ fontSize: '0.78rem', color: '#64748b', margin: 0 }}>
+              All other modules are active. Scroll down to explore the{' '}
+              <span style={{ color: '#34d399', fontWeight: 600 }}>Atmospheric Cargo Truck</span> and{' '}
+              <span style={{ color: '#38bdf8', fontWeight: 600 }}>School Safety intelligence</span> below.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                const truckEl = document.getElementById('atmospheric-cargo-section');
+                if (truckEl) truckEl.scrollIntoView({ behavior: 'smooth' });
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 16px',
+                borderRadius: '9999px',
+                background: 'rgba(52, 211, 153, 0.12)',
+                border: '1px solid rgba(52, 211, 153, 0.35)',
+                color: '#34d399',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              <span>Continue to Cargo Truck</span>
+              <ChevronDown size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Electric CRT TV-On Boot Animation Overlay (Elevated at zIndex 35 above map canvas) */}
       {isTvTurningOn && (
