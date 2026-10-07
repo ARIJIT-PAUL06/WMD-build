@@ -18,7 +18,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ArrowLeft, RefreshCw, AlertCircle } from 'lucide-react';
 import schoolsDirectory from '../../data/schoolsDirectory.json';
 import SchoolSafetyDashboard from './SchoolSafetyDashboard.jsx';
-import PetitionModal from '../Petition/PetitionModal.jsx';
+const PetitionModal = React.lazy(() => import('../Petition/PetitionModal.jsx'));
 import {
   getNearbyStationsForSchool,
   calculateSchoolIdw,
@@ -548,17 +548,19 @@ export default function SchoolSafetyContainer({
 
       {/* Existing PetitionModal Integration for Phase 6 */}
       {isPetitionModalOpen && (
-        <PetitionModal
-          isOpen={isPetitionModalOpen}
-          onClose={() => setIsPetitionModalOpen(false)}
-          school={selectedSchool}
-          schoolContext={selectedSchool}
-          evidencePackage={activeEvidencePackage || evidencePackage}
-          schoolEvidencePackage={activeEvidencePackage || evidencePackage}
-          initialStation={selectedSchool.nearestStation || nearbyStations[0]?.name}
-          initialLocality={selectedSchool.locality}
-          initialPm25={schoolEstimate.pm25 || 142}
-        />
+        <React.Suspense fallback={null}>
+          <PetitionModal
+            isOpen={isPetitionModalOpen}
+            onClose={() => setIsPetitionModalOpen(false)}
+            school={selectedSchool}
+            schoolContext={selectedSchool}
+            evidencePackage={activeEvidencePackage || evidencePackage}
+            schoolEvidencePackage={activeEvidencePackage || evidencePackage}
+            initialStation={selectedSchool.nearestStation || nearbyStations[0]?.name}
+            initialLocality={selectedSchool.locality}
+            initialPm25={schoolEstimate.pm25 || 142}
+          />
+        </React.Suspense>
       )}
     </div>
   );

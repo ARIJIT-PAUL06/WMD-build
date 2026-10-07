@@ -2,11 +2,34 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Film, MapPin, Truck } from 'lucide-react';
 import PanoramicScrollHero from './components/MotionHero/PanoramicScrollHero';
 import DelhiAqiHeatmap from './components/Heatmap/DelhiAqiHeatmap';
-import AutonomousMonitorModal from './components/Dashboard/AutonomousMonitorModal';
+const AutonomousMonitorModal = React.lazy(() => import('./components/Dashboard/AutonomousMonitorModal'));
 import AtmosphericCargoTruck from './components/CargoTruck/AtmosphericCargoTruck';
 import PollutantDetailPage from './components/PollutantDetail/PollutantDetailPage';
 import SchoolSafetyContainer from './components/SchoolSafety/SchoolSafetyContainer';
 import PollutantDocumentary from './components/PollutantDocumentary/PollutantDocumentary';
+
+class MapErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(err) {
+    console.warn('Map engine error safely intercepted by boundary:', err);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ width: '100%', minHeight: '600px', background: '#070a12', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+          <p>Map engine paused. Continue scrolling to view Atmospheric Cargo and School Safety modules.</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function App() {
   const heatmapRef = useRef(null);
@@ -245,11 +268,17 @@ export default function App() {
   if (isMapOnly) {
     return (
       <div style={{ width: '100vw', height: '100vh', background: '#070a12', overflow: 'hidden' }}>
-        <DelhiAqiHeatmap />
-        <AutonomousMonitorModal
-          isOpen={isGlobalMonitorOpen}
-          onClose={handleCloseMonitor}
-        />
+        <MapErrorBoundary>
+          <DelhiAqiHeatmap />
+        </MapErrorBoundary>
+        {isGlobalMonitorOpen && (
+          <React.Suspense fallback={null}>
+            <AutonomousMonitorModal
+              isOpen={isGlobalMonitorOpen}
+              onClose={handleCloseMonitor}
+            />
+          </React.Suspense>
+        )}
       </div>
     );
   }
@@ -263,10 +292,14 @@ export default function App() {
           onBack={handleBackToTruck}
           onSelectPollutant={handleSelectPollutant}
         />
-        <AutonomousMonitorModal
-          isOpen={isGlobalMonitorOpen}
-          onClose={handleCloseMonitor}
-        />
+        {isGlobalMonitorOpen && (
+          <React.Suspense fallback={null}>
+            <AutonomousMonitorModal
+              isOpen={isGlobalMonitorOpen}
+              onClose={handleCloseMonitor}
+            />
+          </React.Suspense>
+        )}
       </>
     );
   }
@@ -283,7 +316,9 @@ export default function App() {
 
         {activeMobileTab === 'map' && (
           <div style={{ width: '100%', height: '100vh', position: 'relative', overflow: 'hidden' }}>
-            <DelhiAqiHeatmap onDrawerChange={setIsMapDrawerOpen} />
+            <MapErrorBoundary>
+              <DelhiAqiHeatmap onDrawerChange={setIsMapDrawerOpen} />
+            </MapErrorBoundary>
           </div>
         )}
 
@@ -339,10 +374,14 @@ export default function App() {
         </nav>
 
         {/* Autonomous Atmospheric Shield & Emergency Monitor Test Bench */}
-        <AutonomousMonitorModal
-          isOpen={isGlobalMonitorOpen}
-          onClose={handleCloseMonitor}
-        />
+        {isGlobalMonitorOpen && (
+          <React.Suspense fallback={null}>
+            <AutonomousMonitorModal
+              isOpen={isGlobalMonitorOpen}
+              onClose={handleCloseMonitor}
+            />
+          </React.Suspense>
+        )}
       </div>
     );
   }
@@ -355,7 +394,9 @@ export default function App() {
 
       {/* 2. MODERN AQI SPATIAL HEATMAP OF DELHI */}
       <div ref={heatmapRef}>
-        <DelhiAqiHeatmap />
+        <MapErrorBoundary>
+          <DelhiAqiHeatmap />
+        </MapErrorBoundary>
       </div>
 
       {/* 3. ATMOSPHERIC LOGISTICS & MASS CARGO TRUCK */}
@@ -365,10 +406,14 @@ export default function App() {
       />
 
       {/* Autonomous Atmospheric Shield & Emergency Monitor Test Bench */}
-      <AutonomousMonitorModal
-        isOpen={isGlobalMonitorOpen}
-        onClose={handleCloseMonitor}
-      />
+      {isGlobalMonitorOpen && (
+        <React.Suspense fallback={null}>
+          <AutonomousMonitorModal
+            isOpen={isGlobalMonitorOpen}
+            onClose={handleCloseMonitor}
+          />
+        </React.Suspense>
+      )}
     </div>
   );
 }

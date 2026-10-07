@@ -442,6 +442,49 @@ describe('School Safety & PetitionModal Integration (Phase 6 Tests)', () => {
         letterText: 'Standard complaint letter body text.',
       });
     }, 'Must generate standard PDF without exception');
+
+    // Hindi PDF generation executes cleanly in Node (fallback path)
+    assert.doesNotThrow(() => {
+      const doc = generatePetitionPdf({
+        evidence,
+        authority,
+        letterText: 'सेवा में,\nजिलाधिकारी महोदय,\nविषय: वायु प्रदूषण रोकथाम हेतु जनहित याचिका\nमान्यवर, सविनय निवेदन है कि...',
+        language: 'hi',
+      });
+      assert.ok(doc, 'Must return jsPDF document instance for Hindi petition');
+    }, 'Must generate Hindi PDF without exception in Node');
+
+    // Hindi PDF generation with simulated browser canvas executes cleanly
+    const mockCanvas = {
+      width: 100,
+      height: 100,
+      getContext: () => ({
+        font: '',
+        fillStyle: '',
+        fillRect: () => {},
+        fillText: () => {},
+        measureText: (text) => ({ width: text.length * 8 }),
+      }),
+      toDataURL: () => 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+    };
+    const origDoc = globalThis.document;
+    try {
+      globalThis.document = {
+        createElement: (tag) => (tag === 'canvas' ? mockCanvas : {}),
+      };
+      assert.doesNotThrow(() => {
+        const doc = generatePetitionPdf({
+          evidence,
+          authority,
+          letterText: 'सेवा में,\nजिलाधिकारी महोदय,\nविषय: वायु प्रदूषण रोकथाम हेतु जनहित याचिका\nमान्यवर, सविनय निवेदन है कि विद्यालय परिसर में वायु गुणवत्ता खतरनाक स्तर पर पहुंच चुकी है।\nअनुरोध है कि त्वरित कार्रवाई की जाए।',
+          language: 'hi',
+          schoolEvidencePackage: pkg,
+        });
+        assert.ok(doc, 'Must return jsPDF document instance using canvas renderer');
+      }, 'Must generate Hindi PDF with canvas rendering without exception');
+    } finally {
+      globalThis.document = origDoc;
+    }
   });
 
   // ==========================================================================
