@@ -31,3 +31,4 @@ __pycache__/
 *.pyc
 *.pdf
 lambda-dist/
+FRONTEND_AUDIT.md

@@ -36,8 +36,8 @@ import {
   X,
   Building2
 } from 'lucide-react';
-import PetitionModal from '../Petition/PetitionModal';
-import AutonomousMonitorModal from '../Dashboard/AutonomousMonitorModal';
+const PetitionModal = React.lazy(() => import('../Petition/PetitionModal'));
+const AutonomousMonitorModal = React.lazy(() => import('../Dashboard/AutonomousMonitorModal'));
 
 // Import official India national boundary GeoJSON (MultiPolygon covering mainland + islands)
 import indiaBoundaryGeoJson from '../../data/indiaBoundary.json';
@@ -647,24 +647,24 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
   // Helper for glass panel background wipe & flicker
   const getPanelClass = useCallback(() => {
-    if (uiBootStage === 0) return 'crt-ui-hidden';
-    if (uiBootStage === 1) return 'crt-panel-flicker';
+    if (uiBootStage === 0 && !isTokenMissing) return 'crt-ui-hidden';
+    if (uiBootStage === 1 && !isTokenMissing) return 'crt-panel-flicker';
     return '';
-  }, [uiBootStage]);
+  }, [uiBootStage, isTokenMissing]);
 
   // Helper for button flicker class
   const getBtnFlickerClass = useCallback(() => {
-    if (uiBootStage === 0) return 'crt-ui-hidden';
-    if (uiBootStage === 1) return 'crt-btn-flicker';
+    if (uiBootStage === 0 && !isTokenMissing) return 'crt-ui-hidden';
+    if (uiBootStage === 1 && !isTokenMissing) return 'crt-btn-flicker';
     return '';
-  }, [uiBootStage]);
+  }, [uiBootStage, isTokenMissing]);
 
   // Helper for sequential left-to-right button flicker timing
   const getBtnFlickerStyle = useCallback((delayMs) => {
-    if (uiBootStage === 0) return { opacity: 0, visibility: 'hidden' };
-    if (uiBootStage === 1) return { animationDelay: `${delayMs}ms` };
+    if (uiBootStage === 0 && !isTokenMissing) return { opacity: 0, visibility: 'hidden' };
+    if (uiBootStage === 1 && !isTokenMissing) return { animationDelay: `${delayMs}ms` };
     return {};
-  }, [uiBootStage]);
+  }, [uiBootStage, isTokenMissing]);
 
   const triggerMapActivation = useCallback(() => {
     if (hasTriggeredActivationRef.current) return;
@@ -2988,7 +2988,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           style={{
             position: 'absolute',
             inset: 0,
-            zIndex: 30,
+            zIndex: 15,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -3089,29 +3089,59 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
               <span style={{ color: '#38bdf8', fontWeight: 600 }}>School Safety intelligence</span> below.
             </p>
 
-            <button
-              type="button"
-              onClick={() => {
-                const truckEl = document.getElementById('atmospheric-cargo-section');
-                if (truckEl) truckEl.scrollIntoView({ behavior: 'smooth' });
-              }}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '8px 16px',
-                borderRadius: '9999px',
-                background: 'rgba(52, 211, 153, 0.12)',
-                border: '1px solid rgba(52, 211, 153, 0.35)',
-                color: '#34d399',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              <span>Continue to Cargo Truck</span>
-              <ChevronDown size={14} />
-            </button>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+              {/* Direct Petition & Action Generator Launcher */}
+              <button
+                id="token-fallback-petition-btn"
+                type="button"
+                onClick={() => {
+                  setPetitionStation(displayStation?.name || 'DTU (Delhi Technological University)');
+                  setPetitionLocality(displayStation?.zone ? `${displayStation.name}, ${displayStation.zone}` : 'Rohini Sector 16, North Delhi');
+                  setPetitionPm25(displayStation?.pm25 || displayStation?.aqi || 142);
+                  setIsPetitionModalOpen(true);
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 16px',
+                  borderRadius: '9999px',
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(6, 182, 212, 0.25) 100%)',
+                  border: '1px solid rgba(52, 211, 153, 0.5)',
+                  color: '#34d399',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                <FileText size={14} color="#34d399" />
+                <span>Petition &amp; Action</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const truckEl = document.getElementById('atmospheric-cargo-section');
+                  if (truckEl) truckEl.scrollIntoView({ behavior: 'smooth' });
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 16px',
+                  borderRadius: '9999px',
+                  background: 'rgba(52, 211, 153, 0.12)',
+                  border: '1px solid rgba(52, 211, 153, 0.35)',
+                  color: '#34d399',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                <span>Continue to Cargo Truck</span>
+                <ChevronDown size={14} />
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -4871,19 +4901,27 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       </aside>
 
       {/* Section 10: Civic Petition & Action Modal */}
-      <PetitionModal
-        isOpen={isPetitionModalOpen}
-        onClose={() => setIsPetitionModalOpen(false)}
-        initialStation={petitionStation}
-        initialLocality={petitionLocality}
-        initialPm25={petitionPm25}
-      />
+      {isPetitionModalOpen && (
+        <React.Suspense fallback={null}>
+          <PetitionModal
+            isOpen={isPetitionModalOpen}
+            onClose={() => setIsPetitionModalOpen(false)}
+            initialStation={petitionStation}
+            initialLocality={petitionLocality}
+            initialPm25={petitionPm25}
+          />
+        </React.Suspense>
+      )}
 
       {/* Autonomous Atmospheric Shield & Emergency Monitor Test Bench */}
-      <AutonomousMonitorModal
-        isOpen={isMonitorModalOpen}
-        onClose={() => setIsMonitorModalOpen(false)}
-      />
+      {isMonitorModalOpen && (
+        <React.Suspense fallback={null}>
+          <AutonomousMonitorModal
+            isOpen={isMonitorModalOpen}
+            onClose={() => setIsMonitorModalOpen(false)}
+          />
+        </React.Suspense>
+      )}
     </section>
   );
 

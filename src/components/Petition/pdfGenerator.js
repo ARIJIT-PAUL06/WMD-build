@@ -2,6 +2,105 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 /**
+ * High-DPI Devanagari Canvas Text Block Renderer
+ * Renders Unicode / Devanagari text with native browser HarfBuzz/DirectWrite complex script
+ * shaping, avoiding jsPDF's lack of complex Brahmic script ligature and matra shaping.
+ */
+function renderDevanagariCanvasBlock({
+  paragraphs,
+  contentWidthMm = 174,
+  fontSizePt = 8.8,
+  lineHeightMultiplier = 1.5,
+  fontFamily = "'Noto Sans Devanagari', 'Nirmala UI', 'Devanagari Sangam MN', 'Mangal', sans-serif",
+  textColor = '#334155',
+  backgroundColor = '#ffffff',
+  fontWeight = 'normal',
+  paddingYMm = 2,
+  scale = 3
+}) {
+  if (typeof document === 'undefined' || typeof document.createElement !== 'function') {
+    return null;
+  }
+
+  const pxPerMm = 3.779527559; // 96 DPI base (96 / 25.4)
+  const canvasWidthPx = Math.round(contentWidthMm * pxPerMm * scale);
+  const maxWidthPx = canvasWidthPx;
+
+  const fontPx = Math.round(fontSizePt * (96 / 72) * scale);
+  const lineSpacingPx = Math.round(fontPx * lineHeightMultiplier);
+
+  const measureCanvas = document.createElement('canvas');
+  const measureCtx = measureCanvas.getContext('2d');
+  if (!measureCtx) return null;
+
+  measureCtx.font = `${fontWeight} ${fontPx}px ${fontFamily}`;
+
+  const lines = [];
+  paragraphs.forEach((para) => {
+    const trimmed = typeof para === 'string' ? para.trim() : '';
+    if (!trimmed) {
+      lines.push({ text: '', isBlank: true });
+      return;
+    }
+
+    const words = trimmed.split(/\s+/);
+    let currentLine = '';
+
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const metrics = measureCtx.measureText(testLine);
+
+      if (metrics.width > maxWidthPx && i > 0) {
+        lines.push({ text: currentLine, isBlank: false });
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) {
+      lines.push({ text: currentLine, isBlank: false });
+    }
+  });
+
+  if (lines.length === 0) return null;
+
+  const paddingYPx = Math.round(paddingYMm * pxPerMm * scale);
+  const totalHeightPx = (lines.length * lineSpacingPx) + (paddingYPx * 2);
+  const heightMm = totalHeightPx / (pxPerMm * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = canvasWidthPx;
+  canvas.height = totalHeightPx;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  ctx.fillStyle = backgroundColor;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.font = `${fontWeight} ${fontPx}px ${fontFamily}`;
+  ctx.fillStyle = textColor;
+  ctx.textBaseline = 'top';
+
+  let currentY = paddingYPx;
+  for (const line of lines) {
+    if (!line.isBlank) {
+      ctx.fillText(line.text, 0, currentY);
+    } else {
+      currentY += Math.round(lineSpacingPx * 0.45);
+      continue;
+    }
+    currentY += lineSpacingPx;
+  }
+
+  return {
+    dataUrl: canvas.toDataURL('image/png'),
+    heightMm,
+    linesCount: lines.length
+  };
+}
+
+/**
  * Generate and download an audit-grade civic grievance PDF dossier
  */
 export function generatePetitionPdf({
@@ -9,12 +108,17 @@ export function generatePetitionPdf({
   authority,
   letterText,
   forecast,
+  language = 'en',
   _language = 'en',
   senderName,
   senderRole,
   senderContact,
   schoolEvidencePackage = null
 }) {
+  const activeLang = language || _language || 'en';
+  const isHindi = activeLang === 'hi' || /[\u0900-\u097F]/.test(letterText || '');
+  const isBrowserWithCanvas = typeof document !== 'undefined' && typeof document.createElement === 'function';
+
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -26,6 +130,7 @@ export function generatePetitionPdf({
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 18;
   const contentWidth = pageWidth - (margin * 2);
+  const contentWidthMm = contentWidth;
 
   const refId = `VV-ACTION-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
   const currentDateStr = new Date().toLocaleDateString('en-IN', {
@@ -96,19 +201,47 @@ export function generatePetitionPdf({
   yPos += 8;
 
   // Subject Line
-  doc.setFillColor(241, 245, 249);
-  doc.rect(margin, yPos, contentWidth, 9, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(15, 23, 42);
-  const subjectText = `SUBJECT: URGENT ADMINISTRATIVE ACTION ON HAZARDOUS MORNING AIR QUALITY — ${evidence.schoolName.toUpperCase()}`;
-  doc.text(subjectText, margin + 3, yPos + 6, { maxWidth: contentWidth - 6 });
-  yPos += 14;
+  let subjectText = `SUBJECT: URGENT ADMINISTRATIVE ACTION ON HAZARDOUS MORNING AIR QUALITY — ${evidence.schoolName.toUpperCase()}`;
+  if (isHindi) {
+    const sMatch = letterText.match(/विषय:\s*([^\n\r]+)/);
+    subjectText = sMatch
+      ? `विषय: ${sMatch[1].trim()}`
+      : `विषय: ${evidence.schoolName} के विद्यार्थियों पर प्रातःकालीन गंभीर वायु प्रदूषण हेतु प्रतिवेदन`;
+  }
 
-  // Letter Body Text
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(51, 65, 85);
+  if (isHindi && isBrowserWithCanvas) {
+    const subjectBlock = renderDevanagariCanvasBlock({
+      paragraphs: [subjectText],
+      contentWidthMm,
+      fontSizePt: 8.8,
+      fontWeight: 'bold',
+      lineHeightMultiplier: 1.4,
+      textColor: '#0f172a',
+      backgroundColor: '#f1f5f9',
+      paddingYMm: 2.2
+    });
+
+    if (subjectBlock) {
+      doc.addImage(subjectBlock.dataUrl, 'PNG', margin, yPos, contentWidth, subjectBlock.heightMm);
+      yPos += subjectBlock.heightMm + 4;
+    } else {
+      doc.setFillColor(241, 245, 249);
+      doc.rect(margin, yPos, contentWidth, 9, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(15, 23, 42);
+      doc.text(subjectText, margin + 3, yPos + 6, { maxWidth: contentWidth - 6 });
+      yPos += 14;
+    }
+  } else {
+    doc.setFillColor(241, 245, 249);
+    doc.rect(margin, yPos, contentWidth, 9, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(15, 23, 42);
+    doc.text(subjectText, margin + 3, yPos + 6, { maxWidth: contentWidth - 6 });
+    yPos += 14;
+  }
 
   // Clean and prepare the letter text paragraphs
   // Filter out the "To:" and "Subject:" headers if they were already included in letterText
@@ -123,33 +256,124 @@ export function generatePetitionPdf({
     }
   }
 
-  const lines = doc.splitTextToSize(bodyContent, contentWidth);
+  // Print letter body text
+  if (isHindi && isBrowserWithCanvas) {
+    const bodyParagraphs = bodyContent.split(/\r?\n/);
+    const bodyBlock = renderDevanagariCanvasBlock({
+      paragraphs: bodyParagraphs,
+      contentWidthMm,
+      fontSizePt: 8.6,
+      lineHeightMultiplier: 1.5,
+      textColor: '#334155',
+      backgroundColor: '#ffffff',
+      paddingYMm: 1.5
+    });
 
-  // Print text with pagination safety
-  for (let i = 0; i < lines.length; i++) {
-    if (yPos > pageHeight - 30) {
-      addFooter(doc, 1, 2);
-      doc.addPage();
-      yPos = 25;
+    if (bodyBlock) {
+      const availablePage1Mm = pageHeight - 35 - 18 - yPos; // Remaining space before footer & verification box
+      if (bodyBlock.heightMm <= availablePage1Mm) {
+        doc.addImage(bodyBlock.dataUrl, 'PNG', margin, yPos, contentWidth, bodyBlock.heightMm);
+        yPos += bodyBlock.heightMm + 5;
+      } else {
+        // Multi-page splitting if text exceeds available page 1 height
+        let page1Paras = [];
+        let page2Paras = [];
+        let runningLines = 0;
+        const maxLinesPage1 = Math.floor(availablePage1Mm / 4.4);
+
+        for (const p of bodyParagraphs) {
+          const estLines = Math.max(1, Math.ceil((p.length || 1) / 75));
+          if (runningLines + estLines <= maxLinesPage1 && page2Paras.length === 0) {
+            page1Paras.push(p);
+            runningLines += estLines;
+          } else {
+            page2Paras.push(p);
+          }
+        }
+
+        const b1 = renderDevanagariCanvasBlock({
+          paragraphs: page1Paras,
+          contentWidthMm,
+          fontSizePt: 8.6,
+          lineHeightMultiplier: 1.5,
+          textColor: '#334155',
+          backgroundColor: '#ffffff'
+        });
+        if (b1) {
+          doc.addImage(b1.dataUrl, 'PNG', margin, yPos, contentWidth, b1.heightMm);
+          yPos += b1.heightMm + 5;
+        }
+
+        if (page2Paras.length > 0) {
+          addFooter(doc, 1, totalPages + 1);
+          doc.addPage();
+          yPos = 25;
+          const b2 = renderDevanagariCanvasBlock({
+            paragraphs: page2Paras,
+            contentWidthMm,
+            fontSizePt: 8.6,
+            lineHeightMultiplier: 1.5,
+            textColor: '#334155',
+            backgroundColor: '#ffffff'
+          });
+          if (b2) {
+            doc.addImage(b2.dataUrl, 'PNG', margin, yPos, contentWidth, b2.heightMm);
+            yPos += b2.heightMm + 5;
+          }
+        }
+      }
+    } else {
+      // Clean fallback if canvas context unavailable
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(51, 65, 85);
+      const lines = doc.splitTextToSize(bodyContent, contentWidth);
+      for (let i = 0; i < lines.length; i++) {
+        if (yPos > pageHeight - 30) {
+          addFooter(doc, 1, 2);
+          doc.addPage();
+          yPos = 25;
+        }
+        doc.text(lines[i], margin, yPos);
+        yPos += 4.2;
+      }
     }
-    doc.text(lines[i], margin, yPos);
-    yPos += 4.2;
+  } else {
+    // Standard English typography flow (100% original code)
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(51, 65, 85);
+
+    const lines = doc.splitTextToSize(bodyContent, contentWidth);
+
+    for (let i = 0; i < lines.length; i++) {
+      if (yPos > pageHeight - 30) {
+        addFooter(doc, 1, 2);
+        doc.addPage();
+        yPos = 25;
+      }
+      doc.text(lines[i], margin, yPos);
+      yPos += 4.2;
+    }
   }
 
-  yPos += 4;
-  if (senderName) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8.5);
-    doc.setTextColor(30, 41, 59);
-    doc.text(`Submitted by: ${senderName} (${senderRole || 'School Representative'})`, margin, yPos);
+  // Signatory block (only print if not already contained in Hindi body text)
+  if (!bodyContent.includes('भवदीय') && !bodyContent.includes('Yours sincerely')) {
     yPos += 4;
-  }
-  if (senderContact) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(71, 85, 105);
-    doc.text(`Contact: ${senderContact}`, margin, yPos);
-    yPos += 5;
+    if (senderName) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(30, 41, 59);
+      doc.text(`Submitted by: ${senderName} (${senderRole || 'School Representative'})`, margin, yPos);
+      yPos += 4;
+    }
+    if (senderContact) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(71, 85, 105);
+      doc.text(`Contact: ${senderContact}`, margin, yPos);
+      yPos += 5;
+    }
   }
 
   if (yPos > pageHeight - 35) {

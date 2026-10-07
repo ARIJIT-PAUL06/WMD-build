@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Film, MapPin, Truck } from 'lucide-react';
 import PanoramicScrollHero from './components/MotionHero/PanoramicScrollHero';
 import DelhiAqiHeatmap from './components/Heatmap/DelhiAqiHeatmap';
-import AutonomousMonitorModal from './components/Dashboard/AutonomousMonitorModal';
+const AutonomousMonitorModal = React.lazy(() => import('./components/Dashboard/AutonomousMonitorModal'));
 import AtmosphericCargoTruck from './components/CargoTruck/AtmosphericCargoTruck';
 import PollutantDetailPage from './components/PollutantDetail/PollutantDetailPage';
 import SchoolSafetyContainer from './components/SchoolSafety/SchoolSafetyContainer';
@@ -271,10 +271,14 @@ export default function App() {
         <MapErrorBoundary>
           <DelhiAqiHeatmap />
         </MapErrorBoundary>
-        <AutonomousMonitorModal
-          isOpen={isGlobalMonitorOpen}
-          onClose={handleCloseMonitor}
-        />
+        {isGlobalMonitorOpen && (
+          <React.Suspense fallback={null}>
+            <AutonomousMonitorModal
+              isOpen={isGlobalMonitorOpen}
+              onClose={handleCloseMonitor}
+            />
+          </React.Suspense>
+        )}
       </div>
     );
   }
@@ -288,10 +292,14 @@ export default function App() {
           onBack={handleBackToTruck}
           onSelectPollutant={handleSelectPollutant}
         />
-        <AutonomousMonitorModal
-          isOpen={isGlobalMonitorOpen}
-          onClose={handleCloseMonitor}
-        />
+        {isGlobalMonitorOpen && (
+          <React.Suspense fallback={null}>
+            <AutonomousMonitorModal
+              isOpen={isGlobalMonitorOpen}
+              onClose={handleCloseMonitor}
+            />
+          </React.Suspense>
+        )}
       </>
     );
   }
@@ -366,10 +374,14 @@ export default function App() {
         </nav>
 
         {/* Autonomous Atmospheric Shield & Emergency Monitor Test Bench */}
-        <AutonomousMonitorModal
-          isOpen={isGlobalMonitorOpen}
-          onClose={handleCloseMonitor}
-        />
+        {isGlobalMonitorOpen && (
+          <React.Suspense fallback={null}>
+            <AutonomousMonitorModal
+              isOpen={isGlobalMonitorOpen}
+              onClose={handleCloseMonitor}
+            />
+          </React.Suspense>
+        )}
       </div>
     );
   }
@@ -394,10 +406,14 @@ export default function App() {
       />
 
       {/* Autonomous Atmospheric Shield & Emergency Monitor Test Bench */}
-      <AutonomousMonitorModal
-        isOpen={isGlobalMonitorOpen}
-        onClose={handleCloseMonitor}
-      />
+      {isGlobalMonitorOpen && (
+        <React.Suspense fallback={null}>
+          <AutonomousMonitorModal
+            isOpen={isGlobalMonitorOpen}
+            onClose={handleCloseMonitor}
+          />
+        </React.Suspense>
+      )}
     </div>
   );
 }
