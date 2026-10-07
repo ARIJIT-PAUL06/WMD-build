@@ -318,9 +318,9 @@ function computeRawSpatialGrid(stationsList, pollutantType = 'aqi', bounds = IND
 
   // Continental-scale IDW parameters:
   // power = 2.0 (natural physical inverse-square dispersion over 3,000 km subcontinent)
-  // epsilonKm = 15.0 km (prevents sharp pinhole artifacts around individual ground stations)
+  // epsilonKm = 1.5 km (preserves real peak concentrations at monitoring stations while providing silky transitions)
   const power = 2.0;
-  const epsilonKm = 15.0;
+  const epsilonKm = 1.5;
 
   let nationalMin = Infinity;
   let nationalMax = -Infinity;
@@ -351,32 +351,17 @@ function computeRawSpatialGrid(stationsList, pollutantType = 'aqi', bounds = IND
       }
 
       const interpolatedVal = weightedVal / (totalWeight || 1);
-      let effectiveAqi = interpolatedVal;
-      if (pollutantType === 'pm25') {
-        effectiveAqi = calculateUncappedAqi(interpolatedVal);
-      } else if (pollutantType === 'pm10') {
-        effectiveAqi = interpolatedVal * 0.9;
-      } else if (pollutantType === 'no2') {
-        effectiveAqi = interpolatedVal * 2.5;
-      } else if (pollutantType === 'so2') {
-        effectiveAqi = interpolatedVal * 3.0;
-      } else if (pollutantType === 'co') {
-        effectiveAqi = interpolatedVal * 50;
-      } else if (pollutantType === 'o3') {
-        effectiveAqi = interpolatedVal * 2.0;
-      }
-
-      rawGrid[idx] = effectiveAqi;
+      rawGrid[idx] = interpolatedVal;
 
       if (mask[idx] === 1) {
-        if (effectiveAqi < nationalMin) nationalMin = effectiveAqi;
-        if (effectiveAqi > nationalMax) nationalMax = effectiveAqi;
+        if (interpolatedVal < nationalMin) nationalMin = interpolatedVal;
+        if (interpolatedVal > nationalMax) nationalMax = interpolatedVal;
       }
     }
   }
 
-  if (!Number.isFinite(nationalMin)) nationalMin = 40;
-  if (!Number.isFinite(nationalMax)) nationalMax = 260;
+  if (!Number.isFinite(nationalMin)) nationalMin = pollutantType === 'co' ? 0.4 : (pollutantType === 'so2' ? 5 : 40);
+  if (!Number.isFinite(nationalMax)) nationalMax = pollutantType === 'co' ? 1.8 : (pollutantType === 'so2' ? 20 : 260);
 
   return {
     rawGrid,
@@ -410,15 +395,20 @@ function sampleRasterGridVal(gridObj, lon, lat) {
  * - At national overview (zoom <= 5.5): nationwide spread (lowest in India = Green, highest in India = Bright Red)
  * - As user zooms into ANY region (zoom 5.5 -> 10.0+): adapts to visible viewport min/max so local deviation is vivid!
  */
-function calculateAdaptiveRange(gridObj, mapBounds, zoom, isAdaptiveMode = true) {
+function calculateAdaptiveRange(gridObj, mapBounds, zoom, isAdaptiveMode = true, pollutant = 'aqi') {
+  const isCo = pollutant === 'co';
+  const roundVal = (v) => isCo ? Math.round(v * 10) / 10 : Math.round(v);
+
   if (!gridObj) {
+    const dMin = isCo ? 0.4 : (pollutant === 'so2' ? 5 : 40);
+    const dMax = isCo ? 1.8 : (pollutant === 'so2' ? 20 : 260);
     return {
-      effectiveMin: 40,
-      effectiveMax: 260,
-      localMin: 40,
-      localMax: 260,
-      nationalMin: 40,
-      nationalMax: 260,
+      effectiveMin: dMin,
+      effectiveMax: dMax,
+      localMin: dMin,
+      localMax: dMax,
+      nationalMin: dMin,
+      nationalMax: dMax,
       zoomFactor: 0,
     };
   }
@@ -429,10 +419,10 @@ function calculateAdaptiveRange(gridObj, mapBounds, zoom, isAdaptiveMode = true)
     return {
       effectiveMin: nationalMin,
       effectiveMax: nationalMax,
-      localMin: nationalMin,
-      localMax: nationalMax,
-      nationalMin,
-      nationalMax,
+      localMin: roundVal(nationalMin),
+      localMax: roundVal(nationalMax),
+      nationalMin: roundVal(nationalMin),
+      nationalMax: roundVal(nationalMax),
       zoomFactor: 0,
     };
   }
@@ -484,21 +474,27 @@ function calculateAdaptiveRange(gridObj, mapBounds, zoom, isAdaptiveMode = true)
   let effectiveMin = (1 - zoomFactor) * nationalMin + zoomFactor * localMin;
   let effectiveMax = (1 - zoomFactor) * nationalMax + zoomFactor * localMax;
 
-  // Enforce a minimum contrast span (20 AQI) so negligible 2-3 AQI noise isn't over-amplified
-  const minSpan = 20;
+  // Enforce a minimum contrast span calibrated specifically to each physical pollutant
+  let minSpan = 20;
+  if (pollutant === 'co') minSpan = 0.25;
+  else if (pollutant === 'so2') minSpan = 3.0;
+  else if (pollutant === 'no2' || pollutant === 'o3') minSpan = 8.0;
+  else if (pollutant === 'pm25') minSpan = 10.0;
+  else if (pollutant === 'pm10') minSpan = 15.0;
+
   if (effectiveMax - effectiveMin < minSpan) {
     const mid = (effectiveMax + effectiveMin) / 2;
-    effectiveMin = mid - minSpan / 2;
+    effectiveMin = Math.max(0, mid - minSpan / 2);
     effectiveMax = mid + minSpan / 2;
   }
 
   return {
     effectiveMin,
     effectiveMax,
-    localMin: Math.round(localMin),
-    localMax: Math.round(localMax),
-    nationalMin: Math.round(nationalMin),
-    nationalMax: Math.round(nationalMax),
+    localMin: roundVal(localMin),
+    localMax: roundVal(localMax),
+    nationalMin: roundVal(nationalMin),
+    nationalMax: roundVal(nationalMax),
     zoomFactor,
   };
 }
@@ -562,7 +558,70 @@ function renderSeamlessRasterImage(gridObj, effectiveMin, effectiveMax) {
 /**
  * AQI Color & Badge helper synchronized directly with the seamless gradient and active range
  */
-function getAqiColor(val, activeRange) {
+function getPollutantValue(station, pollutant = 'aqi') {
+  if (!station) return 0;
+  switch (pollutant) {
+    case 'pm25': return station.pm25 ?? Math.round((station.aqi || 100) * 0.6);
+    case 'pm10': return station.pm10 ?? Math.round((station.aqi || 100) * 1.15);
+    case 'no2':  return station.no2 ?? 24;
+    case 'so2':  return station.so2 ?? 10;
+    case 'co':   return station.co ?? 0.8;
+    case 'o3':   return station.o3 ?? 32;
+    default:     return station.aqi ?? 100;
+  }
+}
+
+function getPollutantMeta(val, pollutant = 'aqi', activeRange = null) {
+  const num = Number(val) || 0;
+  
+  if (pollutant === 'pm25') {
+    if (num <= 30) return { hex: '#10b981', label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'µg/m³', maxScale: 250 };
+    if (num <= 60) return { hex: '#84cc16', label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'µg/m³', maxScale: 250 };
+    if (num <= 90) return { hex: '#eab308', label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'µg/m³', maxScale: 250 };
+    if (num <= 120) return { hex: '#f97316', label: 'Poor', badgeBg: 'rgba(249, 115, 22, 0.2)', textHex: '#fb923c', unit: 'µg/m³', maxScale: 250 };
+    if (num <= 250) return { hex: '#ef4444', label: 'Very Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'µg/m³', maxScale: 250 };
+    return { hex: '#991b1b', label: 'Severe / Hazardous', badgeBg: 'rgba(153, 27, 27, 0.25)', textHex: '#fca5a5', unit: 'µg/m³', maxScale: 250 };
+  }
+
+  if (pollutant === 'pm10') {
+    if (num <= 50) return { hex: '#10b981', label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'µg/m³', maxScale: 430 };
+    if (num <= 100) return { hex: '#84cc16', label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'µg/m³', maxScale: 430 };
+    if (num <= 250) return { hex: '#eab308', label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'µg/m³', maxScale: 430 };
+    if (num <= 350) return { hex: '#f97316', label: 'Poor', badgeBg: 'rgba(249, 115, 22, 0.2)', textHex: '#fb923c', unit: 'µg/m³', maxScale: 430 };
+    if (num <= 430) return { hex: '#ef4444', label: 'Very Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'µg/m³', maxScale: 430 };
+    return { hex: '#991b1b', label: 'Severe / Hazardous', badgeBg: 'rgba(153, 27, 27, 0.25)', textHex: '#fca5a5', unit: 'µg/m³', maxScale: 430 };
+  }
+
+  if (pollutant === 'no2') {
+    if (num <= 40) return { hex: '#10b981', label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'µg/m³', maxScale: 280 };
+    if (num <= 80) return { hex: '#84cc16', label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'µg/m³', maxScale: 280 };
+    if (num <= 180) return { hex: '#eab308', label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'µg/m³', maxScale: 280 };
+    if (num <= 280) return { hex: '#f97316', label: 'Poor', badgeBg: 'rgba(249, 115, 22, 0.2)', textHex: '#fb923c', unit: 'µg/m³', maxScale: 280 };
+    return { hex: '#ef4444', label: 'Very Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'µg/m³', maxScale: 280 };
+  }
+
+  if (pollutant === 'so2') {
+    if (num <= 40) return { hex: '#10b981', label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'µg/m³', maxScale: 200 };
+    if (num <= 80) return { hex: '#84cc16', label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'µg/m³', maxScale: 200 };
+    if (num <= 200) return { hex: '#eab308', label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'µg/m³', maxScale: 200 };
+    return { hex: '#ef4444', label: 'Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'µg/m³', maxScale: 200 };
+  }
+
+  if (pollutant === 'co') {
+    if (num <= 1.0) return { hex: '#10b981', label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'mg/m³', maxScale: 10 };
+    if (num <= 2.0) return { hex: '#84cc16', label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'mg/m³', maxScale: 10 };
+    if (num <= 10.0) return { hex: '#eab308', label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'mg/m³', maxScale: 10 };
+    return { hex: '#ef4444', label: 'Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'mg/m³', maxScale: 10 };
+  }
+
+  if (pollutant === 'o3') {
+    if (num <= 50) return { hex: '#10b981', label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'µg/m³', maxScale: 200 };
+    if (num <= 100) return { hex: '#84cc16', label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'µg/m³', maxScale: 200 };
+    if (num <= 168) return { hex: '#eab308', label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'µg/m³', maxScale: 200 };
+    return { hex: '#ef4444', label: 'Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'µg/m³', maxScale: 200 };
+  }
+
+  // Fallback / AQI mode
   let hex = '#f97316';
   if (activeRange && activeRange.max > activeRange.min) {
     const t = Math.max(0, Math.min(1, (val - activeRange.min) / (activeRange.max - activeRange.min)));
@@ -603,7 +662,11 @@ function getAqiColor(val, activeRange) {
     textHex = '#f87171';
   }
 
-  return { hex, label, textHex, badgeBg };
+  return { hex, label, textHex, badgeBg, unit: 'AQI', maxScale: 500 };
+}
+
+function getAqiColor(val, activeRange, pollutant = 'aqi') {
+  return getPollutantMeta(val, pollutant, activeRange);
 }
 
 export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
@@ -886,15 +949,17 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     const zoom = map.getZoom();
     setCurrentZoom(Math.round(zoom * 10) / 10);
     const bounds = map.getBounds();
+    const currentPollutant = activePollutantRef.current || 'aqi';
+    const isCo = currentPollutant === 'co';
 
     let effectiveMin, effectiveMax;
     if (isAdaptiveModeRef.current) {
-      const rangeResult = calculateAdaptiveRange(gridCacheRef.current, bounds, zoom);
+      const rangeResult = calculateAdaptiveRange(gridCacheRef.current, bounds, zoom, true, currentPollutant);
       effectiveMin = rangeResult.effectiveMin;
       effectiveMax = rangeResult.effectiveMax;
       setActiveRange({
-        min: Math.round(effectiveMin),
-        max: Math.round(effectiveMax),
+        min: isCo ? Math.round(effectiveMin * 10) / 10 : Math.round(effectiveMin),
+        max: isCo ? Math.round(effectiveMax * 10) / 10 : Math.round(effectiveMax),
         localMin: rangeResult.localMin,
         localMax: rangeResult.localMax,
         nationalMin: rangeResult.nationalMin,
@@ -907,12 +972,12 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       effectiveMin = gridCacheRef.current.nationalMin;
       effectiveMax = gridCacheRef.current.nationalMax;
       setActiveRange({
-        min: Math.round(effectiveMin),
-        max: Math.round(effectiveMax),
-        localMin: Math.round(effectiveMin),
-        localMax: Math.round(effectiveMax),
-        nationalMin: Math.round(effectiveMin),
-        nationalMax: Math.round(effectiveMax),
+        min: isCo ? Math.round(effectiveMin * 10) / 10 : Math.round(effectiveMin),
+        max: isCo ? Math.round(effectiveMax * 10) / 10 : Math.round(effectiveMax),
+        localMin: isCo ? Math.round(effectiveMin * 10) / 10 : Math.round(effectiveMin),
+        localMax: isCo ? Math.round(effectiveMax * 10) / 10 : Math.round(effectiveMax),
+        nationalMin: isCo ? Math.round(effectiveMin * 10) / 10 : Math.round(effectiveMin),
+        nationalMax: isCo ? Math.round(effectiveMax * 10) / 10 : Math.round(effectiveMax),
         zoomFactor: 0,
         isZoomed: false,
         zoom: Math.round(zoom * 10) / 10,
@@ -1286,12 +1351,22 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
     const estAqi = Math.round(sampledAqi);
     const estPm25 = Math.round((nearestSt?.pm25 ? (estAqi / (nearestSt.aqi || 1)) * nearestSt.pm25 : estAqi * 0.55) * 10) / 10;
+    const estPm10 = Math.round((nearestSt?.pm10 ? (estAqi / (nearestSt.aqi || 1)) * nearestSt.pm10 : estAqi * 1.15) * 10) / 10;
+    const estNo2 = nearestSt?.no2 != null ? Number(nearestSt.no2) : 24;
+    const estSo2 = nearestSt?.so2 != null ? Number(nearestSt.so2) : 10;
+    const estCo = nearestSt?.co != null ? Number(nearestSt.co) : 0.8;
+    const estO3 = nearestSt?.o3 != null ? Number(nearestSt.o3) : 32;
 
     setInspectedPoint({
       lat: Math.round(lat * 10000) / 10000,
       lon: Math.round(lon * 10000) / 10000,
       aqi: estAqi,
       pm25: estPm25,
+      pm10: estPm10,
+      no2: estNo2,
+      so2: estSo2,
+      co: estCo,
+      o3: estO3,
       nearestStation: nearestSt ? nearestSt.name : 'Indian Subcontinent Ground Station',
       nearestState: nearestSt?.state || 'India',
       distanceKm: minDist,
@@ -1788,30 +1863,44 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     fetchGeminiAdvisory(displayStation);
   }, [displayStation, fetchGeminiAdvisory]);
 
-  // Interpolated AQI at user's current live GPS coordinates using nationwide IDW (p = 2.0)
+  // High-precision interpolated concentration / AQI at user's current live GPS coordinates
   const userAqiEstimate = useMemo(() => {
     if (!userLocation.isLiveGps || !userLocation.lat || !userLocation.lon) {
       return null;
     }
-    const sampled = sampleRasterGridVal(gridCacheRef.current, userLocation.lon, userLocation.lat);
-    if (sampled !== null) return Math.round(sampled);
     let totalWeight = 0;
-    let weightedAqi = 0;
+    let weightedVal = 0;
+    let nearestDist = Infinity;
+    let nearestVal = 0;
+
     stations.forEach((st) => {
       const d = calculateDistanceKm(userLocation.lat, userLocation.lon, st.lat, st.lon);
-      const w = 1 / Math.pow(Math.max(15.0, d), 2.0);
+      const stVal = getPollutantValue(st, activePollutant);
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearestVal = stVal;
+      }
+      const w = 1 / Math.pow(Math.max(1.2, d), 2.0);
       totalWeight += w;
-      weightedAqi += st.aqi * w;
+      weightedVal += stVal * w;
     });
-    return Math.round(weightedAqi / (totalWeight || 1));
-  }, [stations, userLocation]);
+
+    const interp = weightedVal / (totalWeight || 1);
+    // If within 1.5 km of a ground monitoring station, anchor directly to the station's ground-truth sensor reading
+    if (nearestDist <= 1.5) {
+      const blend = nearestDist / 1.5;
+      return Math.round(((1 - blend) * nearestVal + blend * interp) * 10) / 10;
+    }
+
+    return Math.round(interp * 10) / 10;
+  }, [stations, userLocation, activePollutant]);
 
   const userColor = useMemo(() => {
     if (userAqiEstimate === null) {
-      return { hex: '#38bdf8', label: 'Measuring AQI...', textHex: '#38bdf8', badgeBg: 'rgba(56, 189, 248, 0.2)' };
+      return { hex: '#38bdf8', label: 'Measuring...', textHex: '#38bdf8', badgeBg: 'rgba(56, 189, 248, 0.2)', unit: activePollutant.toUpperCase() };
     }
-    return getAqiColor(userAqiEstimate, activeRange);
-  }, [userAqiEstimate, activeRange]);
+    return getPollutantMeta(userAqiEstimate, activePollutant, activeRange);
+  }, [userAqiEstimate, activeRange, activePollutant]);
 
 
   // Convert stations to GeoJSON FeatureCollection
@@ -2198,27 +2287,62 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         });
 
         // Sample the EXACT continuous spatial raster grid value that determines the screen color!
+        const currentActivePollutant = activePollutantRef.current || 'aqi';
+
+        // Sample the EXACT continuous spatial raster grid value that determines the screen color!
         let sampledVal = sampleRasterGridVal(gridCacheRef.current, lng, lat);
         if (sampledVal === null) {
           let totalW = 0;
-          let weightedAqi = 0;
+          let weightedVal = 0;
           currentStations.forEach((st) => {
             const d = calculateDistanceKm(lat, lng, st.lat, st.lon);
-            const w = 1 / Math.pow(Math.max(15.0, d), 2.0);
+            const w = 1 / Math.pow(Math.max(1.5, d), 2.0);
             totalW += w;
-            weightedAqi += st.aqi * w;
+            weightedVal += getPollutantValue(st, currentActivePollutant) * w;
           });
-          sampledVal = weightedAqi / (totalW || 1);
+          sampledVal = weightedVal / (totalW || 1);
         }
 
-        const pAqi = Math.round(sampledVal);
-        const pPm25 = Math.round((nearest?.pm25 ? (pAqi / (nearest.aqi || 1)) * nearest.pm25 : pAqi * 0.55) * 10) / 10;
+        let pAqi, pPm25, pPm10, pNo2, pSo2, pCo, pO3;
+
+        if (currentActivePollutant === 'aqi') {
+          pAqi = Math.round(sampledVal);
+          pPm25 = Math.round((nearest?.pm25 ? (pAqi / (nearest.aqi || 1)) * nearest.pm25 : pAqi * 0.55) * 10) / 10;
+          pPm10 = Math.round((nearest?.pm10 ? (pAqi / (nearest.aqi || 1)) * nearest.pm10 : pAqi * 1.15) * 10) / 10;
+          pNo2 = nearest?.no2 != null ? Number(nearest.no2) : 24;
+          pSo2 = nearest?.so2 != null ? Number(nearest.so2) : 10;
+          pCo = nearest?.co != null ? Number(nearest.co) : 0.8;
+          pO3 = nearest?.o3 != null ? Number(nearest.o3) : 30;
+        } else {
+          // Continuous raster grid was computed directly for this active pollutant
+          let activeVal = Math.round(sampledVal * 10) / 10;
+          const nearestBaseVal = getPollutantValue(nearest, currentActivePollutant) || 1;
+          if (minD <= 1.5 && nearest) {
+            const blend = minD / 1.5;
+            activeVal = Math.round(((1 - blend) * nearestBaseVal + blend * activeVal) * 10) / 10;
+          }
+          const ratio = Math.max(0.4, Math.min(2.5, activeVal / nearestBaseVal));
+          pAqi = currentActivePollutant === 'pm25'
+            ? calculateUncappedAqi(activeVal)
+            : (nearest?.aqi ? Math.round(nearest.aqi * (0.85 + 0.15 * ratio)) : 100);
+          pPm25 = currentActivePollutant === 'pm25' ? activeVal : Math.round((getPollutantValue(nearest, 'pm25') * ratio) * 10) / 10;
+          pPm10 = currentActivePollutant === 'pm10' ? activeVal : Math.round((getPollutantValue(nearest, 'pm10') * ratio) * 10) / 10;
+          pNo2 = currentActivePollutant === 'no2' ? activeVal : Math.round(getPollutantValue(nearest, 'no2') * ratio);
+          pSo2 = currentActivePollutant === 'so2' ? activeVal : Math.round(getPollutantValue(nearest, 'so2') * ratio);
+          pCo = currentActivePollutant === 'co' ? activeVal : Math.round((getPollutantValue(nearest, 'co') * ratio) * 10) / 10;
+          pO3 = currentActivePollutant === 'o3' ? activeVal : Math.round(getPollutantValue(nearest, 'o3') * ratio);
+        }
 
         setInspectedPoint({
           lat: Math.round(lat * 10000) / 10000,
           lon: Math.round(lng * 10000) / 10000,
           aqi: pAqi,
           pm25: pPm25,
+          pm10: pPm10,
+          no2: pNo2,
+          so2: pSo2,
+          co: pCo,
+          o3: pO3,
           nearestStation: nearest ? nearest.name : 'Indian Subcontinent Ground Station',
           nearestState: nearest?.state || 'India',
           distanceKm: minD,
@@ -2517,24 +2641,28 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             <polygon points="13.2,32 14.8,32 14,35" fill="url(#tipMetal-${st.id})" />
           </svg>
         </div>
-        ${isSelected ? `
+        ${isSelected ? (() => {
+          const stVal = getPollutantValue(st, activePollutant);
+          const stMeta = getPollutantMeta(stVal, activePollutant, activeRange);
+          return `
           <div style="
             margin-top: 2px;
             background: rgba(15, 23, 42, 0.96);
             backdrop-filter: blur(8px);
-            border: 1px solid #f43f5e;
+            border: 1px solid ${stMeta.hex || '#f43f5e'};
             padding: 3px 8px;
             border-radius: 6px;
             font-size: 11px;
             font-weight: 700;
             color: #ffffff;
             white-space: nowrap;
-            box-shadow: 0 4px 16px rgba(244, 63, 94, 0.45);
+            box-shadow: 0 4px 16px ${stMeta.hex ? stMeta.hex + '66' : 'rgba(244, 63, 94, 0.45)'};
             pointer-events: none;
           ">
-            ${st.name.split(',')[0].trim()}: <span style="color: #f43f5e; font-weight: 800;">${st.aqi} AQI</span>
+            ${st.name.split(',')[0].trim()}: <span style="color: ${stMeta.hex || '#f43f5e'}; font-weight: 800;">${activePollutant.toUpperCase()} ${stVal} ${stMeta.unit}</span>
           </div>
-        ` : ''}
+          `;
+        })() : ''}
       `;
 
       el.appendChild(inner);
@@ -2549,7 +2677,21 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       el.addEventListener('click', (e) => {
         e.stopPropagation();
         setSelectedStation(st);
-        setInspectedPoint(null);
+        setInspectedPoint({
+          lat: st.lat,
+          lon: st.lon,
+          aqi: st.aqi,
+          pm25: st.pm25,
+          pm10: st.pm10,
+          no2: st.no2 != null ? Number(st.no2) : 24,
+          so2: st.so2 != null ? Number(st.so2) : 10,
+          co: st.co != null ? Number(st.co) : 0.8,
+          o3: st.o3 != null ? Number(st.o3) : 30,
+          nearestStation: st.name,
+          nearestState: st.state || st.zone || 'India',
+          distanceKm: 0,
+          label: `${st.name} Monitoring Station`,
+        });
         setIsSidebarOpen(true);
       });
 
@@ -2559,7 +2701,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
       markersRef.current.push(marker);
     });
-  }, [stations, selectedStation, showStationPins]);
+  }, [stations, selectedStation, showStationPins, activePollutant, activeRange]);
 
   // Update Pinpoint Target Marker with adaptive color updates on zoom without animation disruption
   useEffect(() => {
@@ -2575,7 +2717,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       return;
     }
 
-    const color = getAqiColor(inspectedPoint.aqi, activeRange);
+    const pVal = getPollutantValue(inspectedPoint, activePollutant);
+    const color = getPollutantMeta(pVal, activePollutant, activeRange);
 
     const isSamePoint =
       targetMarkerRef.current &&
@@ -2584,12 +2727,16 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       lastInspectedCoordsRef.current.lon === inspectedPoint.lon;
 
     if (isSamePoint) {
-      // Adaptively update colors on zoom without destroying DOM element or restarting animations
+      // Adaptively update colors & text on zoom/pollutant toggle without destroying DOM element or restarting animations
       const el = targetMarkerRef.current.getElement();
       if (el) {
         el.style.setProperty('--aqi-color', color.hex);
         el.style.setProperty('--aqi-badge-bg', color.badgeBg);
         el.style.setProperty('--aqi-text-color', color.textHex);
+        const readingLabel = el.querySelector('#pinpoint-badge-reading');
+        if (readingLabel) {
+          readingLabel.innerHTML = `${activePollutant.toUpperCase()} <strong style="color: var(--aqi-color); font-size: 12.5px; transition: color 0.35s ease;">${pVal}</strong> <span style="font-size: 9px; opacity: 0.85; font-weight: 600;">${color.unit}</span>`;
+        }
         const badgeLabel = el.querySelector('#pinpoint-badge-label');
         if (badgeLabel) {
           badgeLabel.textContent = color.label;
@@ -2754,14 +2901,14 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         transition: border-color 0.35s ease, box-shadow 0.35s ease;
       ">
         <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--aqi-color); box-shadow: 0 0 8px var(--aqi-color); flex-shrink: 0; transition: background 0.35s ease, box-shadow 0.35s ease;"></span>
-        <span style="letter-spacing: 0.02em;">AQI <strong style="color: var(--aqi-color); font-size: 12.5px; transition: color 0.35s ease;">${inspectedPoint.aqi}</strong></span>
+        <span id="pinpoint-badge-reading" style="letter-spacing: 0.02em;">${activePollutant.toUpperCase()} <strong style="color: var(--aqi-color); font-size: 12.5px; transition: color 0.35s ease;">${pVal}</strong> <span style="font-size: 9px; opacity: 0.85; font-weight: 600;">${color.unit}</span></span>
         <span id="pinpoint-badge-label" style="background: var(--aqi-badge-bg); color: var(--aqi-text-color); padding: 2px 7px; border-radius: 9999px; font-size: 9.5px; font-weight: 800; border: 1px solid var(--aqi-color); text-transform: uppercase; transition: all 0.35s ease;">${color.label}</span>
       </div>
     `;
     targetMarkerRef.current = new mapboxgl.Marker({ element: targetEl, anchor: 'center' })
       .setLngLat([inspectedPoint.lon, inspectedPoint.lat])
       .addTo(map);
-  }, [inspectedPoint, activeRange]);
+  }, [inspectedPoint, activeRange, activePollutant]);
 
   // Update User Location Live Beacon Marker with adaptive color updates on zoom
   useEffect(() => {
@@ -2782,9 +2929,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       return;
     }
 
-    const liveColor = userAqiEstimate !== null
-      ? getAqiColor(userAqiEstimate, activeRange)
-      : { hex: '#38bdf8', label: 'Measuring...', textHex: '#38bdf8', badgeBg: 'rgba(56, 189, 248, 0.2)' };
+    const liveColor = userColor;
 
     if (!userMarkerRef.current) {
       const userEl = document.createElement('div');
@@ -2916,7 +3061,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           transition: border-color 0.35s ease, box-shadow 0.35s ease;
         ">
           <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981; animation: pulse 1s infinite; flex-shrink: 0;"></span>
-          <span>LIVE GPS: <strong style="color: var(--user-color); transition: color 0.35s ease;">${userAqiEstimate !== null ? userAqiEstimate + ' AQI' : 'Measuring...'}</strong>${userLocation.accuracy ? ` <span style="color: #94a3b8; font-weight: 500; font-size: 10px;">(±${userLocation.accuracy}m)</span>` : ''}</span>
+          <span>LIVE GPS: <strong style="color: var(--user-color); transition: color 0.35s ease;">${userAqiEstimate !== null ? `${activePollutant.toUpperCase()} ${userAqiEstimate} ${liveColor.unit}` : 'Measuring...'}</strong>${userLocation.accuracy ? ` <span style="color: #94a3b8; font-weight: 500; font-size: 10px;">(±${userLocation.accuracy}m)</span>` : ''}</span>
         </div>
       `;
 
@@ -2933,7 +3078,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       if (badge) {
         badge.innerHTML = `
           <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981; animation: pulse 1s infinite; flex-shrink: 0;"></span>
-          <span>LIVE GPS: <strong style="color: var(--user-color); transition: color 0.35s ease;">${userAqiEstimate !== null ? userAqiEstimate + ' AQI' : 'Measuring...'}</strong>${userLocation.accuracy ? ` <span style="color: #94a3b8; font-weight: 500; font-size: 10px;">(±${userLocation.accuracy}m)</span>` : ''}</span>
+          <span>LIVE GPS: <strong style="color: var(--user-color); transition: color 0.35s ease;">${userAqiEstimate !== null ? `${activePollutant.toUpperCase()} ${userAqiEstimate} ${liveColor.unit}` : 'Measuring...'}</strong>${userLocation.accuracy ? ` <span style="color: #94a3b8; font-weight: 500; font-size: 10px;">(±${userLocation.accuracy}m)</span>` : ''}</span>
         `;
       }
     }
@@ -2946,7 +3091,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         features: [circlePoly],
       });
     }
-  }, [userLocation, userAqiEstimate, activeRange]);
+  }, [userLocation, userAqiEstimate, activeRange, activePollutant, userColor]);
 
   return (
     <section
@@ -4409,7 +4554,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Activity size={16} color="#38bdf8" />
               <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                Air Quality & Advisory HUD
+                {activePollutant === 'aqi' ? 'Air Quality & Advisory HUD' : `${activePollutant.toUpperCase()} Atmospheric Telemetry HUD`}
               </span>
             </div>
 
@@ -4446,20 +4591,23 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             }}
           >
             {/* 1. PINPOINT INSPECTION OR YOUR REAL-TIME GPS POSITION CARD */}
-            {inspectedPoint ? (
+            {inspectedPoint ? (() => {
+              const pVal = getPollutantValue(inspectedPoint, activePollutant);
+              const color = getPollutantMeta(pVal, activePollutant, activeRange);
+              return (
               <div
                 className="glass-panel-sub"
                 style={{
                   padding: '20px',
                   borderRadius: '16px',
-                  border: '1px solid rgba(244, 63, 94, 0.45)',
-                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(244, 63, 94, 0.1)',
+                  border: `1px solid ${color.hex ? color.hex + '66' : 'rgba(244, 63, 94, 0.45)'}`,
+                  boxShadow: `0 12px 30px rgba(0, 0, 0, 0.5), 0 0 25px ${color.hex ? color.hex + '22' : 'rgba(244, 63, 94, 0.1)'}`,
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Crosshair size={16} color="#f43f5e" />
-                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#f43f5e', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    <Crosshair size={16} color={color.hex || '#f43f5e'} />
+                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: color.hex || '#f43f5e', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                       Pinpoint Micro-Zone Analysis
                     </span>
                   </div>
@@ -4484,29 +4632,29 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px', marginBottom: '8px' }}>
                   <div style={{ position: 'relative', display: 'inline-flex' }}>
-                    <AqiSporeAura color={getAqiColor(inspectedPoint.aqi, activeRange).hex} />
+                    <AqiSporeAura color={color.hex} />
                     <span
                       style={{
                         fontFamily: 'var(--font-heading)',
                         fontSize: '3.85rem',
                         fontWeight: 900,
                         lineHeight: 1,
-                        color: getAqiColor(inspectedPoint.aqi, activeRange).hex,
-                        textShadow: `0 0 25px ${getAqiColor(inspectedPoint.aqi, activeRange).hex}55`,
+                        color: color.hex,
+                        textShadow: `0 0 25px ${color.hex}55`,
                         zIndex: 1,
                       }}
                     >
-                      {inspectedPoint.aqi}
+                      {pVal}
                     </span>
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: getAqiColor(inspectedPoint.aqi, activeRange).textHex }}>
-                      AQI · {getAqiColor(inspectedPoint.aqi, activeRange).label}
+                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: color.textHex }}>
+                      {activePollutant.toUpperCase()} · {color.label}
                     </span>
                     <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: 0 }}>
                       {activeRange.isZoomed
-                        ? `Calibrated to local zoom viewport (${activeRange.min} → ${activeRange.max} AQI)`
-                        : 'Subcontinental spatial IDW estimate at clicked point'}
+                        ? `Calibrated to local zoom viewport (${activeRange.min} → ${activeRange.max} ${color.unit})`
+                        : `Subcontinental spatial IDW estimate (${color.unit}) at clicked point`}
                     </p>
                   </div>
                 </div>
@@ -4530,9 +4678,15 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
-                    <span>Estimated PM2.5:</span>
-                    <strong style={{ color: '#f87171' }}>{inspectedPoint.pm25 != null ? inspectedPoint.pm25 : '—'} µg/m³</strong>
+                    <span>{activePollutant.toUpperCase()} Concentration:</span>
+                    <strong style={{ color: color.textHex }}>{pVal} {color.unit}</strong>
                   </div>
+                  {activePollutant !== 'aqi' && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
+                      <span>Equivalent Overall AQI:</span>
+                      <strong style={{ color: '#38bdf8' }}>{inspectedPoint.aqi} AQI</strong>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>Nearest Ground Station:</span>
                     <span style={{ color: '#38bdf8', fontWeight: 600 }}>
@@ -4543,7 +4697,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   </div>
                 </div>
               </div>
-            ) : userLocation.isLiveGps && userLocation.lat && userLocation.lon ? (
+              );
+            })() : userLocation.isLiveGps && userLocation.lat && userLocation.lon ? (
               <div
                 className="glass-panel-sub"
                 style={{
@@ -4596,10 +4751,10 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   </div>
                   <div>
                     <span style={{ fontSize: '0.95rem', fontWeight: 700, color: userColor.textHex }}>
-                      AQI · {userColor.label}
+                      {activePollutant.toUpperCase()} · {userColor.label}
                     </span>
                     <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: 0 }}>
-                      Spatial IDW estimate at your exact position
+                      Spatial IDW estimate ({userColor.unit}) at your exact position
                     </p>
                   </div>
                 </div>
@@ -4640,6 +4795,14 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                           ? `${nearestStation.station.name.split(',')[0]?.trim() || nearestStation.station.name} (${nearestStation.distance ?? 0} km)`
                           : 'Nearby CAAQMS Sensor'}
                       </span>
+                    </div>
+                  )}
+                  {nearestStation?.station && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
+                      <span>Nearest Node {activePollutant.toUpperCase()}:</span>
+                      <strong style={{ color: userColor.textHex }}>
+                        {getPollutantValue(nearestStation.station, activePollutant)} {userColor.unit}
+                      </strong>
                     </div>
                   )}
                   {userLocation.speed !== null && (
@@ -4739,7 +4902,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   className="glass-pill"
                   style={{
                     fontSize: '0.68rem',
-                    color: getAqiColor(displayStation.aqi, activeRange).hex,
+                    color: getPollutantMeta(getPollutantValue(displayStation, activePollutant), activePollutant, activeRange).hex,
                     padding: '2px 8px',
                     borderRadius: '6px',
                     fontWeight: 700,
@@ -4749,7 +4912,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 </span>
               </div>
 
-              {/* Station Hero Header with Large AQI & Radiating Spores */}
+              {/* Station Hero Header with Large AQI / Pollutant Concentration & Radiating Spores */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', marginBottom: '14px' }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -4761,46 +4924,60 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 </div>
 
                 <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-                  <AqiSporeAura color={getAqiColor(displayStation.aqi, activeRange).hex} />
+                  <AqiSporeAura color={getPollutantMeta(getPollutantValue(displayStation, activePollutant), activePollutant, activeRange).hex} />
                   <span
                     style={{
                       fontFamily: 'var(--font-heading)',
                       fontSize: '3.6rem',
                       fontWeight: 900,
                       lineHeight: 1,
-                      color: getAqiColor(displayStation.aqi, activeRange).hex,
-                      textShadow: `0 0 25px ${getAqiColor(displayStation.aqi, activeRange).hex}55`,
+                      color: getPollutantMeta(getPollutantValue(displayStation, activePollutant), activePollutant, activeRange).hex,
+                      textShadow: `0 0 25px ${getPollutantMeta(getPollutantValue(displayStation, activePollutant), activePollutant, activeRange).hex}55`,
                       zIndex: 1,
                     }}
                   >
-                    {displayStation.aqi}
+                    {getPollutantValue(displayStation, activePollutant)}
                   </span>
-                  <span style={{ fontSize: '0.68rem', fontWeight: 700, color: getAqiColor(displayStation.aqi, activeRange).textHex, zIndex: 1, marginTop: '2px' }}>
-                    AQI · {getAqiColor(displayStation.aqi, activeRange).label}
+                  <span style={{ fontSize: '0.68rem', fontWeight: 700, color: getPollutantMeta(getPollutantValue(displayStation, activePollutant), activePollutant, activeRange).textHex, zIndex: 1, marginTop: '2px' }}>
+                    {activePollutant.toUpperCase()} ({getPollutantMeta(getPollutantValue(displayStation, activePollutant), activePollutant).unit}) · {getPollutantMeta(getPollutantValue(displayStation, activePollutant), activePollutant, activeRange).label}
                   </span>
                 </div>
               </div>
 
-              {/* Station secondary metrics grid - Subtle, muted, non-jarring */}
+              {/* Station Comprehensive 6-Pollutant Matrix */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '14px' }}>
-                <div className="glass-panel-sub" style={{ padding: '8px 6px', borderRadius: '8px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                  <span style={{ fontSize: '0.62rem', color: '#64748b', display: 'block' }}>PM2.5</span>
-                  <strong style={{ fontSize: '0.95rem', color: '#f87171' }}>
-                    {displayStation.pm25} <span style={{ fontSize: '0.6rem', color: '#64748b' }}>µg</span>
-                  </strong>
-                </div>
-                <div className="glass-panel-sub" style={{ padding: '8px 6px', borderRadius: '8px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                  <span style={{ fontSize: '0.62rem', color: '#64748b', display: 'block' }}>PM10</span>
-                  <strong style={{ fontSize: '0.95rem', color: '#fb923c' }}>
-                    {displayStation.pm10} <span style={{ fontSize: '0.6rem', color: '#64748b' }}>µg</span>
-                  </strong>
-                </div>
-                <div className="glass-panel-sub" style={{ padding: '8px 6px', borderRadius: '8px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                  <span style={{ fontSize: '0.62rem', color: '#64748b', display: 'block' }}>NO2</span>
-                  <strong style={{ fontSize: '0.95rem', color: '#38bdf8' }}>
-                    {displayStation.no2 || 24} <span style={{ fontSize: '0.6rem', color: '#64748b' }}>µg</span>
-                  </strong>
-                </div>
+                {[
+                  { id: 'pm25', label: 'PM2.5', val: displayStation.pm25, unit: 'µg', color: '#f87171' },
+                  { id: 'pm10', label: 'PM10', val: displayStation.pm10, unit: 'µg', color: '#fb923c' },
+                  { id: 'no2', label: 'NO2', val: displayStation.no2 != null ? displayStation.no2 : 24, unit: 'µg', color: '#38bdf8' },
+                  { id: 'so2', label: 'SO2', val: displayStation.so2 != null ? displayStation.so2 : 10, unit: 'µg', color: '#a78bfa' },
+                  { id: 'co', label: 'CO', val: displayStation.co != null ? displayStation.co : 0.8, unit: 'mg', color: '#34d399' },
+                  { id: 'o3', label: 'O3', val: displayStation.o3 != null ? displayStation.o3 : 30, unit: 'µg', color: '#facc15' },
+                ].map((p) => {
+                  const isActive = activePollutant === p.id;
+                  return (
+                    <div
+                      key={p.id}
+                      className="glass-panel-sub"
+                      style={{
+                        padding: '8px 6px',
+                        borderRadius: '8px',
+                        textAlign: 'center',
+                        border: isActive ? `1px solid ${p.color}` : '1px solid rgba(255, 255, 255, 0.05)',
+                        background: isActive ? `${p.color}18` : 'rgba(255, 255, 255, 0.02)',
+                        boxShadow: isActive ? `0 0 12px ${p.color}33` : 'none',
+                        transition: 'all 0.25s ease',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.62rem', color: isActive ? p.color : '#64748b', display: 'block', fontWeight: isActive ? 800 : 600 }}>
+                        {p.label}
+                      </span>
+                      <strong style={{ fontSize: '0.95rem', color: isActive ? '#ffffff' : p.color }}>
+                        {p.val} <span style={{ fontSize: '0.6rem', color: '#64748b' }}>{p.unit}</span>
+                      </strong>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Google Gemini AI Health & Commute Advisory - Zero size jumping */}
@@ -4855,7 +5032,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#94a3b8', marginBottom: '8px' }}>
-                <span style={{ fontWeight: 700, color: '#e2e8f0', fontSize: '0.76rem' }}>Zoom Spectrum</span>
+                <span style={{ fontWeight: 700, color: '#e2e8f0', fontSize: '0.76rem' }}>{activePollutant.toUpperCase()} Spectrum</span>
                 <span
                   className={`glass-pill ${isAdaptiveMode && activeRange.isZoomed ? 'glass-pill-success' : 'glass-pill-active'}`}
                   style={{
@@ -4866,8 +5043,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   }}
                 >
                   {isAdaptiveMode && activeRange.isZoomed
-                    ? `Zoom ${activeRange.zoom}x (${activeRange.min} → ${activeRange.max} AQI)`
-                    : `India (${activeRange.nationalMin || 40} → ${activeRange.nationalMax || 260} AQI)`}
+                    ? `Zoom ${activeRange.zoom}x (${activeRange.min} → ${activeRange.max} ${getPollutantMeta(0, activePollutant).unit})`
+                    : `NAAQS (${getPollutantMeta(0, activePollutant).unit})`}
                 </span>
               </div>
 
