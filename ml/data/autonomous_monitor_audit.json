@@ -2215,5 +2215,696 @@
     "emergencySurgesDetected": [],
     "petitionsEvaluated": [],
     "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T10:45:19.661Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 86,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T11:37:05.310Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 87,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T12:44:00.453Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 88,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T13:30:07.508Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 89,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T14:00:34.522Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 90,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T14:32:25.480Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 91,
+    "telemetrySync": {
+      "syncedBlocksCount": 5
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T15:13:52.730Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 92,
+    "telemetrySync": {
+      "syncedBlocksCount": 11
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T15:46:42.447Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 93,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T16:59:14.429Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 94,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T17:29:14.416Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 95,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T17:59:58.911Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 96,
+    "telemetrySync": {
+      "syncedBlocksCount": 14
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T18:31:19.049Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 97,
+    "telemetrySync": {
+      "syncedBlocksCount": 8
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T19:04:11.364Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 98,
+    "telemetrySync": {
+      "syncedBlocksCount": 8
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T19:44:27.215Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 99,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T21:13:40.564Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 100,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T22:26:09.650Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 101,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-06T23:05:56.776Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 102,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T01:02:03.192Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 103,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": [
+      {
+        "facilityId": "dps_rk_puram",
+        "name": "Delhi Public School, R.K. Puram",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "modern_barakhamba",
+        "name": "Modern School, Barakhamba Road",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "modern_vasant_vihar",
+        "name": "Modern School, Vasant Vihar",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "dps_mathura_road",
+        "name": "Delhi Public School, Mathura Road",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "dps_rohini",
+        "name": "Delhi Public School, Rohini",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "dps_vasant_kunj",
+        "name": "Delhi Public School, Vasant Kunj",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "sanskriti_school",
+        "name": "Sanskriti School, Chanakyapuri",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "mothers_international",
+        "name": "The Mother's International School",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "sardar_patel_vidyalaya",
+        "name": "Sardar Patel Vidyalaya, Lodi Estate",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "springdales_pusa_road",
+        "name": "Springdales School, Pusa Road",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "springdales_dhaula_kuan",
+        "name": "Springdales School, Dhaula Kuan",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "st_columbas",
+        "name": "St. Columba's School, Ashok Place",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "convent_jesus_mary",
+        "name": "Convent of Jesus and Mary, New Delhi",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "dav_shreshtha_vihar",
+        "name": "DAV Public School, Shreshtha Vihar",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "dav_vasant_kunj",
+        "name": "DAV Public School, Vasant Kunj",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-10-07T02:20:57.149Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 104,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": [
+      {
+        "facilityId": "dps_rk_puram",
+        "name": "Delhi Public School, R.K. Puram",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "modern_barakhamba",
+        "name": "Modern School, Barakhamba Road",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "modern_vasant_vihar",
+        "name": "Modern School, Vasant Vihar",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "dps_mathura_road",
+        "name": "Delhi Public School, Mathura Road",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "dps_rohini",
+        "name": "Delhi Public School, Rohini",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "dps_vasant_kunj",
+        "name": "Delhi Public School, Vasant Kunj",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "sanskriti_school",
+        "name": "Sanskriti School, Chanakyapuri",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "mothers_international",
+        "name": "The Mother's International School",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "sardar_patel_vidyalaya",
+        "name": "Sardar Patel Vidyalaya, Lodi Estate",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "springdales_pusa_road",
+        "name": "Springdales School, Pusa Road",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "springdales_dhaula_kuan",
+        "name": "Springdales School, Dhaula Kuan",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "st_columbas",
+        "name": "St. Columba's School, Ashok Place",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "convent_jesus_mary",
+        "name": "Convent of Jesus and Mary, New Delhi",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "dav_shreshtha_vihar",
+        "name": "DAV Public School, Shreshtha Vihar",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "dav_vasant_kunj",
+        "name": "DAV Public School, Vasant Kunj",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-10-07T02:55:22.659Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 105,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": [
+      {
+        "facilityId": "dps_rk_puram",
+        "name": "Delhi Public School, R.K. Puram",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "modern_barakhamba",
+        "name": "Modern School, Barakhamba Road",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "modern_vasant_vihar",
+        "name": "Modern School, Vasant Vihar",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "dps_mathura_road",
+        "name": "Delhi Public School, Mathura Road",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "dps_rohini",
+        "name": "Delhi Public School, Rohini",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "dps_vasant_kunj",
+        "name": "Delhi Public School, Vasant Kunj",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "sanskriti_school",
+        "name": "Sanskriti School, Chanakyapuri",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "mothers_international",
+        "name": "The Mother's International School",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "sardar_patel_vidyalaya",
+        "name": "Sardar Patel Vidyalaya, Lodi Estate",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "springdales_pusa_road",
+        "name": "Springdales School, Pusa Road",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "springdales_dhaula_kuan",
+        "name": "Springdales School, Dhaula Kuan",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "st_columbas",
+        "name": "St. Columba's School, Ashok Place",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "convent_jesus_mary",
+        "name": "Convent of Jesus and Mary, New Delhi",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "dav_shreshtha_vihar",
+        "name": "DAV Public School, Shreshtha Vihar",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      },
+      {
+        "facilityId": "dav_vasant_kunj",
+        "name": "DAV Public School, Vasant Kunj",
+        "dispatched": false,
+        "error": "AWS SES Client is not initialized. Please verify AWS credentials in .env."
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-10-07T04:21:46.384Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 106,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T05:22:47.687Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 107,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T06:23:51.965Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 108,
+    "telemetrySync": {
+      "syncedBlocksCount": 6
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T06:53:51.962Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 109,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T07:23:51.965Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 110,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T07:59:00.326Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 111,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T08:31:13.666Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 112,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T09:01:13.661Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 113,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T09:36:32.975Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 114,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T10:09:05.300Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 115,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T11:15:02.418Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 116,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T12:28:25.116Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 117,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T13:29:38.917Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 118,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T14:20:14.292Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 119,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T15:31:23.162Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 120,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T16:32:23.267Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 121,
+    "telemetrySync": {
+      "syncedBlocksCount": 0
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T17:11:53.398Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 122,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
+  },
+  {
+    "timestamp": "2026-10-07T17:41:53.392Z",
+    "eventType": "CYCLE_COMPLETED",
+    "cycleId": 123,
+    "telemetrySync": {
+      "syncedBlocksCount": 15
+    },
+    "emergencySurgesDetected": [],
+    "petitionsEvaluated": [],
+    "predictiveAdvisoriesEvaluated": []
   }
 ]

@@ -112,7 +112,13 @@ export default function App() {
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash.toLowerCase();
       setActivePollutant(params.get('pollutant') || null);
-      setDocumentaryState(checkDocumentaryState());
+      const nextDocState = checkDocumentaryState();
+      setDocumentaryState(nextDocState);
+      if (nextDocState.isOpen && typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+      }
       setIsGlobalMonitorOpen(checkIsMonitorRequested());
       if (hash === '#heatmap' || hash === '#map' || hash === '#controls' || hash === '#hud' || hash === '#burger') {
         setActiveMobileTab('map');
@@ -178,13 +184,15 @@ export default function App() {
 
   const handleOpenDocumentary = (pollutantId = 'pm25') => {
     const targetPollutant = pollutantId && pollutantId !== 'true' && pollutantId !== 'landing' ? pollutantId : 'pm25';
-    setDocumentaryState({ isOpen: true, pollutantId: targetPollutant });
     if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
       const url = new URL(window.location);
       url.searchParams.set('documentary', targetPollutant);
       window.history.pushState({}, '', url);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    setDocumentaryState({ isOpen: true, pollutantId: targetPollutant });
   };
 
   const handleCloseDocumentary = () => {
@@ -214,13 +222,15 @@ export default function App() {
 
   const handleDocumentarySelectPollutant = (pollutantId = 'pm25') => {
     const targetPollutant = pollutantId && pollutantId !== 'true' && pollutantId !== 'landing' ? pollutantId : 'pm25';
-    setDocumentaryState({ isOpen: true, pollutantId: targetPollutant });
     if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
       const url = new URL(window.location);
       url.searchParams.set('documentary', targetPollutant);
       window.history.pushState({}, '', url);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    setDocumentaryState({ isOpen: true, pollutantId: targetPollutant });
   };
 
   const isSchoolView = typeof window !== 'undefined' && (
