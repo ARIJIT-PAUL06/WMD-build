@@ -1,0 +1,563 @@
+/* ULTRA-PREMIUM CRYSTAL GLASSMORHPISM & MAP ATMOSPHERE STYLES */
+
+/* 1. Atmospheric Perimeter Corner & Border Fade */
+.atmospheric-fade-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 45%, rgba(2, 6, 16, 0.88) 100%),
+    linear-gradient(to bottom, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) top / 100% 50px no-repeat,
+    linear-gradient(to top, #070a12 0%, rgba(7, 10, 18, 0.98) 25%, rgba(7, 10, 18, 0.90) 45%, rgba(7, 10, 18, 0.65) 65%, rgba(7, 10, 18, 0.35) 80%, rgba(7, 10, 18, 0.10) 92%, transparent 100%) bottom / 100% 140px no-repeat,
+    linear-gradient(to right, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) left / 42px 100% no-repeat,
+    linear-gradient(to left, #070a12 0%, rgba(7, 10, 18, 0.94) 14%, rgba(7, 10, 18, 0.80) 28%, rgba(7, 10, 18, 0.55) 45%, rgba(7, 10, 18, 0.30) 65%, rgba(7, 10, 18, 0.10) 84%, rgba(7, 10, 18, 0.02) 94%, transparent 100%) right / 42px 100% no-repeat;
+}
+
+/* 2. Genuine CRT TV-On Power Boot Animation */
+.crt-tv-turnon-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  background: #03060f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.95);
+  animation: crtCurtainFade 1.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.crt-tv-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(2, 6, 16, 0.88) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.crt-tv-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.55) 0px,
+    rgba(0, 0, 0, 0.55) 2px,
+    rgba(255, 255, 255, 0.04) 2px,
+    rgba(255, 255, 255, 0.04) 4px
+  );
+  pointer-events: none;
+  z-index: 3;
+  animation: crtScanlineFlicker 1.35s linear forwards;
+}
+
+.crt-tv-beam-stage {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.crt-tv-electron-raster {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, #ffffff 0%, rgba(186, 230, 253, 0.9) 25%, rgba(56, 189, 248, 0.55) 60%, transparent 100%);
+  filter: blur(1.5px);
+  animation: crtRasterExpand 1.35s cubic-bezier(0.2, 0.85, 0.32, 1) forwards;
+}
+
+.crt-tv-star-core {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow:
+    0 0 20px 8px #ffffff,
+    0 0 50px 20px #38bdf8,
+    0 0 90px 40px #0284c7;
+  animation: crtCoreFlash 1.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.crt-tv-lens-flare {
+  position: absolute;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.8) 45%, #ffffff 50%, rgba(255, 255, 255, 0.8) 55%, transparent 100%);
+  box-shadow: 0 0 25px 5px rgba(56, 189, 248, 0.9);
+  animation: crtFlareCollapse 1.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes crtCurtainFade {
+  0% { opacity: 1; }
+  68% { opacity: 0.95; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+@keyframes crtRasterExpand {
+  0% { transform: scale(0.01, 0.005); opacity: 1; }
+  35% { transform: scale(1.0, 0.015); opacity: 1; }
+  70% { transform: scale(1.0, 1.0); opacity: 0.85; }
+  100% { transform: scale(1.0, 1.0); opacity: 0; }
+}
+
+@keyframes crtCoreFlash {
+  0% { transform: scale(0.2); opacity: 0; }
+  25% { transform: scale(2.2); opacity: 1; }
+  55% { transform: scale(1.4); opacity: 0.9; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+@keyframes crtFlareCollapse {
+  0% { transform: scaleX(0); opacity: 0; }
+  30% { transform: scaleX(1.1); opacity: 1; }
+  65% { transform: scaleX(1.0); opacity: 0.6; }
+  100% { transform: scaleX(0); opacity: 0; }
+}
+
+@keyframes crtScanlineFlicker {
+  0%, 100% { opacity: 0.8; }
+  20%, 60% { opacity: 0.45; }
+  40%, 80% { opacity: 0.9; }
+}
+
+/* 3. Ultra-Premium Glassmorphism Tokens */
+.glass-panel-master {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.015) 100%
+  ), rgba(10, 16, 31, 0.58) !important;
+  backdrop-filter: blur(22px) saturate(195%) contrast(105%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(195%) contrast(105%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #f8fafc !important;
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.35),
+    0 16px 45px rgba(0, 0, 0, 0.6),
+    0 0 24px rgba(56, 189, 248, 0.06) !important;
+}
+
+.glass-panel-sub {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.01) 100%
+  ), rgba(15, 23, 42, 0.48) !important;
+  backdrop-filter: blur(16px) saturate(185%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(185%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  color: #f8fafc !important;
+  box-shadow:
+    inset 0 1px 0.8px 0 rgba(255, 255, 255, 0.16),
+    0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.glass-pill {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.07) 0%,
+    rgba(255, 255, 255, 0.015) 100%
+  ), rgba(15, 23, 42, 0.48) !important;
+  backdrop-filter: blur(14px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(175%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #f1f5f9 !important;
+  box-shadow:
+    inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.2),
+    0 4px 14px rgba(0, 0, 0, 0.35) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.glass-pill-active {
+  background: linear-gradient(
+    135deg,
+    rgba(56, 189, 248, 0.28) 0%,
+    rgba(56, 189, 248, 0.10) 100%
+  ), rgba(15, 23, 42, 0.6) !important;
+  border-color: rgba(56, 189, 248, 0.65) !important;
+  color: #38bdf8 !important;
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.35),
+    0 0 16px rgba(56, 189, 248, 0.3) !important;
+}
+
+.glass-cuboid-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.04) 100%
+  ), rgba(28, 41, 62, 0.82) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border: 1px solid rgba(148, 163, 184, 0.32) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.30) !important;
+  color: #f8fafc !important;
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.28),
+    0 3px 12px rgba(0, 0, 0, 0.28) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  user-select: none;
+}
+
+.glass-cuboid-btn-active {
+  background: linear-gradient(
+    180deg,
+    rgba(56, 189, 248, 0.38) 0%,
+    rgba(56, 189, 248, 0.16) 48%,
+    rgba(2, 132, 199, 0.28) 52%,
+    rgba(3, 105, 161, 0.5) 100%
+  ), rgba(15, 23, 42, 0.82) !important;
+  border-color: rgba(56, 189, 248, 0.75) !important;
+  color: #38bdf8 !important;
+  box-shadow:
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -2px 0 0 rgba(2, 132, 199, 0.65),
+    0 0 18px rgba(56, 189, 248, 0.35),
+    0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.glass-cuboid-btn-success {
+  background: linear-gradient(
+    180deg,
+    rgba(16, 185, 129, 0.38) 0%,
+    rgba(16, 185, 129, 0.16) 48%,
+    rgba(5, 150, 105, 0.28) 52%,
+    rgba(4, 120, 87, 0.5) 100%
+  ), rgba(6, 28, 22, 0.82) !important;
+  border-color: rgba(16, 185, 129, 0.75) !important;
+  color: #34d399 !important;
+  box-shadow:
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -2px 0 0 rgba(5, 150, 105, 0.65),
+    0 0 18px rgba(16, 185, 129, 0.35),
+    0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 4. Atmospheric Spore Particles */
+.aqi-spore-container {
+  position: absolute;
+  inset: -14px;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 0;
+}
+
+.aqi-spore {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--spore-size, 3px);
+  height: var(--spore-size, 3px);
+  border-radius: 50%;
+  background: var(--spore-color, #10b981);
+  box-shadow: 0 0 8px var(--spore-color, #10b981);
+  opacity: 0;
+  animation: radiateAqiSpore var(--spore-duration, 3.4s) cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  animation-delay: var(--spore-delay, 0s);
+  filter: blur(0.6px);
+}
+
+@keyframes radiateAqiSpore {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.38;
+  }
+  65% {
+    opacity: 0.18;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(var(--tx, 30px), var(--ty, -30px)) scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* ============================================================== */
+/* 5. EXPLICIT GRAB & GRABBING CURSORS (IDENTICAL TO WEB APP)     */
+/* ============================================================== */
+.mapboxgl-canvas-container,
+.mapboxgl-canvas-container.mapboxgl-interactive,
+canvas.mapboxgl-canvas {
+  cursor: grab !important;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mapboxgl-canvas-container:active,
+.mapboxgl-canvas-container.mapboxgl-interactive:active,
+canvas.mapboxgl-canvas:active {
+  cursor: grabbing !important;
+}
+
+.glass-pin-node-wrapper,
+.mapboxgl-marker,
+button {
+  cursor: pointer !important;
+}
+
+/* Mapbox Navigation Controls Crystal Glass Styling */
+.mapboxgl-ctrl-bottom-right {
+  margin-right: 14px !important;
+  margin-bottom: 160px !important;
+  pointer-events: auto !important;
+  z-index: 30 !important;
+}
+
+.mapboxgl-ctrl-group {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.09) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  ), rgba(10, 16, 31, 0.65) !important;
+  backdrop-filter: blur(20px) saturate(190%) contrast(105%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(190%) contrast(105%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 12px !important;
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.35),
+    0 12px 35px rgba(0, 0, 0, 0.65),
+    0 0 16px rgba(56, 189, 248, 0.12) !important;
+  overflow: hidden !important;
+}
+
+.mapboxgl-ctrl-group button {
+  width: 32px !important;
+  height: 32px !important;
+  background-color: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  cursor: pointer !important;
+}
+
+.mapboxgl-ctrl-group button:last-child {
+  border-bottom: none !important;
+}
+
+.mapboxgl-ctrl-group button .mapboxgl-ctrl-icon {
+  filter: invert(1) brightness(1.2) contrast(1.1) !important;
+}
+
+.mapboxgl-ctrl-group button:hover {
+  background-color: rgba(56, 189, 248, 0.25) !important;
+}
+
+/* 6. User Live GPS Radar Beacon Marker */
+.user-gps-beacon-container {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.user-gps-beacon-pulse {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(0, 240, 255, 0.25);
+  border: 1.5px solid #00f0ff;
+  animation: gpsBeaconPulse 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+.user-gps-beacon-core {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #00f0ff;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 12px #00f0ff, 0 0 24px rgba(0, 240, 255, 0.6);
+  z-index: 2;
+}
+
+@keyframes gpsBeaconPulse {
+  0% { transform: scale(0.5); opacity: 0.95; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+
+/* 7. Website-Parity Atmospheric Pinpoint Marker Animations */
+@keyframes pointLightPulse {
+  0%, 100% {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.2;
+  }
+}
+
+@keyframes pointParticleEmit1 {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0.7);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) translate(-5px, -6px) scale(1.05);
+  }
+  60% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(-18px, -20px) scale(0.35);
+    opacity: 0;
+  }
+}
+
+@keyframes pointParticleEmit2 {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0.7);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) translate(6px, -5px) scale(1.05);
+  }
+  60% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(19px, -17px) scale(0.35);
+    opacity: 0;
+  }
+}
+
+@keyframes pointParticleEmit3 {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0.7);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) translate(-5px, 6px) scale(1.05);
+  }
+  60% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(-17px, 18px) scale(0.35);
+    opacity: 0;
+  }
+}
+
+@keyframes pointParticleEmit4 {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0.7);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) translate(5px, 5px) scale(1.05);
+  }
+  60% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(18px, 17px) scale(0.35);
+    opacity: 0;
+  }
+}
+
+@keyframes pointParticleEmit5 {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0.7);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) translate(0px, -7px) scale(1.05);
+  }
+  60% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(0px, -22px) scale(0.35);
+    opacity: 0;
+  }
+}
+
+@keyframes pointParticleEmit6 {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0.7);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) translate(0px, 7px) scale(1.05);
+  }
+  60% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(0px, 22px) scale(0.35);
+    opacity: 0;
+  }
+}
+
+.aqi-target-pinpoint-marker {
+  z-index: 50 !important;
+  pointer-events: none;
+}
+
+.mapbox-station-pin-wrap {
+  cursor: pointer !important;
+  z-index: 15;
+}
+
+/* Mapbox Navigation Controls (Zoom +/- and Compass) styling & elevation */
+.mapboxgl-ctrl-bottom-right {
+  margin-right: 12px !important;
+  margin-bottom: 160px !important;
+  pointer-events: auto !important;
+  z-index: 38 !important;
+  transition: margin-bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.mapboxgl-ctrl-group {
+  background: rgba(15, 23, 42, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+.mapboxgl-ctrl-group button {
+  width: 32px !important;
+  height: 32px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background-color: transparent !important;
+}
+
+.mapboxgl-ctrl-group button:last-child {
+  border-bottom: none !important;
+}
+
+.mapboxgl-ctrl-group button:hover {
+  background-color: rgba(56, 189, 248, 0.15) !important;
+}
+
+
