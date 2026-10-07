@@ -9,7 +9,11 @@
     "pm10": 210,
     "zone": "Delhi NCR",
     "state": "Delhi",
-    "type": "Urban Commercial"
+    "type": "Urban Commercial",
+    "no2": 45,
+    "so2": 19,
+    "co": 1.5,
+    "o3": 33
   },
   {
     "id": "delhi-dtu",
@@ -21,7 +25,11 @@
     "pm10": 190,
     "zone": "Delhi NCR",
     "state": "Delhi",
-    "type": "Institutional"
+    "type": "Institutional",
+    "no2": 30,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 36
   },
   {
     "id": "delhi-lodhi",
@@ -33,7 +41,11 @@
     "pm10": 155,
     "zone": "Delhi NCR",
     "state": "Delhi",
-    "type": "Green Buffer"
+    "type": "Green Buffer",
+    "no2": 16,
+    "so2": 7,
+    "co": 0.5,
+    "o3": 46
   },
   {
     "id": "delhi-igi",
@@ -45,7 +57,11 @@
     "pm10": 175,
     "zone": "Delhi NCR",
     "state": "Delhi",
-    "type": "Transit Hub"
+    "type": "Transit Hub",
+    "no2": 42,
+    "so2": 18,
+    "co": 1.4,
+    "o3": 32
   },
   {
     "id": "noida-sec62",
@@ -57,7 +73,11 @@
     "pm10": 200,
     "zone": "Delhi NCR",
     "state": "Uttar Pradesh",
-    "type": "Commercial-IT"
+    "type": "Commercial-IT",
+    "no2": 44,
+    "so2": 19,
+    "co": 1.5,
+    "o3": 33
   },
   {
     "id": "gurugram-sec51",
@@ -69,7 +89,11 @@
     "pm10": 165,
     "zone": "Delhi NCR",
     "state": "Haryana",
-    "type": "Commercial"
+    "type": "Commercial",
+    "no2": 42,
+    "so2": 18,
+    "co": 1.4,
+    "o3": 32
   },
   {
     "id": "faridabad-sec16",
@@ -81,7 +105,11 @@
     "pm10": 195,
     "zone": "Delhi NCR",
     "state": "Haryana",
-    "type": "Industrial"
+    "type": "Industrial",
+    "no2": 44,
+    "so2": 19,
+    "co": 1.5,
+    "o3": 33
   },
   {
     "id": "ghaziabad-vasundhara",
@@ -93,7 +121,11 @@
     "pm10": 220,
     "zone": "Delhi NCR",
     "state": "Uttar Pradesh",
-    "type": "Dense Urban"
+    "type": "Dense Urban",
+    "no2": 32,
+    "so2": 13,
+    "co": 1,
+    "o3": 38
   },
   {
     "id": "chandigarh",
@@ -105,7 +137,11 @@
     "pm10": 115,
     "zone": "North",
     "state": "Chandigarh",
-    "type": "Planned City"
+    "type": "Planned City",
+    "no2": 26,
+    "so2": 10,
+    "co": 0.8,
+    "o3": 33
   },
   {
     "id": "ludhiana",
@@ -117,7 +153,11 @@
     "pm10": 160,
     "zone": "North",
     "state": "Punjab",
-    "type": "Industrial Hub"
+    "type": "Industrial Hub",
+    "no2": 41,
+    "so2": 18,
+    "co": 1.4,
+    "o3": 31
   },
   {
     "id": "amritsar",
@@ -129,7 +169,11 @@
     "pm10": 150,
     "zone": "North",
     "state": "Punjab",
-    "type": "Cultural Hub"
+    "type": "Cultural Hub",
+    "no2": 28,
+    "so2": 11,
+    "co": 0.9,
+    "o3": 35
   },
   {
     "id": "jalandhar",
@@ -141,7 +185,11 @@
     "pm10": 145,
     "zone": "North",
     "state": "Punjab",
-    "type": "Urban"
+    "type": "Urban",
+    "no2": 28,
+    "so2": 11,
+    "co": 0.9,
+    "o3": 35
   },
   {
     "id": "panipat",
@@ -153,7 +201,11 @@
     "pm10": 185,
     "zone": "North",
     "state": "Haryana",
-    "type": "Textile Hub"
+    "type": "Textile Hub",
+    "no2": 30,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 37
   },
   {
     "id": "karnal",
@@ -165,7 +217,11 @@
     "pm10": 155,
     "zone": "North",
     "state": "Haryana",
-    "type": "Agricultural Corridor"
+    "type": "Agricultural Corridor",
+    "no2": 28,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 35
   },
   {
     "id": "srinagar",
@@ -177,7 +233,11 @@
     "pm10": 55,
     "zone": "Kashmir Valley",
     "state": "Jammu & Kashmir",
-    "type": "Mountain Valley"
+    "type": "Mountain Valley",
+    "no2": 12,
+    "so2": 5,
+    "co": 0.4,
+    "o3": 39
   },
   {
     "id": "jammu",
@@ -189,7 +249,11 @@
     "pm10": 85,
     "zone": "North",
     "state": "Jammu & Kashmir",
-    "type": "Sub-Himalayan"
+    "type": "Sub-Himalayan",
+    "no2": 25,
+    "so2": 10,
+    "co": 0.8,
+    "o3": 32
   },
   {
     "id": "leh",
@@ -201,7 +265,11 @@
     "pm10": 38,
     "zone": "Ladakh Plateau",
     "state": "Ladakh",
-    "type": "High Altitude Pristine"
+    "type": "High Altitude Pristine",
+    "no2": 23,
+    "so2": 9,
+    "co": 0.7,
+    "o3": 30
   },
   {
     "id": "shimla",
@@ -213,7 +281,11 @@
     "pm10": 62,
     "zone": "Himalayas",
     "state": "Himachal Pradesh",
-    "type": "Hill Station"
+    "type": "Hill Station",
+    "no2": 12,
+    "so2": 5,
+    "co": 0.4,
+    "o3": 39
   },
   {
     "id": "dharamshala",
@@ -225,7 +297,11 @@
     "pm10": 50,
     "zone": "Himalayas",
     "state": "Himachal Pradesh",
-    "type": "Hill Station"
+    "type": "Hill Station",
+    "no2": 12,
+    "so2": 5,
+    "co": 0.4,
+    "o3": 39
   },
   {
     "id": "dehradun",
@@ -237,7 +313,11 @@
     "pm10": 82,
     "zone": "Doon Valley",
     "state": "Uttarakhand",
-    "type": "Valley Urban"
+    "type": "Valley Urban",
+    "no2": 25,
+    "so2": 10,
+    "co": 0.8,
+    "o3": 32
   },
   {
     "id": "rishikesh",
@@ -249,7 +329,11 @@
     "pm10": 68,
     "zone": "Foothills",
     "state": "Uttarakhand",
-    "type": "River Corridor"
+    "type": "River Corridor",
+    "no2": 12,
+    "so2": 5,
+    "co": 0.4,
+    "o3": 40
   },
   {
     "id": "lucknow-hazratganj",
@@ -261,7 +345,11 @@
     "pm10": 180,
     "zone": "Gangetic Plains",
     "state": "Uttar Pradesh",
-    "type": "Urban Heart"
+    "type": "Urban Heart",
+    "no2": 29,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 36
   },
   {
     "id": "lucknow-talkatora",
@@ -273,7 +361,11 @@
     "pm10": 198,
     "zone": "Gangetic Plains",
     "state": "Uttar Pradesh",
-    "type": "Industrial"
+    "type": "Industrial",
+    "no2": 44,
+    "so2": 19,
+    "co": 1.5,
+    "o3": 33
   },
   {
     "id": "kanpur-iit",
@@ -285,7 +377,11 @@
     "pm10": 170,
     "zone": "Gangetic Plains",
     "state": "Uttar Pradesh",
-    "type": "Institutional"
+    "type": "Institutional",
+    "no2": 29,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 36
   },
   {
     "id": "kanpur-nehru",
@@ -297,7 +393,11 @@
     "pm10": 210,
     "zone": "Gangetic Plains",
     "state": "Uttar Pradesh",
-    "type": "Dense Urban"
+    "type": "Dense Urban",
+    "no2": 31,
+    "so2": 13,
+    "co": 1,
+    "o3": 37
   },
   {
     "id": "varanasi-bhu",
@@ -309,7 +409,11 @@
     "pm10": 152,
     "zone": "Gangetic Plains",
     "state": "Uttar Pradesh",
-    "type": "University Eco"
+    "type": "University Eco",
+    "no2": 15,
+    "so2": 7,
+    "co": 0.5,
+    "o3": 45
   },
   {
     "id": "varanasi-ardhali",
@@ -321,7 +425,11 @@
     "pm10": 185,
     "zone": "Gangetic Plains",
     "state": "Uttar Pradesh",
-    "type": "Urban Transit"
+    "type": "Urban Transit",
+    "no2": 43,
+    "so2": 18,
+    "co": 1.5,
+    "o3": 32
   },
   {
     "id": "agra-taj",
@@ -333,7 +441,11 @@
     "pm10": 178,
     "zone": "Gangetic Plains",
     "state": "Uttar Pradesh",
-    "type": "Eco Heritage"
+    "type": "Eco Heritage",
+    "no2": 16,
+    "so2": 7,
+    "co": 0.5,
+    "o3": 47
   },
   {
     "id": "prayagraj",
@@ -345,7 +457,11 @@
     "pm10": 165,
     "zone": "Gangetic Plains",
     "state": "Uttar Pradesh",
-    "type": "Confluence Hub"
+    "type": "Confluence Hub",
+    "no2": 29,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 35
   },
   {
     "id": "meerut",
@@ -357,7 +473,11 @@
     "pm10": 195,
     "zone": "Gangetic Plains",
     "state": "Uttar Pradesh",
-    "type": "Urban Corridor"
+    "type": "Urban Corridor",
+    "no2": 31,
+    "so2": 12,
+    "co": 1,
+    "o3": 37
   },
   {
     "id": "bareilly",
@@ -369,7 +489,11 @@
     "pm10": 160,
     "zone": "Gangetic Plains",
     "state": "Uttar Pradesh",
-    "type": "Rohilkhand"
+    "type": "Rohilkhand",
+    "no2": 29,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 35
   },
   {
     "id": "gorakhpur",
@@ -381,7 +505,11 @@
     "pm10": 172,
     "zone": "Gangetic Plains",
     "state": "Uttar Pradesh",
-    "type": "Eastern UP"
+    "type": "Eastern UP",
+    "no2": 29,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 36
   },
   {
     "id": "jhansi",
@@ -393,7 +521,11 @@
     "pm10": 140,
     "zone": "Bundelkhand",
     "state": "Uttar Pradesh",
-    "type": "Bundelkhand"
+    "type": "Bundelkhand",
+    "no2": 28,
+    "so2": 11,
+    "co": 0.9,
+    "o3": 34
   },
   {
     "id": "patna-muradpur",
@@ -405,7 +537,11 @@
     "pm10": 192,
     "zone": "Gangetic Plains",
     "state": "Bihar",
-    "type": "Urban Riverfront"
+    "type": "Urban Riverfront",
+    "no2": 30,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 36
   },
   {
     "id": "patna-danapur",
@@ -417,7 +553,11 @@
     "pm10": 196,
     "zone": "Gangetic Plains",
     "state": "Bihar",
-    "type": "Transit Hub"
+    "type": "Transit Hub",
+    "no2": 43,
+    "so2": 19,
+    "co": 1.5,
+    "o3": 33
   },
   {
     "id": "gaya",
@@ -429,7 +569,11 @@
     "pm10": 135,
     "zone": "East",
     "state": "Bihar",
-    "type": "Heritage Hub"
+    "type": "Heritage Hub",
+    "no2": 27,
+    "so2": 11,
+    "co": 0.8,
+    "o3": 34
   },
   {
     "id": "muzaffarpur",
@@ -441,7 +585,11 @@
     "pm10": 188,
     "zone": "Gangetic Plains",
     "state": "Bihar",
-    "type": "North Bihar"
+    "type": "North Bihar",
+    "no2": 30,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 36
   },
   {
     "id": "bhagalpur",
@@ -453,7 +601,11 @@
     "pm10": 160,
     "zone": "Gangetic Plains",
     "state": "Bihar",
-    "type": "Silk City"
+    "type": "Silk City",
+    "no2": 28,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 35
   },
   {
     "id": "ranchi",
@@ -465,7 +617,11 @@
     "pm10": 122,
     "zone": "Chota Nagpur",
     "state": "Jharkhand",
-    "type": "Plateau Capital"
+    "type": "Plateau Capital",
+    "no2": 26,
+    "so2": 11,
+    "co": 0.8,
+    "o3": 33
   },
   {
     "id": "jamshedpur",
@@ -477,7 +633,11 @@
     "pm10": 155,
     "zone": "Chota Nagpur",
     "state": "Jharkhand",
-    "type": "Steel City"
+    "type": "Steel City",
+    "no2": 40,
+    "so2": 17,
+    "co": 1.4,
+    "o3": 31
   },
   {
     "id": "dhanbad",
@@ -489,7 +649,11 @@
     "pm10": 178,
     "zone": "Chota Nagpur",
     "state": "Jharkhand",
-    "type": "Mining Hub"
+    "type": "Mining Hub",
+    "no2": 29,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 36
   },
   {
     "id": "jaipur-adarsh",
@@ -501,7 +665,11 @@
     "pm10": 160,
     "zone": "East Rajasthan",
     "state": "Rajasthan",
-    "type": "Heritage Urban"
+    "type": "Heritage Urban",
+    "no2": 28,
+    "so2": 11,
+    "co": 0.9,
+    "o3": 35
   },
   {
     "id": "jaipur-mansarovar",
@@ -513,7 +681,11 @@
     "pm10": 150,
     "zone": "East Rajasthan",
     "state": "Rajasthan",
-    "type": "Residential"
+    "type": "Residential",
+    "no2": 28,
+    "so2": 11,
+    "co": 0.9,
+    "o3": 35
   },
   {
     "id": "jodhpur",
@@ -525,7 +697,11 @@
     "pm10": 155,
     "zone": "Thar Desert",
     "state": "Rajasthan",
-    "type": "Arid Urban"
+    "type": "Arid Urban",
+    "no2": 28,
+    "so2": 11,
+    "co": 0.9,
+    "o3": 34
   },
   {
     "id": "udaipur",
@@ -537,7 +713,11 @@
     "pm10": 110,
     "zone": "Aravalli Hills",
     "state": "Rajasthan",
-    "type": "Lake Eco"
+    "type": "Lake Eco",
+    "no2": 14,
+    "so2": 6,
+    "co": 0.4,
+    "o3": 42
   },
   {
     "id": "kota",
@@ -549,7 +729,11 @@
     "pm10": 165,
     "zone": "Hadoti",
     "state": "Rajasthan",
-    "type": "Industrial-Coaching"
+    "type": "Industrial-Coaching",
+    "no2": 41,
+    "so2": 17,
+    "co": 1.4,
+    "o3": 31
   },
   {
     "id": "bikaner",
@@ -561,7 +745,11 @@
     "pm10": 170,
     "zone": "Thar Desert",
     "state": "Rajasthan",
-    "type": "Desert Industrial"
+    "type": "Desert Industrial",
+    "no2": 40,
+    "so2": 17,
+    "co": 1.4,
+    "o3": 31
   },
   {
     "id": "ajmer",
@@ -573,7 +761,11 @@
     "pm10": 135,
     "zone": "Aravalli",
     "state": "Rajasthan",
-    "type": "Cultural Center"
+    "type": "Cultural Center",
+    "no2": 27,
+    "so2": 11,
+    "co": 0.8,
+    "o3": 34
   },
   {
     "id": "ahmedabad-maninagar",
@@ -585,7 +777,11 @@
     "pm10": 138,
     "zone": "West Coast",
     "state": "Gujarat",
-    "type": "Urban Heart"
+    "type": "Urban Heart",
+    "no2": 27,
+    "so2": 11,
+    "co": 0.8,
+    "o3": 34
   },
   {
     "id": "ahmedabad-chandkheda",
@@ -597,7 +793,11 @@
     "pm10": 125,
     "zone": "West Coast",
     "state": "Gujarat",
-    "type": "Suburban"
+    "type": "Suburban",
+    "no2": 26,
+    "so2": 11,
+    "co": 0.8,
+    "o3": 33
   },
   {
     "id": "surat",
@@ -609,7 +809,11 @@
     "pm10": 118,
     "zone": "Tapi Delta",
     "state": "Gujarat",
-    "type": "Diamond & Textile"
+    "type": "Diamond & Textile",
+    "no2": 26,
+    "so2": 10,
+    "co": 0.8,
+    "o3": 33
   },
   {
     "id": "vadodara",
@@ -621,7 +825,11 @@
     "pm10": 130,
     "zone": "West Coast",
     "state": "Gujarat",
-    "type": "Cultural Capital"
+    "type": "Cultural Capital",
+    "no2": 26,
+    "so2": 11,
+    "co": 0.8,
+    "o3": 33
   },
   {
     "id": "rajkot",
@@ -633,7 +841,11 @@
     "pm10": 135,
     "zone": "Saurashtra",
     "state": "Gujarat",
-    "type": "Engineering Hub"
+    "type": "Engineering Hub",
+    "no2": 27,
+    "so2": 11,
+    "co": 0.8,
+    "o3": 34
   },
   {
     "id": "gandhinagar",
@@ -645,7 +857,11 @@
     "pm10": 105,
     "zone": "Green Capital",
     "state": "Gujarat",
-    "type": "Capital Green"
+    "type": "Capital Green",
+    "no2": 14,
+    "so2": 6,
+    "co": 0.4,
+    "o3": 42
   },
   {
     "id": "mumbai-bkc",
@@ -657,7 +873,11 @@
     "pm10": 195,
     "zone": "Konkan Coast",
     "state": "Maharashtra",
-    "type": "Financial Hub"
+    "type": "Financial Hub",
+    "no2": 31,
+    "so2": 13,
+    "co": 1,
+    "o3": 37
   },
   {
     "id": "mumbai-colaba",
@@ -669,7 +889,11 @@
     "pm10": 155,
     "zone": "Konkan Coast",
     "state": "Maharashtra",
-    "type": "Coastal Marine"
+    "type": "Coastal Marine",
+    "no2": 16,
+    "so2": 7,
+    "co": 0.5,
+    "o3": 46
   },
   {
     "id": "mumbai-borivali",
@@ -681,7 +905,11 @@
     "pm10": 175,
     "zone": "Konkan Coast",
     "state": "Maharashtra",
-    "type": "Suburban Forest"
+    "type": "Suburban Forest",
+    "no2": 30,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 36
   },
   {
     "id": "mumbai-worli",
@@ -693,7 +921,11 @@
     "pm10": 160,
     "zone": "Konkan Coast",
     "state": "Maharashtra",
-    "type": "Seafront"
+    "type": "Seafront",
+    "no2": 29,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 36
   },
   {
     "id": "navi-mumbai",
@@ -705,7 +937,11 @@
     "pm10": 185,
     "zone": "Konkan Coast",
     "state": "Maharashtra",
-    "type": "Planned Industrial"
+    "type": "Planned Industrial",
+    "no2": 43,
+    "so2": 19,
+    "co": 1.5,
+    "o3": 33
   },
   {
     "id": "pune-shivajinagar",
@@ -717,7 +953,11 @@
     "pm10": 128,
     "zone": "Deccan Plateau",
     "state": "Maharashtra",
-    "type": "Urban Core"
+    "type": "Urban Core",
+    "no2": 27,
+    "so2": 11,
+    "co": 0.8,
+    "o3": 34
   },
   {
     "id": "pune-hinjewadi",
@@ -729,7 +969,11 @@
     "pm10": 115,
     "zone": "Deccan Plateau",
     "state": "Maharashtra",
-    "type": "Tech Park"
+    "type": "Tech Park",
+    "no2": 26,
+    "so2": 10,
+    "co": 0.8,
+    "o3": 33
   },
   {
     "id": "nagpur",
@@ -741,7 +985,11 @@
     "pm10": 140,
     "zone": "Vidarbha",
     "state": "Maharashtra",
-    "type": "Central Geographic"
+    "type": "Central Geographic",
+    "no2": 27,
+    "so2": 11,
+    "co": 0.8,
+    "o3": 34
   },
   {
     "id": "nashik",
@@ -753,7 +1001,11 @@
     "pm10": 105,
     "zone": "Western Ghats",
     "state": "Maharashtra",
-    "type": "Highland Urban"
+    "type": "Highland Urban",
+    "no2": 25,
+    "so2": 10,
+    "co": 0.8,
+    "o3": 32
   },
   {
     "id": "aurangabad",
@@ -765,7 +1017,11 @@
     "pm10": 135,
     "zone": "Marathwada",
     "state": "Maharashtra",
-    "type": "Historical"
+    "type": "Historical",
+    "no2": 27,
+    "so2": 11,
+    "co": 0.8,
+    "o3": 34
   },
   {
     "id": "panaji-goa",
@@ -777,7 +1033,11 @@
     "pm10": 65,
     "zone": "Konkan Coast",
     "state": "Goa",
-    "type": "Coastal Eco"
+    "type": "Coastal Eco",
+    "no2": 12,
+    "so2": 5,
+    "co": 0.4,
+    "o3": 39
   },
   {
     "id": "bhopal-tt-nagar",
@@ -789,7 +1049,11 @@
     "pm10": 135,
     "zone": "Central India",
     "state": "Madhya Pradesh",
-    "type": "Lake Capital"
+    "type": "Lake Capital",
+    "no2": 27,
+    "so2": 11,
+    "co": 0.8,
+    "o3": 34
   },
   {
     "id": "indore-vijay",
@@ -801,7 +1065,11 @@
     "pm10": 142,
     "zone": "Malwa",
     "state": "Madhya Pradesh",
-    "type": "Commercial Hub"
+    "type": "Commercial Hub",
+    "no2": 39,
+    "so2": 16,
+    "co": 1.3,
+    "o3": 30
   },
   {
     "id": "jabalpur",
@@ -813,7 +1081,11 @@
     "pm10": 125,
     "zone": "Narmada Valley",
     "state": "Madhya Pradesh",
-    "type": "River Corridor"
+    "type": "River Corridor",
+    "no2": 26,
+    "so2": 11,
+    "co": 0.8,
+    "o3": 33
   },
   {
     "id": "gwalior",
@@ -825,7 +1097,11 @@
     "pm10": 172,
     "zone": "Chambal",
     "state": "Madhya Pradesh",
-    "type": "Historic Fort"
+    "type": "Historic Fort",
+    "no2": 29,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 35
   },
   {
     "id": "raipur",
@@ -837,7 +1113,11 @@
     "pm10": 150,
     "zone": "Central Basin",
     "state": "Chhattisgarh",
-    "type": "Capital Industrial"
+    "type": "Capital Industrial",
+    "no2": 40,
+    "so2": 17,
+    "co": 1.4,
+    "o3": 31
   },
   {
     "id": "bilaspur",
@@ -849,7 +1129,11 @@
     "pm10": 145,
     "zone": "Central Basin",
     "state": "Chhattisgarh",
-    "type": "Railway Hub"
+    "type": "Railway Hub",
+    "no2": 28,
+    "so2": 11,
+    "co": 0.9,
+    "o3": 34
   },
   {
     "id": "kolkata-victoria",
@@ -861,7 +1145,11 @@
     "pm10": 180,
     "zone": "Delta Plain",
     "state": "West Bengal",
-    "type": "Heritage Eco"
+    "type": "Heritage Eco",
+    "no2": 16,
+    "so2": 7,
+    "co": 0.5,
+    "o3": 47
   },
   {
     "id": "kolkata-saltlake",
@@ -873,7 +1161,11 @@
     "pm10": 190,
     "zone": "Delta Plain",
     "state": "West Bengal",
-    "type": "IT Hub"
+    "type": "IT Hub",
+    "no2": 30,
+    "so2": 12,
+    "co": 0.9,
+    "o3": 36
   },
   {
     "id": "kolkata-howrah",
@@ -885,7 +1177,11 @@
     "pm10": 205,
     "zone": "Delta Plain",
     "state": "West Bengal",
-    "type": "Industrial Port"
+    "type": "Industrial Port",
+    "no2": 44,
+    "so2": 19,
+    "co": 1.5,
+    "o3": 33
   },
   {
     "id": "siliguri",
@@ -897,7 +1193,11 @@
     "pm10": 95,
     "zone": "Terai Gateway",
     "state": "West Bengal",
-    "type": "Northeast Gateway"
+    "type": "Northeast Gateway",
+    "no2": 25,
+    "so2": 10,
+    "co": 0.8,
+    "o3": 32
   },
   {
     "id": "asansol",
@@ -909,7 +1209,11 @@
     "pm10": 175,
     "zone": "Rarh Region",
     "state": "West Bengal",
-    "type": "Colliery Belt"
+    "type": "Colliery Belt",
+    "no2": 42,
+    "so2": 18,
+    "co": 1.4,
+    "o3": 32
   },
   {
     "id": "bhubaneswar",
@@ -921,7 +1225,11 @@
     "pm10": 115,
     "zone": "Mahanadi Coast",
     "state": "Odisha",
-    "type": "Temple Capital"
+    "type": "Temple Capital",
+    "no2": 26,
+    "so2": 10,
+    "co": 0.8,
+    "o3": 33
   },
   {
     "id": "cuttack",
@@ -933,7 +1241,11 @@
     "pm10": 120,
     "zone": "Mahanadi Coast",
     "state": "Odisha",
-    "type": "Silver City"
+    "type": "Silver City",
+    "no2": 26,
+    "so2": 11,
+    "co": 0.8,
+    "o3": 33
   },
   {
     "id": "rourkela",
@@ -945,7 +1257,11 @@
     "pm10": 158,
     "zone": "Brahmani Basin",
     "state": "Odisha",
-    "type": "Steel City"
+    "type": "Steel City",
+    "no2": 40,
+    "so2": 17,
+    "co": 1.4,
+    "o3": 31
   },
   {
     "id": "guwahati-panbazar",
@@ -957,7 +1273,11 @@
     "pm10": 88,
     "zone": "Brahmaputra Valley",
     "state": "Assam",
-    "type": "River Capital"
+    "type": "River Capital",
+    "no2": 25,
+    "so2": 10,
+    "co": 0.8,
+    "o3": 32
   },
   {
     "id": "shillong",
@@ -969,7 +1289,11 @@
     "pm10": 48,
     "zone": "Khasi Hills",
     "state": "Meghalaya",
-    "type": "Pine Highland"
+    "type": "Pine Highland",
+    "no2": 12,
+    "so2": 5,
+    "co": 0.4,
+    "o3": 38
   },
   {
     "id": "agartala",
@@ -981,7 +1305,11 @@
     "pm10": 70,
     "zone": "Tripura Plain",
     "state": "Tripura",
-    "type": "Palace Border"
+    "type": "Palace Border",
+    "no2": 24,
+    "so2": 10,
+    "co": 0.7,
+    "o3": 31
   },
   {
     "id": "imphal",
@@ -993,7 +1321,11 @@
     "pm10": 52,
     "zone": "Manipur Valley",
     "state": "Manipur",
-    "type": "Valley Heritage"
+    "type": "Valley Heritage",
+    "no2": 23,
+    "so2": 9,
+    "co": 0.7,
+    "o3": 30
   },
   {
     "id": "aizawl",
@@ -1005,7 +1337,11 @@
     "pm10": 42,
     "zone": "Mizo Hills",
     "state": "Mizoram",
-    "type": "Mountain Ridge"
+    "type": "Mountain Ridge",
+    "no2": 12,
+    "so2": 5,
+    "co": 0.4,
+    "o3": 38
   },
   {
     "id": "kohima",
@@ -1017,7 +1353,11 @@
     "pm10": 44,
     "zone": "Naga Hills",
     "state": "Nagaland",
-    "type": "Hill Capital"
+    "type": "Hill Capital",
+    "no2": 12,
+    "so2": 5,
+    "co": 0.4,
+    "o3": 38
   },
   {
     "id": "itanagar",
@@ -1029,7 +1369,11 @@
     "pm10": 38,
     "zone": "Arunachal Foothills",
     "state": "Arunachal Pradesh",
-    "type": "Pristine Foothill"
+    "type": "Pristine Foothill",
+    "no2": 11,
+    "so2": 5,
+    "co": 0.4,
+    "o3": 38
   },
   {
     "id": "gangtok",
@@ -1041,7 +1385,11 @@
     "pm10": 40,
     "zone": "Eastern Himalayas",
     "state": "Sikkim",
-    "type": "Eco Hill Capital"
+    "type": "Eco Hill Capital",
+    "no2": 11,
+    "so2": 5,
+    "co": 0.4,
+    "o3": 38
   },
   {
     "id": "hyderabad-sanathnagar",
@@ -1053,7 +1401,11 @@
     "pm10": 142,
     "zone": "Deccan Plateau",
     "state": "Telangana",
-    "type": "Industrial Urban"
+    "type": "Industrial Urban",
+    "no2": 39,
+    "so2": 17,
+    "co": 1.3,
+    "o3": 30
   },
   {
     "id": "hyderabad-hitec",
@@ -1065,7 +1417,11 @@
     "pm10": 125,
     "zone": "Deccan Plateau",
     "state": "Telangana",
-    "type": "Tech Corridor"
+    "type": "Tech Corridor",
+    "no2": 27,
+    "so2": 11,
+    "co": 0.8,
+    "o3": 34
   },
   {
     "id": "hyderabad-charminar",
@@ -1077,7 +1433,11 @@
     "pm10": 155,
     "zone": "Deccan Plateau",
     "state": "Telangana",
-    "type": "Heritage Core"
+    "type": "Heritage Core",
+    "no2": 28,
+    "so2": 11,
+    "co": 0.9,
+    "o3": 35
   },
   {
     "id": "visakhapatnam",
@@ -1089,7 +1449,11 @@
     "pm10": 85,
     "zone": "Eastern Ghats Coast",
     "state": "Andhra Pradesh",
-    "type": "Coastal Port"
+    "type": "Coastal Port",
+    "no2": 13,
+    "so2": 6,
+    "co": 0.4,
+    "o3": 41
   },
   {
     "id": "vijayawada",
@@ -1101,7 +1465,11 @@
     "pm10": 108,
     "zone": "Krishna Delta",
     "state": "Andhra Pradesh",
-    "type": "River Junction"
+    "type": "River Junction",
+    "no2": 26,
+    "so2": 10,
+    "co": 0.8,
+    "o3": 33
   },
   {
     "id": "tirupati",
@@ -1113,7 +1481,11 @@
     "pm10": 78,
     "zone": "Seshachalam Hills",
     "state": "Andhra Pradesh",
-    "type": "Spiritual Eco"
+    "type": "Spiritual Eco",
+    "no2": 13,
+    "so2": 5,
+    "co": 0.4,
+    "o3": 40
   },
   {
     "id": "bengaluru-btm",
@@ -1125,7 +1497,11 @@
     "pm10": 105,
     "zone": "South Deccan",
     "state": "Karnataka",
-    "type": "Residential"
+    "type": "Residential",
+    "no2": 26,
+    "so2": 10,
+    "co": 0.8,
+    "o3": 33
   },
   {
     "id": "bengaluru-whitefield",
@@ -1137,7 +1513,11 @@
     "pm10": 130,
     "zone": "South Deccan",
     "state": "Karnataka",
-    "type": "IT Hub"
+    "type": "IT Hub",
+    "no2": 27,
+    "so2": 11,
+    "co": 0.8,
+    "o3": 34
   },
   {
     "id": "bengaluru-peenya",
@@ -1149,7 +1529,11 @@
     "pm10": 158,
     "zone": "South Deccan",
     "state": "Karnataka",
-    "type": "Industrial Area"
+    "type": "Industrial Area",
+    "no2": 40,
+    "so2": 17,
+    "co": 1.4,
+    "o3": 31
   },
   {
     "id": "bengaluru-city",
@@ -1161,7 +1545,11 @@
     "pm10": 125,
     "zone": "South Deccan",
     "state": "Karnataka",
-    "type": "Transit Core"
+    "type": "Transit Core",
+    "no2": 38,
+    "so2": 16,
+    "co": 1.3,
+    "o3": 30
   },
   {
     "id": "mysuru",
@@ -1173,7 +1561,11 @@
     "pm10": 72,
     "zone": "South Deccan",
     "state": "Karnataka",
-    "type": "Heritage Green"
+    "type": "Heritage Green",
+    "no2": 12,
+    "so2": 5,
+    "co": 0.4,
+    "o3": 40
   },
   {
     "id": "mangaluru",
@@ -1185,7 +1577,11 @@
     "pm10": 78,
     "zone": "Canara Coast",
     "state": "Karnataka",
-    "type": "Coastal Port"
+    "type": "Coastal Port",
+    "no2": 13,
+    "so2": 5,
+    "co": 0.4,
+    "o3": 40
   },
   {
     "id": "chennai-alandur",
@@ -1197,7 +1593,11 @@
     "pm10": 95,
     "zone": "Coromandel Coast",
     "state": "Tamil Nadu",
-    "type": "Urban Transit"
+    "type": "Urban Transit",
+    "no2": 35,
+    "so2": 15,
+    "co": 1.2,
+    "o3": 28
   },
   {
     "id": "chennai-velachery",
@@ -1209,7 +1609,11 @@
     "pm10": 90,
     "zone": "Coromandel Coast",
     "state": "Tamil Nadu",
-    "type": "Marshland Urban"
+    "type": "Marshland Urban",
+    "no2": 25,
+    "so2": 10,
+    "co": 0.8,
+    "o3": 32
   },
   {
     "id": "chennai-manali",
@@ -1221,7 +1625,11 @@
     "pm10": 145,
     "zone": "Coromandel Coast",
     "state": "Tamil Nadu",
-    "type": "Refinery Petrochem"
+    "type": "Refinery Petrochem",
+    "no2": 28,
+    "so2": 11,
+    "co": 0.9,
+    "o3": 34
   },
   {
     "id": "coimbatore",
@@ -1233,7 +1641,11 @@
     "pm10": 75,
     "zone": "Western Ghats",
     "state": "Tamil Nadu",
-    "type": "Textile Hub"
+    "type": "Textile Hub",
+    "no2": 24,
+    "so2": 10,
+    "co": 0.7,
+    "o3": 31
   },
   {
     "id": "madurai",
@@ -1245,7 +1657,11 @@
     "pm10": 82,
     "zone": "Vaigai Basin",
     "state": "Tamil Nadu",
-    "type": "Cultural City"
+    "type": "Cultural City",
+    "no2": 24,
+    "so2": 10,
+    "co": 0.7,
+    "o3": 32
   },
   {
     "id": "trichy",
@@ -1257,7 +1673,11 @@
     "pm10": 86,
     "zone": "Cauvery Delta",
     "state": "Tamil Nadu",
-    "type": "Delta City"
+    "type": "Delta City",
+    "no2": 25,
+    "so2": 10,
+    "co": 0.8,
+    "o3": 32
   },
   {
     "id": "thiruvananthapuram",
@@ -1269,7 +1689,11 @@
     "pm10": 70,
     "zone": "Malabar Coast",
     "state": "Kerala",
-    "type": "Coastal Capital"
+    "type": "Coastal Capital",
+    "no2": 12,
+    "so2": 5,
+    "co": 0.4,
+    "o3": 40
   },
   {
     "id": "kochi-kaloor",
@@ -1281,7 +1705,11 @@
     "pm10": 84,
     "zone": "Malabar Coast",
     "state": "Kerala",
-    "type": "Harbor City"
+    "type": "Harbor City",
+    "no2": 24,
+    "so2": 10,
+    "co": 0.7,
+    "o3": 32
   },
   {
     "id": "kozhikode",
@@ -1293,6 +1721,10 @@
     "pm10": 66,
     "zone": "Malabar Coast",
     "state": "Kerala",
-    "type": "Malabar Port"
+    "type": "Malabar Port",
+    "no2": 23,
+    "so2": 9,
+    "co": 0.7,
+    "o3": 31
   }
 ]
