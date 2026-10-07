@@ -204,7 +204,8 @@ export async function runPredictiveAdvisoryEvaluation({
       // Pass the empirical ground base PM2.5 so the advisory starts from actual sensor telemetry
       const advisory = await generate630Advisory({ facilityId: facility.id, basePm25: liveBasePm25 || peakArrival });
       const actualRecipient = resolveRecipientForFacility(facility.id);
-      const commandCenterEmail = process.env.COMMAND_CENTRE_EMAIL || 'psubai2006@gmail.com';
+      const commandCenterEmail = process.env.COMMAND_CENTRE_EMAIL || process.env.MONITOR_ALERT_RECIPIENT || 'psubai2006@gmail.com';
+      const senderEmail = process.env.AWS_SES_VERIFIED_SENDER || process.env.SES_SENDER_EMAIL || 'vayuvitals@gmail.com';
 
       let sesResult = null;
       if (dispatchViaSes) {
@@ -213,7 +214,7 @@ export async function runPredictiveAdvisoryEvaluation({
           to: commandCenterEmail,
           subject: sanitizeHeader(`[VayuVitals Forecast • ${facility.name}] ${advisory.emailPayload.subject}`),
           htmlBody: advisory.emailPayload.html,
-          fromEmail: process.env.AWS_SES_VERIFIED_SENDER || 'vayuvitals@gmail.com'
+          fromEmail: senderEmail
         });
 
         // 2. If mapped to another recipient, ALSO dispatch to them
@@ -223,7 +224,7 @@ export async function runPredictiveAdvisoryEvaluation({
               to: actualRecipient,
               subject: sanitizeHeader(`[VayuVitals Forecast • ${facility.name}] ${advisory.emailPayload.subject}`),
               htmlBody: advisory.emailPayload.html,
-              fromEmail: process.env.AWS_SES_VERIFIED_SENDER || 'vayuvitals@gmail.com'
+              fromEmail: senderEmail
             });
           } catch (e) {
             // Non-fatal
@@ -447,7 +448,7 @@ export async function evaluate14DayChronicBlockPetitions({
           to: targetEmail,
           subject: sanitizeHeader(`[VayuVitals Legal Action] ⚖️ STATUTORY SECTION 10 NOTICE: 14-Day Severe Air Violation in Block ${gId}`),
           htmlBody,
-          fromEmail: process.env.AWS_SES_VERIFIED_SENDER || 'vayuvitals@gmail.com'
+          fromEmail: process.env.AWS_SES_VERIFIED_SENDER || process.env.SES_SENDER_EMAIL || 'vayuvitals@gmail.com'
         });
         sesMsgId = sesRes?.messageId;
       }
@@ -527,7 +528,7 @@ export async function runAutonomousMonitoringCycle({ dispatchViaSes = true, isSa
     const istHour = parseInt(istHourStr, 10);
     if (istHour >= 6 && istHour <= 8) {
       const advResults = await runPredictiveAdvisoryEvaluation({
-        thresholdPm25: 120,
+        thresholdPm25: parseInt(process.env.ADVISORY_THRESHOLD_PM25, 10) || 90,
         dispatchViaSes,
         isSandbox,
         maxFacilities: 15

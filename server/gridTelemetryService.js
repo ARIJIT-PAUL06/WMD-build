@@ -42,10 +42,26 @@ try {
   console.warn('[GridTelemetryService] Could not read spatial_grids.json:', err.message);
 }
 
-// Load or initialize 14-day buffer
+// Load or initialize 14-day buffer with Lambda cold-start auto-seeding
 try {
+  if (isLambda && !fs.existsSync(BUFFER_PATH)) {
+    const bundledBuffer = resolveDataPath('ml/data/grid_14day_buffer.json');
+    if (fs.existsSync(bundledBuffer)) {
+      try {
+        fs.copyFileSync(bundledBuffer, BUFFER_PATH);
+      } catch (cpErr) {
+        console.warn('[GridTelemetryService] Failed copying buffer to /tmp:', cpErr.message);
+      }
+    }
+  }
+
   if (fs.existsSync(BUFFER_PATH)) {
     grid14DayBuffer = JSON.parse(fs.readFileSync(BUFFER_PATH, 'utf8'));
+  } else {
+    const fallbackPath = resolveDataPath('ml/data/grid_14day_buffer.json');
+    if (fs.existsSync(fallbackPath)) {
+      grid14DayBuffer = JSON.parse(fs.readFileSync(fallbackPath, 'utf8'));
+    }
   }
 } catch (err) {
   grid14DayBuffer = {};

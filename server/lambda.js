@@ -13,7 +13,7 @@ export const handler = async (event, context) => {
   ) {
     console.log('[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...');
     try {
-      const result = await runAutonomousMonitoringCycle();
+      const result = await runAutonomousMonitoringCycle({ dispatchViaSes: true, isSandbox: false });
       return {
         statusCode: 200,
         body: JSON.stringify({

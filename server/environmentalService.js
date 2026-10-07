@@ -75,7 +75,7 @@ export class EnvironmentalDataProvider {
           no2: Math.round((current.nitrogen_dioxide ?? 25) * 10) / 10,
           so2: Math.round((current.sulphur_dioxide ?? 10) * 10) / 10,
           o3: Math.round((current.ozone ?? 30) * 10) / 10,
-          co: Math.round((current.carbon_monoxide ? current.carbon_monoxide / 100 : 0.8) * 10) / 10,
+          co: Math.round((current.carbon_monoxide ? (current.carbon_monoxide > 20 ? current.carbon_monoxide / 1000 : current.carbon_monoxide) : 0.8) * 10) / 10,
           dust: Math.round((current.dust ?? 15) * 10) / 10,
         },
         weather: {
