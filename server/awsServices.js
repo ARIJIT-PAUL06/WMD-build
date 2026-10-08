@@ -140,27 +140,31 @@ export async function getHistoricalReadings(city, limit = 24) {
         };
       }
     } catch (err) {
-      console.warn(`[DynamoDB] Query failed, falling back to local history:`, err.message);
+      console.warn(`[DynamoDB] Query failed for table "${tableName}":`, err.message);
+      return {
+        success: false,
+        mode: 'DYNAMODB_ERROR',
+        error: err.message,
+        latencyMs: Date.now() - startTime,
+        data: []
+      };
     }
   }
 
-  // Fallback to local store or generate a realistic 24-hour arc for the city
-  let items = localHistoryStore.get(city) || [];
-  if (items.length === 0) {
-    items = generateSyntheticHistory(city);
-    localHistoryStore.set(city, items);
-  }
-
+  // Return live readings captured in local memory during current session if DynamoDB has no records yet
+  const sessionItems = localHistoryStore.get(city) || [];
   return {
     success: true,
-    mode: 'LOCAL_EMULATED',
+    mode: sessionItems.length > 0 ? 'LOCAL_SESSION_STORE' : 'EMPTY_NO_RECORDS',
     latencyMs: Date.now() - startTime,
-    data: items.slice(-limit),
+    data: sessionItems.slice(-limit),
+    totalCount: sessionItems.length
   };
 }
 
 /**
  * Generate human-readable explanation & actionable advisory using Amazon Bedrock
+ * Transparently invokes live Amazon Bedrock Foundation Models.
  */
 export async function generateBedrockAdvisory(metrics) {
   await initAwsClientsIfNeeded();
@@ -224,6 +228,7 @@ Format: Return ONLY the explanation and recommendation. No preamble or meta comm
 
       if (explanation) {
         return {
+          success: true,
           advisory: explanation,
           modelId,
           mode: 'AWS_BEDROCK_LIVE',
@@ -232,20 +237,32 @@ Format: Return ONLY the explanation and recommendation. No preamble or meta comm
       }
     } catch (err) {
       console.warn(`[Bedrock] Live invocation failed:`, err.message);
+      return {
+        success: false,
+        advisory: null,
+        error: err.message,
+        modelId,
+        mode: 'AWS_BEDROCK_UNAVAILABLE',
+        latencyMs: Date.now() - startTime,
+      };
     }
   }
 
-  // Intelligent rule-grounded advisory generator if AWS Bedrock is not configured
-  const fallbackAdvisory = getRuleBasedAdvisory(metrics);
   return {
-    advisory: fallbackAdvisory,
-    modelId: `${modelId} (Simulated)`,
-    mode: 'LOCAL_BEDROCK_SIMULATOR',
-    latencyMs: Math.floor(180 + Math.random() * 80),
+    success: false,
+    advisory: null,
+    error: 'AWS_BEDROCK_NOT_INITIALIZED_OR_CREDENTIALS_MISSING',
+    modelId,
+    mode: 'AWS_BEDROCK_UNAVAILABLE',
+    latencyMs: Date.now() - startTime,
   };
 }
 
-function getRuleBasedAdvisory(metrics) {
+/**
+ * Deterministic clinical health advice based strictly on ICMR / CPCB standards.
+ * Explicitly identified as statutory clinical rules, NEVER masquerading as AI.
+ */
+export function getClinicalHealthGuidelines(metrics) {
   const aqi = metrics.aqi;
   const city = metrics.city;
   const pm25 = metrics.pollutants?.pm25 || 85;
@@ -259,7 +276,7 @@ function getRuleBasedAdvisory(metrics) {
   } else if (aqi <= 200) {
     return `Air quality in ${city} is unhealthy across the urban basin (AQI ${aqi}). Elevated fine particulates (PM2.5) penetrate deep into the lower bronchial tree, triggering respiratory inflammation. Outdoor physical exertion should be avoided, and school morning assemblies moved indoors.`;
   } else if (aqi <= 300) {
-    return `Air quality in ${city} is very unhealthy (AQI ${aqi}, PM2.5: ${pm25} µg/m³). Inhalation of these particulate levels is equivalent to smoking multiple cigarettes, causing severe bronchial constriction. All residents must wear certified N95 respirators outdoors and run HEPA air purifiers indoors.`;
+    return `Air quality in ${city} is very unhealthy (AQI ${aqi}, PM2.5: ${pm25} µg/m³). Inhalation of these particulate levels causes severe bronchial constriction. All residents must wear certified N95 respirators outdoors and run HEPA air purifiers indoors.`;
   } else {
     return `CRITICAL HEALTH ALERT: Air quality in ${city} is Hazardous (AQI ${aqi}). Toxic atmospheric smog and micro-particulates cause acute pulmonary distress and systemic vascular stress. Outdoor exposure must be strictly prohibited, schools should transition to hybrid mode, and sealed indoor air filtration is mandatory.`;
   }
@@ -314,45 +331,4 @@ export async function saveMonitorStateToDynamoDB(state) {
   return false;
 }
 
-function generateSyntheticHistory(city) {
-  const now = Date.now();
-  const items = [];
-  const baseAqi = city.toLowerCase().includes('delhi') ? 290 :
-                 city.toLowerCase().includes('mumbai') ? 140 :
-                 city.toLowerCase().includes('bengaluru') ? 65 : 120;
-
-  for (let i = 24; i >= 0; i--) {
-    const timestamp = now - i * 3600 * 1000;
-    const hour = new Date(timestamp).getHours();
-    const diurnalFactor = Math.sin((hour - 8) / 12 * Math.PI) * 0.25;
-    // Deterministic diurnal variation without random jitter
-    const aqi = Math.max(20, Math.round(baseAqi * (1 + diurnalFactor)));
-
-    let status = 'Moderate';
-    if (aqi <= 50) status = 'Good';
-    else if (aqi <= 100) status = 'Moderate';
-    else if (aqi <= 150) status = 'Unhealthy for Sensitive Groups';
-    else if (aqi <= 200) status = 'Unhealthy';
-    else if (aqi <= 300) status = 'Very Unhealthy';
-    else status = 'Hazardous';
-
-    items.push({
-      city,
-      timestamp,
-      dateStr: new Date(timestamp).toISOString(),
-      aqi,
-      status,
-      pm25: Math.round(aqi * 0.65),
-      pm10: Math.round(aqi * 1.15),
-      no2: Math.round(35 + Math.sin(hour / 12 * Math.PI) * 15),
-      so2: Math.round(12 + Math.cos(hour / 12 * Math.PI) * 5),
-      o3: Math.round(28 + Math.sin((hour - 12) / 12 * Math.PI) * 15),
-      co: +(0.8 + Math.max(0, Math.sin(hour / 12 * Math.PI)) * 0.4).toFixed(1),
-      temp: Math.round(24 + Math.sin(hour / 24 * Math.PI * 2) * 6),
-      humidity: Math.round(55 + Math.cos(hour / 24 * Math.PI * 2) * 15),
-      source: 'DynamoDB Synced Archive',
-    });
-  }
-  return items;
-}
 

@@ -162,7 +162,9 @@ export class EnvironmentalDataProvider {
   generateDefaultReading(cityName) {
     const isDelhi = cityName.toLowerCase().includes('delhi');
     const aqi = isDelhi ? 245 : 88;
-    return this.generateSimulatedReading(cityName, aqi);
+    const reading = this.generateSimulatedReading(cityName, aqi);
+    reading.source = 'Baseline Calibration (Live Network Offline)';
+    return reading;
   }
 }
 

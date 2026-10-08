@@ -1,7 +1,11 @@
 /**
  * AWS SageMaker Predictive Forecasting Service
- * Forecasts 48-hour PM2.5 levels for schools & educational campuses in Delhi-NCR.
- * Integrates live AWS SageMaker Runtime Endpoint with a resilient local physics-based fallback.
+ * Forecasts 48-hour forward hourly PM2.5 levels for schools & campuses in Delhi-NCR.
+ * 
+ * Architecture:
+ * 1. Primary: Invokes live AWS SageMaker Serverless Endpoint (wmd-delhi-48h-forecast-endpoint).
+ * 2. Local Fallback: Evaluates native XGBoost binary decision trees (120 trees) trained on 332,416 samples.
+ * 3. 100% Transparent: Zero heuristic sine/cosine diurnal curves or synthetic approximations.
  */
 
 import { SageMakerRuntimeClient, InvokeEndpointCommand } from '@aws-sdk/client-sagemaker-runtime';
@@ -9,16 +13,15 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { findGridForCoordinates, recordHourlyTelemetry, get14DayCompliance, getLatestTelemetryForGrid } from './gridTelemetryService.js';
+import { findGridForCoordinates, get14DayCompliance, getLatestTelemetryForGrid } from './gridTelemetryService.js';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Initialize AWS SageMaker Runtime Client if credentials exist
 const sagemakerRegion = process.env.AWS_REGION || 'ap-south-1';
-const endpointName = process.env.SAGEMAKER_ENDPOINT_NAME || 'vayuvitals-delhi-schools-xgboost';
+const endpointName = process.env.SAGEMAKER_ENDPOINT_NAME || 'wmd-delhi-48h-forecast-endpoint';
 
 let sagemakerClient = null;
 if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
@@ -32,15 +35,7 @@ if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
       }
     });
   } catch (err) {
-    console.warn('[SageMakerService] Failed to initialize SageMakerRuntimeClient:', err.message);
-  }
-}
-
-if (!sagemakerClient) {
-  try {
-    sagemakerClient = new SageMakerRuntimeClient({ region: sagemakerRegion });
-  } catch (err) {
-    console.warn('[SageMakerService] Failed to initialize default SageMakerRuntimeClient:', err.message);
+    console.warn('[SageMakerService] Failed initializing SageMakerRuntimeClient:', err.message);
   }
 }
 
@@ -52,15 +47,57 @@ function resolveDataPath(relPath) {
   return localPath;
 }
 
-// Load metadata if available
+// Load verified training metadata
 let modelMetadata = null;
 try {
-  const metaPath = resolveDataPath('ml/model/sagemaker_model_metadata.json');
+  const metaPath = resolveDataPath('ml/model/sagemaker_forecast_metadata.json');
   if (fs.existsSync(metaPath)) {
     modelMetadata = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
   }
 } catch (err) {
   console.warn('[SageMakerService] Could not read model metadata:', err.message);
+}
+
+// Load native XGBoost model for local machine learning inference
+let localXgbModel = null;
+let localBaseScore = 4.909675;
+try {
+  const jsonPath = resolveDataPath('ml/model/xgboost_forecast_model.json');
+  if (fs.existsSync(jsonPath)) {
+    localXgbModel = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+    const bsStr = localXgbModel?.learner?.learner_model_param?.base_score || '4.909675';
+    localBaseScore = parseFloat(bsStr.replace(/[\[\]]/g, '')) || 4.909675;
+  }
+} catch (err) {
+  console.warn('[SageMakerService] Could not read local XGBoost model:', err.message);
+}
+
+/**
+ * Native JavaScript evaluation of the exact trained XGBoost decision trees.
+ * Executes binary tree traversal across all trees. Zero approximations, zero sine waves.
+ */
+function evaluateXgbTrees(features) {
+  if (!localXgbModel || !localXgbModel.learner?.gradient_booster?.model?.trees) {
+    throw new Error('Local XGBoost model not loaded');
+  }
+  const trees = localXgbModel.learner.gradient_booster.model.trees;
+  let logScore = localBaseScore;
+  for (let i = 0; i < trees.length; i++) {
+    const t = trees[i];
+    let node = 0;
+    while (t.left_children[node] !== -1) {
+      const fIdx = t.split_indices[node];
+      const val = features[fIdx];
+      const cond = t.split_conditions[node];
+      if (val < cond) {
+        node = t.left_children[node];
+      } else {
+        node = t.right_children[node];
+      }
+    }
+    logScore += t.split_conditions[node];
+  }
+  return Math.max(15, Math.round(Math.expm1(logScore)));
 }
 
 /**
@@ -76,7 +113,7 @@ export function categorizePm25(pm25) {
 }
 
 /**
- * Fetch forward 48h meteorological and chemical transport conditions from Open-Meteo for coordinates
+ * Fetch forward 48h meteorological conditions from Open-Meteo for coordinates
  */
 async function fetchMeteoAndAqiForecast(lat, lon) {
   try {
@@ -93,14 +130,13 @@ async function fetchMeteoAndAqiForecast(lat, lon) {
       aqi: aqiData?.hourly || null
     };
   } catch (err) {
-    console.warn('[SageMakerService] Forecast fetch timed out/failed, using physics model fallback:', err.message);
+    console.warn('[SageMakerService] Weather fetch timed out/failed:', err.message);
     return { meteo: null, aqi: null };
   }
 }
 
 /**
- * Generate 48-hour forward hourly predictions using physics-grounded inversion model
- * Replicates the trained XGBoost model features (boundary layer height, lag dynamics, morning school rush).
+ * Generate 48-hour forward hourly predictions using trained XGBoost ML Engine.
  */
 export async function getSchoolAqiForecast({
   schoolId = 'dps_rohini',
@@ -129,208 +165,130 @@ export async function getSchoolAqiForecast({
     }
   }
   const currentBase = Math.max(25, Math.round(resolvedBase || 85));
-  
   const compliance14Day = get14DayCompliance(gridId);
 
-  const { meteo: hourlyMeteo, aqi: hourlyAqi } = await fetchMeteoAndAqiForecast(latitude, longitude);
+  const { meteo: hourlyMeteo } = await fetchMeteoAndAqiForecast(latitude, longitude);
+  const now = new Date();
 
-  // If live SageMaker endpoint is configured and active:
-  let executionMode = 'AWS_SAGEMAKER_REGISTERED_MODEL';
-  let sagemakerStatus = 'MODEL_REGISTERED_IN_SAGEMAKER';
+  // Construct 14 features for each of the 48 forward hours
+  const featureRows = [];
+  for (let step = 1; step <= 48; step++) {
+    const forecastTime = new Date(now.getTime() + step * 3600 * 1000);
+    const hour = forecastTime.getHours();
+    const dayOfYear = Math.floor((forecastTime - new Date(forecastTime.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+    const month = forecastTime.getMonth() + 1;
+    const day = forecastTime.getDate();
 
-  if (sagemakerClient && process.env.SAGEMAKER_ENDPOINT_NAME) {
+    const isWinterSeason = (month === 11 || month === 12 || month === 1 || (month === 10 && day >= 15)) ? 1 : 0;
+    const isStubbleWindow = ((month === 10 && day >= 20) || (month === 11 && day <= 20)) ? 1 : 0;
+    const isSchoolRush = (hour >= 7 && hour <= 9) ? 1 : 0;
+
+    let temp = 26.0;
+    let humidity = 60.0;
+    let windSpeed = 2.2;
+    if (hourlyMeteo && hourlyMeteo.time && hourlyMeteo.time[step]) {
+      temp = hourlyMeteo.temperature_2m?.[step] ?? 26.0;
+      humidity = hourlyMeteo.relative_humidity_2m?.[step] ?? 60.0;
+      windSpeed = hourlyMeteo.wind_speed_10m?.[step] ?? 2.2;
+    }
+
+    const hourSin = Math.sin((2 * Math.PI * hour) / 24);
+    const hourCos = Math.cos((2 * Math.PI * hour) / 24);
+    const doySin = Math.sin((2 * Math.PI * dayOfYear) / 365.25);
+    const doyCos = Math.cos((2 * Math.PI * dayOfYear) / 365.25);
+
+    // [pm25_now, horizon_hours, temperature, humidity, wind_speed, hour_sin, hour_cos, doy_sin, doy_cos, is_winter, is_stubble_burning, is_school_rush, latitude, longitude]
+    featureRows.push([
+      currentBase,
+      step,
+      temp,
+      humidity,
+      windSpeed,
+      hourSin,
+      hourCos,
+      doySin,
+      doyCos,
+      isWinterSeason,
+      isStubbleWindow,
+      isSchoolRush,
+      latitude,
+      longitude
+    ]);
+  }
+
+  let predictions = [];
+  let executionMode = 'LOCAL_NATIVE_XGBOOST_INFERENCE';
+  let sagemakerStatus = 'OFFLINE_LOCAL_MODEL_ACTIVE';
+  let sagemakerError = null;
+  const inferenceStart = Date.now();
+
+  // Primary Path: Attempt live AWS SageMaker Serverless Endpoint
+  if (sagemakerClient && endpointName) {
     try {
-      // In live AWS mode, construct feature payload and invoke endpoint
-      const payload = {
-        instances: [
-          {
-            lat: latitude,
-            lon: longitude,
-            pm25_now: currentBase,
-            horizon_hours: 48
-          }
-        ]
-      };
-
+      const csvPayload = featureRows.map(r => r.join(',')).join('\n');
       const command = new InvokeEndpointCommand({
         EndpointName: endpointName,
-        ContentType: 'application/json',
-        Body: Buffer.from(JSON.stringify(payload))
+        ContentType: 'text/csv',
+        Accept: 'text/csv',
+        Body: Buffer.from(csvPayload)
       });
-
       const response = await sagemakerClient.send(command);
       if (response && response.Body) {
-        const responseData = JSON.parse(new TextDecoder().decode(response.Body));
-        if (responseData && responseData.predictions) {
+        const text = new TextDecoder().decode(response.Body);
+        const lines = text.trim().split(/\r?\n/).filter(Boolean);
+        if (lines.length === 48) {
+          predictions = lines.map(l => Math.max(15, Math.round(Math.expm1(parseFloat(l)))));
           executionMode = 'AWS_SAGEMAKER_SERVERLESS_LIVE';
           sagemakerStatus = 'CONNECTED_ACTIVE';
-          // Return live SageMaker predictions if format matches
         }
       }
-    } catch (err) {
-      console.warn(`[SageMakerService] SageMaker Endpoint '${endpointName}' unavailable (${err.message}), falling back to deterministic local model.`);
-      sagemakerStatus = 'FALLBACK_TO_LOCAL_MODEL';
+    } catch (smErr) {
+      sagemakerStatus = 'SAGEMAKER_UNAVAILABLE';
+      sagemakerError = smErr.message;
     }
   }
 
-  // Generate 48 hourly forward intervals starting from current hour
-  const now = new Date();
+  // Secondary Path: If SageMaker is creating, offline, or unconfigured, execute the exact same trained XGBoost model locally
+  if (predictions.length === 0) {
+    try {
+      predictions = featureRows.map(r => evaluateXgbTrees(r));
+      executionMode = 'LOCAL_NATIVE_XGBOOST_INFERENCE';
+    } catch (e) {
+      console.error('[SageMakerService] Local tree execution error:', e);
+      predictions = featureRows.map(() => currentBase);
+      executionMode = 'ERROR_STATION_BASELINE';
+    }
+  }
+  const inferenceLatencyMs = Date.now() - inferenceStart;
+
+  // Process timeline and school windows
   const hourlyTimeline = [];
   let peakMorningPm25 = 0;
   let peakMorningTime = '';
   let peakMorningDay = '';
   let exceedanceHoursCount = 0;
 
-  // Track morning school windows (Day +1 and Day +2: 07:00 - 13:00)
   const morningWindows = {
     day1: { date: '', readings: [], avg: 0, peak: 0, peakHour: '', actionRequired: false },
     day2: { date: '', readings: [], avg: 0, peak: 0, peakHour: '', actionRequired: false }
   };
 
-  // Kalman Assimilation: Calculate initial observation innovation residual
-  // Real-time sensor observation vs. uncalibrated synoptic climatology
-  const nowMonth = now.getMonth() + 1;
-  const nowDay = now.getDate();
-  const nowDayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-  const nowDoyCos = Math.cos((2 * Math.PI * nowDayOfYear) / 365.25);
-  const nowIsWinter = (nowMonth === 11 || nowMonth === 12 || nowMonth === 1 || (nowMonth === 10 && nowDay >= 15));
-  const nowIsStubble = (nowMonth === 10 && nowDay >= 20) || (nowMonth === 11 && nowDay <= 20);
-  const synopticAmbient = nowIsWinter ? 210 : 95;
-  const synopticSeasonalFactor = nowIsWinter 
-    ? 1.35 + (nowIsStubble ? 0.25 : 0) + (nowDoyCos > 0.7 ? 0.15 : 0)
-    : 0.85;
-  const synopticBaseline = synopticAmbient * synopticSeasonalFactor;
-
-  // Real-time innovation residual that decays across atmospheric decorrelation timescale (tau = 5.5h)
-  const kalmanInitialResidual = currentBase - synopticBaseline;
-  const kalmanTau = 5.5;
+  const expectedMae = modelMetadata?.test_mae_ug_m3 || 27.92;
+  const sigmaLog = 0.28;
 
   for (let step = 1; step <= 48; step++) {
     const forecastTime = new Date(now.getTime() + step * 3600 * 1000);
     const hour = forecastTime.getHours();
-    const dayIndex = Math.floor(step / 24); // 0 = today/tomorrow, 1 = Day 1, 2 = Day 2
-
-    // Retrieve weather or approximate
-    let temp = 26;
-    let humidity = 65;
-    let windSpeed = 2.2;
-    if (hourlyMeteo && hourlyMeteo.time && hourlyMeteo.time[step]) {
-      temp = hourlyMeteo.temperature_2m?.[step] ?? 26;
-      humidity = hourlyMeteo.relative_humidity_2m?.[step] ?? 65;
-      windSpeed = hourlyMeteo.wind_speed_10m?.[step] ?? 2.2;
-    } else {
-      // Diurnal temperature and wind cycle
-      temp = 20 + 10 * Math.sin(((hour - 6) / 24) * 2 * Math.PI);
-      windSpeed = Math.max(0.8, 2.5 + 1.2 * Math.sin(((hour - 12) / 24) * 2 * Math.PI));
-    }
-
-    // Macro-Seasonality Engineering (Derived from xKDR Multi-Year CPCB Model)
-    const month = forecastTime.getMonth() + 1; // 1-12
-    const day = forecastTime.getDate();
-    const dayOfYear = Math.floor((forecastTime - new Date(forecastTime.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-    const doyCos = Math.cos((2 * Math.PI * dayOfYear) / 365.25);
-    
-    // Winter radiation inversion trap (Nov, Dec, Jan, late Oct)
-    const isWinterSeason = (month === 11 || month === 12 || month === 1 || (month === 10 && day >= 15));
-    // Stubble burning smoke window (Late Oct -> Mid Nov)
-    const isStubbleWindow = (month === 10 && day >= 20) || (month === 11 && day <= 20);
-    
-    const seasonalMultiplier = isWinterSeason 
-      ? 1.35 + (isStubbleWindow ? 0.25 : 0) + (doyCos > 0.7 ? 0.15 : 0)
-      : 0.85;
-
-    // High-Order Atmospheric Physics Features:
-    // 1. Inversion Intensity Index: High during cold nighttime/early morning calm air
-    const coldInversionIndex = Math.max(0, (24 - temp) / 10) * (windSpeed < 2.0 ? 1.35 : 0.85);
-    const morningInversionSurge = hour >= 6 && hour <= 10 
-      ? 1.45 - (hour - 6) * 0.08 + (isWinterSeason ? coldInversionIndex * 0.12 : 0)
-      : hour >= 13 && hour <= 16 
-        ? 0.72 
-        : (hour >= 21 || hour <= 5) ? 1.15 : 1.0;
-    
-    const windStagnationPenalty = windSpeed < 2.0 ? 1.25 : windSpeed > 4.5 ? 0.82 : 1.0;
-
-    // 2. Combustion Soot Mass & Fine Ratio (Top ML Feature at 26.4% Importance)
-    const fineRatio = isWinterSeason ? 0.72 : (hour >= 12 && hour <= 16 ? 0.58 : 0.65);
-    const sootMultiplier = 1.0 + (fineRatio - 0.60) * 0.40;
-
-    // 3. Adaptive Kalman Innovation Decay (Nudges real-time sensor reading into atmospheric physics)
-    const kalmanInnovation = kalmanInitialResidual * Math.exp(-step / kalmanTau);
-
-    // 4. Temporal Autocorrelation Decay towards Synoptic Equilibrium
-    const decay = Math.pow(0.985, step);
-    const ambientMean = isWinterSeason ? 210 : 95;
-    const baseProjected = (currentBase * decay + ambientMean * (1 - decay)) + kalmanInnovation;
-
-    // Diurnal variation driven by atmospheric boundary layer expansion and night stagnation
-    const sinHour = Math.sin((2 * Math.PI * hour) / 24);
-    const cosHour = Math.cos((2 * Math.PI * hour) / 24);
-    const hourEffect = -18 * sinHour - 14 * cosHour;
-
-    let predictedPm25;
-
-    // PRIMARY PATH: Ground prediction in Copernicus/Open-Meteo numerical atmospheric chemistry
-    // combined with Model Output Statistics (MOS) local bias correction anchored on the live ground reading
-    if (hourlyAqi && hourlyAqi.pm2_5 && hourlyAqi.pm2_5[step] !== null && hourlyAqi.pm2_5[step] !== undefined && !isNaN(hourlyAqi.pm2_5[step])) {
-      const camsVal = hourlyAqi.pm2_5[step];
-      const camsBase = hourlyAqi.pm2_5[0] || camsVal;
-      // Local observation ratio (constrained between 0.5 and 2.0 to avoid unbounded divergence)
-      const biasRatio = camsBase > 0 ? Math.min(2.0, Math.max(0.5, currentBase / camsBase)) : 1.0;
-      // Local ground innovation relaxes toward the numerical model over an 18-hour horizon
-      const alpha = Math.exp(-step / 18.0);
-      const mosCorrected = camsVal * (1.0 + (biasRatio - 1.0) * alpha);
-      
-      // Micro-urban boundary layer rush-hour adjustment (07:00 - 09:30 AM IST)
-      const morningRushFactor = (hour >= 7 && hour <= 9) ? 1.08 : 1.0;
-      predictedPm25 = Math.max(25, Math.round(mosCorrected * morningRushFactor));
-    } else {
-      // Deterministic physical simulation fallback with normalized multipliers
-      const rawPrediction = baseProjected * Math.min(1.35, seasonalMultiplier) * morningInversionSurge * Math.min(1.15, windStagnationPenalty) * sootMultiplier;
-      predictedPm25 = Math.max(25, Math.round(rawPrediction));
-    }
-
-    // Cascading Horizon Ensemble Ladder Assignment
-    let horizonKey = '24h_day_ahead';
-    let horizonLabel = '24-Hour Synoptic Day-Ahead';
-    let expectedMae = 43.37;
-    let sigmaLog = 0.3808;
-
-    if (step === 1) {
-      horizonKey = '1h_nowcast';
-      horizonLabel = '1-Hour Rapid Nowcast';
-      expectedMae = modelMetadata?.cascading_horizons?.['1h_nowcast']?.mae_ug_m3 || 21.05;
-      sigmaLog = modelMetadata?.cascading_horizons?.['1h_nowcast']?.sigma_log || 0.1918;
-    } else if (step <= 3) {
-      horizonKey = '3h_arrival';
-      horizonLabel = '3-Hour Morning Arrival';
-      expectedMae = modelMetadata?.cascading_horizons?.['3h_arrival']?.mae_ug_m3 || 29.29;
-      sigmaLog = modelMetadata?.cascading_horizons?.['3h_arrival']?.sigma_log || 0.2578;
-    } else if (step <= 6) {
-      horizonKey = '6h_morning_shift';
-      horizonLabel = '6-Hour Operational Shift';
-      expectedMae = modelMetadata?.cascading_horizons?.['6h_morning_shift']?.mae_ug_m3 || 37.18;
-      sigmaLog = modelMetadata?.cascading_horizons?.['6h_morning_shift']?.sigma_log || 0.3248;
-    } else if (step <= 12) {
-      horizonKey = '12h_evening_commute';
-      horizonLabel = '12-Hour Evening Commute';
-      expectedMae = modelMetadata?.cascading_horizons?.['12h_evening_commute']?.mae_ug_m3 || 43.54;
-      sigmaLog = modelMetadata?.cascading_horizons?.['12h_evening_commute']?.sigma_log || 0.3736;
-    } else {
-      expectedMae = modelMetadata?.cascading_horizons?.['24h_day_ahead']?.mae_ug_m3 || 43.37;
-      sigmaLog = modelMetadata?.cascading_horizons?.['24h_day_ahead']?.sigma_log || 0.3808;
-    }
+    const dayIndex = Math.floor(step / 24);
+    const predictedPm25 = predictions[step - 1];
 
     const category = categorizePm25(predictedPm25);
     const exceeded = predictedPm25 > targetThreshold;
-
-    if (exceeded) {
-      exceedanceHoursCount++;
-    }
+    if (exceeded) exceedanceHoursCount++;
 
     const timeString = forecastTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
     const dateFormatted = forecastTime.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
 
-    // Track day 1 vs day 2 peaks
     const windowKey = dayIndex === 0 || (dayIndex === 1 && step <= 24) ? 'day1' : 'day2';
     if (!morningWindows[windowKey].date) morningWindows[windowKey].date = dateFormatted;
     morningWindows[windowKey].readings.push(predictedPm25);
@@ -339,29 +297,16 @@ export async function getSchoolAqiForecast({
       morningWindows[windowKey].peakHour = timeString;
     }
 
-    // Track peak atmospheric concentration
     if (predictedPm25 > peakMorningPm25) {
       peakMorningPm25 = predictedPm25;
       peakMorningTime = timeString;
       peakMorningDay = dateFormatted;
     }
 
-    // Horizon-Tailored Quantile Prediction Bands (P10 / P50 / P90 via Log-Normal Uncertainty)
     const predLog = Math.log(1 + predictedPm25);
     const p10 = Math.max(15, Math.round(Math.exp(predLog - 1.28 * sigmaLog) - 1));
     const p90 = Math.round(Math.exp(predLog + 1.28 * sigmaLog) - 1);
-    const confidenceBand = {
-      p10,
-      p50: predictedPm25,
-      p90,
-      horizonKey,
-      horizonLabel,
-      expectedMae,
-      sigmaLog,
-      rangeStr: `${p10} – ${p90} µg/m³ (80% Confidence)`
-    };
 
-    // Pure atmospheric hourly data point (institution hours can filter this dynamically)
     hourlyTimeline.push({
       step,
       isoTime: forecastTime.toISOString(),
@@ -369,26 +314,24 @@ export async function getSchoolAqiForecast({
       displayDate: dateFormatted,
       hour,
       predictedPm25,
-      confidenceBand,
-      horizonLadder: {
-        key: horizonKey,
-        label: horizonLabel,
-        mae: expectedMae,
-        leadHours: step
+      confidenceBand: {
+        p10,
+        p50: predictedPm25,
+        p90,
+        expectedMae,
+        rangeStr: `${p10} – ${p90} µg/m³ (80% Confidence)`
       },
       category: category.label,
       color: category.color,
       textColor: category.textColor,
       exceeded,
-      temp: Math.round(temp),
-      windSpeed: Number(windSpeed.toFixed(1)),
-      // Aliased for seamless backwards compatibility with PDF generators:
+      temp: Math.round(featureRows[step - 1][2]),
+      windSpeed: Number(featureRows[step - 1][4].toFixed(1)),
       isSchoolWindow: hour >= 7 && hour <= 14,
       isMorningArrival: hour >= 7 && hour <= 9
     });
   }
 
-  // Calculate stats for day1 and day2
   ['day1', 'day2'].forEach(key => {
     const win = morningWindows[key];
     if (win.readings.length > 0) {
@@ -400,12 +343,10 @@ export async function getSchoolAqiForecast({
   const peakCategory = categorizePm25(peakMorningPm25);
   const severeAlert = peakMorningPm25 >= 180;
 
-  // Pure Atmospheric Guidance: Identify natural danger vs safe windows based on particulate physics
   const day1Hours = hourlyTimeline.slice(0, 24);
   const dangerWindows = [];
   const safeWindows = [];
 
-  // Group consecutive hours above threshold (e.g., thermal inversion / traffic stagnation)
   let currentDanger = null;
   day1Hours.forEach(h => {
     if (h.predictedPm25 > targetThreshold) {
@@ -437,7 +378,6 @@ export async function getSchoolAqiForecast({
     dangerWindows.push(currentDanger);
   }
 
-  // Group consecutive hours below threshold (Solar dispersion & ventilation)
   let currentSafe = null;
   day1Hours.forEach(h => {
     if (h.predictedPm25 <= targetThreshold) {
@@ -448,8 +388,7 @@ export async function getSchoolAqiForecast({
           end: h.displayTime,
           avgPm25: h.predictedPm25,
           hours: [h.hour],
-          reason: 'Solar convective boundary layer dispersion window',
-          level: 'MODERATE / SAFE'
+          recommendation: 'Optimal window for physical education, outdoor recess, and natural classroom ventilation'
         };
       } else {
         currentSafe.end = h.displayTime;
@@ -468,131 +407,59 @@ export async function getSchoolAqiForecast({
     safeWindows.push(currentSafe);
   }
 
-  const morningCommuteItem = day1Hours.find(h => h.hour === 7) || day1Hours[0];
-  const noonRecessItem = day1Hours.find(h => h.hour === 12) || day1Hours[5];
+  const day1MorningHours = day1Hours.filter(h => h.isSchoolWindow);
+  const day1ArrivalHours = day1Hours.filter(h => h.isMorningArrival);
+  const morningAvg = day1MorningHours.length > 0
+    ? Math.round(day1MorningHours.reduce((acc, h) => acc + h.predictedPm25, 0) / day1MorningHours.length)
+    : Math.round(currentBase * 1.15);
 
-  const isWinterInversionMonth = (now.getMonth() + 1 >= 10 || now.getMonth() + 1 <= 1);
-  const regionalHistoricalInsight = isWinterInversionMonth
-    ? `3-Year CPCB Analysis for ${gridId}: Severe thermal radiation inversion elevates PM2.5 above ${targetThreshold} µg/m³ during morning hours (06:30 – 09:30 AM). Peak solar convective dilution occurs between 02:00 PM and 04:30 PM.`
-    : `3-Year CPCB Analysis for ${gridId}: Favorable convective mixing prevails; localized increases are driven primarily by diurnal vehicular traffic.`;
-
-  // Pre-emptive mitigation recommendation
-  let preEmptiveRecommendation = 'Routine ambient dust suppression advised.';
-  let preEmptiveRecommendationHi = 'सामान्य धूल नियंत्रण उपाय पर्याप्त हैं।';
-
-  if (peakMorningPm25 >= 200) {
-    preEmptiveRecommendation = `CRITICAL ALERT: Severe air quality expected during peak morning inversion (${peakMorningPm25} µg/m³). MANDATORY: Suspend all morning assemblies and outdoor sports. Confine activities indoors.`;
-    preEmptiveRecommendationHi = `अति गंभीर आपात सूचना: प्रातःकालीन इनवर्जन में अत्यंत दूषित वायु अनुमानित है। प्रार्थना सभा एवं खेलकूद पूर्णतः स्थगित रखें।`;
-  } else if (peakMorningPm25 > targetThreshold) {
-    preEmptiveRecommendation = `ELEVATED ADVISORY: Hazardous morning air (${peakMorningPm25} µg/m³). Avoid outdoor exposure during 07:00 – 09:30 AM inversion window.`;
-    preEmptiveRecommendationHi = `सचेत सलाह: प्रातःकाल में उच्च प्रदूषण। प्रातः इनवर्जन विंडो में खुले मैदान में गतिविधियां टालें।`;
-  }
+  const arrivalAvg = day1ArrivalHours.length > 0
+    ? Math.round(day1ArrivalHours.reduce((acc, h) => acc + h.predictedPm25, 0) / day1ArrivalHours.length)
+    : peakMorningPm25;
 
   return {
     success: true,
-    schoolId: schoolId || facilityId,
-    schoolName: schoolName || facilityName,
-    facilityId: facilityId || schoolId,
-    facilityName: facilityName || schoolName,
-    lat: latitude,
-    lon: longitude,
-    gridBlock: {
+    institution: {
+      id: schoolId || facilityId || 'dps_rohini',
+      name: schoolName || facilityName || 'Delhi Public School, Rohini',
+      lat: latitude,
+      lon: longitude,
       gridId,
-      bounds: spatialGrid ? spatialGrid.bounds : null,
-      facilityCount: spatialGrid ? spatialGrid.facility_count : 1
+      gridName: spatialGrid ? spatialGrid.name : 'Central Delhi Basin',
+      currentBasePm25: currentBase,
+      targetThreshold
+    },
+    modelDetails: {
+      endpointName,
+      executionMode,
+      sagemakerStatus,
+      sagemakerError,
+      inferenceLatencyMs,
+      framework: modelMetadata?.model_framework || 'xgboost',
+      featuresCount: modelMetadata?.features?.length || 14,
+      testMae: modelMetadata?.test_mae_ug_m3 || 27.92,
+      r2ExplainedVariance: modelMetadata?.r2_explained_variance || 0.8156,
+      accuracyWithin20: modelMetadata?.accuracy_within_20 || 54.3,
+      accuracyWithin40: modelMetadata?.accuracy_within_40 || 76.8,
+      trainingRecords: modelMetadata?.sample_count || 332416,
     },
     compliance14Day,
-    threshold: targetThreshold,
-    currentBasePm25: currentBase,
-    forecastHorizonHours: 48,
-    executionMode,
-    sagemakerStatus,
-    modelArn: modelMetadata?.model_arn || 'arn:aws:sagemaker:ap-south-1:594650681179:model/vayuvitals-delhi-ncr-xgboost-v2',
-    s3ModelPackage: 's3://vayuvitals-aqi-dataset/models/model.tar.gz',
-    modelName: 'vayuvitals-delhi-ncr-xgboost-v2',
-    modelFramework: 'cascading_multi_horizon_log_normal_engine',
-    cascadingLadder: {
-      nowcast1h: { 
-        mae: modelMetadata?.cascading_horizons?.['1h_nowcast']?.mae_ug_m3 || 21.05, 
-        rmse: modelMetadata?.cascading_horizons?.['1h_nowcast']?.rmse_ug_m3 || 46.86,
-        r2: modelMetadata?.cascading_horizons?.['1h_nowcast']?.r2_explained_variance || 0.8664,
-        accuracyWithin20: modelMetadata?.cascading_horizons?.['1h_nowcast']?.accuracy_within_20 || 67.2,
-        label: '1-Hour Rapid Nowcast' 
-      },
-      arrival3h: { 
-        mae: modelMetadata?.cascading_horizons?.['3h_arrival']?.mae_ug_m3 || 29.29, 
-        rmse: modelMetadata?.cascading_horizons?.['3h_arrival']?.rmse_ug_m3 || 49.93,
-        r2: modelMetadata?.cascading_horizons?.['3h_arrival']?.r2_explained_variance || 0.7936,
-        accuracyWithin20: modelMetadata?.cascading_horizons?.['3h_arrival']?.accuracy_within_20 || 50.9,
-        label: '3-Hour Morning Arrival' 
-      },
-      shift6h: { 
-        mae: modelMetadata?.cascading_horizons?.['6h_morning_shift']?.mae_ug_m3 || 37.18, 
-        rmse: modelMetadata?.cascading_horizons?.['6h_morning_shift']?.rmse_ug_m3 || 55.23,
-        r2: modelMetadata?.cascading_horizons?.['6h_morning_shift']?.r2_explained_variance || 0.6942,
-        accuracyWithin20: modelMetadata?.cascading_horizons?.['6h_morning_shift']?.accuracy_within_20 || 42.4,
-        label: '6-Hour Operational Shift' 
-      },
-      evening12h: { 
-        mae: modelMetadata?.cascading_horizons?.['12h_evening_commute']?.mae_ug_m3 || 43.54, 
-        rmse: modelMetadata?.cascading_horizons?.['12h_evening_commute']?.rmse_ug_m3 || 63.01,
-        r2: modelMetadata?.cascading_horizons?.['12h_evening_commute']?.r2_explained_variance || 0.5948,
-        accuracyWithin20: modelMetadata?.cascading_horizons?.['12h_evening_commute']?.accuracy_within_20 || 37.3,
-        label: '12-Hour Evening Commute' 
-      },
-      dayAhead24h: { 
-        mae: modelMetadata?.cascading_horizons?.['24h_day_ahead']?.mae_ug_m3 || 43.37, 
-        rmse: modelMetadata?.cascading_horizons?.['24h_day_ahead']?.rmse_ug_m3 || 64.19,
-        r2: modelMetadata?.cascading_horizons?.['24h_day_ahead']?.r2_explained_variance || 0.5815,
-        accuracyWithin20: modelMetadata?.cascading_horizons?.['24h_day_ahead']?.accuracy_within_20 || 38.5,
-        label: '24-Hour Synoptic Day-Ahead' 
-      }
+    summary: {
+      severeAlert,
+      peakPm25: peakMorningPm25,
+      peakCategory: peakCategory.label,
+      peakColor: peakCategory.color,
+      peakTime: peakMorningTime,
+      peakDay: peakMorningDay,
+      morningAverage: morningAvg,
+      arrivalAverage: arrivalAvg,
+      totalExceedanceHours: exceedanceHoursCount,
+      exceedancePercent: Math.round((exceedanceHoursCount / 48) * 100),
+      day1MorningWindow: morningWindows.day1,
+      day2MorningWindow: morningWindows.day2
     },
-    kalmanAssimilation: {
-      active: true,
-      decorrelationTauHours: kalmanTau,
-      initialResidual: Math.round(kalmanInitialResidual),
-      assimilatedSensorReading: currentBase,
-      synopticClimatologyBaseline: Math.round(synopticBaseline)
-    },
-    maeError: modelMetadata?.mae_arrival_3h || 29.29,
-    rmseError: modelMetadata?.cascading_horizons?.['3h_arrival']?.rmse_ug_m3 || 49.93,
-    r2Score: modelMetadata?.cascading_horizons?.['3h_arrival']?.r2_explained_variance || 0.7936,
-    nowcastMae: modelMetadata?.mae_nowcast_1h || 21.05,
-    arrivalMae: modelMetadata?.mae_arrival_3h || 29.29,
-    peakMorningArrival: {
-      predictedPm25: peakMorningPm25,
-      confidenceBand: {
-        p10: Math.max(15, Math.round(Math.exp(Math.log(1 + peakMorningPm25) - 1.28 * 0.2578) - 1)),
-        p50: peakMorningPm25,
-        p90: Math.round(Math.exp(Math.log(1 + peakMorningPm25) + 1.28 * 0.2578) - 1),
-        rangeStr: `${Math.max(15, Math.round(Math.exp(Math.log(1 + peakMorningPm25) - 1.28 * 0.2578) - 1))} – ${Math.round(Math.exp(Math.log(1 + peakMorningPm25) + 1.28 * 0.2578) - 1)} µg/m³ (80% Confidence)`
-      },
-      time: peakMorningTime,
-      date: peakMorningDay,
-      category: peakCategory.label,
-      color: peakCategory.color,
-      severeAlert
-    },
-    morningWindows,
-    outdoorActivityGuidance: {
-      dangerWindows,
-      safeWindows,
-      morningArrivalRisk: {
-        alertRequired: (morningCommuteItem?.predictedPm25 || 0) > targetThreshold,
-        window: '07:00 AM - 09:30 AM',
-        predictedPm25: morningCommuteItem?.predictedPm25 || peakMorningPm25
-      },
-      noonRecessRisk: {
-        alertRequired: (noonRecessItem?.predictedPm25 || 0) > targetThreshold,
-        window: '12:00 PM - 01:30 PM',
-        predictedPm25: noonRecessItem?.predictedPm25 || 120
-      }
-    },
-    regionalHistoricalInsight,
-    exceedanceHoursCount,
-    preEmptiveRecommendation,
-    preEmptiveRecommendationHi,
-    hourlyTimeline
+    dangerWindows,
+    safeWindows,
+    hourlyForecast: hourlyTimeline
   };
 }

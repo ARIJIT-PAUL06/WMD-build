@@ -1,0 +1,29 @@
+{
+  "model_framework": "xgboost",
+  "framework_version": "1.7-1",
+  "objective": "reg:squarederror",
+  "target_transform": "log1p",
+  "features": [
+    "pm25_now",
+    "horizon_hours",
+    "temperature",
+    "humidity",
+    "wind_speed",
+    "hour_sin",
+    "hour_cos",
+    "doy_sin",
+    "doy_cos",
+    "is_winter",
+    "is_stubble_burning",
+    "is_school_rush",
+    "latitude",
+    "longitude"
+  ],
+  "sample_count": 332416,
+  "test_mae_ug_m3": 27.92,
+  "test_rmse_ug_m3": 42.92,
+  "r2_explained_variance": 0.8156,
+  "accuracy_within_20": 54.3,
+  "accuracy_within_40": 76.8,
+  "trained_at": "2026-10-08T04:07:52.171521Z"
+}

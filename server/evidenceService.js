@@ -1,7 +1,21 @@
-/**
- * Evidence Aggregation Service
- * Generates verified empirical environmental statistics for civic complaints & school petitions.
- */
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+function getGrid14DayBuffer() {
+  try {
+    const p = path.join(__dirname, '..', 'ml/data/grid_14day_buffer.json');
+    if (fs.existsSync(p)) {
+      return JSON.parse(fs.readFileSync(p, 'utf8'));
+    }
+  } catch (e) {
+    // ignore
+  }
+  return {};
+}
 
 // Categorize PM2.5 in Indian National Air Quality Index (NAQI) standards
 export function categorizePm25(pm25) {
@@ -16,6 +30,7 @@ export function categorizePm25(pm25) {
 /**
  * Generate or aggregate the last N days of school-hours environmental evidence
  * School hours: 07:00 - 13:00
+ * Strictly aggregates from empirical telemetry buffers without synthetic math generators.
  */
 export function aggregateSchoolEvidence({
   schoolName = 'Delhi Public School, Rohini',
@@ -28,6 +43,15 @@ export function aggregateSchoolEvidence({
 }) {
   const numDays = Math.min(Math.max(parseInt(days, 10) || 14, 5), 30);
   const thresh = Math.max(parseInt(threshold, 10) || 60, 25);
+  const buffer = getGrid14DayBuffer();
+
+  // Find all available hourly records across grids or the matching station
+  let allReadings = [];
+  for (const grid of Object.values(buffer)) {
+    if (grid && Array.isArray(grid.hourlyBuffer)) {
+      allReadings.push(...grid.hourlyBuffer);
+    }
+  }
 
   const dailyLogs = [];
   const now = new Date();
@@ -66,13 +90,35 @@ export function aggregateSchoolEvidence({
       day: 'numeric',
     });
 
-    // Realistic diurnal variation for North India / Delhi:
-    // Morning inversion creates higher PM2.5 between 7am and 10am
-    const daySeed = (d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()) % 1000;
-    const deterministicVariance = (Math.sin(daySeed * 0.17 + i * 1.3) * 10) + (Math.cos(daySeed * 0.09) * 6);
-    const dayVariance = (Math.sin(i * 1.3) * 35) + ((i % 3) * 12) + deterministicVariance;
-    const morningAvg = Math.max(28, Math.round(basePm25 + dayVariance));
-    const dayPeak = Math.max(morningAvg + 25, Math.round(morningAvg * (1.25 + (Math.sin(daySeed * 0.1) * 0.08))));
+    // Extract empirical readings matching this calendar date
+    const dayReadings = allReadings.filter(r => r && r.timestamp && r.timestamp.startsWith(dateStr));
+    const morningReadings = dayReadings.filter(r => {
+      try {
+        const h = new Date(r.timestamp).getHours();
+        return h >= 7 && h <= 13;
+      } catch (e) {
+        return false;
+      }
+    });
+
+    let morningAvg;
+    let dayPeak;
+    let telemetrySource = 'EMPIRICAL_BUFFER';
+
+    if (morningReadings.length > 0) {
+      const pmValues = morningReadings.map(r => Number(r.pm25)).filter(v => !isNaN(v));
+      morningAvg = Math.round(pmValues.reduce((a, b) => a + b, 0) / pmValues.length);
+      dayPeak = Math.max(...dayReadings.map(r => Number(r.pm25)).filter(v => !isNaN(v)), morningAvg);
+    } else if (dayReadings.length > 0) {
+      const pmValues = dayReadings.map(r => Number(r.pm25)).filter(v => !isNaN(v));
+      morningAvg = Math.round(pmValues.reduce((a, b) => a + b, 0) / pmValues.length);
+      dayPeak = Math.max(...pmValues);
+    } else {
+      // If historical buffer does not have this specific date, use station baseline honestly without trigonometric faking
+      morningAvg = Math.max(25, Math.round(Number(basePm25) || 85));
+      dayPeak = Math.round(morningAvg * 1.2);
+      telemetrySource = 'STATION_BASELINE_EXTRAPOLATION';
+    }
 
     const category = categorizePm25(morningAvg);
     const exceeded = morningAvg > thresh;
@@ -105,6 +151,7 @@ export function aggregateSchoolEvidence({
       category: category.label,
       categoryColor: category.color,
       exceeded,
+      source: telemetrySource,
       disruption: isSchoolDay ? disruption : 'Weekend - School closed'
     });
   }

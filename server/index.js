@@ -53,25 +53,66 @@ app.use((req, res, next) => {
 
 /**
  * Health check & AWS Configuration Status
+ * Transparently checks and reports live AWS status without masking errors.
  */
-app.get('/api/aws-status', (req, res) => {
+app.get('/api/aws-status', async (req, res) => {
   const hasCreds = Boolean(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
+  const region = process.env.AWS_REGION || 'ap-south-1';
+  const dynamoDbTable = process.env.DYNAMODB_TABLE_NAME || 'AirQualityReadings';
+  const sagemakerEndpoint = process.env.SAGEMAKER_ENDPOINT_NAME || 'wmd-delhi-48h-forecast-endpoint';
+  const bedrockModel = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-haiku-20240307-v1:0';
+
+  let dynamoStatus = 'NOT_CHECKED';
+  let sagemakerStatus = 'OFFLINE_NO_ENDPOINT';
+  let bedrockStatus = 'UNAUTHORIZED_OR_NOT_CONFIGURED';
+
+  if (hasCreds) {
+    const credentials = {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      ...(process.env.AWS_SESSION_TOKEN ? { sessionToken: process.env.AWS_SESSION_TOKEN } : {})
+    };
+
+    try {
+      const { DynamoDBClient, DescribeTableCommand } = await import('@aws-sdk/client-dynamodb');
+      const ddbClient = new DynamoDBClient({ region, credentials });
+      const tableDesc = await ddbClient.send(new DescribeTableCommand({ TableName: dynamoDbTable }));
+      dynamoStatus = tableDesc?.Table?.TableStatus === 'ACTIVE' ? 'ONLINE_ACTIVE' : tableDesc?.Table?.TableStatus || 'UNKNOWN';
+    } catch (e) {
+      dynamoStatus = `ERROR: ${e.message}`;
+    }
+
+    try {
+      const { SageMakerClient, DescribeEndpointCommand } = await import('@aws-sdk/client-sagemaker');
+      const smClient = new SageMakerClient({ region, credentials });
+      const epDesc = await smClient.send(new DescribeEndpointCommand({ EndpointName: sagemakerEndpoint }));
+      sagemakerStatus = epDesc?.EndpointStatus || 'UNKNOWN';
+    } catch (e) {
+      sagemakerStatus = `NOT_DEPLOYED (${e.name || e.message})`;
+    }
+  }
+
   res.json({
     status: 'ONLINE',
     awsConnected: hasCreds,
-    region: process.env.AWS_REGION || 'ap-south-1',
-    dynamoDbTable: process.env.DYNAMODB_TABLE_NAME || 'AirQualityReadings',
-    bedrockModel: process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-haiku-20240307-v1:0',
-    sagemakerEndpoint: process.env.SAGEMAKER_ENDPOINT_NAME || 'vayuvitals-delhi-schools-xgboost',
+    region,
+    dynamoDb: {
+      tableName: dynamoDbTable,
+      status: dynamoStatus,
+    },
+    sagemaker: {
+      endpointName: sagemakerEndpoint,
+      status: sagemakerStatus,
+    },
+    bedrock: {
+      modelId: bedrockModel,
+      status: bedrockStatus,
+    },
+    iotCore: {
+      status: 'NOT_DEPLOYED (Direct HTTP REST Ingest Active)',
+    },
     availableCities: Object.keys(CITIES_CONFIG),
-    features: {
-      s3AndCloudFrontReady: true,
-      apiGatewayLambdaReady: true,
-      dynamoDbHistoricalTracking: true,
-      bedrockHumanExplanationLayer: true,
-      sagemakerPredictiveInference: true,
-      iotCoreReady: true,
-    }
+    executionEnvironment: process.env.AWS_LAMBDA_FUNCTION_NAME ? 'AWS_LAMBDA' : 'LOCAL_EXPRESS_SERVER',
   });
 });
 
@@ -146,12 +187,12 @@ app.get('/api/air-quality', async (req, res) => {
     // 3. Persist to AWS DynamoDB
     const ddbResult = await saveReadingToDynamoDB(metrics);
 
-    // 4. Return normalized response with full AWS execution telemetry
+    // 4. Return normalized response with authentic backend telemetry
     res.json({
       success: true,
       data: metrics,
-      awsTelemetry: {
-        lambdaExecutionTimeMs: Math.round(15 + Math.random() * 10),
+      serverTelemetry: {
+        environment: process.env.AWS_LAMBDA_FUNCTION_NAME ? 'AWS_LAMBDA' : 'LOCAL_EXPRESS_DEV',
         dynamoDb: {
           mode: ddbResult.mode,
           tableName: ddbResult.tableName,
@@ -162,9 +203,10 @@ app.get('/api/air-quality', async (req, res) => {
           mode: bedrockResult.mode,
           modelId: bedrockResult.modelId,
           latencyMs: bedrockResult.latencyMs,
+          success: bedrockResult.success || false,
+          error: bedrockResult.error || null,
         },
         region: process.env.AWS_REGION || 'ap-south-1',
-        requestId: `aws-req-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
       }
     });
   } catch (err) {
@@ -258,7 +300,7 @@ app.post('/api/sensor-ingest', async (req, res) => {
         temp: temp ?? 28,
         humidity: humidity ?? 50,
       },
-      source: `AWS IoT Core Topic: sensors/${deviceId || 'esp32-delhi-01'}`,
+      source: `Edge Device HTTP Ingest: ${deviceId || 'esp32-delhi-01'}`,
     };
 
     // Save to DynamoDB
@@ -266,7 +308,8 @@ app.post('/api/sensor-ingest', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'IoT Telemetry successfully ingested and stored in DynamoDB',
+      message: 'Edge sensor telemetry ingested and stored in DynamoDB',
+      ingestProtocol: 'HTTP_REST',
       deviceId: deviceId || 'esp32-delhi-01',
       dynamoDb: ddbResult,
     });

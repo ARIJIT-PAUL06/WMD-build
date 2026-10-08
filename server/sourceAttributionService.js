@@ -103,6 +103,7 @@ export function analyzeChemicalFingerprint({
     driverTitle,
     icon,
     confidencePct,
+    methodology: 'DETERMINISTIC_CHEMICAL_RATIO_HEURISTIC',
     metrics: {
       pm25: pm25Num,
       pm10: pm10Num,
@@ -115,7 +116,7 @@ export function analyzeChemicalFingerprint({
     },
     scientificReason,
     mitigationDirective,
-    summaryBadge: `${icon} ${driverTitle} (${confidencePct}% Forensic Confidence)`
+    summaryBadge: `${icon} ${driverTitle} (Chemical Stoichiometric Heuristic)`
   };
 }
 
