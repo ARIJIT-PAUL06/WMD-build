@@ -278,7 +278,7 @@ export async function getSchoolAqiForecast({
     day2: { date: '', readings: [], avg: 0, peak: 0, peakHour: '', actionRequired: false }
   };
 
-  const expectedMae = modelMetadata?.test_mae_ug_m3 || 27.92;
+  const expectedMae = modelMetadata?.test_mae_ug_m3 || null;
   const sigmaLog = 0.28;
 
   for (let step = 1; step <= 48; step++) {
@@ -442,7 +442,7 @@ export async function getSchoolAqiForecast({
       inferenceLatencyMs,
       framework: modelMetadata?.model_framework || 'xgboost',
       featuresCount: modelMetadata?.features?.length || 14,
-      testMae: modelMetadata?.test_mae_ug_m3 || 27.92,
+      testMae: modelMetadata?.test_mae_ug_m3 || null,
       r2ExplainedVariance: modelMetadata?.r2_explained_variance || 0.8156,
       accuracyWithin20: modelMetadata?.accuracy_within_20 || 54.3,
       accuracyWithin40: modelMetadata?.accuracy_within_40 || 76.8,

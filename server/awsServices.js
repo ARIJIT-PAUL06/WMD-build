@@ -340,4 +340,53 @@ export async function saveMonitorStateToDynamoDB(state) {
   return false;
 }
 
+/**
+ * Retrieve rolling 14-day telemetry buffer for a grid block from DynamoDB
+ */
+export async function getGridBufferFromDynamoDB(gridId) {
+  await initAwsClientsIfNeeded();
+  const tableName = process.env.DYNAMODB_TABLE_NAME || 'AirQualityReadings';
+  if (hasAwsCredentials && ddbDocClient) {
+    try {
+      const { GetCommand } = await import('@aws-sdk/lib-dynamodb');
+      const res = await ddbDocClient.send(new GetCommand({
+        TableName: tableName,
+        Key: { city: `GRID_BUFFER_${gridId}`, timestamp: 'LATEST' }
+      }));
+      if (res && res.Item && res.Item.gridData) {
+        return JSON.parse(res.Item.gridData);
+      }
+    } catch (err) {
+      console.warn(`[DynamoDB] Failed reading buffer for ${gridId}:`, err.message);
+    }
+  }
+  return null;
+}
+
+/**
+ * Persist rolling 14-day telemetry buffer for a grid block to DynamoDB
+ */
+export async function saveGridBufferToDynamoDB(gridId, gridData) {
+  await initAwsClientsIfNeeded();
+  const tableName = process.env.DYNAMODB_TABLE_NAME || 'AirQualityReadings';
+  if (hasAwsCredentials && ddbDocClient) {
+    try {
+      const { PutCommand } = await import('@aws-sdk/lib-dynamodb');
+      await ddbDocClient.send(new PutCommand({
+        TableName: tableName,
+        Item: {
+          city: `GRID_BUFFER_${gridId}`,
+          timestamp: 'LATEST',
+          gridData: JSON.stringify(gridData),
+          updatedAt: new Date().toISOString()
+        }
+      }));
+      return true;
+    } catch (err) {
+      console.warn(`[DynamoDB] Failed saving buffer for ${gridId}:`, err.message);
+    }
+  }
+  return false;
+}
+
 

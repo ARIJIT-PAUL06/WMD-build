@@ -23,7 +23,7 @@ import {
 import authoritiesConfig from '../../data/authoritiesConfig.json';
 import schoolsDirectory from '../../data/schoolsDirectory.json';
 import { generatePetitionPdf } from './pdfGenerator';
-import { computeClientEvidence, buildClientDraft, computeClientForecast } from './petitionHelpers';
+import { categorizePm25 } from './petitionHelpers';
 
 export default function PetitionModal({
   isOpen,
@@ -122,21 +122,34 @@ export default function PetitionModal({
         stationDistanceKm: sDist,
         compiledBy: 'VayuVitals SafeRecess Continuous Monitoring Engine',
         compilationDate: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
-        maeError: 12.4,
+        maeError: null,
         dailyLogs: sLogs
       };
     }
-    return computeClientEvidence({
-      schoolName: activeSchool?.name || 'Delhi Public School, Rohini',
-      locality: activeSchool?.locality || initialLocality,
-      stationName: activeSchool?.nearestStation || initialStation,
-      stationDistanceKm: activeSchool?.stationDistanceKm || 1.8,
-      days: 14,
+    return {
+      schoolName: activeSchool?.name || school?.name || 'Delhi Public School, Rohini',
+      locality: activeSchool?.locality || school?.locality || initialLocality || 'Rohini Sector 16, North Delhi',
+      stationName: activeSchool?.nearestStation || school?.nearestStation || initialStation || 'DTU (Delhi Technological University)',
+      stationDistanceKm: activeSchool?.stationDistanceKm || school?.stationDistanceKm || 1.8,
       threshold: 60,
-      basePm25: initialPm25
-    });
+      schoolDaysTotal: 0,
+      exceedanceCount: 0,
+      startDate: '',
+      endDate: '',
+      peakPm25: initialPm25 || null,
+      peakDate: '',
+      avgMorningPm25: initialPm25 || null,
+      compiledBy: 'VayuVitals SafeRecess Continuous Monitoring Engine',
+      compilationDate: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+      maeError: null,
+      dailyLogs: []
+    };
   });
   const [isLoadingEvidence, setIsLoadingEvidence] = useState(false);
+  const [evidenceError, setEvidenceError] = useState(null);
+  const [forecastError, setForecastError] = useState(null);
+  const [draftError, setDraftError] = useState(null);
+  const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
 
   // Editable Letter Text State
   const [editableLetterEn, setEditableLetterEn] = useState('');
@@ -194,32 +207,16 @@ export default function PetitionModal({
         const data = await res.json();
         if (data && data.success) {
           setEvidence(data);
+          setEvidenceError(null);
           return;
         }
       }
-      // Resilient local fallback
-      const localData = computeClientEvidence({
-        schoolName,
-        locality,
-        stationName,
-        stationDistanceKm,
-        days,
-        threshold,
-        basePm25: initialPm25
-      });
-      setEvidence(localData);
+      setEvidence(null);
+      setEvidenceError('Continuous monitoring station telemetry could not be loaded from backend.');
     } catch (err) {
-      console.warn('[PetitionModal] Failed to fetch evidence, using local fallback:', err);
-      const localData = computeClientEvidence({
-        schoolName,
-        locality,
-        stationName,
-        stationDistanceKm,
-        days,
-        threshold,
-        basePm25: initialPm25
-      });
-      setEvidence(localData);
+      console.warn('[PetitionModal] Failed to fetch evidence:', err);
+      setEvidence(null);
+      setEvidenceError('Unable to reach telemetry server. Please check your connection and retry.');
     } finally {
       setIsLoadingEvidence(false);
     }
@@ -244,29 +241,16 @@ export default function PetitionModal({
         const data = await res.json();
         if (data && data.success) {
           setForecast(data);
+          setForecastError(null);
           return;
         }
       }
-      const localForecast = computeClientForecast({
-        schoolId: selectedSchoolId,
-        schoolName,
-        lat: schoolLat,
-        lon: schoolLon,
-        basePm25: initialPm25,
-        threshold
-      });
-      setForecast(localForecast);
+      setForecast(null);
+      setForecastError('SageMaker forward forecast currently unavailable.');
     } catch (err) {
       console.warn('[PetitionModal] Forecast fetch fallback:', err);
-      const localForecast = computeClientForecast({
-        schoolId: selectedSchoolId,
-        schoolName,
-        lat: schoolLat,
-        lon: schoolLon,
-        basePm25: initialPm25,
-        threshold
-      });
-      setForecast(localForecast);
+      setForecast(null);
+      setForecastError('Unable to connect to SageMaker forecast endpoint.');
     } finally {
       setIsLoadingForecast(false);
     }
@@ -306,7 +290,7 @@ export default function PetitionModal({
           stationDistanceKm: sDist,
           compiledBy: 'VayuVitals SafeRecess Continuous Monitoring Engine',
           compilationDate: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
-          maeError: 12.4,
+          maeError: null,
           dailyLogs: sLogs
         });
       } else {
@@ -318,9 +302,12 @@ export default function PetitionModal({
 
   // --------------------------------------------------------------------------
   // Step 2: Generate Draft When Evidence, Authority, or Forecast Changes
+  // Single canonical template on server per P2.6. Shows error + retry on failure.
   // --------------------------------------------------------------------------
   const generateDraft = useCallback(async () => {
     if (!evidence) return;
+    setIsGeneratingDraft(true);
+    setDraftError(null);
     const activeForecast = includeForecastInDossier ? forecast : null;
     try {
       const res = await fetch('/api/petition/generate-draft', {
@@ -343,38 +330,21 @@ export default function PetitionModal({
           setEditableLetterEn(data.englishText);
           setEditableLetterHi(data.hindiText);
           setCurrentSubject(data.subject);
+          setDraftError(null);
           return;
         }
       }
-      // Resilient local fallback
-      const localDraft = buildClientDraft({
-        evidence,
-        authority: currentAuthority,
-        forecast: activeForecast,
-        senderName,
-        senderRole,
-        senderContact: `${senderEmail} | ${senderPhone}`,
-        selectedDemands,
-        schoolEvidencePackage: activeEvidencePackage
-      });
-      setEditableLetterEn(localDraft.englishText);
-      setEditableLetterHi(localDraft.hindiText);
-      setCurrentSubject(localDraft.subject);
+      const errData = await res.json().catch(() => ({}));
+      setDraftError(errData.error || 'Server draft generation failed. Please retry.');
+      setEditableLetterEn('');
+      setEditableLetterHi('');
     } catch (err) {
-      console.warn('[PetitionModal] Draft generation fallback:', err);
-      const localDraft = buildClientDraft({
-        evidence,
-        authority: currentAuthority,
-        forecast: activeForecast,
-        senderName,
-        senderRole,
-        senderContact: `${senderEmail} | ${senderPhone}`,
-        selectedDemands,
-        schoolEvidencePackage: activeEvidencePackage
-      });
-      setEditableLetterEn(localDraft.englishText);
-      setEditableLetterHi(localDraft.hindiText);
-      setCurrentSubject(localDraft.subject);
+      console.warn('[PetitionModal] Draft generation failed:', err);
+      setDraftError('Unable to generate petition draft from backend. Please check connection and retry.');
+      setEditableLetterEn('');
+      setEditableLetterHi('');
+    } finally {
+      setIsGeneratingDraft(false);
     }
   }, [evidence, currentAuthority, forecast, includeForecastInDossier, senderName, senderRole, senderEmail, senderPhone, selectedDemands, activeEvidencePackage]);
 
@@ -463,10 +433,7 @@ export default function PetitionModal({
   const handleOpenEmailDraft = () => {
     const recipient = currentAuthority.email;
     const subject = encodeURIComponent(currentSubject || `Grievance on Morning Air Quality - ${schoolName}`);
-    const body = encodeURIComponent(
-      activeLetterText +
-      `\n\n[Please find attached the official PDF Empirical Evidence Dossier: Verified by VayuVitals SafeRecess Engine]`
-    );
+    const body = encodeURIComponent(activeLetterText);
     window.open(`mailto:${recipient}?subject=${subject}&body=${body}`, '_blank');
   };
 
@@ -857,6 +824,25 @@ export default function PetitionModal({
                       <span><strong>Observed Range:</strong> {evidence.startDate} – {evidence.endDate} (MAE: {evidence.maeError} µg/m³)</span>
                     </div>
                   </div>
+                </div>
+              ) : evidenceError ? (
+                <div style={{ padding: '16px', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '10px', color: '#fca5a5', fontSize: '0.78rem' }}>
+                  <div style={{ marginBottom: '8px' }}>{evidenceError}</div>
+                  <button
+                    onClick={fetchEvidence}
+                    disabled={isLoadingEvidence}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      background: 'rgba(239, 68, 68, 0.3)',
+                      border: '1px solid rgba(239, 68, 68, 0.5)',
+                      color: '#ffffff',
+                      fontSize: '0.72rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {isLoadingEvidence ? 'Retrying...' : 'Retry Live Fetch'}
+                  </button>
                 </div>
               ) : (
                 <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>
@@ -1489,33 +1475,60 @@ export default function PetitionModal({
                   </div>
                 </div>
 
-                {/* Direct Editable Content Area */}
-                <textarea
-                  value={language === 'hi' ? editableLetterHi : editableLetterEn}
-                  onChange={(e) => {
-                    if (language === 'hi') {
-                      setEditableLetterHi(e.target.value);
-                    } else {
-                      setEditableLetterEn(e.target.value);
-                    }
-                  }}
-                  style={{
-                    width: '100%',
-                    minHeight: '440px',
-                    border: 'none',
-                    outline: 'none',
-                    resize: 'none',
-                    fontFamily: 'inherit',
-                    fontSize: 'inherit',
-                    lineHeight: 'inherit',
-                    color: '#1e293b',
-                    background: 'transparent',
-                    whiteSpace: 'pre-wrap'
-                  }}
-                  placeholder="Drafting formal grievance..."
-                />
+                {draftError ? (
+                  <div style={{ padding: '40px 20px', textAlign: 'center', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '8px', border: '1px dashed #fca5a5' }}>
+                    <div style={{ color: '#dc2626', fontWeight: 'bold', fontSize: '0.9rem', marginBottom: '8px' }}>
+                      Draft Generation Error
+                    </div>
+                    <div style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '16px' }}>
+                      {draftError}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={generateDraft}
+                      disabled={isGeneratingDraft}
+                      style={{
+                        padding: '6px 14px',
+                        background: '#0284c7',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 600
+                      }}
+                    >
+                      {isGeneratingDraft ? 'Retrying...' : 'Retry Generating Draft'}
+                    </button>
+                  </div>
+                ) : (
+                  <textarea
+                    value={language === 'hi' ? editableLetterHi : editableLetterEn}
+                    onChange={(e) => {
+                      if (language === 'hi') {
+                        setEditableLetterHi(e.target.value);
+                      } else {
+                        setEditableLetterEn(e.target.value);
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      minHeight: '440px',
+                      border: 'none',
+                      outline: 'none',
+                      resize: 'none',
+                      fontFamily: 'inherit',
+                      fontSize: 'inherit',
+                      lineHeight: 'inherit',
+                      color: '#1e293b',
+                      background: 'transparent',
+                      whiteSpace: 'pre-wrap'
+                    }}
+                    placeholder={isGeneratingDraft ? 'Drafting formal grievance from verified telemetry...' : 'Drafting formal grievance...'}
+                  />
+                )}
 
-                {/* Empirical Enclosure Watermark Note */}
+                {/* Empirical Watermark Note */}
                 <div style={{ marginTop: '20px', paddingTop: '12px', borderTop: '1px solid #e2e8f0', fontSize: '0.75rem', color: '#64748b' }}>
                   <strong>Annexure Attached:</strong> Verified continuous {days}-day morning exposure log ({evidence?.stationName || 'CAAQMS Station'}) compiled via VayuVitals SafeRecess Protocol.
                 </div>
