@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 const PetitionModal = React.lazy(() => import('../Petition/PetitionModal'));
 const AutonomousMonitorModal = React.lazy(() => import('../Dashboard/AutonomousMonitorModal'));
+import AnimatedCounter from '../common/AnimatedCounter';
 
 // Import official India national boundary GeoJSON (MultiPolygon covering mainland + islands)
 import indiaBoundaryGeoJson from '../../data/indiaBoundary.json';
@@ -4938,7 +4939,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                       zIndex: 1,
                     }}
                   >
-                    {getPollutantValue(displayStation, activePollutant)}
+                    <AnimatedCounter value={getPollutantValue(displayStation, activePollutant)} duration={600} />
                   </span>
                   <span style={{ fontSize: '0.68rem', fontWeight: 700, color: getPollutantMeta(getPollutantValue(displayStation, activePollutant), activePollutant, activeRange).textHex, zIndex: 1, marginTop: '2px' }}>
                     {activePollutant.toUpperCase()} ({getPollutantMeta(getPollutantValue(displayStation, activePollutant), activePollutant).unit}) · {getPollutantMeta(getPollutantValue(displayStation, activePollutant), activePollutant, activeRange).label}
@@ -4975,7 +4976,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                         {p.label}
                       </span>
                       <strong style={{ fontSize: '0.95rem', color: isActive ? '#ffffff' : p.color }}>
-                        {p.val} <span style={{ fontSize: '0.6rem', color: '#64748b' }}>{p.unit}</span>
+                        <AnimatedCounter value={p.val != null ? p.val : 0} duration={600} /> <span style={{ fontSize: '0.6rem', color: '#64748b' }}>{p.unit}</span>
                       </strong>
                     </div>
                   );

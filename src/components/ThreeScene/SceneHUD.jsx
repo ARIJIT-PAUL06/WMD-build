@@ -1,5 +1,6 @@
 import React from 'react';
 import { HeartPulse, Wind, AlertTriangle, ShieldCheck } from 'lucide-react';
+import AnimatedCounter from '../common/AnimatedCounter';
 
 export default function SceneHUD({ aqi = 45 }) {
   // Biological metrics calculated from AQI
@@ -46,7 +47,7 @@ export default function SceneHUD({ aqi = 45 }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
           <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)' }}>
-            {bpm}
+            <AnimatedCounter value={bpm} />
           </span>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>breaths / min</span>
         </div>
@@ -74,12 +75,12 @@ export default function SceneHUD({ aqi = 45 }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: '6px' }}>
           <span style={{ fontSize: '1.4rem', fontWeight: 800, color: badgeColor, fontFamily: 'var(--font-mono)' }}>
-            +{constriction}%
+            +<AnimatedCounter value={constriction} suffix="%" />
           </span>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>narrowing</span>
         </div>
         <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-          Deposition: <strong style={{ color: '#ffffff' }}>{inhaledPmHourly} µg/hr</strong>
+          Deposition: <strong style={{ color: '#ffffff' }}><AnimatedCounter value={inhaledPmHourly} decimals={1} /> µg/hr</strong>
         </div>
       </div>
     </div>
