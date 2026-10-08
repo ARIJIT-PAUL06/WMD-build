@@ -27,7 +27,10 @@
   min-height: 100vh;
   background-color: #0b1011;
   color: #f8fafc;
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --doc-font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --doc-font-body: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --doc-font-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  font-family: var(--doc-font-body);
   overflow-x: hidden;
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
@@ -328,6 +331,7 @@
   transform: translate(-50%, -50%);
   translate: calc(var(--doc-mouse-norm-x, 0) * -7px) calc(var(--doc-mouse-norm-y, 0) * -4.5px);
   transition: translate 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+  font-family: var(--doc-font-display);
   font-size: clamp(10rem, 24vw, 24rem);
   font-weight: 900;
   line-height: 0.8;
@@ -347,6 +351,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  font-family: var(--doc-font-display);
   font-size: clamp(8rem, 20vw, 20rem);
   font-weight: 900;
   line-height: 0.8;
@@ -360,12 +365,58 @@
   will-change: transform, opacity;
 }
 
+/* Giant Ghost Pollutant Typography in Editorial Narrative Sections */
+.doc-section-ghost-watermark {
+  position: absolute;
+  top: 10%;
+  right: -2%;
+  font-family: var(--doc-font-display);
+  font-size: clamp(10rem, 22vw, 24rem);
+  font-weight: 900;
+  line-height: 0.8;
+  letter-spacing: -0.06em;
+  color: var(--pollutant-accent, #10b981);
+  opacity: 0.032;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  white-space: nowrap;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+.doc-section-ghost-watermark.doc-ghost-left {
+  right: auto;
+  left: -2%;
+}
+
 /* Masked Typography Reveal Wrapper (Trionn-Level Motion Craft) */
 .doc-mask-reveal-wrap {
   overflow: hidden;
   display: inline-block;
   vertical-align: top;
   max-width: 100%;
+}
+
+.doc-char-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.doc-hero-char {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+}
+
+.doc-headline-line-mask {
+  display: block;
+  overflow: hidden;
+}
+
+.doc-headline-line {
+  display: block;
+  will-change: transform, opacity;
 }
 
 .doc-mask-reveal-wrap > * {
@@ -409,10 +460,11 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  color: #10b981;
+  font-family: var(--doc-font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--pollutant-accent, #10b981);
   text-transform: uppercase;
 }
 
@@ -420,8 +472,8 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 6px #10b981;
+  background: var(--pollutant-accent, #10b981);
+  box-shadow: 0 0 6px var(--pollutant-accent, #10b981);
 }
 
 .documentary-pollutant-title-row {
@@ -431,10 +483,11 @@
 }
 
 .documentary-pollutant-name {
-  font-size: 3.6rem;
-  font-weight: 900;
-  letter-spacing: -0.03em;
-  line-height: 1;
+  font-family: var(--doc-font-display);
+  font-size: clamp(4.2rem, 8.2vw, 7.8rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
   color: #ffffff;
   margin: 0;
   translate: calc(var(--doc-mouse-norm-x, 0) * -3.5px) calc(var(--doc-mouse-norm-y, 0) * -2.5px);
@@ -443,22 +496,24 @@
 }
 
 .documentary-pollutant-chem-formula {
-  font-size: 1.3rem;
+  font-family: var(--doc-font-mono);
+  font-size: 1.15rem;
   font-weight: 600;
   color: #64748b;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   translate: calc(var(--doc-mouse-norm-x, 0) * -2.5px) calc(var(--doc-mouse-norm-y, 0) * -1.8px);
   transition: translate 0.18s cubic-bezier(0.2, 0, 0.2, 1);
 }
 
 .documentary-hero-headline {
   margin: 0;
-  font-size: 1.1rem;
+  font-family: var(--doc-font-display);
+  font-size: clamp(1.2rem, 2.2vw, 1.85rem);
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--pollutant-accent, #10b981);
-  line-height: 1.3;
+  line-height: 1.25;
   translate: calc(var(--doc-mouse-norm-x, 0) * -2px) calc(var(--doc-mouse-norm-y, 0) * -1.5px);
   transition: translate 0.16s cubic-bezier(0.2, 0, 0.2, 1);
   will-change: translate;
@@ -467,9 +522,10 @@
 .documentary-editorial-quote {
   margin: 0;
   padding: 0;
-  font-size: 1.68rem;
+  font-family: var(--doc-font-display);
+  font-size: clamp(1.4rem, 2.3vw, 1.95rem);
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.32;
   letter-spacing: -0.02em;
   color: #f1f5f9;
   translate: calc(var(--doc-mouse-norm-x, 0) * -1.4px) calc(var(--doc-mouse-norm-y, 0) * -1px);
@@ -479,10 +535,11 @@
 
 .documentary-editorial-desc {
   margin: 0;
-  font-size: 0.92rem;
-  line-height: 1.55;
+  font-family: var(--doc-font-body);
+  font-size: 0.95rem;
+  line-height: 1.6;
   color: #94a3b8;
-  max-width: 420px;
+  max-width: 440px;
   translate: calc(var(--doc-mouse-norm-x, 0) * -1px) calc(var(--doc-mouse-norm-y, 0) * -0.7px);
   transition: translate 0.18s cubic-bezier(0.2, 0, 0.2, 1);
 }
@@ -491,11 +548,12 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 5px 12px;
+  padding: 6px 14px;
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 9999px;
   width: fit-content;
+  font-family: var(--doc-font-mono);
   font-size: 0.74rem;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -521,16 +579,18 @@
 }
 
 .doc-weather-label {
+  font-family: var(--doc-font-mono);
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   font-size: 0.68rem;
   color: #64748b;
 }
 
 .doc-weather-val {
+  font-family: var(--doc-font-mono);
   font-weight: 700;
+  letter-spacing: 0.04em;
   color: #e2e8f0;
-  font-family: "SF Mono", Monaco, Consolas, monospace;
 }
 
 .doc-weather-divider {
@@ -543,7 +603,9 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  font-size: 0.76rem;
+  font-family: var(--doc-font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
   color: #64748b;
   padding-top: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -552,14 +614,17 @@
 }
 
 .doc-meta-label {
+  font-family: var(--doc-font-mono);
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   color: #64748b;
 }
 
 .doc-meta-val {
+  font-family: var(--doc-font-mono);
   font-weight: 700;
-  color: #e2e8f0;
+  letter-spacing: 0.04em;
+  color: #cbd5e1;
 }
 
 .doc-meta-divider {
@@ -649,14 +714,17 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.78rem;
+  font-family: var(--doc-font-mono);
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.16em;
   color: #94a3b8;
   text-transform: uppercase;
 }
 
 .doc-symbol-txt {
+  font-family: var(--doc-font-display);
+  font-weight: 800;
   color: #f8fafc;
 }
 
@@ -665,7 +733,9 @@
 }
 
 .doc-symbol-ctx {
+  font-family: var(--doc-font-mono);
   color: #94a3b8;
+  letter-spacing: 0.14em;
 }
 
 .documentary-value-number-row {
@@ -674,8 +744,9 @@
 }
 
 .documentary-value-number {
-  font-size: 5.2rem;
-  font-weight: 900;
+  font-family: var(--doc-font-display);
+  font-size: clamp(4.6rem, 7.5vw, 6.4rem);
+  font-weight: 800;
   letter-spacing: -0.04em;
   color: #ffffff;
   font-variant-numeric: tabular-nums;
@@ -695,10 +766,10 @@
 .documentary-value-unit {
   font-size: 0.88rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #94a3b8;
-  font-family: "SF Mono", Monaco, Consolas, monospace;
+  font-family: var(--doc-font-mono);
 }
 
 .documentary-value-status-badge {
@@ -712,9 +783,10 @@
   padding: 4px 12px;
   border-radius: 9999px;
   border: 1px solid;
+  font-family: var(--doc-font-mono);
   font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -821,12 +893,13 @@
 }
 
 .doc-spatial-coord {
-  font-family: "SF Mono", Monaco, Consolas, monospace;
+  font-family: var(--doc-font-mono);
   font-size: 0.68rem;
   color: #94a3b8;
 }
 
 .doc-spatial-loc-name {
+  font-family: var(--doc-font-display);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -887,17 +960,19 @@
 }
 
 .doc-col-heading {
-  font-size: 0.7rem;
+  font-family: var(--doc-font-mono);
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   color: #94a3b8;
   text-transform: uppercase;
 }
 
 .doc-col-badge {
+  font-family: var(--doc-font-mono);
   font-size: 0.62rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: #64748b;
   padding: 2px 6px;
   background: rgba(255, 255, 255, 0.04);
@@ -908,8 +983,10 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  font-family: var(--doc-font-mono);
   font-size: 0.68rem;
   font-weight: 700;
+  letter-spacing: 0.08em;
   color: #f97316;
 }
 
@@ -941,6 +1018,11 @@
   gap: 6px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.doc-chip-symbol {
+  font-family: var(--doc-font-display);
+  font-weight: 700;
 }
 
 .doc-pollutant-chip:hover {
@@ -983,6 +1065,7 @@
 }
 
 .doc-chip-val {
+  font-family: var(--doc-font-mono);
   font-size: 0.72rem;
   font-weight: 700;
   color: #10b981;
@@ -1012,7 +1095,8 @@
   justify-content: space-between;
   font-size: 0.65rem;
   color: #64748b;
-  font-family: monospace;
+  font-family: var(--doc-font-mono);
+  letter-spacing: 0.06em;
 }
 
 /* Risk Legend */
@@ -1026,7 +1110,9 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 0.72rem;
+  font-family: var(--doc-font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
 }
 
 .doc-legend-indicator {
@@ -1061,10 +1147,14 @@
 }
 
 .documentary-section {
+  position: relative;
   width: 100%;
+  overflow: hidden;
 }
 
 .documentary-section-inner {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 1140px;
   margin: 0 auto;
@@ -1085,14 +1175,15 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.76rem;
+  font-family: var(--doc-font-mono);
+  font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.18em;
-  color: #10b981;
+  color: var(--pollutant-accent, #10b981);
 }
 
 .doc-sec-num {
-  font-family: monospace;
+  font-family: var(--doc-font-mono);
 }
 
 .doc-sec-divider {
@@ -1100,16 +1191,18 @@
 }
 
 .documentary-section-title {
-  font-size: 2.4rem;
+  font-family: var(--doc-font-display);
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
   font-weight: 800;
   letter-spacing: -0.02em;
   color: #f8fafc;
   margin: 0;
-  line-height: 1.15;
+  line-height: 1.12;
 }
 
 .documentary-section-lead {
-  font-size: 1.15rem;
+  font-family: var(--doc-font-body);
+  font-size: 1.12rem;
   line-height: 1.6;
   color: #94a3b8;
   margin: 0;
@@ -1146,7 +1239,7 @@
 }
 
 .doc-card-idx {
-  font-family: monospace;
+  font-family: var(--doc-font-mono);
   font-size: 0.82rem;
   font-weight: 700;
   color: #10b981;
@@ -1221,7 +1314,7 @@
 }
 
 .doc-flow-step-num {
-  font-family: monospace;
+  font-family: var(--doc-font-mono);
   font-size: 0.76rem;
   font-weight: 700;
   color: #10b981;
@@ -1286,7 +1379,7 @@
 }
 
 .doc-impact-idx {
-  font-family: monospace;
+  font-family: var(--doc-font-mono);
   font-size: 0.82rem;
   font-weight: 700;
   color: #ef4444;
@@ -1618,7 +1711,7 @@
 }
 
 .doc-scale-size {
-  font-family: monospace;
+  font-family: var(--doc-font-mono);
   color: #94a3b8;
 }
 
@@ -1687,7 +1780,7 @@
   justify-content: space-between;
   font-size: 0.72rem;
   color: #64748b;
-  font-family: monospace;
+  font-family: var(--doc-font-mono);
   padding: 0 40px;
 }
 
@@ -1885,7 +1978,7 @@
 }
 
 .doc-chip-number {
-  font-family: monospace;
+  font-family: var(--doc-font-mono);
   font-size: 0.72rem;
   color: #10b981;
 }
@@ -2247,7 +2340,7 @@
 }
 
 .ev-pill-lbl {
-  font-family: monospace;
+  font-family: var(--doc-font-mono);
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -2299,7 +2392,7 @@
   justify-content: space-between;
   font-size: 0.68rem;
   color: #64748b;
-  font-family: monospace;
+  font-family: var(--doc-font-mono);
 }
 
 .day-frame-mid {
@@ -2572,7 +2665,7 @@
 }
 
 .doc-step-num {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--doc-font-mono);
 }
 
 .doc-step-bar {
@@ -2845,7 +2938,7 @@
   font-size: 0.65rem;
   font-weight: 700;
   color: #64748b;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--doc-font-mono);
 }
 
 .doc-flow-step-title {
@@ -2929,7 +3022,7 @@
   font-weight: 800;
   padding: 3px 8px;
   border-radius: 6px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--doc-font-mono);
 }
 
 .doc-diff-badge.exceeded {
@@ -2967,7 +3060,7 @@
   font-size: 1.15rem;
   font-weight: 800;
   color: #f8fafc;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--doc-font-mono);
 }
 
 /* 6. Diurnal Summary Strip (PEAK, AVERAGE, LOW, CURRENT) */
@@ -3000,7 +3093,7 @@
   font-size: 0.85rem;
   font-weight: 800;
   color: #f8fafc;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--doc-font-mono);
 }
 
 .doc-diurnal-metric-pill.peak .doc-d-val {

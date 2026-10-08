@@ -69,6 +69,9 @@ export default function DocumentarySection({
           1. WHAT ARE THEY? (SECTION 01) - VISUAL CHEMICAL PROFILE & FLOW
           =================================================================== */}
       <section className="documentary-section" id="section-01-what-are-they">
+        <div className="doc-section-ghost-watermark" aria-hidden="true">
+          {pollutantData.symbol}
+        </div>
         <div className="documentary-section-inner">
           <header className="documentary-section-header">
             <div className="documentary-section-kicker">
@@ -218,6 +221,9 @@ export default function DocumentarySection({
         className="documentary-section doc-source-exposure-section"
         id="section-where-it-comes-from"
       >
+        <div className="doc-section-ghost-watermark doc-ghost-left" aria-hidden="true">
+          {pollutantData.symbol}
+        </div>
         <div className="documentary-section-inner">
           <header className="documentary-section-header">
             <div className="documentary-section-kicker">
@@ -379,6 +385,9 @@ export default function DocumentarySection({
           7. WHY IT MATTERS & SCHOOL SAFETY (SECTION 07)
           =================================================================== */}
       <section className="documentary-section" id="section-07-why-it-matters">
+        <div className="doc-section-ghost-watermark" aria-hidden="true">
+          {pollutantData.symbol}
+        </div>
         <div className="documentary-section-inner">
           <header className="documentary-section-header">
             <div className="documentary-section-kicker">

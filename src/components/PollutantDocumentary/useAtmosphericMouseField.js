@@ -220,3 +220,5 @@ export function useAtmosphericMouseField(heroRef, mouseStateRef) {
     };
   }, [heroRef, mouseStateRef]);
 }
+
+export default useAtmosphericMouseField;

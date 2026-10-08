@@ -119,54 +119,106 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
       );
     }
 
-    // Step 3: Small environmental label / kicker reveals
+    // Step 3: Small environmental label / kicker reveals with animated letter spacing settling into normal
     const kickerTag = containerEl.querySelector('.documentary-pollutant-kicker-tag');
     if (kickerTag) {
       heroTl.fromTo(
         kickerTag,
-        { opacity: 0, y: -6 },
-        { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
+        { opacity: 0, y: -6, letterSpacing: '0.36em' },
+        { opacity: 1, y: 0, letterSpacing: '0.22em', duration: 0.7, ease: 'power2.out' },
         0.12
       );
     }
 
-    // Step 4: Pollutant title, symbol, and chemical formula reveal with masked line motion
+    // Step 4: Pollutant title with cinematic masked character-level reveal (30-60ms stagger)
     const pollutantNameEl = containerEl.querySelector('.documentary-pollutant-name');
     const pollutantTitleRow = containerEl.querySelector('.documentary-pollutant-title-row');
     if (pollutantNameEl) {
-      heroTl.fromTo(
-        pollutantNameEl,
-        { yPercent: 110, opacity: 0 },
-        { yPercent: 0, opacity: 1, duration: 0.85, ease: 'expo.out' },
-        0.16
-      );
+      if (!pollutantNameEl.querySelector('.doc-hero-char')) {
+        const rawChars = Array.from(pollutantNameEl.textContent.trim());
+        pollutantNameEl.innerHTML = rawChars
+          .map((c) => `<span class="doc-char-mask"><span class="doc-hero-char">${c === ' ' ? '&nbsp;' : c}</span></span>`)
+          .join('');
+      }
+      const heroChars = pollutantNameEl.querySelectorAll('.doc-hero-char');
+      if (heroChars.length > 0) {
+        heroTl.fromTo(
+          heroChars,
+          { yPercent: 120, opacity: 0, filter: 'blur(8px)' },
+          {
+            yPercent: 0,
+            opacity: 1,
+            filter: 'blur(0px)',
+            duration: 0.8,
+            stagger: 0.045, // 45ms character stagger
+            ease: 'power3.out',
+          },
+          0.16
+        );
+      }
     } else if (pollutantTitleRow) {
       heroTl.fromTo(
         pollutantTitleRow,
         { opacity: 0, y: 18 },
-        { opacity: 1, y: 0, duration: 0.6, ease: 'expo.out' },
+        { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' },
         0.18
       );
     }
 
-    // Step 5: Tagline / headline and editorial statement appear with masked elevation
+    const chemTag = containerEl.querySelector('.documentary-pollutant-chem-formula');
+    const asciiTag = containerEl.querySelector('.documentary-pollutant-ascii-symbol');
+    if (chemTag || asciiTag) {
+      const extraTags = [asciiTag, chemTag].filter(Boolean);
+      heroTl.fromTo(
+        extraTags,
+        { opacity: 0, x: -6 },
+        { opacity: 1, x: 0, duration: 0.5, stagger: 0.08, ease: 'power2.out' },
+        0.35
+      );
+    }
+
+    // Step 5: Tagline / headline with editorial line-based masked reveal
     const headlineEl = containerEl.querySelector('.documentary-hero-headline');
     const editorialQuote = containerEl.querySelector('.documentary-editorial-quote');
     const editorialDesc = containerEl.querySelector('.documentary-editorial-desc');
     if (headlineEl) {
-      heroTl.fromTo(
-        headlineEl,
-        { yPercent: 105, opacity: 0 },
-        { yPercent: 0, opacity: 1, duration: 0.65, ease: 'expo.out' },
-        0.22
-      );
+      if (!headlineEl.querySelector('.doc-headline-line')) {
+        const text = headlineEl.textContent.trim();
+        const words = text.split(/\s+/);
+        if (words.length > 2) {
+          const mid = Math.ceil(words.length / 2);
+          const line1 = words.slice(0, mid).join(' ');
+          const line2 = words.slice(mid).join(' ');
+          headlineEl.innerHTML = `
+            <span class="doc-headline-line-mask"><span class="doc-headline-line">${line1}</span></span>
+            <span class="doc-headline-line-mask"><span class="doc-headline-line">${line2}</span></span>
+          `;
+        } else {
+          headlineEl.innerHTML = `<span class="doc-headline-line-mask"><span class="doc-headline-line">${text}</span></span>`;
+        }
+      }
+      const lines = headlineEl.querySelectorAll('.doc-headline-line');
+      if (lines.length > 0) {
+        heroTl.fromTo(
+          lines,
+          { yPercent: 110, opacity: 0 },
+          {
+            yPercent: 0,
+            opacity: 1,
+            duration: 0.75,
+            stagger: 0.09, // Staggered line reveal
+            ease: 'power3.out',
+          },
+          0.22
+        );
+      }
     }
     if (editorialQuote) {
       heroTl.fromTo(
         editorialQuote,
         { opacity: 0, y: 12 },
         { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' },
-        0.26
+        0.28
       );
     }
     if (editorialDesc) {
@@ -174,26 +226,26 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
         editorialDesc,
         { opacity: 0, y: 10 },
         { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' },
-        0.3
+        0.32
       );
     }
 
-    // Step 6: Environmental parameters (weather strip & metadata) appear
-    const weatherStrip = containerEl.querySelector('.documentary-hero-weather-strip');
+    // Step 6: Environmental parameters (weather strip & metadata) with micro-label tracking entrance
+    const weatherItems = containerEl.querySelectorAll('.doc-weather-item');
     const metaRow = containerEl.querySelector('.documentary-editorial-metadata');
-    if (weatherStrip) {
+    if (weatherItems.length > 0) {
       heroTl.fromTo(
-        weatherStrip,
-        { opacity: 0, y: 8 },
-        { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
+        weatherItems,
+        { opacity: 0, y: 8, letterSpacing: '0.12em' },
+        { opacity: 1, y: 0, letterSpacing: '0.04em', duration: 0.55, stagger: 0.04, ease: 'power2.out' },
         0.28
       );
     }
     if (metaRow) {
       heroTl.fromTo(
         metaRow,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.4 },
+        { opacity: 0, letterSpacing: '0.12em' },
+        { opacity: 1, letterSpacing: '0.05em', duration: 0.55, ease: 'power2.out' },
         0.32
       );
     }
@@ -255,15 +307,16 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
       }
     }
 
-    // Step 8: Current value resolves into view with subtle scale, blur-to-sharp, and count-up
+    // Step 8: Large number resolution effect (blur -> rapid visual count-up -> sharp real value)
     const numEl = containerEl.querySelector('#doc-central-numeric-readout');
+    const unitEl = containerEl.querySelector('.documentary-value-unit-row');
     if (numEl) {
       const rawText = numEl.innerText.trim();
       const targetVal = parseFloat(rawText);
       heroTl.fromTo(
         numEl,
-        { opacity: 0, scale: 0.95, filter: 'blur(6px)' },
-        { opacity: 1, scale: 1.0, filter: 'blur(0px)', duration: 0.65, ease: 'power2.out' },
+        { opacity: 0, scale: 0.92, filter: 'blur(12px)' },
+        { opacity: 1, scale: 1.0, filter: 'blur(0px)', duration: 0.7, ease: 'power3.out' },
         0.38
       );
       if (!isNaN(targetVal) && targetVal > 0) {
@@ -287,16 +340,25 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
         );
       }
     }
+    // Unit appears subtly underneath the resolved number
+    if (unitEl) {
+      heroTl.fromTo(
+        unitEl,
+        { opacity: 0, y: 5, letterSpacing: '0.12em' },
+        { opacity: 0.9, y: 0, letterSpacing: '0.04em', duration: 0.45, ease: 'power2.out' },
+        0.62
+      );
+    }
 
-    // Step 9: Status pill & location pin appear smoothly as measurement settles
+    // Step 9: Status pill & location pin attached to measurement settling smoothly
     const statusPill = containerEl.querySelector('.documentary-value-status-badge');
     const locationPin = containerEl.querySelector('.documentary-value-location');
     if (statusPill) {
       heroTl.fromTo(
         statusPill,
-        { opacity: 0, scale: 0.9 },
-        { opacity: 1, scale: 1.0, duration: 0.45, ease: 'power2.out' },
-        0.55
+        { opacity: 0, scale: 0.88, y: -8 },
+        { opacity: 1, scale: 1.0, y: 0, duration: 0.5, ease: 'power2.out' },
+        0.68
       );
     }
     if (locationPin) {
@@ -304,7 +366,7 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
         locationPin,
         { opacity: 0, y: 6 },
         { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
-        0.6
+        0.72
       );
     }
 
@@ -361,6 +423,7 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
       const heroHaze = heroSection.querySelector('.documentary-hero-haze-layer');
       const flowCanvas = heroSection.querySelector('.hero-atmospheric-canvas');
       const heroGlyph = heroSection.querySelector('.documentary-hero-sculptural-glyph');
+      const pollutantTitleRow = heroSection.querySelector('.documentary-pollutant-title-row');
       const editorialCol = heroSection.querySelector('.documentary-hero-editorial-col');
       const centerCol = heroSection.querySelector('.documentary-hero-center-col');
       const spatialCol = heroSection.querySelector('.documentary-hero-spatial-col');
@@ -386,6 +449,20 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
       }
       if (heroGlyph) {
         heroScrollTl.to(heroGlyph, { yPercent: -22, scale: 1.15, opacity: 0.01, ease: 'none' }, 0);
+      }
+      // Kinetic Hero Typography: pollutant title scales up, drifts horizontally, and recedes into background depth
+      if (pollutantTitleRow) {
+        heroScrollTl.to(
+          pollutantTitleRow,
+          {
+            scale: 1.42,
+            x: 26,
+            y: -38,
+            opacity: 0.14,
+            ease: 'none',
+          },
+          0
+        );
       }
       if (editorialCol) {
         heroScrollTl.to(editorialCol, { y: -35, opacity: 0.4, ease: 'none' }, 0);
@@ -572,7 +649,49 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     const sections = containerEl.querySelectorAll('.documentary-section');
     sections.forEach((section) => {
       const header = section.querySelector('.documentary-section-header');
+      const kickerEl = section.querySelector('.documentary-section-kicker');
       const titleEl = section.querySelector('.documentary-section-title');
+      const ghostWatermark = section.querySelector('.doc-section-ghost-watermark');
+
+      // Giant Ghost Pollutant Typography subtle parallax drift behind section content
+      if (ghostWatermark) {
+        gsap.fromTo(
+          ghostWatermark,
+          { yPercent: 14, scale: 0.96, opacity: 0.022 },
+          {
+            yPercent: -18,
+            scale: 1.05,
+            opacity: 0.038,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: section,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: 1.2,
+            },
+          }
+        );
+      }
+
+      // Editorial section micro-kicker letter spacing entrance
+      if (kickerEl) {
+        gsap.fromTo(
+          kickerEl,
+          { opacity: 0, y: 10, letterSpacing: '0.22em' },
+          {
+            opacity: 1,
+            y: 0,
+            letterSpacing: '0.14em',
+            duration: 0.6,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: section,
+              start: 'top 85%',
+              toggleActions: 'play none none none',
+            },
+          }
+        );
+      }
 
       if (titleEl) {
         gsap.fromTo(

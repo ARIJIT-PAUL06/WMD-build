@@ -57,6 +57,8 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
   // Low-frequency phase state: only re-renders when crossing the 0.68 threshold for the CTA button overlay
   const [isRightPhase, setIsRightPhase] = useState(false);
 
+  const airshedLabelRef = useRef(null);
+
   // Direct DOM style calibration on scroll without triggering React state updates
   const updateBrandStyles = (progress) => {
     const theme = getBrandTheme(progress);
@@ -68,6 +70,10 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
     }
     if (bottomFadeRef.current) {
       bottomFadeRef.current.style.background = `linear-gradient(to bottom, rgba(7, 10, 18, 0.45) 0%, transparent 14%, transparent 60%, rgba(7, 10, 18, 0.88) 85%, #070a12 100%), ${theme.ambient}`;
+    }
+    if (airshedLabelRef.current) {
+      airshedLabelRef.current.style.color = theme.textColor;
+      airshedLabelRef.current.textContent = progress < 0.38 ? 'WINTER INVERSION' : progress < 0.68 ? 'SCRUB TRANSITION' : 'LIVING CANOPY';
     }
   };
 
@@ -323,7 +329,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             </div>
             <div className="hero-hud-pill phase-indicator">
               <span>
-                AIRSHED: <strong style={{ color: brandTheme.textColor }}>{isLeftPhase ? 'WINTER INVERSION' : isMidPhase ? 'SCRUB TRANSITION' : 'LIVING CANOPY'}</strong>
+                AIRSHED: <strong ref={airshedLabelRef} style={{ color: '#f87171', transition: 'color 0.15s ease' }}>WINTER INVERSION</strong>
               </span>
             </div>
           </div>
