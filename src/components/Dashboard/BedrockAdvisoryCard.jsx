@@ -113,7 +113,7 @@ export default function BedrockAdvisoryCard({
             <span>Generating tailored pulmonary risk explanation via Amazon Bedrock...</span>
           </div>
         ) : (
-          advisory || 'Air quality is moderate today. Sensitive individuals should be mindful during prolonged outdoor activities.'
+          advisory || 'No Bedrock AI advisory available. (Live AWS Bedrock model unconfigured or unauthorized)'
         )}
       </div>
 

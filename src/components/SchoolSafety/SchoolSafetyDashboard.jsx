@@ -99,26 +99,7 @@ function getStatusCssClass(status) {
   }
 }
 
-/**
- * Default sample time series for Phase 3 fallback estimation
- * when no live series is yet injected by Phase 4.
- */
-const DEFAULT_FALLBACK_HOURLY_SERIES = [
-  { time: '07:30', pm25: 115 },
-  { time: '08:00', pm25: 98 },
-  { time: '08:30', pm25: 84 },
-  { time: '09:00', pm25: 76 },
-  { time: '09:30', pm25: 72 },
-  { time: '10:00', pm25: 68 },
-  { time: '10:30', pm25: 58 },
-  { time: '11:00', pm25: 52 },
-  { time: '11:30', pm25: 54 },
-  { time: '12:00', pm25: 62 },
-  { time: '12:30', pm25: 78 },
-  { time: '13:00', pm25: 92 },
-  { time: '13:30', pm25: 110 },
-  { time: '14:00', pm25: 125 },
-];
+
 
 export default function SchoolSafetyDashboard({
   schools = schoolsDirectory.educationalInstitutions,
@@ -189,56 +170,54 @@ export default function SchoolSafetyDashboard({
   };
 
   // --------------------------------------------------------------------------
-  // Phase 3 Deterministic Fallback Pipeline
-  // (Uses schoolSafetyHelpers to compute complete metrics if props are omitted)
+  // Default Pipeline (Returns explicit uninitialized state when props are omitted)
   // --------------------------------------------------------------------------
   const fallbackEstimate = useMemo(() => {
-    const simulatedNearbyStations = [
-      {
-        id: 'st_primary',
-        name: selectedSchool.nearestStation || 'Primary CAAQMS Node',
-        distanceKm: selectedSchool.stationDistanceKm || 1.8,
-        pm25: 78.0,
-      },
-      {
-        id: 'st_secondary',
-        name: 'Secondary Urban Node',
-        distanceKm: (selectedSchool.stationDistanceKm || 1.8) + 1.6,
-        pm25: 72.0,
-      },
-      {
-        id: 'st_tertiary',
-        name: 'Regional Background Station',
-        distanceKm: (selectedSchool.stationDistanceKm || 1.8) + 3.1,
-        pm25: 64.0,
-      },
-    ];
-    return calculateSchoolIdw(simulatedNearbyStations);
-  }, [selectedSchool]);
+    return {
+      pm25: null,
+      stationCount: 0,
+      stationsUsed: [],
+      confidence: 'INSUFFICIENT',
+      isEstimate: true,
+      disclaimer: 'Awaiting regulatory monitoring telemetry before computing spatial campus estimate.',
+    };
+  }, []);
 
   const effectiveEstimate = schoolEstimate ?? fallbackEstimate;
 
   const fallbackActivityResults = useMemo(() => {
-    return evaluateSchoolActivityWindows(
-      DEFAULT_FALLBACK_HOURLY_SERIES,
-      DEFAULT_SCHOOL_ACTIVITIES
-    );
+    return [];
   }, []);
 
   const effectiveActivityResults = activityResults ?? fallbackActivityResults;
 
   const fallbackOverallVerdict = useMemo(() => {
-    return calculateOverallSchoolVerdict(effectiveActivityResults);
-  }, [effectiveActivityResults]);
+    return {
+      verdict: 'INSUFFICIENT_DATA',
+      severity: 0,
+      severityLabel: 'UNKNOWN',
+      summary: 'Insufficient nearby monitoring data to establish campus operational status.',
+      maxPm25: null,
+      minPm25: null,
+      activityResults: [],
+      isEstimate: true,
+    };
+  }, []);
 
   const effectiveOverallVerdict = overallVerdict ?? fallbackOverallVerdict;
 
   const fallbackBestWindow = useMemo(() => {
-    const hours = selectedSchool.schoolHours ? selectedSchool.schoolHours.split('-') : ['07:30', '14:00'];
-    const start = hours[0]?.trim() || '07:30';
-    const end = hours[1]?.trim() || '14:00';
-    return findBestOutdoorWindow(DEFAULT_FALLBACK_HOURLY_SERIES, start, end, 30, 15);
-  }, [selectedSchool]);
+    return {
+      found: false,
+      startTime: null,
+      endTime: null,
+      window: null,
+      averagePm25: null,
+      confidence: 'INSUFFICIENT',
+      isEstimate: true,
+      reason: 'No continuous hourly observations available to determine optimal outdoor window.',
+    };
+  }, []);
 
   const effectiveBestWindow = bestOutdoorWindow ?? fallbackBestWindow;
 

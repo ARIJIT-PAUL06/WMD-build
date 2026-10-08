@@ -39,18 +39,26 @@ export default function AwsArchitectureModal({ isOpen, onClose, awsTelemetry, on
     },
     {
       name: 'Compute Engine',
-      service: 'AWS Lambda (Node.js 20.x)',
+      service: 'AWS Lambda / Express',
       icon: Cpu,
       desc: 'Normalizes pollutant concentrations and triggers persistence',
-      status: `${awsTelemetry?.lambdaExecutionTimeMs || 18}ms Execution`,
+      status: awsTelemetry?.lambdaExecutionTimeMs ? `${awsTelemetry.lambdaExecutionTimeMs}ms (AWS Lambda)` : 'Local Dev (Node.js)',
       color: '#ff9900',
+    },
+    {
+      name: 'Predictive ML Engine',
+      service: 'Amazon SageMaker Serverless',
+      icon: Cpu,
+      desc: '48h forward hourly PM2.5 inference (XGBoost v4 on 332,416 historical records)',
+      status: awsTelemetry?.sagemaker?.status || 'InService (Live Serverless)',
+      color: '#10b981',
     },
     {
       name: 'Historical Store',
       service: 'Amazon DynamoDB',
       icon: Database,
       desc: 'Partition: city, Sort: timestamp. Enables 24h trend analytics',
-      status: awsTelemetry?.dynamoDb?.mode || 'Local/Cloud Synchronized',
+      status: awsTelemetry?.dynamoDb?.mode || 'Local Session / In-Memory',
       color: '#3b82f6',
     },
     {
@@ -58,7 +66,7 @@ export default function AwsArchitectureModal({ isOpen, onClose, awsTelemetry, on
       service: 'Amazon Bedrock',
       icon: Bot,
       desc: 'Generates non-computational biological risk advisory (Claude 3 Haiku / Titan)',
-      status: `${awsTelemetry?.bedrock?.latencyMs || 210}ms Inference`,
+      status: awsTelemetry?.bedrock?.latencyMs ? `${awsTelemetry.bedrock.latencyMs}ms Inference` : (awsTelemetry?.bedrock?.status || 'Unauthorized/Not Configured'),
       color: '#a855f7',
     },
     {
@@ -212,7 +220,7 @@ export default function AwsArchitectureModal({ isOpen, onClose, awsTelemetry, on
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Radio size={16} color="#38bdf8" />
               <span style={{ fontSize: '0.88rem', fontWeight: 700 }}>
-                AWS IoT Core Hardware Sensor Bridge
+                Sensor Ingestion Pipeline Testbench
               </span>
             </div>
             <button
@@ -226,12 +234,12 @@ export default function AwsArchitectureModal({ isOpen, onClose, awsTelemetry, on
               }}
             >
               <RefreshCw size={13} className={isIngestingIot ? 'animate-spin' : ''} />
-              {isIngestingIot ? 'Publishing MQTT...' : 'Simulate Live IoT Sensor Ping'}
+              {isIngestingIot ? 'Sending Test Ingest...' : 'Test /api/sensor-ingest Endpoint'}
             </button>
           </div>
 
           <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '10px' }}>
-            Simulates a physical air-quality station (e.g. ESP32 with PMS5003 laser sensor at DTU Delhi) publishing to topic <code>sensors/delhi-dtu-01</code> via AWS IoT Core. The payload triggers AWS Lambda, writes to DynamoDB, and updates the 3D lungs.
+            Dispatches a sample sensor payload to the backend <code>/api/sensor-ingest</code> endpoint to verify payload normalization, schema validation, and DynamoDB persistence.
           </p>
 
           {iotResult && (

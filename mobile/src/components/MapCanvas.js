@@ -31,15 +31,11 @@ export const INDIA_REGION_PRESETS = [
 
 export function getPollutantValue(station, pollutant = 'aqi') {
   if (!station) return 0;
-  switch (pollutant) {
-    case 'pm25': return station.pm25 ?? Math.round((station.aqi || 100) * 0.6);
-    case 'pm10': return station.pm10 ?? Math.round((station.aqi || 100) * 1.15);
-    case 'no2':  return station.no2 ?? 24;
-    case 'so2':  return station.so2 ?? 10;
-    case 'co':   return station.co ?? 0.8;
-    case 'o3':   return station.o3 ?? 32;
-    default:     return station.aqi ?? 100;
+  if (pollutant === 'aqi') return station.aqi ?? 0;
+  if (station[pollutant] !== undefined && station[pollutant] !== null) {
+    return station[pollutant];
   }
+  return 0;
 }
 
 export function getPollutantMeta(val, pollutant = 'aqi') {
@@ -926,16 +922,17 @@ export default function MapCanvas({
           const inspectedObj = {
             ...nearest,
             id: `pinpoint-${Math.round(clickLat * 100)}-${Math.round(clickLon * 100)}`,
-            name: `${nearest.name} (Micro-Zone)`,
+            name: `${nearest.name} (Spatial Interpolation)`,
             lat: clickLat,
             lon: clickLon,
-            aqi: currentPollutant === 'aqi' ? Math.round(activeVal) : (nearest.aqi || 100),
-            pm25: currentPollutant === 'pm25' ? activeVal : Math.round((getPollutantValue(nearest, 'pm25') * ratio) * 10) / 10,
-            pm10: currentPollutant === 'pm10' ? activeVal : Math.round((getPollutantValue(nearest, 'pm10') * ratio) * 10) / 10,
-            no2: currentPollutant === 'no2' ? activeVal : Math.round(getPollutantValue(nearest, 'no2') * ratio),
-            so2: currentPollutant === 'so2' ? activeVal : Math.round(getPollutantValue(nearest, 'so2') * ratio),
-            co: currentPollutant === 'co' ? activeVal : Math.round((getPollutantValue(nearest, 'co') * ratio) * 10) / 10,
-            o3: currentPollutant === 'o3' ? activeVal : Math.round(getPollutantValue(nearest, 'o3') * ratio),
+            isInterpolated: true,
+            aqi: currentPollutant === 'aqi' ? Math.round(activeVal) : (nearest.aqi || 0),
+            pm25: currentPollutant === 'pm25' ? activeVal : (nearest.pm25 ?? 0),
+            pm10: currentPollutant === 'pm10' ? activeVal : (nearest.pm10 ?? 0),
+            no2: currentPollutant === 'no2' ? activeVal : (nearest.no2 ?? 0),
+            so2: currentPollutant === 'so2' ? activeVal : (nearest.so2 ?? 0),
+            co: currentPollutant === 'co' ? activeVal : (nearest.co ?? 0),
+            o3: currentPollutant === 'o3' ? activeVal : (nearest.o3 ?? 0),
           };
 
           if (onSelectStation) {

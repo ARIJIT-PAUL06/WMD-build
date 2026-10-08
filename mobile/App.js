@@ -23,10 +23,15 @@ import BottomDialogBox from './src/components/BottomDialogBox';
 import BottomNavBar from './src/components/BottomNavBar';
 import indiaStations from './src/data/indiaStations.json';
 
+const initialStations = indiaStations.map(s => ({
+  ...s,
+  source: s.source || 'Offline National Baseline Registry'
+}));
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('map');
-  const [stations, setStations] = useState(indiaStations);
-  const [selectedStation, setSelectedStation] = useState(indiaStations[0]);
+  const [stations, setStations] = useState(initialStations);
+  const [selectedStation, setSelectedStation] = useState(initialStations[0]);
   const [isDrawerExpanded, setIsDrawerExpanded] = useState(false);
 
   // Map Filter & Layer States

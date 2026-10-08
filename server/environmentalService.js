@@ -51,12 +51,14 @@ export class EnvironmentalDataProvider {
       const current = data.current || {};
 
       // Determine US AQI or calculate from PM2.5
+      const pm25 = current.pm2_5 !== undefined && current.pm2_5 !== null ? Number(current.pm2_5) : null;
+      const pm10 = current.pm10 !== undefined && current.pm10 !== null ? Number(current.pm10) : null;
       let aqi = current.us_aqi;
-      const pm25 = current.pm2_5 ?? 45;
-      const pm10 = current.pm10 ?? 75;
 
-      if (!aqi || aqi === 0) {
+      if ((!aqi || aqi === 0) && pm25 !== null) {
         aqi = this.calculateAqiFromPm25(pm25);
+      } else if (!aqi && pm25 === null) {
+        throw new Error('Incomplete telemetry: missing AQI and PM2.5');
       }
 
       const statusInfo = this.categorizeAqi(aqi);
@@ -70,18 +72,18 @@ export class EnvironmentalDataProvider {
         healthLevel: statusInfo.level,
         dominantPollutant: this.determineDominantPollutant(current),
         pollutants: {
-          pm25: Math.round(pm25 * 10) / 10,
-          pm10: Math.round(pm10 * 10) / 10,
-          no2: Math.round((current.nitrogen_dioxide ?? 25) * 10) / 10,
-          so2: Math.round((current.sulphur_dioxide ?? 10) * 10) / 10,
-          o3: Math.round((current.ozone ?? 30) * 10) / 10,
-          co: Math.round((current.carbon_monoxide ? (current.carbon_monoxide > 20 ? current.carbon_monoxide / 1000 : current.carbon_monoxide) : 0.8) * 10) / 10,
-          dust: Math.round((current.dust ?? 15) * 10) / 10,
+          pm25: pm25 !== null ? Math.round(pm25 * 10) / 10 : null,
+          pm10: pm10 !== null ? Math.round(pm10 * 10) / 10 : null,
+          no2: current.nitrogen_dioxide != null ? Math.round(Number(current.nitrogen_dioxide) * 10) / 10 : null,
+          so2: current.sulphur_dioxide != null ? Math.round(Number(current.sulphur_dioxide) * 10) / 10 : null,
+          o3: current.ozone != null ? Math.round(Number(current.ozone) * 10) / 10 : null,
+          co: current.carbon_monoxide != null ? Math.round((current.carbon_monoxide > 20 ? current.carbon_monoxide / 1000 : current.carbon_monoxide) * 10) / 10 : null,
+          dust: current.dust != null ? Math.round(Number(current.dust) * 10) / 10 : null,
         },
         weather: {
-          temp: 29, // Default comfortable ambient
-          humidity: 58,
-          uvIndex: current.uv_index ?? 4,
+          temp: current.temperature_2m ?? null,
+          humidity: current.relative_humidity_2m ?? null,
+          uvIndex: current.uv_index ?? null,
         },
         source: 'Live Open-Meteo & CPCB Sensor Network',
       };

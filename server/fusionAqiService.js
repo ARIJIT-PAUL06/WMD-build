@@ -166,8 +166,8 @@ export async function getDelhiHeatmapData(userLat = 28.7495, userLon = 77.1171) 
 
     const stations = DELHI_STATION_COORDS.map((meta, index) => {
       const live = dataList[index]?.current || {};
-      const rawPm25 = Number(live.pm2_5) || 45;
-      const rawPm10 = Number(live.pm10) || 80;
+      const rawPm25 = live.pm2_5 !== undefined && live.pm2_5 !== null ? Number(live.pm2_5) : (meta.pm25 ?? 0);
+      const rawPm10 = live.pm10 !== undefined && live.pm10 !== null ? Number(live.pm10) : (meta.pm10 ?? 0);
       const computedAqi = calculateUncappedAqiFromPm25(rawPm25);
 
       return {
@@ -175,10 +175,10 @@ export async function getDelhiHeatmapData(userLat = 28.7495, userLon = 77.1171) 
         aqi: computedAqi,
         pm25: Math.round(rawPm25 * 10) / 10,
         pm10: Math.round(rawPm10 * 10) / 10,
-        no2: Math.round((Number(live.nitrogen_dioxide) || 25) * 10) / 10,
-        so2: Math.round((Number(live.sulphur_dioxide) || 10) * 10) / 10,
-        co: Math.round((Number(live.carbon_monoxide) ? (Number(live.carbon_monoxide) > 20 ? live.carbon_monoxide / 1000 : live.carbon_monoxide) : 0.8) * 10) / 10,
-        o3: Math.round((Number(live.ozone) || 30) * 10) / 10,
+        no2: live.nitrogen_dioxide !== undefined && live.nitrogen_dioxide !== null ? Math.round(Number(live.nitrogen_dioxide) * 10) / 10 : (meta.no2 ?? null),
+        so2: live.sulphur_dioxide !== undefined && live.sulphur_dioxide !== null ? Math.round(Number(live.sulphur_dioxide) * 10) / 10 : (meta.so2 ?? null),
+        co: live.carbon_monoxide !== undefined && live.carbon_monoxide !== null ? Math.round((Number(live.carbon_monoxide) > 20 ? Number(live.carbon_monoxide) / 1000 : Number(live.carbon_monoxide)) * 10) / 10 : (meta.co ?? null),
+        o3: live.ozone !== undefined && live.ozone !== null ? Math.round(Number(live.ozone) * 10) / 10 : (meta.o3 ?? null),
         source: 'Live Open-Meteo (CAMS / Copernicus Model)',
         updatedAt: live.time || new Date().toISOString(),
       };
@@ -664,8 +664,8 @@ export async function getUniversalHeatmapData(lat = 28.7495, lon = 77.1171, city
 
     const liveStations = targetStations.map((meta, index) => {
       const live = dataList[index]?.current || {};
-      const rawPm25 = Number(live.pm2_5) || 35;
-      const rawPm10 = Number(live.pm10) || 65;
+      const rawPm25 = live.pm2_5 !== undefined && live.pm2_5 !== null ? Number(live.pm2_5) : (meta.pm25 ?? 0);
+      const rawPm10 = live.pm10 !== undefined && live.pm10 !== null ? Number(live.pm10) : (meta.pm10 ?? 0);
       const computedAqi = calculateUncappedAqiFromPm25(rawPm25);
 
       return {
@@ -673,10 +673,10 @@ export async function getUniversalHeatmapData(lat = 28.7495, lon = 77.1171, city
         aqi: computedAqi,
         pm25: Math.round(rawPm25 * 10) / 10,
         pm10: Math.round(rawPm10 * 10) / 10,
-        no2: Math.round((Number(live.nitrogen_dioxide) || 22) * 10) / 10,
-        so2: Math.round((Number(live.sulphur_dioxide) || 8) * 10) / 10,
-        co: Math.round((Number(live.carbon_monoxide) ? (Number(live.carbon_monoxide) > 20 ? live.carbon_monoxide / 1000 : live.carbon_monoxide) : 0.7) * 10) / 10,
-        o3: Math.round((Number(live.ozone) || 28) * 10) / 10,
+        no2: live.nitrogen_dioxide !== undefined && live.nitrogen_dioxide !== null ? Math.round(Number(live.nitrogen_dioxide) * 10) / 10 : (meta.no2 ?? null),
+        so2: live.sulphur_dioxide !== undefined && live.sulphur_dioxide !== null ? Math.round(Number(live.sulphur_dioxide) * 10) / 10 : (meta.so2 ?? null),
+        co: live.carbon_monoxide !== undefined && live.carbon_monoxide !== null ? Math.round((Number(live.carbon_monoxide) > 20 ? Number(live.carbon_monoxide) / 1000 : Number(live.carbon_monoxide)) * 10) / 10 : (meta.co ?? null),
+        o3: live.ozone !== undefined && live.ozone !== null ? Math.round(Number(live.ozone) * 10) / 10 : (meta.o3 ?? null),
         source: 'Live Open-Meteo High-Resolution Grid',
         updatedAt: live.time || new Date().toISOString(),
       };
@@ -1015,10 +1015,10 @@ export async function getIndiaNationalHeatmapData(userLat = null, userLon = null
         aqi: computedAqi,
         pm25: Math.round(rawPm25 * 10) / 10,
         pm10: Math.round(rawPm10 * 10) / 10,
-        no2: Math.round((Number(live.nitrogen_dioxide) || 24) * 10) / 10,
-        so2: Math.round((Number(live.sulphur_dioxide) || 10) * 10) / 10,
-        co: Math.round((Number(live.carbon_monoxide) ? (Number(live.carbon_monoxide) > 20 ? live.carbon_monoxide / 1000 : live.carbon_monoxide) : 0.8) * 10) / 10,
-        o3: Math.round((Number(live.ozone) || 30) * 10) / 10,
+        no2: live.nitrogen_dioxide !== undefined && live.nitrogen_dioxide !== null ? Math.round(Number(live.nitrogen_dioxide) * 10) / 10 : (meta.no2 ?? null),
+        so2: live.sulphur_dioxide !== undefined && live.sulphur_dioxide !== null ? Math.round(Number(live.sulphur_dioxide) * 10) / 10 : (meta.so2 ?? null),
+        co: live.carbon_monoxide !== undefined && live.carbon_monoxide !== null ? Math.round((Number(live.carbon_monoxide) > 20 ? Number(live.carbon_monoxide) / 1000 : Number(live.carbon_monoxide)) * 10) / 10 : (meta.co ?? null),
+        o3: live.ozone !== undefined && live.ozone !== null ? Math.round(Number(live.ozone) * 10) / 10 : (meta.o3 ?? null),
         source: 'Live Open-Meteo High-Res Grid',
         updatedAt: live.time || new Date().toISOString(),
       };
