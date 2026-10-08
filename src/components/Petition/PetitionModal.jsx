@@ -893,7 +893,7 @@ export default function PetitionModal({
                   >
                     <Cpu size={15} />
                   </div>
-                    <div>
+                  <div>
                     <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Step 1b: AWS SageMaker Grid Model
                     </span>

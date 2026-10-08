@@ -7,7 +7,8 @@
   background: radial-gradient(ellipse at 50% 0%, #070a12 0%, #070a12 25%, rgba(15, 23, 42, 0.95) 55%, rgba(6, 10, 18, 0.99) 80%, #030712 100%);
   padding: 6rem 1.5rem 6.5rem;
   overflow: hidden;
-  border-top: none; /* Seamless borderless transition from map section */
+  border-top: none;
+  /* Seamless borderless transition from map section */
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -30,7 +31,7 @@
 .cargo-ambient-grid {
   position: absolute;
   inset: 0;
-  background-image: 
+  background-image:
     radial-gradient(circle at 15% 25%, rgba(239, 68, 68, 0.045) 0%, transparent 40%),
     radial-gradient(circle at 85% 65%, rgba(6, 182, 212, 0.055) 0%, transparent 45%),
     linear-gradient(rgba(255, 255, 255, 0.038) 1px, transparent 1px),
@@ -81,8 +82,17 @@
 }
 
 @keyframes pulse-dot-anim {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.3; transform: scale(1.4); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.3;
+    transform: scale(1.4);
+  }
 }
 
 .cargo-title {
@@ -244,15 +254,13 @@
   top: 13.5%;
   bottom: 48.3%;
   width: 2px;
-  background: linear-gradient(
-    180deg,
-    rgba(56, 189, 248, 0) 0%,
-    rgba(56, 189, 248, 0.4) 15%,
-    rgba(6, 182, 212, 0.95) 50%,
-    rgba(239, 68, 68, 0.9) 85%,
-    rgba(239, 68, 68, 0) 100%
-  );
-  box-shadow: 
+  background: linear-gradient(180deg,
+      rgba(56, 189, 248, 0) 0%,
+      rgba(56, 189, 248, 0.4) 15%,
+      rgba(6, 182, 212, 0.95) 50%,
+      rgba(239, 68, 68, 0.9) 85%,
+      rgba(239, 68, 68, 0) 100%);
+  box-shadow:
     0 0 12px rgba(6, 182, 212, 0.9),
     0 0 25px rgba(6, 182, 212, 0.5),
     -3px 0 15px rgba(6, 182, 212, 0.35);
@@ -279,20 +287,25 @@
     left: 34.3%;
     opacity: 0;
   }
+
   8% {
     opacity: 1;
   }
+
   50% {
     left: 94.5%;
     opacity: 1;
   }
+
   54% {
     opacity: 0.8;
   }
+
   92% {
     left: 34.3%;
     opacity: 1;
   }
+
   100% {
     left: 34.3%;
     opacity: 0;
@@ -322,8 +335,13 @@
 }
 
 @keyframes engine-idle-rumble {
-  0% { transform: translateY(0px); }
-  100% { transform: translateY(-0.7px); }
+  0% {
+    transform: translateY(0px);
+  }
+
+  100% {
+    transform: translateY(-0.7px);
+  }
 }
 
 /* Base Truck High-Res Transparent PNG */
@@ -374,16 +392,14 @@
   left: 1%;
   right: 1%;
   height: 2px;
-  background: linear-gradient(
-    90deg, 
-    transparent 0%, 
-    rgba(56, 189, 248, 0.25) 12%, 
-    rgba(56, 189, 248, 0.65) 50%, 
-    rgba(56, 189, 248, 0.25) 88%, 
-    transparent 100%
-  );
-  box-shadow: 
-    0 0 10px rgba(56, 189, 248, 0.4), 
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(56, 189, 248, 0.25) 12%,
+      rgba(56, 189, 248, 0.65) 50%,
+      rgba(56, 189, 248, 0.25) 88%,
+      transparent 100%);
+  box-shadow:
+    0 0 10px rgba(56, 189, 248, 0.4),
     0 0 20px rgba(6, 182, 212, 0.25);
   pointer-events: none;
   z-index: 3;
@@ -439,7 +455,7 @@
   background: var(--cont-bg, #1e293b);
   border: 1px solid var(--cont-border, rgba(255, 255, 255, 0.25));
   /* Realistic drop shadow onto flatbed deck + neon ambient aura */
-  box-shadow: 
+  box-shadow:
     0 10px 22px rgba(0, 0, 0, 0.95),
     0 3px 6px rgba(0, 0, 0, 0.95),
     0 -3px 18px var(--cont-glow, rgba(0, 0, 0, 0.4)),
@@ -458,15 +474,13 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.12) 0px,
-    rgba(255, 255, 255, 0.12) 2px,
-    transparent 2px,
-    transparent 5px,
-    rgba(0, 0, 0, 0.18) 5px,
-    rgba(0, 0, 0, 0.18) 8px
-  );
+  background: repeating-linear-gradient(90deg,
+      rgba(255, 255, 255, 0.12) 0px,
+      rgba(255, 255, 255, 0.12) 2px,
+      transparent 2px,
+      transparent 5px,
+      rgba(0, 0, 0, 0.18) 5px,
+      rgba(0, 0, 0, 0.18) 8px);
   pointer-events: none;
   opacity: 0.45;
 }
@@ -511,11 +525,14 @@
 }
 
 @keyframes warning-strobe-flash {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(0.9);
     opacity: 0.35;
     box-shadow: 0 0 5px var(--beacon-color, #ef4444);
   }
+
   50% {
     transform: scale(1.4);
     opacity: 1;
@@ -533,7 +550,7 @@
   border-radius: 5px;
   padding: 0.32rem 0.18rem;
   text-align: center;
-  box-shadow: 
+  box-shadow:
     inset 0 1px 5px rgba(0, 0, 0, 0.95),
     0 2px 6px rgba(0, 0, 0, 0.7);
 }
@@ -947,18 +964,22 @@
   .cargo-section {
     padding: 3.5rem 1rem 3.5rem;
   }
+
   .cargo-controls-bar {
     flex-direction: column;
     align-items: stretch;
     margin-bottom: 2.5rem !important;
   }
+
   .cargo-presets-group {
     justify-content: center;
     flex-wrap: wrap;
   }
+
   .cargo-actions-group {
     justify-content: center;
   }
+
   .cargo-mobile-pollutant-bar {
     display: flex;
   }
@@ -970,14 +991,16 @@
     -webkit-overflow-scrolling: touch;
     padding: 0.5rem 0 1.25rem;
   }
+
   .truck-viewport {
     min-width: 540px;
   }
+
   .cargo-title {
     font-size: 1.65rem;
   }
+
   .cargo-description {
     font-size: 0.86rem;
   }
 }
-
