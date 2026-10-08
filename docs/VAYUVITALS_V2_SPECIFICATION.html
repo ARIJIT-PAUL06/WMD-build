@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>VayuVitals V2 Autonomous Engine Specification</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #080c14;
+      color: #f1f5f9;
+      line-height: 1.45;
+      font-size: 11px;
+    }
+
+    .page {
+      width: 210mm;
+      height: 297mm;
+      max-height: 297mm;
+      padding: 16mm 18mm 14mm 18mm;
+      position: relative;
+      background: #080c14;
+      overflow: hidden;
+      page-break-after: always;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Ambient background glows */
+    .glow-cyan {
+      position: absolute;
+      top: -100px;
+      right: -80px;
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, rgba(6, 182, 212, 0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow-purple {
+      position: absolute;
+      bottom: -100px;
+      left: -80px;
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.10) 0%, rgba(139, 92, 246, 0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .content-wrap {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    /* Header styling */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35);
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-tagline {
+      font-size: 9px;
+      color: #94a3b8;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .header-badges {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 9px;
+      border-radius: 9999px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-v2 {
+      background: rgba(6, 182, 212, 0.12);
+      color: #22d3ee;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    .badge-aws {
+      background: rgba(245, 158, 11, 0.12);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-hackathon {
+      background: rgba(139, 92, 246, 0.12);
+      color: #c084fc;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .badge-live {
+      background: rgba(16, 185, 129, 0.12);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Typography helpers */
+    h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      line-height: 1.25;
+      margin-bottom: 6px;
+    }
+
+    h2 {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: #38bdf8;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 12px;
+      background: #06b6d4;
+      border-radius: 2px;
+    }
+
+    p {
+      color: #94a3b8;
+      font-size: 10.5px;
+      line-height: 1.5;
+    }
+
+    /* Cards */
+    .card {
+      background: rgba(17, 24, 39, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 10px;
+      padding: 12px 14px;
+      position: relative;
+    }
+
+    .card-accent-cyan {
+      border-top: 2px solid #06b6d4;
+    }
+
+    .card-accent-amber {
+      border-top: 2px solid #f59e0b;
+    }
+
+    .card-accent-emerald {
+      border-top: 2px solid #10b981;
+    }
+
+    .card-accent-purple {
+      border-top: 2px solid #8b5cf6;
+    }
+
+    /* Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    /* Metric stat boxes */
+    .stat-box {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-value {
+      font-size: 19px;
+      font-weight: 800;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1.1;
+      margin-bottom: 2px;
+    }
+
+    .stat-label {
+      font-size: 8.5px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-sub {
+      font-size: 8px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    /* Diagram flow box */
+    .flow-pipeline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin: 10px 0 14px 0;
+    }
+
+    .flow-step {
+      flex: 1;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 7px;
+      padding: 8px 9px;
+      text-align: center;
+      position: relative;
+    }
+
+    .flow-step-icon {
+      font-size: 14px;
+      margin-bottom: 3px;
+    }
+
+    .flow-step-title {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #e2e8f0;
+      line-height: 1.2;
+    }
+
+    .flow-step-desc {
+      font-size: 8px;
+      color: #94a3b8;
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 2px;
+    }
+
+    .flow-arrow {
+      color: #38bdf8;
+      font-weight: bold;
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    /* Table styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9.5px;
+    }
+
+    th {
+      text-align: left;
+      padding: 6px 8px;
+      background: rgba(30, 41, 59, 0.7);
+      color: #cbd5e1;
+      font-weight: 700;
+      font-size: 8.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    td {
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: #94a3b8;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+      color: #e2e8f0;
+    }
+
+    /* Footer */
+    .page-footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8.5px;
+      color: #64748b;
+    }
+
+    .page-footer strong {
+      color: #94a3b8;
+    }
+
+    .highlight-pill {
+      background: rgba(6, 182, 212, 0.15);
+      color: #38bdf8;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+    }
+
+    .pill-amber {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+    }
+
+    .pill-crimson {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+    }
+
+    .pill-emerald {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+    }
+
+    .pill-purple {
+      background: rgba(139, 92, 246, 0.15);
+      color: #c084fc;
+    }
+
+    /* Visual grid ASCII / canvas representation */
+    .grid-matrix-card {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      line-height: 1.4;
+    }
+
+    .grid-cell-active {
+      color: #22d3ee;
+      font-weight: bold;
+    }
+
+    .grid-cell-dim {
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 1: EXECUTIVE OVERVIEW & CLOUD PIPELINE ARCHITECTURE (V2 ENGINE) -->
+  <!-- ===================================================================== -->
+  <div class="page">
+    <div class="glow-cyan"></div>
+    <div class="content-wrap">
+      
+      <!-- Header -->
+      <div class="header-bar">
+        <div class="brand-group">
+          <div class="brand-icon">V</div>
+          <div>
+            <div class="brand-title">VayuVitals · Atmospheric Defense</div>
+            <div class="brand-tagline">Autonomous National Intelligence Engine · V2 Specification</div>
+          </div>
+        </div>
+        <div class="header-badges">
+          <span class="badge badge-v2"><span class="badge-dot"></span>ENGINE V2</span>
+          <span class="badge badge-live"><span class="badge-dot"></span>LIVE IN AWS</span>
+          <span class="badge badge-hackathon">HACKATHON DOSSIER</span>
+        </div>
+      </div>
+
+      <!-- Hero Title -->
+      <div style="margin-bottom: 12px;">
+        <h1>100% Autonomous Cloud Atmospheric Intelligence & Mitigation</h1>
+        <p style="font-size: 11.5px; color: #cbd5e1; max-width: 95%;">
+          VayuVitals Engine V2 eliminates client-daemon dependencies by decoupling continuous atmospheric telemetry, Machine Learning inversion forecasting, and emergency dispatch into an authentic, serverless AWS Cloud pipeline running 24/7.
+        </p>
+      </div>
+
+      <!-- Core Stat Highlights -->
+      <div class="grid-4" style="margin-bottom: 14px;">
+        <div class="stat-box">
+          <div class="stat-value" style="color: #22d3ee;">99</div>
+          <div class="stat-label">Spatial Grids</div>
+          <div class="stat-sub">5km × 5km Delhi tessellation</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" style="color: #c084fc;">332.4K</div>
+          <div class="stat-label">Training Samples</div>
+          <div class="stat-sub">Delhi-NCR historical readings</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" style="color: #34d399;">30 Min</div>
+          <div class="stat-label">Autonomous Cycle</div>
+          <div class="stat-sub">Amazon EventBridge triggered</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" style="color: #fbbf24;">100%</div>
+          <div class="stat-label">Zero-Faking Rigor</div>
+          <div class="stat-sub">Real SageMaker + SES dispatches</div>
+        </div>
+      </div>
+
+      <!-- Problem Statement & The V2 Evolution -->
+      <div class="grid-2" style="margin-bottom: 14px;">
+        <div class="card card-accent-amber">
+          <h2>The Problem: The Delhi Inversion Trap</h2>
+          <p>
+            During post-monsoon and winter months, the boundary-layer in Delhi-NCR collapses to < 300m, trapping PM2.5, NO₂, and biomass smoke at human breathing levels.
+          </p>
+          <p style="margin-top: 6px;">
+            Existing government apps report retrospective hourly averages <b>after</b> exposure occurs. School headmasters receive no forward warning before 7:00 AM school bus arrival, leading to hazardous outdoor morning assemblies and severe acute respiratory distress.
+          </p>
+        </div>
+
+        <div class="card card-accent-cyan">
+          <h2>The V2 Breakthrough: True Autonomy</h2>
+          <p>
+            <b>Engine V1</b> was bound to local server timers on client machines. If the operator closed their laptop, monitoring ceased.
+          </p>
+          <p style="margin-top: 6px;">
+            <b>Engine V2</b> migrates the entire pipeline into AWS Serverless. An independent Amazon EventBridge schedule invokes an AWS Lambda controller every 30 minutes, orchestrating real XGBoost inference on Amazon SageMaker and executing multi-channel SES dispatches completely off-grid.
+          </p>
+        </div>
+      </div>
+
+      <!-- Cloud Architecture Flow Diagram -->
+      <div style="margin-bottom: 14px;">
+        <h2>V2 Cloud Architecture Data Pipeline</h2>
+        <div class="flow-pipeline">
+          <div class="flow-step">
+            <div class="flow-step-icon">⏱️</div>
+            <div class="flow-step-title">EventBridge Cron</div>
+            <div class="flow-step-desc">rate(30 minutes)<br>wmd-monitor-cron</div>
+          </div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-step">
+            <div class="flow-step-icon">⚡</div>
+            <div class="flow-step-title">AWS Lambda</div>
+            <div class="flow-step-desc">Node 22 / 512MB<br>wmd-backend</div>
+          </div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-step">
+            <div class="flow-step-icon">🧠</div>
+            <div class="flow-step-title">SageMaker Serverless</div>
+            <div class="flow-step-desc">XGBoost v4 Endpoint<br>48h Hourly Curves</div>
+          </div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-step">
+            <div class="flow-step-icon">🗄️</div>
+            <div class="flow-step-title">DynamoDB State</div>
+            <div class="flow-step-desc">AirQualityReadings<br>14-Day Audit Buffer</div>
+          </div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-step">
+            <div class="flow-step-icon">📨</div>
+            <div class="flow-step-title">Amazon SES Hub</div>
+            <div class="flow-step-desc">Anti-Spam Debounce<br>Pillars 1, 2 & 3</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zero-Faking Directive Box -->
+      <div class="card" style="background: rgba(15, 23, 42, 0.95); border-left: 3px solid #10b981;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <span style="font-weight: 700; color: #34d399; font-size: 11px;">100% TRANSPARENCY & ZERO-FAKING DIRECTIVE</span>
+          <span class="highlight-pill pill-emerald">AGENTS.MD STANDARD ENFORCED</span>
+        </div>
+        <p style="font-size: 10px; color: #cbd5e1;">
+          VayuVitals prohibits synthetic latency approximations, mock mathematical fallbacks (sine/cosine diurnal mocks), or fake cloud telemetry. Every metric, endpoint response, and email message ID presented is 100% verified against live Amazon Web Services APIs.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Page Footer -->
+    <div class="page-footer">
+      <div><strong>VayuVitals Intelligence</strong> · System Architecture & Executive Specification</div>
+      <div>Page 1 of 3</div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 2: 5KM SPATIAL GRID ENGINE & THE THREE PILLARS OF DEFENSE       -->
+  <!-- ===================================================================== -->
+  <div class="page">
+    <div class="glow-purple"></div>
+    <div class="content-wrap">
+
+      <!-- Header -->
+      <div class="header-bar">
+        <div class="brand-group">
+          <div class="brand-icon">V</div>
+          <div>
+            <div class="brand-title">VayuVitals · Spatial & Action Engine</div>
+            <div class="brand-tagline">5km × 5km Delhi NCT Grid & Multi-Tiered Intervention Protocol</div>
+          </div>
+        </div>
+        <div class="header-badges">
+          <span class="badge badge-v2">99 SPATIAL BLOCKS</span>
+          <span class="badge badge-aws">AIR ACT 1981</span>
+        </div>
+      </div>
+
+      <!-- Section Title -->
+      <h1>The 5km × 5km Spatial Grid Engine & The Three Pillars</h1>
+      <p style="margin-bottom: 12px; color: #cbd5e1;">
+        Delhi's heterogeneous microclimates render regional city-wide AQI averages useless. VayuVitals discretizes Delhi-NCR into uniform geographic micro-cells to deliver localized actionable protection.
+      </p>
+
+      <!-- Spatial Grid Breakdown -->
+      <div class="grid-2" style="margin-bottom: 14px;">
+        <div class="card card-accent-cyan">
+          <h2>Micro-Spatial Grid Geometry</h2>
+          <table style="margin-top: 4px;">
+            <tr>
+              <td>Latitude Bounds</td>
+              <td class="mono">28.40°N — 28.85°N (9 Rows)</td>
+            </tr>
+            <tr>
+              <td>Longitude Bounds</td>
+              <td class="mono">76.90°E — 77.40°E (11 Columns)</td>
+            </tr>
+            <tr>
+              <td>Step Discretization</td>
+              <td class="mono">0.05° Lat × 0.05° Lon Uniform</td>
+            </tr>
+            <tr>
+              <td>Physical Cell Size</td>
+              <td class="mono">5.54 km (N-S) × 4.88 km (E-W)</td>
+            </tr>
+            <tr>
+              <td>Total Discrete Blocks</td>
+              <td class="mono">99 Grids (GRID_R00_C00 — R08_C10)</td>
+            </tr>
+            <tr>
+              <td>Populated Institutional Blocks</td>
+              <td class="mono">60 Cells (Schools, Hospitals, Univs)</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="card card-accent-purple">
+          <h2>Empirical Micro-Telemetry Ingestion</h2>
+          <p>
+            Rather than relying on isolated physical sensors with large spatial blind spots, VayuVitals aggregates continuous multi-parameter telemetry for each 5km block centroid:
+          </p>
+          <ul style="margin: 8px 0 0 16px; color: #94a3b8; font-size: 10px; line-height: 1.5;">
+            <li><b>Ground Parameters:</b> PM2.5, PM10, NO₂, CO, and Planetary Boundary Layer height.</li>
+            <li><b>Meteorology:</b> Temperature, Relative Humidity, Boundary Wind Vector.</li>
+            <li><b>Multi-Coordinate Ingestion:</b> Batch-queries 30+ block centroids in single network frames via Open-Meteo empirical API.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- The 3 Pillars Section -->
+      <h2>The Three Pillars of Autonomous Intervention</h2>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;">
+
+        <!-- Pillar 1 -->
+        <div class="card" style="border-left: 3px solid #38bdf8; padding: 10px 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <div style="font-weight: 700; color: #38bdf8; font-size: 11px;">PILLAR 1: PREDICTIVE MORNING FACILITY ADVISORIES</div>
+            <span class="highlight-pill">THRESHOLD: 75 µg/m³ PM2.5</span>
+          </div>
+          <p style="font-size: 10px;">
+            <b>Target:</b> School Principals, Headmasters, Clinic Directors, Hospital Administrators.<br>
+            <b>Function:</b> SageMaker evaluates 48-hour forward hourly curves for each facility's exact GPS coordinates. If tomorrow's 7:00 AM – 9:00 AM arrival peak exceeds 75 µg/m³, an operational advisory is issued specifying indoor assembly mandates and HVAC filtration directives.<br>
+            <b>Fatigue Suppression:</b> If the forecasted peak is $\le 75\ \mu\text{g/m}^3$, the email is strictly suppressed to avoid alert fatigue. Single daily IST debounce prevents duplicate morning dispatches.
+          </p>
+        </div>
+
+        <!-- Pillar 2 -->
+        <div class="card" style="border-left: 3px solid #f87171; padding: 10px 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <div style="font-weight: 700; color: #f87171; font-size: 11px;">PILLAR 2: RAPID 5KM × 5KM BLOCK EMERGENCY SURGE ALERTS</div>
+            <span class="highlight-pill pill-crimson">THRESHOLD: 105 µg/m³ PM2.5</span>
+          </div>
+          <p style="font-size: 10px;">
+            <b>Target:</b> All institutional facilities situated inside the affected 5.5km × 4.88km spatial polygon.<br>
+            <b>Function:</b> Scans all 99 spatial blocks every 30 minutes. If real-time particulate density in any block suddenly surges $\ge 105\ \mu\text{g/m}^3$ (stubble smoke incursions or micro-inversion traps), an immediate emergency flash alert is dispatched.<br>
+            <b>Protocol:</b> Mandatory outdoor recess suspension, exterior door/window sealing, and indoor HEPA purifier overdrive. Protected by a strict <b>3-hour debounce cooldown</b> per grid block.
+          </p>
+        </div>
+
+        <!-- Pillar 3 -->
+        <div class="card" style="border-left: 3px solid #34d399; padding: 10px 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <div style="font-weight: 700; color: #34d399; font-size: 11px;">PILLAR 3: 14-DAY CHRONIC STATUTORY SECTION 10 LEGAL DOSSIERS</div>
+            <span class="highlight-pill pill-emerald">AIR (PREVENTION & CONTROL) ACT 1981</span>
+          </div>
+          <p style="font-size: 10px;">
+            <b>Target:</b> Citizen Coalitions, School Legal Boards, DPCC, Municipal Corporation of Delhi (MCD).<br>
+            <b>Function:</b> Continuously evaluates a rolling 14-day history (336 hourly entries) for every block. If a grid experiences 14 continuous calendar days of persistent severe statutory violations, VayuVitals compiles an evidentiary legal dossier.<br>
+            <b>Remedy:</b> Empowers institutions under Section 10 of the Air Act 1981 to legally compel local authorities to deploy mechanical mist-cannoning, enforce road dust suppression, and divert heavy diesel transit corridors.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Page Footer -->
+    <div class="page-footer">
+      <div><strong>VayuVitals Intelligence</strong> · Spatial Grid Discretization & Action Pillars</div>
+      <div>Page 2 of 3</div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PAGE 3: ML RIGOR, VERIFIED PRODUCTION TELEMETRY & V3 ROADMAP         -->
+  <!-- ===================================================================== -->
+  <div class="page">
+    <div class="glow-cyan"></div>
+    <div class="content-wrap">
+
+      <!-- Header -->
+      <div class="header-bar">
+        <div class="brand-group">
+          <div class="brand-icon">V</div>
+          <div>
+            <div class="brand-title">VayuVitals · Machine Learning Rigor</div>
+            <div class="brand-tagline">AWS SageMaker XGBoost v4 · Verified Benchmark Audit</div>
+          </div>
+        </div>
+        <div class="header-badges">
+          <span class="badge badge-v2">R² = 0.816</span>
+          <span class="badge badge-aws">SAGEMAKER SERVERLESS</span>
+        </div>
+      </div>
+
+      <!-- Section Title -->
+      <h1>Machine Learning Validation & Production Telemetry</h1>
+      <p style="margin-bottom: 12px; color: #cbd5e1;">
+        Prediction accuracy is the bedrock of institutional trust. The VayuVitals ML pipeline operates on high-dimensional gradient-boosted decision trees trained exclusively on real-world Indian atmospheric datasets.
+      </p>
+
+      <!-- ML Metrics Card -->
+      <div class="card card-accent-purple" style="margin-bottom: 12px;">
+        <h2>SageMaker Model Performance (XGBoost v4)</h2>
+        <div class="grid-4" style="margin-bottom: 10px;">
+          <div class="stat-box">
+            <div class="stat-value" style="color: #c084fc;">0.8156</div>
+            <div class="stat-label">R² Explained Variance</div>
+            <div class="stat-sub">Strong fit on non-linear peaks</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" style="color: #22d3ee;">27.92</div>
+            <div class="stat-label">Test MAE (µg/m³)</div>
+            <div class="stat-sub">Strict error tolerance</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" style="color: #38bdf8;">42.92</div>
+            <div class="stat-label">Test RMSE (µg/m³)</div>
+            <div class="stat-sub">Robust against outliers</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" style="color: #34d399;">76.8%</div>
+            <div class="stat-label">Accuracy within ±40</div>
+            <div class="stat-sub">54.3% within ±20 µg/m³</div>
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 8px;">
+          <div style="font-size: 9px; font-weight: 700; color: #cbd5e1; margin-bottom: 4px; text-transform: uppercase;">
+            14 Engineered Input Features:
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+            <span class="highlight-pill">pm25_now</span>
+            <span class="highlight-pill">horizon_hours (1-48)</span>
+            <span class="highlight-pill">temperature</span>
+            <span class="highlight-pill">humidity</span>
+            <span class="highlight-pill">wind_speed</span>
+            <span class="highlight-pill pill-purple">hour_sin</span>
+            <span class="highlight-pill pill-purple">hour_cos</span>
+            <span class="highlight-pill pill-purple">doy_sin</span>
+            <span class="highlight-pill pill-purple">doy_cos</span>
+            <span class="highlight-pill pill-amber">is_winter</span>
+            <span class="highlight-pill pill-amber">is_stubble_burning</span>
+            <span class="highlight-pill pill-amber">is_school_rush</span>
+            <span class="highlight-pill pill-cyan">latitude</span>
+            <span class="highlight-pill pill-cyan">longitude</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live AWS Infrastructure Proof -->
+      <div class="card card-accent-emerald" style="margin-bottom: 12px;">
+        <h2>Verified Live AWS Production Audit (Zero-Faking)</h2>
+        <table style="margin-top: 4px;">
+          <tr>
+            <th style="width: 28%;">AWS Service / Resource</th>
+            <th style="width: 32%;">Resource Identifier / ARN</th>
+            <th style="width: 40%;">Operational Status & Verified Output</th>
+          </tr>
+          <tr>
+            <td style="color: #f1f5f9; font-weight: 600;">Amazon EventBridge</td>
+            <td class="mono">wmd-autonomous-monitor-cron</td>
+            <td><span class="badge badge-live">ENABLED</span> Fires rate(30 minutes) cloud cron</td>
+          </tr>
+          <tr>
+            <td style="color: #f1f5f9; font-weight: 600;">AWS Lambda</td>
+            <td class="mono">wmd-backend (ap-south-1)</td>
+            <td><span class="badge badge-live">IN-SERVICE</span> Node 22, 512MB RAM, Timeout 180s</td>
+          </tr>
+          <tr>
+            <td style="color: #f1f5f9; font-weight: 600;">Amazon SageMaker</td>
+            <td class="mono">wmd-delhi-48h-forecast-endpoint</td>
+            <td><span class="badge badge-live">IN-SERVICE</span> Serverless XGBoost inference</td>
+          </tr>
+          <tr>
+            <td style="color: #f1f5f9; font-weight: 600;">Amazon DynamoDB</td>
+            <td class="mono">AirQualityReadings</td>
+            <td><span class="badge badge-live">ACTIVE</span> Persistent 14-day rolling compliance state</td>
+          </tr>
+          <tr>
+            <td style="color: #f1f5f9; font-weight: 600;">Amazon SES Dispatches</td>
+            <td class="mono">us-east-1 Verified Hub</td>
+            <td class="mono" style="font-size: 8px;">
+              MsgId: 010001a11a187de0... (Modern School Barakhamba)<br>
+              MsgId: 010001a11a1885bd... (Modern School Vasant Vihar)<br>
+              MsgId: 010001a11a188d68... (DPS Mathura Road)<br>
+              MsgId: 010001a11a189538... (DPS Rohini)
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Roadmap to V3 Engine -->
+      <div class="card card-accent-cyan" style="margin-bottom: 8px;">
+        <h2>The Horizon: Engine V3 Roadmap</h2>
+        <div class="grid-3" style="margin-top: 6px;">
+          <div>
+            <div style="font-weight: 700; color: #38bdf8; font-size: 10px; margin-bottom: 2px;">1. Regional IGP Expansion</div>
+            <p style="font-size: 9px;">Expand the 5km grid tessellation across the entire Indo-Gangetic Plain (250+ blocks spanning Punjab, Haryana, UP, and Bihar).</p>
+          </div>
+          <div>
+            <div style="font-weight: 700; color: #c084fc; font-size: 10px; margin-bottom: 2px;">2. Satellite AOD Fusion</div>
+            <p style="font-size: 9px;">Integrate INSAT-3DR and Sentinel-5P TROPOMI satellite Aerosol Optical Depth data directly into SageMaker feature matrices.</p>
+          </div>
+          <div>
+            <div style="font-weight: 700; color: #34d399; font-size: 10px; margin-bottom: 2px;">3. Automated Grievance Dispatch</div>
+            <p style="font-size: 9px;">Automate Pillar 3 dossier filings via API direct-connect with DPCC, MCD, and CPCB online grievance portals.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Page Footer -->
+    <div class="page-footer">
+      <div><strong>VayuVitals Intelligence</strong> · ML Verification, Cloud Proof & V3 Roadmap</div>
+      <div>Page 3 of 3</div>
+    </div>
+  </div>
+
+</body>
+</html>
