@@ -16,7 +16,7 @@ const defaultSender = process.env.SES_SENDER_EMAIL || 'vayuvitals@gmail.com';
 
 let sesClient = null;
 
-const sessionToken = process.env.AWS_SESSION_TOKEN;
+const sessionToken = accessKeyId?.startsWith('ASIA') ? process.env.AWS_SESSION_TOKEN : undefined;
 
 if (accessKeyId && secretAccessKey) {
   try {

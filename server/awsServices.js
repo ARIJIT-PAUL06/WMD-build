@@ -24,10 +24,11 @@ async function initAwsClientsIfNeeded() {
       const { DynamoDBDocumentClient } = await import('@aws-sdk/lib-dynamodb');
       const { BedrockRuntimeClient } = await import('@aws-sdk/client-bedrock-runtime');
 
+      const ddbSessionToken = accessKey?.startsWith('ASIA') ? process.env.AWS_SESSION_TOKEN : undefined;
       const awsCreds = {
         accessKeyId: accessKey,
         secretAccessKey: secretKey,
-        ...(process.env.AWS_SESSION_TOKEN ? { sessionToken: process.env.AWS_SESSION_TOKEN } : {})
+        ...(ddbSessionToken ? { sessionToken: ddbSessionToken } : {})
       };
 
       const ddbClient = new DynamoDBClient({ region, credentials: awsCreds });

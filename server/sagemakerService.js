@@ -26,6 +26,8 @@ const endpointName = process.env.SAGEMAKER_ENDPOINT_NAME || 'wmd-delhi-48h-forec
 const smAccessKey = process.env.APP_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
 const smSecretKey = process.env.APP_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
 
+const smSessionToken = smAccessKey?.startsWith('ASIA') ? process.env.AWS_SESSION_TOKEN : undefined;
+
 let sagemakerClient = null;
 if (smAccessKey && smSecretKey) {
   try {
@@ -34,7 +36,7 @@ if (smAccessKey && smSecretKey) {
       credentials: {
         accessKeyId: smAccessKey,
         secretAccessKey: smSecretKey,
-        ...(process.env.AWS_SESSION_TOKEN ? { sessionToken: process.env.AWS_SESSION_TOKEN } : {})
+        ...(smSessionToken ? { sessionToken: smSessionToken } : {})
       }
     });
   } catch (err) {
