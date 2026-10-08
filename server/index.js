@@ -1,6 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import { environmentalProvider, CITIES_CONFIG } from './environmentalService.js';
 import {
   saveReadingToDynamoDB,
@@ -23,7 +29,7 @@ import {
 } from './advisoryDispatchService.js';
 import { getSesHealth, sendEmailViaSES, triggerEmailVerification } from './sesService.js';
 import { analyzeChemicalFingerprint, fetchLiveSourceAttribution } from './sourceAttributionService.js';
-import { syncAllPopulatedGrids, fetchLiveTelemetryForGrid, get14DayCompliance } from './gridTelemetryService.js';
+import { syncAllPopulatedGrids, fetchLiveTelemetryForGrid, get14DayCompliance, findGridForCoordinates } from './gridTelemetryService.js';
 import {
   startAutonomousDaemon,
   runAutonomousMonitoringCycle,
@@ -39,7 +45,34 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:8081',
+  'http://localhost:19006',
+  'https://wmd-civic.in',
+  'https://vayuvitals.in'
+];
+if (process.env.VERCEL_URL) {
+  const vercelOrigin = process.env.VERCEL_URL.startsWith('http')
+    ? process.env.VERCEL_URL
+    : `https://${process.env.VERCEL_URL}`;
+  allowedOrigins.push(vercelOrigin);
+}
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Non-browser callers (mobile app via Expo/fetch) send no origin
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
+  credentials: true
+}));
 app.use(express.json());
 
 // Logger middleware
@@ -352,12 +385,183 @@ app.post('/api/sensor-ingest', async (req, res) => {
  * ============================================================================
  */
 
+// Bounded sliding window rate limiter for petition endpoints
+const petitionRateLimits = new Map();
+const MAX_RATE_LIMIT_ENTRIES = 5000;
+
+function rateLimitPetition(maxReqs = 60, windowMs = 60000) {
+  return (req, res, next) => {
+    const ip = req.ip || req.headers['x-forwarded-for'] || 'client';
+    const now = Date.now();
+
+    // Bounded cleanup to prevent memory exhaustion
+    if (petitionRateLimits.size > MAX_RATE_LIMIT_ENTRIES) {
+      for (const [k, times] of petitionRateLimits.entries()) {
+        const fresh = times.filter(t => now - t < windowMs);
+        if (fresh.length === 0) {
+          petitionRateLimits.delete(k);
+        } else {
+          petitionRateLimits.set(k, fresh);
+        }
+      }
+      if (petitionRateLimits.size > MAX_RATE_LIMIT_ENTRIES) {
+        petitionRateLimits.clear();
+      }
+    }
+
+    const records = petitionRateLimits.get(ip) || [];
+    const valid = records.filter(t => now - t < windowMs);
+    if (valid.length >= maxReqs) {
+      return res.status(429).json({
+        success: false,
+        error: 'Too many requests on petition endpoints. Please slow down.'
+      });
+    }
+    valid.push(now);
+    petitionRateLimits.set(ip, valid);
+    next();
+  };
+}
+
+/**
+ * Ensures AI polishing did not alter, add, or strip empirical numbers or calendar dates.
+ * Enforces exact bidirectional whole-number match per P5.1.
+ */
+export function verifyNumbersPreserved(originalText, polishedText) {
+  if (!originalText || !polishedText) return false;
+  const origMatches = originalText.match(/\b\d+\b/g) || [];
+  const polishedMatches = polishedText.match(/\b\d+\b/g) || [];
+
+  const origCounts = {};
+  for (const n of origMatches) {
+    origCounts[n] = (origCounts[n] || 0) + 1;
+  }
+
+  const polishedCounts = {};
+  for (const n of polishedMatches) {
+    polishedCounts[n] = (polishedCounts[n] || 0) + 1;
+  }
+
+  // Reject if any number in original disappeared or count changed
+  for (const [num, count] of Object.entries(origCounts)) {
+    if ((polishedCounts[num] || 0) !== count) {
+      return false;
+    }
+  }
+
+  // Reject if any new number was added in polished text
+  for (const [num, count] of Object.entries(polishedCounts)) {
+    if ((origCounts[num] || 0) !== count) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export const SENDER_PLACEHOLDERS = [
+  '[YOUR NAME]',
+  '[YOUR ROLE / DESIGNATION]',
+  '[YOUR PHONE / EMAIL]'
+];
+
+export function verifyPlaceholdersPreserved(originalText, polishedText) {
+  if (!originalText || !polishedText) return false;
+  for (const placeholder of SENDER_PLACEHOLDERS) {
+    if (originalText.includes(placeholder) && !polishedText.includes(placeholder)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Step 0: Read-only authorities directory
+ */
+app.get('/api/petition/authorities', rateLimitPetition(60, 60000), (req, res) => {
+  try {
+    const pCandidates = [
+      path.join(__dirname, '../src/data/authoritiesConfig.json'),
+      path.join(process.cwd(), 'src/data/authoritiesConfig.json'),
+      path.join('/tmp', 'authoritiesConfig.json')
+    ];
+    for (const p of pCandidates) {
+      if (fs.existsSync(p)) {
+        const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
+        return res.json({ success: true, ...raw });
+      }
+    }
+    res.status(404).json({ success: false, error: 'Authorities configuration not found on server' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Step 0b: Read-only schools directory search
+ */
+app.get('/api/petition/schools', rateLimitPetition(60, 60000), (req, res) => {
+  try {
+    const q = (req.query.q || '').trim().toLowerCase();
+    const pCandidates = [
+      path.join(__dirname, '../src/data/schoolsDirectory.json'),
+      path.join(process.cwd(), 'src/data/schoolsDirectory.json'),
+      path.join('/tmp', 'schoolsDirectory.json')
+    ];
+    let schools = [];
+    for (const p of pCandidates) {
+      if (fs.existsSync(p)) {
+        const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
+        schools = raw.educationalInstitutions || [];
+        break;
+      }
+    }
+
+    // Whitelist fields per Fix 11: id, name, locality, district, lat, lon, gridId
+    // Strictly removes emails, primaryEmail, phone, and nodalOfficerEmail
+    const cleanSchools = schools.map(s => {
+      let cellId = s.gridId || null;
+      if (!cellId && s.lat != null && s.lon != null) {
+        const g = findGridForCoordinates(s.lat, s.lon);
+        cellId = g?.grid_id || g?.id || null;
+      }
+      return {
+        id: s.id,
+        name: s.name,
+        locality: s.locality || '',
+        district: s.district || '',
+        lat: s.lat,
+        lon: s.lon,
+        gridId: cellId
+      };
+    });
+
+    if (!q) {
+      return res.json({ success: true, count: cleanSchools.length, schools: cleanSchools.slice(0, 50) });
+    }
+    const filtered = cleanSchools.filter(s =>
+      (s.name && s.name.toLowerCase().includes(q)) ||
+      (s.locality && s.locality.toLowerCase().includes(q)) ||
+      (s.district && s.district.toLowerCase().includes(q))
+    );
+    res.json({ success: true, count: filtered.length, schools: filtered.slice(0, 50) });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 /**
  * Step 1: Pull empirical evidence & school-hour exceedance metrics
  */
-app.get('/api/petition/evidence', async (req, res) => {
+app.get('/api/petition/evidence', rateLimitPetition(60, 60000), async (req, res) => {
   try {
-    const { schoolName, locality, stationName, stationDistanceKm, days, threshold, basePm25 } = req.query;
+    const { schoolName, locality, stationName, stationDistanceKm, days, threshold, gridId } = req.query;
+    if (!schoolName && !stationName && !gridId) {
+      return res.status(400).json({
+        success: false,
+        error: 'schoolName or stationName parameter is required'
+      });
+    }
     const evidence = aggregateSchoolEvidence({
       schoolName,
       locality,
@@ -365,12 +569,12 @@ app.get('/api/petition/evidence', async (req, res) => {
       stationDistanceKm,
       days,
       threshold,
-      basePm25: basePm25 ? Number(basePm25) : 142
+      gridId
     });
     res.json(evidence);
   } catch (err) {
-    console.error('[API /api/petition/evidence Error]:', err);
-    res.status(500).json({ success: false, error: err.message });
+    const status = err.statusCode || 500;
+    res.status(status).json({ success: false, error: err.message });
   }
 });
 
@@ -378,15 +582,54 @@ app.get('/api/petition/evidence', async (req, res) => {
  * Step 1b: 48-Hour Machine Learning & SageMaker Air Quality Forecast
  * Provides forward predictive intelligence for morning school hours (07:00 - 13:00)
  */
-app.get('/api/petition/forecast', async (req, res) => {
+app.get('/api/petition/forecast', rateLimitPetition(60, 60000), async (req, res) => {
   try {
-    const { schoolId, schoolName, lat, lon, basePm25, threshold } = req.query;
+    const { schoolId, schoolName, lat, lon, threshold } = req.query;
+
+    let targetLat = (lat !== undefined && lat !== null && lat !== '') ? parseFloat(lat) : null;
+    let targetLon = (lon !== undefined && lon !== null && lon !== '') ? parseFloat(lon) : null;
+    let targetSchoolName = schoolName;
+
+    // If coordinates omitted, resolve schoolId or schoolName against institutional directory
+    if ((!targetLat || !targetLon) && (schoolId || schoolName)) {
+      const pCandidates = [
+        path.join(__dirname, '../src/data/schoolsDirectory.json'),
+        path.join(process.cwd(), 'src/data/schoolsDirectory.json'),
+        path.join('/tmp', 'schoolsDirectory.json')
+      ];
+      let schools = [];
+      for (const p of pCandidates) {
+        if (fs.existsSync(p)) {
+          const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
+          schools = raw.educationalInstitutions || [];
+          break;
+        }
+      }
+      const qId = (schoolId || '').toLowerCase();
+      const qName = (schoolName || '').toLowerCase();
+      const matched = schools.find(s =>
+        (s.id && s.id.toLowerCase() === qId) ||
+        (s.name && s.name.toLowerCase() === qName)
+      );
+      if (matched && matched.lat && matched.lon) {
+        targetLat = parseFloat(matched.lat);
+        targetLon = parseFloat(matched.lon);
+        targetSchoolName = matched.name;
+      }
+    }
+
+    if (!targetLat || !targetLon || isNaN(targetLat) || isNaN(targetLon)) {
+      return res.status(400).json({
+        success: false,
+        error: 'GPS coordinates (lat, lon) or a valid schoolId resolving to coordinates are required. Rohini fallback removed.'
+      });
+    }
+
     const forecast = await getSchoolAqiForecast({
-      schoolId: schoolId || 'dps_rohini',
-      schoolName: schoolName || 'Delhi Public School, Rohini',
-      lat: lat ? parseFloat(lat) : 28.7188,
-      lon: lon ? parseFloat(lon) : 77.1064,
-      basePm25: basePm25 ? parseInt(basePm25, 10) : 145,
+      schoolId: schoolId || 'school',
+      schoolName: targetSchoolName || 'School Area',
+      lat: targetLat,
+      lon: targetLon,
       threshold: threshold ? parseInt(threshold, 10) : 60
     });
     res.json(forecast);
@@ -399,9 +642,21 @@ app.get('/api/petition/forecast', async (req, res) => {
 /**
  * Step 2: Generate bilingual draft complaint from verified numbers
  */
-app.post('/api/petition/generate-draft', (req, res) => {
+app.post('/api/petition/generate-draft', rateLimitPetition(60, 60000), (req, res) => {
   try {
-    const { evidence, authority, forecast, senderName, senderRole, senderContact, selectedDemands, schoolEvidencePackage } = req.body;
+    const {
+      evidence,
+      authority,
+      forecast,
+      senderName,
+      senderRole,
+      senderContact,
+      selectedDemands,
+      schoolEvidencePackage,
+      userActionNote,
+      schoolActionNote,
+      targetType
+    } = req.body || {};
     if (!evidence || !authority) {
       return res.status(400).json({ success: false, error: 'evidence and authority objects are required' });
     }
@@ -413,19 +668,23 @@ app.post('/api/petition/generate-draft', (req, res) => {
       senderRole,
       senderContact,
       selectedDemands,
-      schoolEvidencePackage
+      schoolEvidencePackage,
+      userActionNote: userActionNote || schoolActionNote,
+      targetType: targetType || evidence?.targetType
     });
     res.json({ success: true, ...result });
   } catch (err) {
     console.error('[API /api/petition/generate-draft Error]:', err);
-    res.status(500).json({ success: false, error: err.message });
+    const status = err.statusCode || 500;
+    res.status(status).json({ success: false, error: err.message });
   }
 });
 
 /**
  * Step 2 (Optional): Tone adjustment via Bedrock (Claude 3 Haiku) or Gemini
+ * Returns 503 if no AI provider is configured; preserves all empirical data.
  */
-app.post('/api/petition/polish-draft', async (req, res) => {
+app.post('/api/petition/polish-draft', rateLimitPetition(15, 60000), async (req, res) => {
   try {
     const { draftText, tone = 'formal', language = 'en', schoolName = 'School' } = req.body;
     if (!draftText) {
@@ -451,7 +710,7 @@ Language: ${langInstruction}
 
 Strict Guardrails (DO NOT VIOLATE):
 1. Do NOT alter, fabricate, or exaggerate any dates, numbers, PM2.5 levels, or station statistics in the draft. Keep all empirical data 100% exact.
-2. Do NOT make unsupported medical diagnoses or catastrophic clinical claims (e.g. do not say "causing irreversible cancer/death"). Refer instead to "acute respiratory distress, particulate inhalation risk, and vulnerable pediatric pulmonary health".
+2. Do NOT make unsupported medical diagnoses or catastrophic clinical claims. Refer instead to "acute respiratory distress, particulate inhalation risk, and vulnerable pediatric pulmonary health".
 3. Maintain the recipient address, subject, specific demands, and sender closing intact.
 4. Output ONLY the polished letter text. No meta-commentary, no conversational filler, no markdown wrappers like \`\`\`.`;
 
@@ -483,6 +742,20 @@ Strict Guardrails (DO NOT VIOLATE):
         const respData = JSON.parse(new TextDecoder().decode(response.body));
         const polishedText = respData.content?.[0]?.text?.trim();
         if (polishedText) {
+          if (!verifyNumbersPreserved(draftText, polishedText)) {
+            return res.status(422).json({
+              success: false,
+              error: 'AI generated draft altered empirical numbers or dates. Polish rejected per AGENTS.md guardrails.',
+              mode: 'INTEGRITY_CHECK_FAILED'
+            });
+          }
+          if (!verifyPlaceholdersPreserved(draftText, polishedText)) {
+            return res.status(422).json({
+              success: false,
+              error: 'AI generated draft dropped sender placeholders. Polish rejected per AGENTS.md guardrails.',
+              mode: 'INTEGRITY_CHECK_FAILED'
+            });
+          }
           return res.json({
             success: true,
             polishedText,
@@ -517,6 +790,20 @@ Strict Guardrails (DO NOT VIOLATE):
           const gData = await gRes.json();
           const polishedText = gData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
           if (polishedText) {
+            if (!verifyNumbersPreserved(draftText, polishedText)) {
+              return res.status(422).json({
+                success: false,
+                error: 'AI generated draft altered empirical numbers or dates. Polish rejected per AGENTS.md guardrails.',
+                mode: 'INTEGRITY_CHECK_FAILED'
+              });
+            }
+            if (!verifyPlaceholdersPreserved(draftText, polishedText)) {
+              return res.status(422).json({
+                success: false,
+                error: 'AI generated draft dropped sender placeholders. Polish rejected per AGENTS.md guardrails.',
+                mode: 'INTEGRITY_CHECK_FAILED'
+              });
+            }
             return res.json({
               success: true,
               polishedText,
@@ -530,25 +817,11 @@ Strict Guardrails (DO NOT VIOLATE):
       }
     }
 
-    // Fallback: rule-based tone enhancement
-    let transformedText = draftText;
-    if (tone === 'urgent') {
-      transformedText = draftText
-        .replace(/Subject: (.*)/i, 'Subject: [CRITICAL CITIZEN HEALTH ALERT] Urgent Request for Administrative Intervention on Hazardous Morning Air at ' + schoolName)
-        .replace(/Respected Sir\/Madam,/i, 'Respected Sir/Madam,\n\n[URGENT: CHILD RESPIRATORY SAFETY ACTION REQUIRED]')
-        .replace(/महोदय\/महोदया,/i, 'महोदय/महोदया,\n\n[अति-आवश्यक: बाल स्वास्थ्य एवं श्वसन सुरक्षा आपात सूचना]');
-    } else if (tone === 'collaborative') {
-      transformedText = draftText
-        .replace(/Subject: (.*)/i, 'Subject: Joint Civic Representation & Request for Collaborative Air Quality Action at ' + schoolName)
-        .replace(/We respectfully request the competent authority/i, 'In the spirit of active civic partnership and public school welfare, we warmly urge the competent authority')
-        .replace(/अतः आपसे सविनय अनुरोध है/i, 'नागरिक सहभागिता एवं बाल कल्याण की भावना से हम सक्षम प्राधिकारी से सादर आग्रह करते हैं');
-    }
-
-    res.json({
-      success: true,
-      polishedText: transformedText,
-      mode: 'INTELLIGENT_RULE_POLISHER',
-      model: 'deterministic-rules'
+    // Per Phase 1b: Return 503 instead of fabricating text with rule-based banners
+    return res.status(503).json({
+      success: false,
+      error: 'AI polishing service is currently unavailable. No AI provider is configured or authorized.',
+      mode: 'AI_PROVIDER_UNAVAILABLE'
     });
   } catch (err) {
     console.error('[API /api/petition/polish-draft Error]:', err);
@@ -952,7 +1225,7 @@ app.use((req, res) => {
   });
 });
 
-if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
+if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME && process.env.NODE_ENV !== 'test' && !process.env.NODE_TEST_CONTEXT) {
   app.listen(PORT, () => {
     console.log(`=======================================================`);
     console.log(`🌿 AWS Environmental Hacks API Server running on port ${PORT}`);

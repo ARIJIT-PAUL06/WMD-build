@@ -429,9 +429,7 @@ describe('VayuVitals Direct Pollutant Documentary Flow', () => {
     const petitionMod = await viteServer.ssrLoadModule(
       './src/components/Petition/petitionHelpers.js'
     );
-    assert.ok(petitionMod.buildClientDraft, 'Client draft builder must exist');
-    assert.ok(petitionMod.computeClientEvidence, 'Client evidence calculator must exist');
-    assert.ok(petitionMod.computeClientForecast, 'Client forecast calculator must exist');
     assert.ok(petitionMod.categorizePm25, 'PM2.5 categorizer must exist');
+    assert.strictEqual(petitionMod.buildClientDraft, undefined, 'Client draft builder must be deleted');
   });
 });

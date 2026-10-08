@@ -1,15 +1,40 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { findGridForCoordinates } from './gridTelemetryService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-function getGrid14DayBuffer() {
+function resolveFilePath(relPath) {
+  const candidates = [
+    path.join(process.cwd(), relPath),
+    path.join(__dirname, '..', relPath),
+    path.join('/tmp', path.basename(relPath)),
+    path.join(__dirname, relPath),
+    path.join('/var/task', relPath)
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return path.join(process.cwd(), relPath);
+}
+
+let cachedGridBuffer = null;
+
+export function getGrid14DayBuffer() {
+  if (cachedGridBuffer) return cachedGridBuffer;
   try {
-    const p = path.join(__dirname, '..', 'ml/data/grid_14day_buffer.json');
-    if (fs.existsSync(p)) {
-      return JSON.parse(fs.readFileSync(p, 'utf8'));
+    const pCandidates = [
+      path.join('/tmp', 'grid_14day_buffer.json'),
+      resolveFilePath('ml/data/grid_14day_buffer.json'),
+      path.join(process.cwd(), 'ml/data/grid_14day_buffer.json')
+    ];
+    for (const p of pCandidates) {
+      if (fs.existsSync(p)) {
+        cachedGridBuffer = JSON.parse(fs.readFileSync(p, 'utf8'));
+        return cachedGridBuffer;
+      }
     }
   } catch (e) {
     // ignore
@@ -17,8 +42,59 @@ function getGrid14DayBuffer() {
   return {};
 }
 
+export function setCachedGridBuffer(buffer) {
+  cachedGridBuffer = buffer;
+}
+
+function getSchoolsDirectory() {
+  try {
+    const p = resolveFilePath('src/data/schoolsDirectory.json');
+    if (fs.existsSync(p)) {
+      const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+      return data.educationalInstitutions || [];
+    }
+  } catch (e) {
+    // ignore
+  }
+  return [];
+}
+
+function getSpatialGrids() {
+  try {
+    const p = resolveFilePath('ml/data/spatial_grids.json');
+    if (fs.existsSync(p)) {
+      const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+      return data.grids || {};
+    }
+  } catch (e) {
+    // ignore
+  }
+  return {};
+}
+
+function getKnownStations() {
+  const stations = new Set();
+  const schools = getSchoolsDirectory();
+  for (const s of schools) {
+    if (s.nearestStation) stations.add(s.nearestStation.toLowerCase());
+  }
+  const buffer = getGrid14DayBuffer();
+  for (const g of Object.values(buffer)) {
+    if (Array.isArray(g.hourlyBuffer)) {
+      for (const r of g.hourlyBuffer) {
+        if (r.stationName) stations.add(r.stationName.toLowerCase());
+        if (r.stationId) stations.add(r.stationId.toLowerCase());
+      }
+    }
+  }
+  return stations;
+}
+
 // Categorize PM2.5 in Indian National Air Quality Index (NAQI) standards
 export function categorizePm25(pm25) {
+  if (pm25 === null || pm25 === undefined || isNaN(pm25)) {
+    return { label: 'NO DATA', color: '#64748b', level: 'no-data' };
+  }
   if (pm25 <= 30) return { label: 'Good', color: '#10b981', level: 'good' };
   if (pm25 <= 60) return { label: 'Satisfactory', color: '#84cc16', level: 'satisfactory' };
   if (pm25 <= 90) return { label: 'Moderate', color: '#f59e0b', level: 'moderate' };
@@ -28,146 +104,294 @@ export function categorizePm25(pm25) {
 }
 
 /**
- * Generate or aggregate the last N days of school-hours environmental evidence
- * School hours: 07:00 - 13:00
+ * Parses timestamp string with an explicit UTC assumption if timezone offset is absent
+ */
+function parseUtcDate(isoString) {
+  if (!isoString) return null;
+  const s = String(isoString).trim();
+  const hasTz = s.endsWith('Z') || /[+-]\d{2}:?\d{2}$/.test(s);
+  const normalized = hasTz ? s : `${s}Z`;
+  const d = new Date(normalized);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Helper to extract IST hour (0-23) from timestamp
+ * Indian Standard Time (IST) is UTC + 5h30m (330 minutes)
+ */
+function getIstHour(isoString) {
+  const d = parseUtcDate(isoString);
+  if (!d) return null;
+  const totalMin = d.getUTCHours() * 60 + d.getUTCMinutes() + 330;
+  return Math.floor((totalMin % 1440) / 60);
+}
+
+/**
+ * Helper to extract IST calendar date (YYYY-MM-DD) from timestamp
+ */
+function getIstDateString(isoOrDate) {
+  const d = isoOrDate instanceof Date ? isoOrDate : parseUtcDate(isoOrDate);
+  if (!d || isNaN(d.getTime())) return '';
+  const istDate = new Date(d.getTime() + 330 * 60 * 1000);
+  return istDate.toISOString().split('T')[0];
+}
+
+/**
+ * Aggregate school-hours environmental evidence
+ * School hours: 07:00 - 13:00 IST
  * Strictly aggregates from empirical telemetry buffers without synthetic math generators.
+ * Days without readings are reported as NO_DATA (never extrapolated).
  */
 export function aggregateSchoolEvidence({
-  schoolName = 'Delhi Public School, Rohini',
-  locality = 'Rohini Sector 16, North Delhi',
-  stationName = 'DTU (Delhi Technological University)',
-  stationDistanceKm = 1.8,
+  schoolName,
+  locality,
+  stationName,
+  stationDistanceKm,
   days = 14,
-  threshold = 60, // CPCB standard for 24h PM2.5 is 60 µg/m³
-  basePm25 = 142
+  threshold = 60,
+  gridId
 }) {
+  if (!schoolName && !stationName && !gridId) {
+    const err = new Error('schoolName, stationName, or gridId parameter is required');
+    err.statusCode = 400;
+    throw err;
+  }
+
   const numDays = Math.min(Math.max(parseInt(days, 10) || 14, 5), 30);
   const thresh = Math.max(parseInt(threshold, 10) || 60, 25);
   const buffer = getGrid14DayBuffer();
+  const schools = getSchoolsDirectory();
+  const spatialGrids = getSpatialGrids();
 
-  // Find all available hourly records across grids or the matching station
-  let allReadings = [];
-  for (const grid of Object.values(buffer)) {
-    if (grid && Array.isArray(grid.hourlyBuffer)) {
-      allReadings.push(...grid.hourlyBuffer);
+  // Validate unknown targets (Return 404 instead of silent fallback)
+  if (gridId && !buffer[gridId] && !spatialGrids[gridId]) {
+    const err = new Error(`Unknown gridId target: "${gridId}". Spatial grid block not found.`);
+    err.statusCode = 404;
+    throw err;
+  }
+
+  let matchedSchool = null;
+  if (schoolName) {
+    const qLower = schoolName.toLowerCase();
+    matchedSchool = schools.find(s => s.name?.toLowerCase() === qLower || s.id?.toLowerCase() === qLower);
+    if (!matchedSchool) {
+      // Check if buffer contains readings for this school
+      let foundInBuffer = false;
+      for (const g of Object.values(buffer)) {
+        if (Array.isArray(g.hourlyBuffer) && g.hourlyBuffer.some(r =>
+          (r.schoolName && r.schoolName.toLowerCase() === qLower) ||
+          (r.schoolId && r.schoolId.toLowerCase() === qLower)
+        )) {
+          foundInBuffer = true;
+          break;
+        }
+      }
+      if (!foundInBuffer) {
+        const err = new Error(`Unknown educational institution target: "${schoolName}". School not found in directory.`);
+        err.statusCode = 404;
+        throw err;
+      }
     }
   }
 
+  if (stationName && !schoolName && !gridId) {
+    const knownStations = getKnownStations();
+    const stLower = stationName.toLowerCase();
+    const isKnown = Array.from(knownStations).some(s => s.includes(stLower) || stLower.includes(s));
+    if (!isKnown) {
+      const err = new Error(`Unknown monitoring station target: "${stationName}".`);
+      err.statusCode = 404;
+      throw err;
+    }
+  }
+
+  // Resolve grid cell from coordinates or parameters
+  let resolvedGridId = gridId || null;
+  if (!resolvedGridId && matchedSchool) {
+    if (matchedSchool.gridId) {
+      resolvedGridId = matchedSchool.gridId;
+    } else if (matchedSchool.lat != null && matchedSchool.lon != null) {
+      const g = findGridForCoordinates(matchedSchool.lat, matchedSchool.lon);
+      resolvedGridId = g?.grid_id || g?.id || null;
+    }
+  }
+
+  const resolvedSchoolName = matchedSchool?.name || schoolName || null;
+  const resolvedLocality = matchedSchool?.locality || locality || matchedSchool?.district || null;
+  const resolvedStation = matchedSchool?.nearestStation || stationName || null;
+  const resolvedDistance = (matchedSchool?.stationDistanceKm != null || stationDistanceKm != null)
+    ? parseFloat(matchedSchool?.stationDistanceKm ?? stationDistanceKm)
+    : null;
+
+  // Filter telemetry readings specifically for the target grid cell or station
+  let targetReadings = [];
+
+  if (resolvedGridId && buffer[resolvedGridId]?.hourlyBuffer) {
+    // Read buffer[resolvedGrid] only; never fall back to other grids
+    targetReadings = buffer[resolvedGridId].hourlyBuffer;
+  } else if (matchedSchool) {
+    // School's cell has no data in buffer -> honest NO_DATA without fallback
+    targetReadings = [];
+  } else if (stationName) {
+    let stationGrid = null;
+    try {
+      const p = resolveFilePath('src/data/indiaStations.json');
+      if (fs.existsSync(p)) {
+        const stations = JSON.parse(fs.readFileSync(p, 'utf8'));
+        const stMatch = stations.find(s => s.name?.toLowerCase().includes(stationName.toLowerCase()) || s.id?.toLowerCase().includes(stationName.toLowerCase()));
+        if (stMatch && stMatch.lat && stMatch.lon) {
+          const g = findGridForCoordinates(stMatch.lat, stMatch.lon);
+          stationGrid = g?.grid_id || g?.id || null;
+        }
+      }
+    } catch (e) {}
+    if (stationGrid && buffer[stationGrid]?.hourlyBuffer) {
+      targetReadings = buffer[stationGrid].hourlyBuffer;
+      resolvedGridId = stationGrid;
+    } else {
+      for (const gridObj of Object.values(buffer)) {
+        if (!gridObj || !Array.isArray(gridObj.hourlyBuffer)) continue;
+        for (const r of gridObj.hourlyBuffer) {
+          if (!r || !r.timestamp) continue;
+          const matchesStation = (
+            (r.stationName && r.stationName.toLowerCase().includes(stationName.toLowerCase())) ||
+            (r.stationId && r.stationId.toLowerCase().includes(stationName.toLowerCase()))
+          );
+          if (matchesStation) {
+            targetReadings.push(r);
+          }
+        }
+      }
+    }
+  }
+
+  const nowUtc = new Date();
+
+  // Exclude hours later than now (forecast rows) and rows lacking a source field
+  const validTargetReadings = targetReadings.filter(r => {
+    if (!r || !r.timestamp || !r.source) return false;
+    const rDate = parseUtcDate(r.timestamp);
+    return rDate && rDate <= nowUtc;
+  });
+
   const dailyLogs = [];
-  const now = new Date();
-  let peakPm25 = 0;
+  let peakPm25 = null;
   let peakDate = '';
   let exceedCount = 0;
   let sumMorningPm25 = 0;
-
-  // Typical school day disruption possibilities based on pollution levels
-  const severeDisruptions = [
-    'Morning outdoor assembly cancelled; physical education shifted indoors; recess restricted to classrooms',
-    'Outdoor sports practice suspended; primary students restricted from playgrounds',
-    'Morning sports trials postponed; student arrival supervised with anti-dust measures',
-    'Annual sports day rehearsals cancelled; indoor activity substitute enforced',
-    'Zero outdoor exposure protocol activated; all recess activities confined to homerooms'
-  ];
-
-  const moderateDisruptions = [
-    'Strenuous outdoor running drills truncated; asthmatic students exempted from morning drills',
-    'Outdoor assembly shortened to 10 minutes; sports periods held with moderate exertion limits',
-    'Pre-primary recess shifted to covered amphitheatre'
-  ];
+  let daysWithData = 0;
+  let daysMissing = 0;
 
   for (let i = numDays - 1; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
+    const d = new Date(nowUtc);
+    d.setUTCDate(d.getUTCDate() - i);
 
-    // Skip Sundays for school days
-    const dayOfWeek = d.getDay();
-    const isSchoolDay = dayOfWeek !== 0;
+    // Day of week in IST
+    const istCalendarDate = getIstDateString(d);
+    const dateParts = istCalendarDate.split('-');
+    const istDateObj = new Date(Date.UTC(parseInt(dateParts[0], 10), parseInt(dateParts[1], 10) - 1, parseInt(dateParts[2], 10)));
+    const dayOfWeek = istDateObj.getUTCDay();
+    const isToday = (i === 0);
+    const isSchoolDay = dayOfWeek !== 0; // Skip Sundays
 
-    const dateStr = d.toISOString().split('T')[0];
-    const formattedDate = d.toLocaleDateString('en-IN', {
+    const formattedDate = istDateObj.toLocaleDateString('en-IN', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
+      timeZone: 'UTC'
     });
 
-    // Extract empirical readings matching this calendar date
-    const dayReadings = allReadings.filter(r => r && r.timestamp && r.timestamp.startsWith(dateStr));
+    // Extract empirical readings matching this calendar date in IST
+    const dayReadings = validTargetReadings.filter(r => getIstDateString(r.timestamp) === istCalendarDate);
     const morningReadings = dayReadings.filter(r => {
-      try {
-        const h = new Date(r.timestamp).getHours();
-        return h >= 7 && h <= 13;
-      } catch (e) {
-        return false;
-      }
+      const h = getIstHour(r.timestamp);
+      return h !== null && h >= 7 && h <= 13;
     });
 
-    let morningAvg;
-    let dayPeak;
-    let telemetrySource = 'EMPIRICAL_BUFFER';
+    let morningAvg = null;
+    let dayPeak = null;
+    let telemetrySource = 'NO_DATA';
+    let exceeded = false;
+    let category = { label: 'NO DATA', color: '#64748b', level: 'no-data' };
 
     if (morningReadings.length > 0) {
       const pmValues = morningReadings.map(r => Number(r.pm25)).filter(v => !isNaN(v));
-      morningAvg = Math.round(pmValues.reduce((a, b) => a + b, 0) / pmValues.length);
-      dayPeak = Math.max(...dayReadings.map(r => Number(r.pm25)).filter(v => !isNaN(v)), morningAvg);
+      if (pmValues.length > 0) {
+        morningAvg = Math.round(pmValues.reduce((a, b) => a + b, 0) / pmValues.length);
+        dayPeak = Math.max(...pmValues);
+        telemetrySource = 'EMPIRICAL_BUFFER';
+        category = categorizePm25(morningAvg);
+        exceeded = morningAvg > thresh;
+        daysWithData++;
+        sumMorningPm25 += morningAvg;
+
+        // Leave today out of the count per Fix 7
+        if (!isToday && isSchoolDay && exceeded) {
+          exceedCount++;
+        }
+
+        if (peakPm25 === null || dayPeak > peakPm25) {
+          peakPm25 = dayPeak;
+          peakDate = formattedDate;
+        }
+      } else {
+        daysMissing++;
+      }
     } else if (dayReadings.length > 0) {
       const pmValues = dayReadings.map(r => Number(r.pm25)).filter(v => !isNaN(v));
-      morningAvg = Math.round(pmValues.reduce((a, b) => a + b, 0) / pmValues.length);
-      dayPeak = Math.max(...pmValues);
+      if (pmValues.length > 0) {
+        morningAvg = Math.round(pmValues.reduce((a, b) => a + b, 0) / pmValues.length);
+        dayPeak = Math.max(...pmValues);
+        telemetrySource = 'EMPIRICAL_BUFFER';
+        category = categorizePm25(morningAvg);
+        exceeded = morningAvg > thresh;
+        daysWithData++;
+        sumMorningPm25 += morningAvg;
+
+        if (!isToday && isSchoolDay && exceeded) {
+          exceedCount++;
+        }
+
+        if (peakPm25 === null || dayPeak > peakPm25) {
+          peakPm25 = dayPeak;
+          peakDate = formattedDate;
+        }
+      } else {
+        daysMissing++;
+      }
     } else {
-      // If historical buffer does not have this specific date, use station baseline honestly without trigonometric faking
-      morningAvg = Math.max(25, Math.round(Number(basePm25) || 85));
-      dayPeak = Math.round(morningAvg * 1.2);
-      telemetrySource = 'STATION_BASELINE_EXTRAPOLATION';
-    }
-
-    const category = categorizePm25(morningAvg);
-    const exceeded = morningAvg > thresh;
-
-    if (isSchoolDay && exceeded) {
-      exceedCount++;
-    }
-
-    if (morningAvg > peakPm25) {
-      peakPm25 = dayPeak;
-      peakDate = formattedDate;
-    }
-
-    sumMorningPm25 += morningAvg;
-
-    let disruption = 'Normal outdoor curriculum conducted';
-    if (morningAvg > 150) {
-      disruption = severeDisruptions[i % severeDisruptions.length];
-    } else if (morningAvg > thresh) {
-      disruption = moderateDisruptions[i % moderateDisruptions.length];
+      daysMissing++;
     }
 
     dailyLogs.push({
-      date: dateStr,
-      displayDate: formattedDate,
-      dayOfWeek: d.toLocaleDateString('en-IN', { weekday: 'short' }),
+      date: istCalendarDate,
+      displayDate: isToday ? `${formattedDate} (partial day)` : formattedDate,
+      dayOfWeek: istDateObj.toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'UTC' }),
       isSchoolDay,
+      isPartialDay: isToday,
       morningAvgPm25: morningAvg,
       peakPm25: dayPeak,
       category: category.label,
       categoryColor: category.color,
       exceeded,
       source: telemetrySource,
-      disruption: isSchoolDay ? disruption : 'Weekend - School closed'
+      disruption: null
     });
   }
 
-  const schoolDaysTotal = dailyLogs.filter(l => l.isSchoolDay).length;
-  const avgMorningPm25 = Math.round(sumMorningPm25 / dailyLogs.length);
-
+  // Today is left out of completed days count per Fix 7
+  const schoolDaysTotal = dailyLogs.filter(l => l.isSchoolDay && !l.isPartialDay).length;
+  const avgMorningPm25 = daysWithData > 0 ? Math.round(sumMorningPm25 / daysWithData) : null;
   const startDate = dailyLogs[0]?.displayDate || '';
   const endDate = dailyLogs[dailyLogs.length - 1]?.displayDate || '';
 
   return {
     success: true,
-    schoolName,
-    locality,
-    stationName,
-    stationDistanceKm: parseFloat(stationDistanceKm) || 1.8,
+    gridId: resolvedGridId,
+    schoolName: resolvedSchoolName,
+    locality: resolvedLocality,
+    stationName: resolvedStation,
+    stationDistanceKm: resolvedDistance,
     timeHorizonDays: numDays,
     schoolDaysTotal,
     exceedanceCount: exceedCount,
@@ -177,12 +401,15 @@ export function aggregateSchoolEvidence({
     peakPm25,
     peakDate: peakDate || endDate,
     avgMorningPm25,
-    maeError: (5.8 + (((basePm25 + exceedCount) % 15) / 10)).toFixed(1), // e.g. 6.2 µg/m³
-    compiledBy: 'VayuVitals 3D (SafeRecess Engine)',
+    daysWithData,
+    daysMissing,
+    maeError: null,
+    compiledBy: 'VayuVitals Continuous Monitoring Engine',
     compilationDate: new Date().toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'long',
-      year: 'numeric'
+      year: 'numeric',
+      timeZone: 'Asia/Kolkata'
     }),
     dailyLogs
   };
@@ -190,64 +417,91 @@ export function aggregateSchoolEvidence({
 
 /**
  * Generate formatted petition text in English and Hindi
+ * Refuses to draft if daysWithData === 0 (422) per P2.4.
+ * Never prints null anywhere in the letter per P2.4.
  */
 export function generateDraftPetition({
   evidence,
   authority,
   forecast,
-  senderName = 'Dr. Sunita Sharma',
-  senderRole = 'Principal / Chairperson',
-  senderContact = 'contact@school.edu.in | +91 98110 00000',
+  senderName = '[YOUR NAME]',
+  senderRole = '[YOUR ROLE / DESIGNATION]',
+  senderContact = '[YOUR PHONE / EMAIL]',
   selectedDemands = [],
-  schoolEvidencePackage = null
+  schoolEvidencePackage = null,
+  userActionNote = null,
+  targetType = null
 }) {
+  if (!evidence || !authority) {
+    const err = new Error('evidence and authority objects are required');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Refuse to draft when there's no data per P2.4
+  if (!evidence.daysWithData || evidence.daysWithData === 0) {
+    const err = new Error('Cannot generate draft petition without verified telemetry observations (0 days with data).');
+    err.statusCode = 422;
+    throw err;
+  }
+
   const {
     schoolName,
     locality,
-    threshold,
-    exceedanceCount,
-    schoolDaysTotal,
-    startDate,
-    endDate,
-    peakPm25,
-    peakDate,
+    threshold = 60,
+    exceedanceCount = 0,
+    schoolDaysTotal = 0,
+    startDate = '',
+    endDate = '',
+    peakPm25 = '--',
+    peakDate = '',
     stationName,
     stationDistanceKm,
     compiledBy,
     compilationDate,
-    maeError
+    daysWithData,
+    timeHorizonDays,
+    gridId
   } = evidence;
+
+  const resolvedTargetType = targetType || evidence.targetType || (schoolName ? 'school' : (gridId ? 'grid' : 'station'));
+  const isSchoolTarget = resolvedTargetType === 'school';
 
   const demandsTextEn = selectedDemands.length > 0
     ? selectedDemands.map((d, idx) => `(${idx + 1}) ${d}`).join('\n')
-    : '(1) Priority morning deployment of mobile anti-smog misting guns along school approach roads;\n(2) Immediate enforcement of dust suppression protocols on nearby open construction sites;\n(3) Regulated traffic marshal intervention to eliminate vehicle idling outside campus gates.';
+    : '(1) Priority morning deployment of mobile anti-smog misting guns along primary approach roads;\n(2) Immediate enforcement of dust suppression protocols on nearby open construction sites;\n(3) Regulated traffic marshal intervention to eliminate vehicle idling outside sensitive pedestrian zones.';
 
   const demandsTextHi = selectedDemands.length > 0
     ? selectedDemands.map((d, idx) => `(${idx + 1}) ${d}`).join('\n')
-    : '(1) विद्यालय के मुख्य पहुंच मार्गों पर सुबह के समय एंटी-स्मॉग वाटर स्प्रिंकलर की तत्काल तैनाती;\n(2) विद्यालय परिसर के 1 किमी दायरे में अनियंत्रित धूल उत्सर्जन एवं खुले निर्माण कार्यों पर रोक;\n(3) स्कूल गेट पर सुबह के समय वाहनों के भारी जाम एवं इंजन आइडलिंग को नियंत्रित करने हेतु ट्रैफिक मार्शल व्यवस्था।';
+    : '(1) मुख्य पहुंच मार्गों पर सुबह के समय एंटी-स्मॉग वाटर स्प्रिंकलर की तत्काल तैनाती;\n(2) आसपास के 1 किमी दायरे में अनियंत्रित धूल उत्सर्जन एवं खुले निर्माण कार्यों पर रोक;\n(3) सुबह के समय वाहनों के भारी जाम एवं इंजन आइडलिंग को नियंत्रित करने हेतु ट्रैफिक मार्शल व्यवस्था।';
 
-  // Advance 48h ML Forecast Alert block (AWS SageMaker Pipeline)
+  // Advance 48h ML Forecast Alert block (MAE printed only inside forecast block per Fix 6)
   let forecastBlockEn = '';
   let forecastBlockHi = '';
   if (forecast && forecast.peakMorningArrival && forecast.peakMorningArrival.predictedPm25) {
     const { predictedPm25, time, date, category } = forecast.peakMorningArrival;
+    const testMae = forecast.modelDetails?.testMae;
+    const maeLineEn = (testMae !== undefined && testMae !== null)
+      ? `\n- Forecast Model Test Error (MAE): ${testMae} µg/m³`
+      : '';
+    const maeLineHi = (testMae !== undefined && testMae !== null)
+      ? `\n- पूर्वानुमान मॉडल परीक्षण त्रुटि (MAE): ${testMae} µg/m³`
+      : '';
     forecastBlockEn = `
 Advance 48-Hour Machine Learning Risk Alert (AWS SageMaker Inference):
-- Predictive Horizon: Next 48 Hours (School Operating Window)
-- Anticipated Morning Arrival Peak: ${predictedPm25} µg/m³ at ${time} (${date}) [Status: ${category}]
-- Governing Dynamics: Thermal inversion layer combined with low boundary wind speed
-- Pre-Emptive Mitigation Demand: Prioritized anti-smog mist cannon deployment at 06:30 AM before student arrival.
+- Predictive Horizon: Next 48 Hours (Morning Operating Window)
+- Anticipated Morning Arrival Peak: ${predictedPm25} µg/m³ at ${time || '--'} (${date || '--'}) [Status: ${category || 'Elevated'}]${maeLineEn}
+- Pre-Emptive Mitigation Demand: Prioritized anti-smog mist cannon deployment at 06:30 AM before peak morning movement.
 `;
     forecastBlockHi = `
 अग्रिम 48-घंटे का मशीन लर्निंग वायु गुणवत्ता पूर्वानुमान (AWS SageMaker मॉडल):
-- पूर्वानुमान समय-सीमा: आगामी 48 घंटे (विद्यालय संचालन अवधि)
-- संभावित प्रातःकालीन आगमन पीक: ${predictedPm25} µg/m³ (${date}, समय: ${time}) [श्रेणी: ${category}]
-- प्रमुख मौसमी कारक: विलोपन परत (Thermal Inversion) एवं शांत पवन गति के कारण सतह पर प्रदूषण का जमाव
-- अग्रिम प्रशासनिक मांग: विद्यार्थियों के स्कूल पहुंचने से पूर्व प्रातः 06:30 बजे पहुंच मार्गों पर एंटी-स्मॉग गन से जल छिड़काव।
+- पूर्वानुमान समय-सीमा: आगामी 48 घंटे (प्रातःकालीन संचालन अवधि)
+- संभावित प्रातःकालीन आगमन पीक: ${predictedPm25} µg/m³ (${date || '--'}, समय: ${time || '--'}) [श्रेणी: ${category || 'गंभीर'}]${maeLineHi}
+- अग्रिम प्रशासनिक मांग: प्रातःकालीन आवागमन से पूर्व 06:30 बजे पहुंच मार्गों पर एंटी-स्मॉग गन से जल छिड़काव।
 `;
   }
 
-  // 14-Day School Environmental Monitoring Evidence Block (Phase 6 Grounding)
+  // 14-Day School Environmental Monitoring Evidence Block
   let schoolEvidenceBlockEn = '';
   let schoolEvidenceBlockHi = '';
   if (schoolEvidencePackage && schoolEvidencePackage.summary) {
@@ -268,25 +522,133 @@ Verified 14-Day School Environmental Monitoring Summary:
 `;
   }
 
-  // 1. English Standard Draft (Verbatim adhering to PRD sample letter structure)
-  const englishText = `To:
-${authority.designation}
-${authority.fullName}
-${authority.address}
+  // Replace "verified empirical continuous telemetry" with "hours with modelled data available" per Fix 5
+  const observationSummaryEn = daysWithData !== undefined && timeHorizonDays
+    ? ` (${daysWithData} of ${timeHorizonDays} days with hours with modelled data available)`
+    : '';
+  const observationSummaryHi = daysWithData !== undefined && timeHorizonDays
+    ? ` (${timeHorizonDays} में से ${daysWithData} दिवस मॉडल डेटा उपलब्ध घंटे)`
+    : '';
 
-Subject: Request for urgent administrative action on hazardous morning air quality affecting students at ${schoolName}, ${locality}
+  const userActionSectionEn = userActionNote && userActionNote.trim()
+    ? `\nInstitutional Action & Mitigations:\n${userActionNote.trim()}\n`
+    : '';
+  const userActionSectionHi = userActionNote && userActionNote.trim()
+    ? `\nसंस्थान स्तर पर किए गए तात्कालिक प्रयास:\n${userActionNote.trim()}\n`
+    : '';
+
+  // Data Provenance line: Open-Meteo modelled PM2.5, grid cell {gridId} (~5.5 km, centroid lat, lon) per Fix 4
+  const spatialGrids = getSpatialGrids();
+  const effectiveGridId = gridId || (schoolEvidencePackage?.gridId) || null;
+  const centroid = effectiveGridId && spatialGrids[effectiveGridId]?.centroid;
+  const centroidStr = centroid ? `, centroid ${centroid.lat}, ${centroid.lon}` : '';
+  const centroidStrHi = centroid ? `, केंद्र बिंदु ${centroid.lat}, ${centroid.lon}` : '';
+  const primarySourceEn = effectiveGridId
+    ? `Open-Meteo modelled PM2.5, grid cell ${effectiveGridId} (~5.5 km${centroidStr})`
+    : 'Open-Meteo modelled hourly PM2.5';
+  const primarySourceHi = effectiveGridId
+    ? `ओपन-मेटियो मॉडल्ड PM2.5, ग्रिड सेल ${effectiveGridId} (~5.5 किमी${centroidStrHi})`
+    : 'ओपन-मेटियो मॉडल्ड प्रति घंटा PM2.5';
+
+  const cleanStation = stationName ? stationName.replace(/\s*CAAQMS/gi, '').trim() : '';
+  const refStationLineEn = cleanStation
+    ? `\n- Nearest Regulatory Station (for reference, not the data source): ${cleanStation}${stationDistanceKm != null ? ` (${stationDistanceKm} km)` : ''}`
+    : '';
+  const refStationLineHi = cleanStation
+    ? `\n- निकटतम विनियामक स्टेशन (संदर्भ हेतु, डेटा स्रोत नहीं): ${cleanStation}${stationDistanceKm != null ? ` (${stationDistanceKm} किमी)` : ''}`
+    : '';
+
+  let subjectEn = '';
+  let subjectHi = '';
+  let englishText = '';
+  let hindiText = '';
+
+  if (!isSchoolTarget) {
+    // Station or Grid mode letter written as resident per Fix 3
+    const gridLabel = locality || (gridId ? `Grid ${gridId}` : (stationName || 'the local monitoring area'));
+    subjectEn = `Urgent action request: Morning air quality near ${gridLabel} (${exceedanceCount}/${schoolDaysTotal} days exceeded threshold)`;
+    subjectHi = `विषय: ${gridLabel} के निकट प्रातःकालीन गंभीर वायु प्रदूषण के संबंध में तत्काल प्रशासनिक हस्तक्षेप हेतु प्रतिवेदन`;
+
+    englishText = `To:
+${authority.designation || 'Competent Authority'}
+${authority.fullName || ''}
+${authority.address || ''}
+
+Subject: ${subjectEn}
 
 Respected Sir/Madam,
 
-I write on behalf of ${schoolName}, located at ${locality}. Using hourly PM2.5 continuous telemetry and nearby station readings, our verified environmental records demonstrate that outdoor-window PM2.5 exceeded the safety threshold of ${threshold} µg/m³ on ${exceedanceCount} of the last ${schoolDaysTotal} school days (${startDate} to ${endDate}), with an alarming peak of ${peakPm25} µg/m³ recorded on ${peakDate}.
-
-On these high-pollution days, our institution was forced to cancel outdoor morning assemblies, suspend physical education sessions, and confine student recess strictly to indoor classrooms to minimize acute respiratory exposure.
+I write as a resident regarding morning air quality near ${gridLabel}. Using modelled hourly PM2.5 data, environmental records demonstrate that outdoor PM2.5 exceeded the safety threshold of ${threshold} µg/m³ (compared against the CPCB 24-hour NAAQS of 60 µg/m³ as a reference; values are 07:00–13:00 IST averages) on ${exceedanceCount} of the last ${schoolDaysTotal} days (${startDate} to ${endDate}), with a peak of ${peakPm25} µg/m³ recorded on ${peakDate || endDate}.${userActionSectionEn}
 
 Data Provenance & Scientific Basis:
-- Primary Monitoring Source: ${stationName} (${stationDistanceKm} km from school campus)
-- Compilation Engine: ${compiledBy} on ${compilationDate}
-- Forecast Mean Absolute Error (MAE) over the observation window: ${maeError} µg/m³
-- Time Window Examined: 07:00 AM to 01:00 PM (Daily School Operating Hours)${schoolEvidenceBlockEn}${forecastBlockEn}
+- Primary Monitoring Source: ${primarySourceEn}${refStationLineEn}
+- Telemetry Network: Open-Meteo modelled hourly PM2.5 dataset
+- Compilation Engine: ${compiledBy || 'VayuVitals Continuous Monitoring Engine'} on ${compilationDate || new Date().toLocaleDateString('en-IN')}
+- Observation Window: ${startDate} to ${endDate}${observationSummaryEn}
+- Time Window Examined: 07:00 AM to 01:00 PM IST (Morning Operating Hours)${schoolEvidenceBlockEn}${forecastBlockEn}
+We respectfully request the competent authority to undertake the following time-bound remedial interventions:
+${demandsTextEn}
+
+Additionally, we request a formal written update within 15 working days outlining the specific measures and inspections conducted in response to this representation.
+
+Yours sincerely,
+
+${senderName}
+${senderRole && senderRole !== '[YOUR ROLE / DESIGNATION]' ? senderRole : 'Resident / Concerned Citizen'}
+${locality || 'Delhi NCR'}
+Contact: ${senderContact}`;
+
+    hindiText = `सेवा में,
+${authority.designation || 'सक्षम प्राधिकारी'}
+${authority.fullName || ''}
+${authority.address || ''}
+
+विषय: ${subjectHi}
+
+महोदय/महोदया,
+
+मैं ${gridLabel} के निकट प्रातःकालीन वायु गुणवत्ता के संबंध में एक स्थानीय निवासी के रूप में यह औपचारिक प्रतिवेदन प्रस्तुत कर रहा/रही हूँ। ओपन-मेटियो मॉडल्ड प्रति घंटा PM2.5 डेटा के अनुसार, पिछले ${schoolDaysTotal} दिनों (${startDate} से ${endDate}) में से ${exceedanceCount} दिनों में सुबह के समय (प्रातः 07:00 से दोपहर 01:00 बजे) PM2.5 का स्तर सुरक्षा मानक ${threshold} µg/m³ (सीपीसीबी के 24-घंटे NAAQS मानक 60 µg/m³ के संदर्भ में; मान प्रातः 07:00–13:00 IST के औसत हैं) से निरंतर अधिक रहा, जिसमें ${peakDate || endDate} को सर्वाधिक ${peakPm25} µg/m³ का स्तर दर्ज किया गया।${userActionSectionHi}
+
+आंकड़ों की प्रामाणिकता एवं स्रोत:
+- प्राथमिक निगरानी स्रोत: ${primarySourceHi}${refStationLineHi}
+- निगरानी नेटवर्क: ओपन-मेटियो मॉडल्ड प्रति घंटा PM2.5 डेटासेट
+- डेटा संकलन: ${compiledBy || 'VayuVitals Continuous Monitoring Engine'} (संकलन तिथि: ${compilationDate || new Date().toLocaleDateString('en-IN')})
+- निगरानी अवधि: ${startDate} से ${endDate}${observationSummaryHi}${schoolEvidenceBlockHi}${forecastBlockHi}
+अतः आपसे सविनय अनुरोध है कि नागरिकों के स्वास्थ्य एवं स्वच्छ परिवेश के अधिकार को ध्यान में रखते हुए निम्नलिखित त्वरित कदम उठाने की कृपा करें:
+${demandsTextHi}
+
+कृपया इस प्रतिवेदन पर की गई कार्रवाई से लिखित रूप में अवगत कराने का कष्ट करें।
+
+भवदीय/भवदीया,
+
+${senderName}
+${senderRole && senderRole !== '[YOUR ROLE / DESIGNATION]' ? senderRole : 'स्थानीय निवासी / जागरूक नागरिक'}
+${locality || 'दिल्ली एनसीआर'}
+संपर्क: ${senderContact}`;
+
+  } else {
+    // School mode letter per Fix 3
+    const locationStr = locality ? `, located at ${locality}` : '';
+    subjectEn = `Urgent action request: Morning air quality affecting students at ${schoolName}${locality ? `, ${locality}` : ''} (${exceedanceCount}/${schoolDaysTotal} days exceeded threshold)`;
+    subjectHi = `विषय: ${schoolName}${locality ? `, ${locality}` : ''} के विद्यार्थियों पर प्रातःकालीन गंभीर वायु प्रदूषण के प्रभाव एवं तत्काल प्रशासनिक हस्तक्षेप हेतु प्रतिवेदन`;
+
+    englishText = `To:
+${authority.designation || 'Competent Authority'}
+${authority.fullName || ''}
+${authority.address || ''}
+
+Subject: ${subjectEn}
+
+Respected Sir/Madam,
+
+I write on behalf of ${schoolName}${locationStr}. Using modelled hourly PM2.5 data, environmental records demonstrate that outdoor-window PM2.5 exceeded the safety threshold of ${threshold} µg/m³ (compared against the CPCB 24-hour NAAQS of 60 µg/m³ as a reference; values are 07:00–13:00 IST averages) on ${exceedanceCount} of the last ${schoolDaysTotal} school days (${startDate} to ${endDate}), with a peak of ${peakPm25} µg/m³ recorded on ${peakDate || endDate}.${userActionSectionEn}
+
+Data Provenance & Scientific Basis:
+- Primary Monitoring Source: ${primarySourceEn}${refStationLineEn}
+- Telemetry Network: Open-Meteo modelled hourly PM2.5 dataset
+- Compilation Engine: ${compiledBy || 'VayuVitals Continuous Monitoring Engine'} on ${compilationDate || new Date().toLocaleDateString('en-IN')}
+- Observation Window: ${startDate} to ${endDate}${observationSummaryEn}
+- Time Window Examined: 07:00 AM to 01:00 PM IST (Daily School Operating Hours)${schoolEvidenceBlockEn}${forecastBlockEn}
 We respectfully request the competent authority to undertake the following time-bound remedial interventions:
 ${demandsTextEn}
 
@@ -297,28 +659,24 @@ Yours sincerely,
 ${senderName}
 ${senderRole}
 ${schoolName}
-Contact: ${senderContact}
+Contact: ${senderContact}`;
 
-Enclosure: Comprehensive Empirical Air Quality Summary & Exceedance Log (PDF)`;
+    hindiText = `सेवा में,
+${authority.designation || 'सक्षम प्राधिकारी'}
+${authority.fullName || ''}
+${authority.address || ''}
 
-  // 2. Hindi Administrative Draft (राजकीय/प्रशासनिक प्रारूप)
-  const hindiText = `सेवा में,
-${authority.designation}
-${authority.fullName}
-${authority.address}
-
-विषय: ${schoolName}, ${locality} के विद्यार्थियों पर प्रातःकालीन गंभीर वायु प्रदूषण के प्रभाव एवं तत्काल प्रशासनिक हस्तक्षेप हेतु प्रतिवेदन।
+विषय: ${subjectHi}
 
 महोदय/महोदया,
 
-मैं ${schoolName} की ओर से यह औपचारिक प्रतिवेदन प्रस्तुत कर रहा/रही हूँ। आधिकारिक परिवेशी वायु गुणवत्ता निगरानी स्टेशन (${stationName}) से प्राप्त प्रमाणित आंकड़ों के अनुसार, पिछले ${schoolDaysTotal} कार्यदिवसों (${startDate} से ${endDate}) में से ${exceedanceCount} दिनों में स्कूल समय (प्रातः 07:00 से दोपहर 01:00 बजे) के दौरान PM2.5 का स्तर सुरक्षा मानक ${threshold} µg/m³ से निरंतर अधिक रहा, जिसमें ${peakDate} को सर्वाधिक ${peakPm25} µg/m³ का खतरनाक स्तर दर्ज किया गया।
-
-इस अत्यंत विषैली वायु गुणवत्ता के कारण विद्यालय प्रबंधन को विद्यार्थियों के स्वास्थ्य की रक्षा हेतु प्रातःकालीन प्रार्थना सभाएं रद्द करनी पड़ीं, खेलकूद गतिविधियां स्थगित करनी पड़ीं तथा मध्यांतर (रिसेस) को पूरी तरह कक्षाओं के भीतर सीमित करना पड़ा।
+मैं ${schoolName}${locality ? `, ${locality}` : ''} की ओर से यह औपचारिक प्रतिवेदन प्रस्तुत कर रहा/रही हूँ। ओपन-मेटियो मॉडल्ड प्रति घंटा PM2.5 डेटा के अनुसार, पिछले ${schoolDaysTotal} कार्यदिवसों (${startDate} से ${endDate}) में से ${exceedanceCount} दिनों में स्कूल समय (प्रातः 07:00 से दोपहर 01:00 बजे) के दौरान PM2.5 का स्तर सुरक्षा मानक ${threshold} µg/m³ (सीपीसीबी के 24-घंटे NAAQS मानक 60 µg/m³ के संदर्भ में; मान प्रातः 07:00–13:00 IST के औसत हैं) से निरंतर अधिक रहा, जिसमें ${peakDate || endDate} को सर्वाधिक ${peakPm25} µg/m³ का स्तर दर्ज किया गया।${userActionSectionHi}
 
 आंकड़ों की प्रामाणिकता एवं स्रोत:
-- निकटतम निगरानी केंद्र: ${stationName} (विद्यालय से दूरी: ${stationDistanceKm} किमी)
-- डेटा संकलन: ${compiledBy} (संकलन तिथि: ${compilationDate})
-- पूर्वानुमान त्रुटि दर (MAE): ${maeError} µg/m³${schoolEvidenceBlockHi}${forecastBlockHi}
+- प्राथमिक निगरानी स्रोत: ${primarySourceHi}${refStationLineHi}
+- निगरानी नेटवर्क: ओपन-मेटियो मॉडल्ड प्रति घंटा PM2.5 डेटासेट
+- डेटा संकलन: ${compiledBy || 'VayuVitals Continuous Monitoring Engine'} (संकलन तिथि: ${compilationDate || new Date().toLocaleDateString('en-IN')})
+- निगरानी अवधि: ${startDate} से ${endDate}${observationSummaryHi}${schoolEvidenceBlockHi}${forecastBlockHi}
 अतः आपसे सविनय अनुरोध है कि बच्चों के स्वास्थ्य एवं स्वच्छ परिवेश के अधिकार को ध्यान में रखते हुए निम्नलिखित त्वरित कदम उठाने की कृपा करें:
 ${demandsTextHi}
 
@@ -329,13 +687,12 @@ ${demandsTextHi}
 ${senderName}
 ${senderRole}
 ${schoolName}
-संपर्क: ${senderContact}
-
-संलग्नक: प्रमाणित दैनिक वायु गुणवत्ता साक्ष्य विवरण (PDF साक्ष्य फाइल)`;
+संपर्क: ${senderContact}`;
+  }
 
   return {
     englishText,
     hindiText,
-    subject: `Urgent action request: Morning air quality at ${schoolName} (${exceedanceCount}/${schoolDaysTotal} days exceeded threshold)`
+    subject: subjectEn
   };
 }

@@ -37,7 +37,6 @@ import {
 } from '../src/components/SchoolSafety/schoolSafetyEvidence.js';
 
 import { generateDraftPetition } from '../server/evidenceService.js';
-import { buildClientDraft } from '../src/components/Petition/petitionHelpers.js';
 import { generatePetitionPdf } from '../src/components/Petition/pdfGenerator.js';
 
 describe('School Safety & PetitionModal Integration (Phase 6 Tests)', () => {
@@ -351,7 +350,7 @@ describe('School Safety & PetitionModal Integration (Phase 6 Tests)', () => {
   // ==========================================================================
   // 9. Existing petition generation still works
   // ==========================================================================
-  it('9. generateDraftPetition and buildClientDraft generate complete bilingual drafts with school evidence', () => {
+  it('9. generateDraftPetition generates complete bilingual drafts with school evidence', () => {
     const pkg = createMockCompletePackage();
     const evidence = {
       schoolName: pkg.school.name,
@@ -367,7 +366,9 @@ describe('School Safety & PetitionModal Integration (Phase 6 Tests)', () => {
       stationDistanceKm: 1.8,
       compiledBy: 'VayuVitals',
       compilationDate: 'October 3, 2026',
-      maeError: 12.4,
+      daysWithData: 14,
+      timeHorizonDays: 14,
+      maeError: null,
     };
     const authority = {
       designation: 'The District Magistrate / Chairperson, DDMA',
@@ -384,15 +385,6 @@ describe('School Safety & PetitionModal Integration (Phase 6 Tests)', () => {
     assert.ok(serverDraft.englishText.includes('Verified 14-Day School Environmental Monitoring Summary'));
     assert.ok(serverDraft.englishText.includes('82.5 µg/m³'));
     assert.ok(serverDraft.hindiText.includes('प्रमाणित 14-दिवसीय विद्यालय पर्यावरण निगरानी विवरण'));
-
-    const clientDraft = buildClientDraft({
-      evidence,
-      authority,
-      schoolEvidencePackage: pkg,
-    });
-
-    assert.ok(clientDraft.englishText.includes('Verified 14-Day School Environmental Monitoring Summary'));
-    assert.ok(clientDraft.hindiText.includes('प्रमाणित 14-दिवसीय विद्यालय पर्यावरण निगरानी विवरण'));
   });
 
   // ==========================================================================

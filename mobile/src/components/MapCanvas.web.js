@@ -5,8 +5,15 @@ import {
   Text,
   Platform,
 } from 'react-native';
-const mapboxgl = null;
-const MAPBOX_TOKEN = '';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import indiaStations from '../data/indiaStations.json';
+import indiaBoundaryGeoJson from '../data/indiaBoundary.json';
+
+const MAPBOX_TOKEN = (typeof process !== 'undefined' && (process.env?.EXPO_PUBLIC_MAPBOX_TOKEN || process.env?.VITE_MAPBOX_TOKEN)) || (typeof window !== 'undefined' && (window.MAPBOX_TOKEN || '')) || '';
+if (MAPBOX_TOKEN) {
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+}
 
 export const MAPBOX_DARK_STYLE = 'mapbox://styles/mapbox/navigation-night-v1';
 
