@@ -981,3 +981,12 @@
   }
 }
 
+
+
+/* Pause all infinite animations (pulse, scanner beam, engine rumble, strobe) while off screen */
+.cargo-section--offscreen,
+.cargo-section--offscreen *,
+.cargo-section--offscreen *::before,
+.cargo-section--offscreen *::after {
+  animation-play-state: paused !important;
+}

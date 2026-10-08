@@ -1,9 +1,10 @@
-import React, { Suspense, useMemo } from 'react';
+import React, { Suspense, useMemo, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Float } from '@react-three/drei';
 import * as THREE from 'three';
 import BioLungsModel from './BioLungsModel';
 import PollutionParticles from './PollutionParticles';
+import useInView from '../../hooks/useInView';
 
 /**
  * LungsCanvas
@@ -11,6 +12,9 @@ import PollutionParticles from './PollutionParticles';
  * atmospheric fog, and particle swarm.
  */
 export default function LungsCanvas({ aqi = 45, interactive = true }) {
+  const wrapRef = useRef(null);
+  // Stop the render loop entirely while the lungs are scrolled out of view
+  const inView = useInView(wrapRef);
   // Lighting and fog colors according to AQI
   const lighting = useMemo(() => {
     if (aqi <= 50) {
@@ -62,15 +66,16 @@ export default function LungsCanvas({ aqi = 45, interactive = true }) {
   }, [aqi]);
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+    <div ref={wrapRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
       <Canvas
+        frameloop={inView ? 'always' : 'never'}
         camera={{ position: [0, 0, 5.2], fov: 45 }}
         gl={{
           antialias: true,
           alpha: true,
           powerPreference: 'high-performance',
         }}
-        dpr={[1, 2]}
+        dpr={[1, 1.5]}
       >
         {/* Dynamic Atmospheric Fog */}
         <fog attach="fog" args={[lighting.fogColor, lighting.fogNear, lighting.fogFar]} />

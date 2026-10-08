@@ -83,7 +83,8 @@ export async function generateGeminiAdvisory(metrics) {
 Task: Give 2 concise health actions and 1 commute advisory for this air quality. Keep response under 60 words total.`;
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     const res = await fetch(url, {
       method: 'POST',
@@ -92,7 +93,8 @@ Task: Give 2 concise health actions and 1 commute advisory for this air quality.
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.2,
-          maxOutputTokens: 180,
+          maxOutputTokens: 500,
+          thinkingConfig: { thinkingBudget: 0 },
         },
       }),
       signal: AbortSignal.timeout(6000),

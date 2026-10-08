@@ -9,15 +9,23 @@ import * as THREE from 'three';
  *   sharing the EXACT SAME spherical curvature, scanlines, and retrace beam as the background!
  * - As the user scrolls down, the panorama scrolls horizontally and the templates rise from below to up.
  */
-export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x: 0, y: 0 }, onExploreTwin }) {
+export default function CrtScreenLensCanvas({
+  scrollProgressRef,
+  mousePosRef,
+  scrollProgress = 0,
+  mousePos = { x: 0, y: 0 },
+  onExploreTwin,
+}) {
   const mountRef = useRef(null);
   const scrollRef = useRef(scrollProgress);
   const buttonBounds = useRef({ x: 0, y: 0, w: 0, h: 0, active: false });
 
-  // Keep scrollRef synchronized with scrollProgress prop
+  // Keep scrollRef synchronized with scrollProgress prop if used without ref
   useEffect(() => {
-    scrollRef.current = scrollProgress;
-  }, [scrollProgress]);
+    if (!scrollProgressRef) {
+      scrollRef.current = scrollProgress;
+    }
+  }, [scrollProgress, scrollProgressRef]);
 
   useEffect(() => {
     const container = mountRef.current;
@@ -31,14 +39,16 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
     // WebGL Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    // Full-screen quad shader: MSAA buys nothing, and DPR is capped to keep fill-rate bounded
+    const MAX_DPR = 1.5;
+    const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_DPR));
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     container.appendChild(renderer.domElement);
 
     // Panoramic Texture Loader
     const textureLoader = new THREE.TextureLoader();
-    const panoramicTex = textureLoader.load('/lungs-panoramic.png');
+    const panoramicTex = textureLoader.load('/lungs-panoramic.webp');
     panoramicTex.minFilter = THREE.LinearFilter;
     panoramicTex.magFilter = THREE.LinearFilter;
     panoramicTex.wrapS = THREE.ClampToEdgeWrapping;
@@ -47,7 +57,7 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
     // Offscreen 2D Canvas for Minimal Templates (Rendered directly into CRT screen space)
     const textCanvas = document.createElement('canvas');
     const textCtx = textCanvas.getContext('2d');
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
     textCanvas.width = width * dpr;
     textCanvas.height = height * dpr;
 
@@ -187,6 +197,12 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
 
           // 14. Contrast & Color Grading
           color.rgb = pow(color.rgb, vec3(0.95)) * 1.03;
+
+          // 14b. Film grain + phosphor flicker (previously CSS overlays: feTurbulence SVG
+          // and an infinite blend-mode animation, both forcing browser re-composites)
+          float grain = hash12(gl_FragCoord.xy + floor(uTime * 24.0) * 17.0) - 0.5;
+          color.rgb += grain * 0.07;
+          color.rgb *= 1.0 + 0.02 * sin(uTime * 52.0);
 
           // 15. Blend cleanly into dark bezel background (#070a12)
           vec3 bgCol = vec3(0.027, 0.039, 0.07);
@@ -609,17 +625,58 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
     renderer.domElement.addEventListener('touchstart', handleCanvasTouch, { passive: true });
     renderer.domElement.addEventListener('mousemove', handleCanvasMouseMove);
 
+    // The overlay canvas only needs re-uploading to the GPU when scroll changes or
+    // the time-driven glitch/blinker effects tick (throttled to TEXT_FPS), not every frame.
+    const TEXT_FPS = 10;
+    let lastTextScroll = -1;
+    let lastTextTick = -1;
+    let forceTextRedraw = true;
+
     const clock = new THREE.Clock();
-    let reqId;
+    let reqId = 0;
     const animate = () => {
       reqId = requestAnimationFrame(animate);
       const time = clock.getElapsedTime();
       crtMaterial.uniforms.uTime.value = time;
-      crtMaterial.uniforms.uCurvature.value = width < 600 ? 0.04 : 0.28;
-      updateTextTexture(scrollRef.current, time);
+
+      const currentScroll = scrollProgressRef ? scrollProgressRef.current : scrollRef.current;
+      const currentMouse = mousePosRef ? mousePosRef.current : mousePos;
+
+      crtMaterial.uniforms.uScroll.value = currentScroll;
+      crtMaterial.uniforms.uParallax.value = (currentMouse.x / width) * -0.015;
+
+      const tick = Math.floor(time * TEXT_FPS);
+      if (forceTextRedraw || Math.abs(currentScroll - lastTextScroll) > 1e-4 || tick !== lastTextTick) {
+        updateTextTexture(currentScroll, tick / TEXT_FPS);
+        lastTextScroll = currentScroll;
+        lastTextTick = tick;
+        forceTextRedraw = false;
+      }
       renderer.render(scene, camera);
     };
-    animate();
+
+    // Only render while the hero is on screen and the tab is visible
+    let inView = true;
+    const syncRunning = () => {
+      const shouldRun = inView && !document.hidden;
+      if (shouldRun && !reqId) {
+        forceTextRedraw = true;
+        animate();
+      } else if (!shouldRun && reqId) {
+        cancelAnimationFrame(reqId);
+        reqId = 0;
+      }
+    };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        inView = entries[entries.length - 1].isIntersecting;
+        syncRunning();
+      },
+      { threshold: 0 }
+    );
+    observer.observe(container);
+    document.addEventListener('visibilitychange', syncRunning);
+    syncRunning();
 
     const handleResize = () => {
       width = window.innerWidth;
@@ -631,6 +688,7 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
 
       textCanvas.width = width * dpr;
       textCanvas.height = height * dpr;
+      forceTextRedraw = true;
     };
     window.addEventListener('resize', handleResize);
 
@@ -639,6 +697,9 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
 
     return () => {
       cancelAnimationFrame(reqId);
+      reqId = 0;
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', syncRunning);
       window.removeEventListener('resize', handleResize);
       renderer.domElement.removeEventListener('click', handleCanvasClick);
       renderer.domElement.removeEventListener('touchstart', handleCanvasTouch);
@@ -655,13 +716,13 @@ export default function CrtScreenLensCanvas({ scrollProgress = 0, mousePos = { x
     };
   }, [onExploreTwin]);
 
-  // Update uniforms smoothly when scroll or mouse changes
+  // Update uniforms smoothly when scroll or mouse changes (only when refs are not passed)
   useEffect(() => {
-    if (mountRef.current && mountRef.current._crtMaterial) {
+    if (mountRef.current && mountRef.current._crtMaterial && !scrollProgressRef && !mousePosRef) {
       mountRef.current._crtMaterial.uniforms.uScroll.value = scrollProgress;
       mountRef.current._crtMaterial.uniforms.uParallax.value = (mousePos.x / window.innerWidth) * -0.015;
     }
-  }, [scrollProgress, mousePos.x]);
+  }, [scrollProgress, mousePos.x, scrollProgressRef, mousePosRef]);
 
   return (
     <div

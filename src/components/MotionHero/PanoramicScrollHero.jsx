@@ -1,6 +1,36 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import CrtScreenLensCanvas from './CrtScreenLensCanvas';
 import './PanoramicScrollHero.css';
+
+/**
+ * Continuous smooth color transition for VAYUVITALS brand text and ambient field
+ * Left (pollution red: 248, 113, 113) -> Mid (amber: 251, 191, 36) -> Right (clean green: 52, 211, 153)
+ */
+function getBrandTheme(progress) {
+  const p = Math.max(0, Math.min(1, progress));
+  let r, g, b;
+  if (p <= 0.5) {
+    const t = p / 0.5;
+    r = Math.round(248 + (251 - 248) * t);
+    g = Math.round(113 + (191 - 113) * t);
+    b = Math.round(113 + (36 - 113) * t);
+  } else {
+    const t = (p - 0.5) / 0.5;
+    r = Math.round(251 + (52 - 251) * t);
+    g = Math.round(191 + (211 - 191) * t);
+    b = Math.round(36 + (153 - 36) * t);
+  }
+
+  const rgb = `${r}, ${g}, ${b}`;
+  return {
+    textColor: `rgb(${rgb})`,
+    accentColor: `rgb(${rgb})`,
+    glow: `rgba(${rgb}, 0.65)`,
+    glowSoft: `rgba(${rgb}, 0.25)`,
+    ambient: `rgba(${rgb}, 0.12)`,
+    spotlight: `rgba(${rgb}, 0.16)`,
+  };
+}
 
 /**
  * PanoramicScrollHero - Option A: Cinematic Sensor & Atmospheric Particulate Treatment
@@ -11,10 +41,36 @@ import './PanoramicScrollHero.css';
 export default function PanoramicScrollHero({ onExploreTwin }) {
   const trackRef = useRef(null);
   const canvasRef = useRef(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0, clientX: 0, clientY: 0 });
+  const spotlightRef = useRef(null);
+  const brandTextRef = useRef(null);
+  const bottomFadeRef = useRef(null);
 
-  // 1. Scroll-driven scrub tracking
+  // High-frequency values use refs instead of React state to eliminate re-renders during interaction
+  const scrollProgressRef = useRef(0);
+  const mousePosRef = useRef({ x: 0, y: 0, clientX: 0, clientY: 0 });
+  const spotlightColorRef = useRef('rgba(248, 113, 113, 0.16)');
+
+  // Read by the particle loop each frame so it never has to be torn down on scroll
+  const isCleanRef = useRef(false);
+
+  // Low-frequency phase state: only re-renders when crossing the 0.68 threshold for the CTA button overlay
+  const [isRightPhase, setIsRightPhase] = useState(false);
+
+  // Direct DOM style calibration on scroll without triggering React state updates
+  const updateBrandStyles = (progress) => {
+    const theme = getBrandTheme(progress);
+    spotlightColorRef.current = theme.spotlight;
+
+    if (brandTextRef.current) {
+      brandTextRef.current.style.color = theme.textColor;
+      brandTextRef.current.style.textShadow = `0 0 16px ${theme.glow}, 0 0 32px ${theme.glowSoft}`;
+    }
+    if (bottomFadeRef.current) {
+      bottomFadeRef.current.style.background = `linear-gradient(to bottom, rgba(7, 10, 18, 0.45) 0%, transparent 14%, transparent 60%, rgba(7, 10, 18, 0.88) 85%, #070a12 100%), ${theme.ambient}`;
+    }
+  };
+
+  // 1. Scroll-driven scrub tracking using refs
   useEffect(() => {
     const handleScroll = () => {
       if (!trackRef.current) return;
@@ -23,7 +79,14 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
       if (trackHeight <= 0) return;
       const currentScroll = -rect.top;
       const progress = Math.min(1, Math.max(0, currentScroll / trackHeight));
-      setScrollProgress(progress);
+
+      scrollProgressRef.current = progress;
+      isCleanRef.current = progress > 0.55;
+
+      updateBrandStyles(progress);
+
+      const rightPhase = progress >= 0.68;
+      setIsRightPhase(prev => (prev !== rightPhase ? rightPhase : prev));
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -31,19 +94,23 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // 2. Mouse tracking for parallax and aperture spotlight
+  // 2. Mouse tracking for parallax and aperture spotlight using refs and direct style updates
   const handleMouseMove = (e) => {
     const x = (e.clientX / window.innerWidth - 0.5) * 20;
     const y = (e.clientY / window.innerHeight - 0.5) * 20;
-    setMousePos({ x, y, clientX: e.clientX, clientY: e.clientY });
+    mousePosRef.current = { x, y, clientX: e.clientX, clientY: e.clientY };
+
+    if (spotlightRef.current) {
+      spotlightRef.current.style.background = `radial-gradient(circle 420px at ${e.clientX}px ${e.clientY}px, ${spotlightColorRef.current} 0%, transparent 80%)`;
+    }
   };
 
-  // 3. Atmospheric Particle Canvas: Floating Soot / Smoke (Left) -> Glowing Spores / Oxygen (Right)
+  // 3. Atmospheric Particle Canvas: created once and keeps running without recreation
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    let animId;
+    let animId = 0;
 
     const resize = () => {
       canvas.width = window.innerWidth;
@@ -52,7 +119,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
     resize();
     window.addEventListener('resize', resize);
 
-    // Particle seed generator
+    // Particle seed generator - created strictly once!
     const particleCount = 48;
     const particles = Array.from({ length: particleCount }).map(() => ({
       x: Math.random() * window.innerWidth,
@@ -65,8 +132,9 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
     }));
 
     const render = () => {
+      animId = requestAnimationFrame(render);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const isClean = scrollProgress > 0.55;
+      const isClean = isCleanRef.current;
 
       particles.forEach(p => {
         // Calm, steady physics - NO erratic mouse whipping!
@@ -98,54 +166,37 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
         ctx.fill();
         ctx.shadowBlur = 0; // Reset
       });
-
-      animId = requestAnimationFrame(render);
     };
 
-    render();
+    // Only animate while the hero is on screen and the tab is visible
+    let inView = true;
+    const sync = () => {
+      const shouldRun = inView && !document.hidden;
+      if (shouldRun && !animId) render();
+      else if (!shouldRun && animId) {
+        cancelAnimationFrame(animId);
+        animId = 0;
+      }
+    };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        inView = entries[entries.length - 1].isIntersecting;
+        sync();
+      },
+      { threshold: 0 }
+    );
+    observer.observe(canvas);
+    document.addEventListener('visibilitychange', sync);
+    sync();
 
     return () => {
       cancelAnimationFrame(animId);
+      animId = 0;
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', sync);
       window.removeEventListener('resize', resize);
     };
-  }, [scrollProgress]);
-
-  // Continuous smooth color transition for VAYUVITALS brand text and ambient field
-  // Left (pollution red: 248, 113, 113) -> Mid (amber: 251, 191, 36) -> Right (clean green: 52, 211, 153)
-  const brandTheme = useMemo(() => {
-    const p = Math.max(0, Math.min(1, scrollProgress));
-    let r, g, b;
-    if (p <= 0.5) {
-      // Phase 1 (Pollution Red #f87171) -> Phase 2 (Amber #fbbf24)
-      const t = p / 0.5;
-      r = Math.round(248 + (251 - 248) * t);
-      g = Math.round(113 + (191 - 113) * t);
-      b = Math.round(113 + (36 - 113) * t);
-    } else {
-      // Phase 2 (Amber #fbbf24) -> Phase 3 (Living Green #34d399)
-      const t = (p - 0.5) / 0.5;
-      r = Math.round(251 + (52 - 251) * t);
-      g = Math.round(191 + (211 - 191) * t);
-      b = Math.round(36 + (153 - 36) * t);
-    }
-
-    const rgb = `${r}, ${g}, ${b}`;
-    return {
-      textColor: `rgb(${rgb})`,
-      accentColor: `rgb(${rgb})`,
-      glow: `rgba(${rgb}, 0.65)`,
-      glowSoft: `rgba(${rgb}, 0.25)`,
-      ambient: `rgba(${rgb}, 0.12)`,
-      spotlight: `rgba(${rgb}, 0.16)`,
-    };
-  }, [scrollProgress]);
-
-  const ambientBg = brandTheme.ambient;
-  const spotlightColor = brandTheme.spotlight;
-
-  const isLeftPhase = scrollProgress < 0.38;
-  const isMidPhase = scrollProgress >= 0.38 && scrollProgress < 0.68;
-  const isRightPhase = scrollProgress >= 0.68;
+  }, []);
 
   return (
     <div
@@ -177,8 +228,8 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
         {/* and rise smoothly from below to up as user scrolls down!       */}
         {/* ============================================================== */}
         <CrtScreenLensCanvas
-          scrollProgress={scrollProgress}
-          mousePos={mousePos}
+          scrollProgressRef={scrollProgressRef}
+          mousePosRef={mousePosRef}
           onExploreTwin={onExploreTwin}
         />
 
@@ -208,36 +259,34 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
           <div className="hero-crt-glass-glare" />
         </div>
 
-        {/* 2. Analog Phosphor Micro-Flicker Layer */}
-        <div className="hero-crt-flicker-layer" aria-hidden="true" />
-
-        {/* 3. Procedural Film Grain Overlay */}
-        <div className="hero-grain-overlay" aria-hidden="true" />
+        {/* Phosphor flicker and film grain now live in the CRT shader (see CrtScreenLensCanvas) */}
 
         {/* 6. Calm Floating Particulate Field (Soot & Spores) */}
         <canvas ref={canvasRef} className="hero-particles-canvas" />
 
         {/* 7. Mouse-reactive Volumetric Lens Spotlight */}
         <div
+          ref={spotlightRef}
           className="hero-cursor-luminescence"
           style={{
             position: 'absolute',
             inset: 0,
             pointerEvents: 'none',
             zIndex: 14,
-            background: `radial-gradient(circle 420px at ${mousePos.clientX || window.innerWidth / 2}px ${mousePos.clientY || window.innerHeight / 2}px, ${spotlightColor} 0%, transparent 80%)`,
+            background: 'radial-gradient(circle 420px at 50vw 50vh, rgba(248, 113, 113, 0.16) 0%, transparent 80%)',
           }}
           aria-hidden="true"
         />
 
         {/* 8. Seamless Bottom Gradient Fade into Map */}
         <div
+          ref={bottomFadeRef}
           style={{
             position: 'absolute',
             inset: 0,
             zIndex: 17,
             pointerEvents: 'none',
-            background: `linear-gradient(to bottom, rgba(7, 10, 18, 0.45) 0%, transparent 14%, transparent 60%, rgba(7, 10, 18, 0.88) 85%, #070a12 100%), ${ambientBg}`,
+            background: 'linear-gradient(to bottom, rgba(7, 10, 18, 0.45) 0%, transparent 14%, transparent 60%, rgba(7, 10, 18, 0.88) 85%, #070a12 100%), rgba(248, 113, 113, 0.12)',
             transition: 'background 0.5s ease',
           }}
         />
@@ -248,14 +297,15 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
         <div className="hero-top-hud">
           <div className="hero-hud-brand">
             <span
+              ref={brandTextRef}
               style={{
                 fontFamily: "'Outfit', sans-serif",
                 fontWeight: 900,
                 fontSize: '1.45rem',
                 letterSpacing: '0.15em',
                 textTransform: 'uppercase',
-                color: brandTheme.textColor,
-                textShadow: `0 0 16px ${brandTheme.glow}, 0 0 32px ${brandTheme.glowSoft}`,
+                color: '#f87171',
+                textShadow: '0 0 16px rgba(248, 113, 113, 0.65), 0 0 32px rgba(248, 113, 113, 0.25)',
                 transition: 'color 0.15s ease, text-shadow 0.15s ease',
               }}
             >

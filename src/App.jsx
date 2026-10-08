@@ -1,12 +1,18 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Film, MapPin, Truck } from 'lucide-react';
 import PanoramicScrollHero from './components/MotionHero/PanoramicScrollHero';
-import DelhiAqiHeatmap from './components/Heatmap/DelhiAqiHeatmap';
+import LazySection from './components/common/LazySection';
+
+// Heavy sections are code-split: Mapbox, the cargo UI, Three.js detail page, documentary and
+// school dashboard are only fetched when the user approaches or navigates to them.
+const DelhiAqiHeatmap = React.lazy(() => import('./components/Heatmap/DelhiAqiHeatmap'));
 const AutonomousMonitorModal = React.lazy(() => import('./components/Dashboard/AutonomousMonitorModal'));
-import AtmosphericCargoTruck from './components/CargoTruck/AtmosphericCargoTruck';
-import PollutantDetailPage from './components/PollutantDetail/PollutantDetailPage';
-import SchoolSafetyContainer from './components/SchoolSafety/SchoolSafetyContainer';
-import PollutantDocumentary from './components/PollutantDocumentary/PollutantDocumentary';
+const AtmosphericCargoTruck = React.lazy(() => import('./components/CargoTruck/AtmosphericCargoTruck'));
+const PollutantDetailPage = React.lazy(() => import('./components/PollutantDetail/PollutantDetailPage'));
+const SchoolSafetyContainer = React.lazy(() => import('./components/SchoolSafety/SchoolSafetyContainer'));
+const PollutantDocumentary = React.lazy(() => import('./components/PollutantDocumentary/PollutantDocumentary'));
+
+const PageFallback = () => <div style={{ minHeight: '100vh', background: '#070a12' }} />;
 
 class MapErrorBoundary extends React.Component {
   constructor(props) {
@@ -173,7 +179,7 @@ export default function App() {
         setActiveMobileTab('cargo');
       } else {
         setTimeout(() => {
-          const truckEl = document.getElementById('atmospheric-cargo-section');
+          const truckEl = document.getElementById('atmospheric-cargo-section') || document.getElementById('atmospheric-cargo-placeholder');
           if (truckEl) {
             truckEl.scrollIntoView({ behavior: 'smooth' });
           }
@@ -211,7 +217,7 @@ export default function App() {
         setActiveMobileTab('cargo');
       } else {
         setTimeout(() => {
-          const truckEl = document.getElementById('atmospheric-cargo-section');
+          const truckEl = document.getElementById('atmospheric-cargo-section') || document.getElementById('atmospheric-cargo-placeholder');
           if (truckEl) {
             truckEl.scrollIntoView({ behavior: 'smooth' });
           }
@@ -254,24 +260,28 @@ export default function App() {
 
   if (isSchoolView) {
     return (
-      <SchoolSafetyContainer
-        onBackToMap={() => {
-          if (typeof window !== 'undefined') {
-            window.location.search = '?view=map';
-          }
-        }}
-      />
+      <React.Suspense fallback={<PageFallback />}>
+        <SchoolSafetyContainer
+          onBackToMap={() => {
+            if (typeof window !== 'undefined') {
+              window.location.search = '?view=map';
+            }
+          }}
+        />
+      </React.Suspense>
     );
   }
 
   // Render Full-Screen Cinematic Pollutant Documentary Experience when active
   if (documentaryState.isOpen) {
     return (
-      <PollutantDocumentary
-        pollutantId={documentaryState.pollutantId}
-        onBack={handleCloseDocumentary}
-        onSelectPollutant={handleDocumentarySelectPollutant}
-      />
+      <React.Suspense fallback={<PageFallback />}>
+        <PollutantDocumentary
+          pollutantId={documentaryState.pollutantId}
+          onBack={handleCloseDocumentary}
+          onSelectPollutant={handleDocumentarySelectPollutant}
+        />
+      </React.Suspense>
     );
   }
 
@@ -279,7 +289,9 @@ export default function App() {
     return (
       <div style={{ width: '100vw', height: '100vh', background: '#070a12', overflow: 'hidden' }}>
         <MapErrorBoundary>
-          <DelhiAqiHeatmap />
+          <React.Suspense fallback={<PageFallback />}>
+            <DelhiAqiHeatmap />
+          </React.Suspense>
         </MapErrorBoundary>
         {isGlobalMonitorOpen && (
           <React.Suspense fallback={null}>
@@ -297,11 +309,13 @@ export default function App() {
   if (activePollutant) {
     return (
       <>
-        <PollutantDetailPage
-          pollutantId={activePollutant}
-          onBack={handleBackToTruck}
-          onSelectPollutant={handleSelectPollutant}
-        />
+        <React.Suspense fallback={<PageFallback />}>
+          <PollutantDetailPage
+            pollutantId={activePollutant}
+            onBack={handleBackToTruck}
+            onSelectPollutant={handleSelectPollutant}
+          />
+        </React.Suspense>
         {isGlobalMonitorOpen && (
           <React.Suspense fallback={null}>
             <AutonomousMonitorModal
@@ -327,17 +341,21 @@ export default function App() {
         {activeMobileTab === 'map' && (
           <div style={{ width: '100%', height: '100vh', position: 'relative', overflow: 'hidden' }}>
             <MapErrorBoundary>
-              <DelhiAqiHeatmap onDrawerChange={setIsMapDrawerOpen} />
+              <React.Suspense fallback={<PageFallback />}>
+                <DelhiAqiHeatmap onDrawerChange={setIsMapDrawerOpen} />
+              </React.Suspense>
             </MapErrorBoundary>
           </div>
         )}
 
         {activeMobileTab === 'cargo' && (
           <div style={{ paddingBottom: '74px' }}>
-            <AtmosphericCargoTruck
-              onSelectPollutant={handleSelectPollutant}
-              onOpenDocumentary={handleOpenDocumentary}
-            />
+            <React.Suspense fallback={<PageFallback />}>
+              <AtmosphericCargoTruck
+                onSelectPollutant={handleSelectPollutant}
+                onOpenDocumentary={handleOpenDocumentary}
+              />
+            </React.Suspense>
           </div>
         )}
 
@@ -404,16 +422,20 @@ export default function App() {
 
       {/* 2. MODERN AQI SPATIAL HEATMAP OF DELHI */}
       <div ref={heatmapRef}>
-        <MapErrorBoundary>
-          <DelhiAqiHeatmap />
-        </MapErrorBoundary>
+        <LazySection minHeight="780px">
+          <MapErrorBoundary>
+            <DelhiAqiHeatmap />
+          </MapErrorBoundary>
+        </LazySection>
       </div>
 
       {/* 3. ATMOSPHERIC LOGISTICS & MASS CARGO TRUCK */}
-      <AtmosphericCargoTruck
-        onSelectPollutant={handleSelectPollutant}
-        onOpenDocumentary={handleOpenDocumentary}
-      />
+      <LazySection minHeight="100vh" id="atmospheric-cargo-placeholder">
+        <AtmosphericCargoTruck
+          onSelectPollutant={handleSelectPollutant}
+          onOpenDocumentary={handleOpenDocumentary}
+        />
+      </LazySection>
 
       {/* Autonomous Atmospheric Shield & Emergency Monitor Test Bench */}
       {isGlobalMonitorOpen && (

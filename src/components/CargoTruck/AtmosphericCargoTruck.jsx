@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   Truck,
   AlertTriangle,
@@ -6,6 +6,7 @@ import {
   Radio,
   Wind
 } from 'lucide-react';
+import useInView from '../../hooks/useInView';
 import './AtmosphericCargoTruck.css';
 
 // Master Indian Pollutants Specification (NAAQS Benchmark Standards)
@@ -157,6 +158,9 @@ const PRESETS = {
 };
 
 export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumentary }) {
+  const sectionRef = useRef(null);
+  // Infinite CSS animations are paused while the section is off screen
+  const sectionInView = useInView(sectionRef);
   const [activePreset, setActivePreset] = useState('india_avg');
   const [pollutantValues, setPollutantValues] = useState(PRESETS.india_avg.values);
   const [selectedPollutantId, setSelectedPollutantId] = useState('pm25');
@@ -305,12 +309,16 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
   };
 
   // Geometry configuration based on user-provided master truck (2095x751)
-  const truckImageSrc = '/assets/truck_cargo_master.png';
+  const truckImageSrc = '/assets/truck_cargo_master.webp';
   const truckAspectRatio = '2095 / 751';
   const deckStyle = { left: '34.37%', width: '60.14%', bottom: '48.34%' };
 
   return (
-    <section className="cargo-section" id="atmospheric-cargo-section">
+    <section
+      ref={sectionRef}
+      className={`cargo-section${sectionInView ? '' : ' cargo-section--offscreen'}`}
+      id="atmospheric-cargo-section"
+    >
       {/* 1. Seamless Atmospheric Gradient Bridge (Connecting map to 3rd page with zero harsh seam) */}
       <div className="cargo-transition-bridge" aria-hidden="true" />
       <div className="cargo-ambient-grid" aria-hidden="true" />

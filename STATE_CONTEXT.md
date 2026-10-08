@@ -1,7 +1,7 @@
 # DELHI AQI SPATIAL STATE SNAPSHOT
-- Generated At: 2026-10-08T05:17:00.000Z
-- User Location: Anand Vihar, Delhi, Delhi
-- User Estimated AQI: 167 (Uncapped PM2.5: 87.3 µg/m³)
+- Generated At: 2026-10-08T05:32:07.824Z
+- User Location: Ganga Lake, Itanagar, Arunachal Pradesh
+- User Estimated AQI: 41 (Uncapped PM2.5: 9.8 µg/m³)
 - Nearest Monitoring Station: DTU (1.8 km)
 - Dominant Pollutant: PM2.5
 - Active Sources: Open-Meteo (Active), CPCB/CAAQMS Ground Stations (Active)

@@ -672,7 +672,8 @@ function getAqiColor(val, activeRange, pollutant = 'aqi') {
 export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
-  const markersRef = useRef([]);
+  const syncStationPinsRef = useRef(null);
+  const isSectionOnScreenRef = useRef(true);
   const userMarkerRef = useRef(null);
   const targetMarkerRef = useRef(null);
   const lastInspectedCoordsRef = useRef(null);
@@ -877,7 +878,9 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
   const [showStationPins, setShowStationPins] = useState(false);
   const [showHeatmapLayer, setShowHeatmapLayer] = useState(true);
   const [showStateBorders, setShowStateBorders] = useState(true);
-  const [is3DBuildings, setIs3DBuildings] = useState(true);
+  // 3D extrusions are one of the costliest Mapbox layers; opt-in rather than on by default
+  const [is3DBuildings, setIs3DBuildings] = useState(false);
+  const is3DBuildingsRef = useRef(false);
 
   const showStateBordersRef = useRef(showStateBorders);
   showStateBordersRef.current = showStateBorders;
@@ -889,7 +892,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
   // Dynamic Zoom-Adaptive Contrast Calibration State
   const [isAdaptiveMode, setIsAdaptiveMode] = useState(true);
-  const [currentZoom, setCurrentZoom] = useState(4.6);
+  const currentZoomRef = useRef(4.6);
+  const mapMovementTimerRef = useRef(null);
   const [activeRange, setActiveRange] = useState({
     min: 40,
     max: 260,
@@ -947,7 +951,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     }
 
     const zoom = map.getZoom();
-    setCurrentZoom(Math.round(zoom * 10) / 10);
+    currentZoomRef.current = Math.round(zoom * 10) / 10;
     const bounds = map.getBounds();
     const currentPollutant = activePollutantRef.current || 'aqi';
     const isCo = currentPollutant === 'co';
@@ -1589,7 +1593,18 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     // Smooth cubic easing for fluid acceleration and deceleration
     const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
+    let pausedSince = null;
     const orbitStep = (timestamp) => {
+      // Hold the orbit (no camera moves, so no map renders) while scrolled away or tab hidden
+      if (!isSectionOnScreenRef.current || document.hidden) {
+        if (pausedSince === null) pausedSince = timestamp;
+        orbitAnimIdRef.current = requestAnimationFrame(orbitStep);
+        return;
+      }
+      if (pausedSince !== null) {
+        if (startTime) startTime += timestamp - pausedSince;
+        pausedSince = null;
+      }
       if (!startTime) startTime = timestamp;
       const elapsed = timestamp - startTime;
       const progress = Math.min(1, elapsed / orbitDuration);
@@ -2133,7 +2148,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             source: buildingSource,
             'source-layer': 'building',
             type: 'fill-extrusion',
-            minzoom: 13.5,
+            minzoom: 15,
+            layout: { visibility: is3DBuildingsRef.current ? 'visible' : 'none' },
             paint: {
               'fill-extrusion-color': [
                 'interpolate', ['linear'],
@@ -2273,6 +2289,32 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
       // 7. Click Anywhere in India to Pinpoint Inspect Micro-Zone AQI
       map.on('click', (e) => {
+        // A click on a visible station pin selects that station instead of inspecting the raster
+        if (map.getLayoutProperty('station-pins', 'visibility') === 'visible') {
+          const hitBox = [[e.point.x - 10, e.point.y - 10], [e.point.x + 10, e.point.y + 10]];
+          const hit = map.queryRenderedFeatures(hitBox, { layers: ['station-pins'] })[0];
+          const st = hit && (stationsRef.current || []).find((item) => item.id === hit.properties.id);
+          if (st) {
+            setSelectedStation(st);
+            setInspectedPoint({
+              lat: st.lat,
+              lon: st.lon,
+              aqi: st.aqi,
+              pm25: st.pm25,
+              pm10: st.pm10,
+              no2: st.no2 != null ? Number(st.no2) : 24,
+              so2: st.so2 != null ? Number(st.so2) : 10,
+              co: st.co != null ? Number(st.co) : 0.8,
+              o3: st.o3 != null ? Number(st.o3) : 30,
+              nearestStation: st.name,
+              nearestState: st.state || st.zone || 'India',
+              distanceKm: 0,
+              label: `${st.name} Monitoring Station`,
+            });
+            setIsSidebarOpen(true);
+            return;
+          }
+        }
         const { lng, lat } = e.lngLat;
         const currentStations = stationsRef.current && stationsRef.current.length > 0 ? stationsRef.current : initialIndiaStations;
         let nearest = currentStations[0];
@@ -2353,31 +2395,18 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
       mapInstanceRef.current = map;
 
-      // Real-time Viewport & Zoom listener for continuous dynamic palette recalibration
-      let throttleTimer = null;
-      const handleViewportChange = () => {
-        if (isOrbitingRef.current) return; // Completely skip expensive raster recalculation during 360° spin!
-        if (throttleTimer) return;
-        throttleTimer = setTimeout(() => {
-          throttleTimer = null;
+      // Only regenerate the heatmap after the user finishes moving the map (moveend/zoomend)
+      const handleMovementEnd = () => {
+        if (isOrbitingRef.current) return;
+        if (mapMovementTimerRef.current) clearTimeout(mapMovementTimerRef.current);
+        mapMovementTimerRef.current = setTimeout(() => {
+          mapMovementTimerRef.current = null;
           updateRasterForViewport();
-        }, 40);
+        }, 50);
       };
 
-      map.on('move', handleViewportChange);
-      map.on('zoom', handleViewportChange);
-      map.on('moveend', () => {
-        if (isOrbitingRef.current) return;
-        if (throttleTimer) clearTimeout(throttleTimer);
-        throttleTimer = null;
-        updateRasterForViewport();
-      });
-      map.on('zoomend', () => {
-        if (isOrbitingRef.current) return;
-        if (throttleTimer) clearTimeout(throttleTimer);
-        throttleTimer = null;
-        updateRasterForViewport();
-      });
+      map.on('moveend', handleMovementEnd);
+      map.on('zoomend', handleMovementEnd);
 
       // Pause follow-mode and stop 360 tour when user manually drags, rotates, or interacts with the map
       const handleUserGesture = () => {
@@ -2393,6 +2422,87 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       map.on('wheel', handleUserGesture);
       map.on('touchstart', handleUserGesture);
 
+      // Station pins: GPU-rendered circle layers on the existing GeoJSON source (no DOM markers).
+      // Hidden until the user enables pins; syncStationPinsRef applies visibility + selection state.
+      map.addSource('selected-station-source', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+      const pinRadius = (small, mid, large) => ['interpolate', ['linear'], ['zoom'], 3, small, 10, mid, 14, large];
+      map.addLayer({
+        id: 'station-pin-halo',
+        type: 'circle',
+        source: 'aqi-stations',
+        layout: { visibility: 'none' },
+        paint: {
+          'circle-radius': pinRadius(7, 10, 13),
+          'circle-color': '#000000',
+          'circle-opacity': 0.45,
+          'circle-blur': 0.8,
+          'circle-translate': [0, 1.5],
+        },
+      });
+      map.addLayer({
+        id: 'station-pins',
+        type: 'circle',
+        source: 'aqi-stations',
+        layout: { visibility: 'none' },
+        paint: {
+          'circle-radius': pinRadius(4.5, 7, 9),
+          'circle-color': '#e11d48',
+          'circle-stroke-color': 'rgba(255, 255, 255, 0.85)',
+          'circle-stroke-width': 1.2,
+        },
+      });
+      map.addLayer({
+        id: 'station-pin-core',
+        type: 'circle',
+        source: 'aqi-stations',
+        layout: { visibility: 'none' },
+        paint: {
+          'circle-radius': pinRadius(1.6, 2.6, 3.4),
+          'circle-color': '#ffe4e6',
+        },
+      });
+      map.addLayer({
+        id: 'selected-station-pin',
+        type: 'circle',
+        source: 'selected-station-source',
+        layout: { visibility: 'none' },
+        paint: {
+          'circle-radius': 12,
+          'circle-color': ['get', 'color'],
+          'circle-stroke-color': '#ffffff',
+          'circle-stroke-width': 2.2,
+        },
+      });
+      map.addLayer({
+        id: 'selected-station-label',
+        type: 'symbol',
+        source: 'selected-station-source',
+        layout: {
+          visibility: 'none',
+          'text-field': ['get', 'label'],
+          'text-size': 12,
+          'text-offset': [0, 1.5],
+          'text-anchor': 'top',
+          'text-allow-overlap': true,
+          'text-ignore-placement': true,
+        },
+        paint: {
+          'text-color': ['get', 'color'],
+          'text-halo-color': 'rgba(15, 23, 42, 0.96)',
+          'text-halo-width': 2.4,
+        },
+      });
+      map.on('mouseenter', 'station-pins', () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+      map.on('mouseleave', 'station-pins', () => {
+        map.getCanvas().style.cursor = '';
+      });
+      syncStationPinsRef.current?.();
+
       if (pendingSearchTargetRef.current) {
         const queuedTarget = pendingSearchTargetRef.current;
         pendingSearchTargetRef.current = null;
@@ -2407,8 +2517,10 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
     return () => {
       cancelCinematic360TourRef.current?.();
-      markersRef.current.forEach((m) => m.remove());
-      markersRef.current = [];
+      if (mapMovementTimerRef.current) {
+        clearTimeout(mapMovementTimerRef.current);
+        mapMovementTimerRef.current = null;
+      }
       if (userMarkerRef.current) {
         userMarkerRef.current.remove();
         userMarkerRef.current = null;
@@ -2492,8 +2604,18 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     );
 
     observer.observe(sectionContainerRef.current);
+
+    // Separate lightweight observer: lets the orbit animation idle while the map is off screen
+    const visibilityObserver = new IntersectionObserver(
+      (entries) => {
+        isSectionOnScreenRef.current = entries[entries.length - 1].isIntersecting;
+      },
+      { threshold: 0 }
+    );
+    visibilityObserver.observe(sectionContainerRef.current);
     return () => {
       observer.disconnect();
+      visibilityObserver.disconnect();
       window.removeEventListener('scroll', handleScrollSnapCheck);
     };
   }, [triggerMapActivation]);
@@ -2543,165 +2665,45 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
   // Toggle 3D Buildings visibility
   useEffect(() => {
+    is3DBuildingsRef.current = is3DBuildings;
     const map = mapInstanceRef.current;
     if (!map || !map.getLayer('3d-buildings')) return;
     map.setLayoutProperty('3d-buildings', 'visibility', is3DBuildings ? 'visible' : 'none');
   }, [is3DBuildings]);
 
-  // Update HTML Station Markers across all of India
-  useEffect(() => {
+  // Station pins render as Mapbox circle layers. This only toggles visibility and refreshes the
+  // single-feature "selected station" source, so pan/zoom range changes never rebuild DOM.
+  const syncStationPins = useCallback(() => {
     const map = mapInstanceRef.current;
-    if (!map) return;
+    if (!map || !mapLoadedRef.current) return;
 
-    // Clear old markers
-    markersRef.current.forEach((m) => m.remove());
-    markersRef.current = [];
-
-    if (!showStationPins) return;
-
-    stations.forEach((st) => {
-      const isSelected = selectedStation?.id === st.id;
-
-      // Outer wrapper element given to Mapbox - MUST NOT have style.transform mutated to avoid coordinate displacement!
-      const el = document.createElement('div');
-      el.className = 'mapbox-station-pin-wrap';
-      el.style.cursor = 'pointer';
-
-      // Inner container for scale, hover animations, and SVG content
-      const inner = document.createElement('div');
-      inner.style.display = 'flex';
-      inner.style.flexDirection = 'column';
-      inner.style.alignItems = 'center';
-      inner.style.transformOrigin = 'bottom center';
-      inner.style.transition = 'transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)';
-      inner.style.transform = isSelected ? 'scale(1.2)' : 'scale(1)';
-
-      inner.innerHTML = `
-        <div style="
-          filter: drop-shadow(0 4px 10px rgba(0,0,0,0.65));
-          transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-        ">
-          <svg width="${isSelected ? '26' : '20'}" height="${isSelected ? '36' : '28'}" viewBox="0 0 28 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <radialGradient id="shadow-${st.id}" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="#000000" stop-opacity="0.75" />
-                <stop offset="60%" stop-color="#000000" stop-opacity="0.3" />
-                <stop offset="100%" stop-color="#000000" stop-opacity="0" />
-              </radialGradient>
-              <radialGradient id="pinHead3D-${st.id}" cx="32%" cy="26%" r="68%">
-                <stop offset="0%" stop-color="#fda4af" />
-                <stop offset="22%" stop-color="#f43f5e" />
-                <stop offset="60%" stop-color="#e11d48" />
-                <stop offset="85%" stop-color="#9f1239" />
-                <stop offset="100%" stop-color="#4c0519" />
-              </radialGradient>
-              <linearGradient id="pinStem3D-${st.id}" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stop-color="#fb7185" />
-                <stop offset="28%" stop-color="#f43f5e" />
-                <stop offset="65%" stop-color="#be123c" />
-                <stop offset="100%" stop-color="#4c0519" />
-              </linearGradient>
-              <linearGradient id="glossGrad-${st.id}" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
-                <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
-              </linearGradient>
-              <radialGradient id="lensCore-${st.id}" cx="35%" cy="32%" r="65%">
-                <stop offset="0%" stop-color="#ffffff" />
-                <stop offset="40%" stop-color="#f1f5f9" />
-                <stop offset="75%" stop-color="#cbd5e1" />
-                <stop offset="100%" stop-color="#64748b" />
-              </radialGradient>
-              <linearGradient id="tipMetal-${st.id}" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stop-color="#94a3b8" />
-                <stop offset="45%" stop-color="#ffffff" />
-                <stop offset="100%" stop-color="#475569" />
-              </linearGradient>
-            </defs>
-
-            <!-- 1. Ground Contact Shadow -->
-            <ellipse cx="14" cy="35.5" rx="7.5" ry="2.2" fill="url(#shadow-${st.id})" />
-
-            <!-- 2. Main 3D Pin Shell -->
-            <path d="M 14 34.5 L 5.1 17.5 A 10 10 0 1 1 22.9 17.5 Z" fill="url(#pinHead3D-${st.id})" stroke="rgba(255, 255, 255, 0.4)" stroke-width="0.75" />
-
-            <!-- 3. Lower Stem 3D Cylindrical Shadow Overlay -->
-            <path d="M 14 34.5 L 7.5 19.5 C 10 22.5 18 22.5 20.5 19.5 Z" fill="url(#pinStem3D-${st.id})" opacity="0.65" />
-
-            <!-- 4. Upper Specular Curved Gloss Arc -->
-            <ellipse cx="10.8" cy="8.8" rx="4.8" ry="2.4" transform="rotate(-30 10.8 8.8)" fill="url(#glossGrad-${st.id})" />
-
-            <!-- 5. 3D Beveled Lens Center Ring -->
-            <circle cx="14" cy="13" r="5.2" fill="#4c0519" opacity="0.65" />
-            <circle cx="14" cy="12.8" r="4.6" fill="#881337" opacity="0.85" />
-            <circle cx="14" cy="12.5" r="3.8" fill="url(#lensCore-${st.id})" />
-            <circle cx="14" cy="12.5" r="2.0" fill="#e11d48" />
-            <circle cx="13.3" cy="11.8" r="0.7" fill="#ffffff" opacity="0.9" />
-
-            <!-- 6. Sharp Chrome Needle Tip Glint -->
-            <polygon points="13.2,32 14.8,32 14,35" fill="url(#tipMetal-${st.id})" />
-          </svg>
-        </div>
-        ${isSelected ? (() => {
-          const stVal = getPollutantValue(st, activePollutant);
-          const stMeta = getPollutantMeta(stVal, activePollutant, activeRange);
-          return `
-          <div style="
-            margin-top: 2px;
-            background: rgba(15, 23, 42, 0.96);
-            backdrop-filter: blur(8px);
-            border: 1px solid ${stMeta.hex || '#f43f5e'};
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            color: #ffffff;
-            white-space: nowrap;
-            box-shadow: 0 4px 16px ${stMeta.hex ? stMeta.hex + '66' : 'rgba(244, 63, 94, 0.45)'};
-            pointer-events: none;
-          ">
-            ${st.name.split(',')[0].trim()}: <span style="color: ${stMeta.hex || '#f43f5e'}; font-weight: 800;">${activePollutant.toUpperCase()} ${stVal} ${stMeta.unit}</span>
-          </div>
-          `;
-        })() : ''}
-      `;
-
-      el.appendChild(inner);
-
-      // Safe hover animation targeting inner container so Mapbox coordinate transform is 100% preserved
-      el.addEventListener('mouseenter', () => {
-        inner.style.transform = 'scale(1.35)';
-      });
-      el.addEventListener('mouseleave', () => {
-        inner.style.transform = isSelected ? 'scale(1.2)' : 'scale(1)';
-      });
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        setSelectedStation(st);
-        setInspectedPoint({
-          lat: st.lat,
-          lon: st.lon,
-          aqi: st.aqi,
-          pm25: st.pm25,
-          pm10: st.pm10,
-          no2: st.no2 != null ? Number(st.no2) : 24,
-          so2: st.so2 != null ? Number(st.so2) : 10,
-          co: st.co != null ? Number(st.co) : 0.8,
-          o3: st.o3 != null ? Number(st.o3) : 30,
-          nearestStation: st.name,
-          nearestState: st.state || st.zone || 'India',
-          distanceKm: 0,
-          label: `${st.name} Monitoring Station`,
-        });
-        setIsSidebarOpen(true);
-      });
-
-      const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-        .setLngLat([st.lon, st.lat])
-        .addTo(map);
-
-      markersRef.current.push(marker);
+    const visibility = showStationPins ? 'visible' : 'none';
+    ['station-pin-halo', 'station-pins', 'station-pin-core', 'selected-station-pin', 'selected-station-label'].forEach((id) => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visibility);
     });
-  }, [stations, selectedStation, showStationPins, activePollutant, activeRange]);
+
+    const selectedSource = map.getSource('selected-station-source');
+    if (!selectedSource) return;
+    const features = [];
+    if (showStationPins && selectedStation) {
+      const stVal = getPollutantValue(selectedStation, activePollutant);
+      const stMeta = getPollutantMeta(stVal, activePollutant, activeRange);
+      features.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [selectedStation.lon, selectedStation.lat] },
+        properties: {
+          color: stMeta.hex || '#f43f5e',
+          label: `${selectedStation.name.split(',')[0].trim()}: ${activePollutant.toUpperCase()} ${stVal} ${stMeta.unit}`,
+        },
+      });
+    }
+    selectedSource.setData({ type: 'FeatureCollection', features });
+  }, [showStationPins, selectedStation, activePollutant, activeRange]);
+  syncStationPinsRef.current = syncStationPins;
+
+  useEffect(() => {
+    syncStationPins();
+  }, [syncStationPins]);
 
   // Update Pinpoint Target Marker with adaptive color updates on zoom without animation disruption
   useEffect(() => {

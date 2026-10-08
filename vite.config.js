@@ -16,25 +16,13 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        // Only Three.js is pinned (the hero needs it on load). Mapbox, jsPDF and app code are left to
+        // Rollup's dynamic-import splitting; pinning them drags Vite's preload helper into their chunk
+        // and makes the entry statically import (and modulepreload) the 1.8 MB Mapbox bundle.
         manualChunks(id) {
-          if (id.includes('pollutantDocumentaries') || id.includes('PollutantDocumentary')) {
-            return 'pollutant-documentary';
-          }
-          if (id.includes('three') || id.includes('@react-three')) {
-            return 'three-vendor';
-          }
-          if (id.includes('jspdf') || id.includes('html2canvas') || id.includes('PetitionModal') || id.includes('pdfGenerator')) {
-            return 'pdf-vendor';
-          }
-          if (id.includes('mapbox-gl')) {
-            return 'mapbox-vendor';
-          }
-          if (id.includes('schoolsDirectory') || id.includes('delhiBoundary') || id.includes('indiaBoundary') || id.includes('indiaStations')) {
-            return 'geo-data';
-          }
-          if (id.includes('AutonomousMonitorModal')) {
-            return 'monitor-vendor';
-          }
+          if (!id.includes('node_modules')) return undefined;
+          if (/node_modules[\/](three|@react-three)[\/]/.test(id)) return 'three-vendor';
+          return undefined;
         },
       },
     },

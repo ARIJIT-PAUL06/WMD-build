@@ -56,7 +56,7 @@ export const POLLUTANT_DOCUMENTARY_ENVIRONMENTS = {
     sourceContext: 'HEAVY DIESEL FREIGHT TRANSPORT',
     environmentContext: 'Outer Ring Road, Delhi NCR // Winter Inversion Corridor',
     visualCaption: 'Heavy commercial hauler operating through morning particulate haze',
-    vehicleImage: '/assets/documentary/vehicles/indian_pm25_truck.jpg',
+    vehicleImage: '/assets/documentary/vehicles/indian_pm25_truck.webp',
     storyBeats: [
       {
         question: 'WHAT IS PM2.5?',
@@ -82,7 +82,7 @@ export const POLLUTANT_DOCUMENTARY_ENVIRONMENTS = {
     sourceContext: 'CONSTRUCTION DUST & ROAD RESUSPENSION',
     environmentContext: 'Dwarka Expressway & Urban Infrastructure Corridor, Delhi NCR',
     visualCaption: 'Civil infrastructure transport churning mechanical dust along unpaved corridor',
-    vehicleImage: '/assets/documentary/vehicles/indian_pm10_tipper.jpg',
+    vehicleImage: '/assets/documentary/vehicles/indian_pm10_tipper.webp',
     storyBeats: [
       {
         question: 'WHAT IS PM10?',
@@ -108,7 +108,7 @@ export const POLLUTANT_DOCUMENTARY_ENVIRONMENTS = {
     sourceContext: 'HIGH-DENSITY URBAN COMMUTER TRAFFIC',
     environmentContext: 'Inner Ring Road & Arterial Flyover Corridors, Delhi NCR',
     visualCaption: 'Urban transit buses and dense commuter stream in high-density corridor',
-    vehicleImage: '/assets/documentary/vehicles/indian_no2_traffic.jpg',
+    vehicleImage: '/assets/documentary/vehicles/indian_no2_traffic.webp',
     storyBeats: [
       {
         question: 'WHAT IS NO2?',
@@ -134,7 +134,7 @@ export const POLLUTANT_DOCUMENTARY_ENVIRONMENTS = {
     sourceContext: 'INDUSTRIAL LOGISTICS & HEAVY FUEL TRANSPORT',
     environmentContext: 'Industrial Infrastructure & Thermal Power Belt, Delhi NCR',
     visualCaption: 'Industrial logistics hauler operating near manufacturing and thermal generation zone',
-    vehicleImage: '/assets/documentary/vehicles/indian_so2_industrial.jpg',
+    vehicleImage: '/assets/documentary/vehicles/indian_so2_industrial.webp',
     storyBeats: [
       {
         question: 'WHAT IS SO2?',
@@ -160,7 +160,7 @@ export const POLLUTANT_DOCUMENTARY_ENVIRONMENTS = {
     sourceContext: 'IDLING TRAFFIC & SUB-GRADE URBAN CANYONS',
     environmentContext: 'Barapullah Concrete Underpass & Elevated Corridors, Delhi NCR',
     visualCaption: 'Multi-modal commuter traffic idling beneath concrete urban flyover underpass',
-    vehicleImage: '/assets/documentary/vehicles/indian_co_underpass.jpg',
+    vehicleImage: '/assets/documentary/vehicles/indian_co_underpass.webp',
     storyBeats: [
       {
         question: 'WHAT IS CO?',
@@ -186,7 +186,7 @@ export const POLLUTANT_DOCUMENTARY_ENVIRONMENTS = {
     sourceContext: 'HIGHWAY PRECURSORS & PHOTOCHEMICAL REACTION',
     environmentContext: 'Peripheral Expressway Arterial // High Solar Irradiance Corridor',
     visualCaption: 'Highway transit cruising under expansive sunlit tropospheric layer',
-    vehicleImage: '/assets/documentary/vehicles/indian_o3_sky.jpg',
+    vehicleImage: '/assets/documentary/vehicles/indian_o3_sky.webp',
     storyBeats: [
       {
         question: 'WHAT IS O3?',
@@ -212,7 +212,7 @@ export const POLLUTANT_DOCUMENTARY_ENVIRONMENTS = {
     sourceContext: 'AGRARIAN EMISSIONS & RURAL LOGISTICS',
     environmentContext: 'Northern Agrarian Belt & Rural Transport Corridors, Delhi NCR',
     visualCaption: 'Agricultural tractor and logistics transport traversing rural field roads',
-    vehicleImage: '/assets/documentary/vehicles/indian_nh3_tractor.jpg',
+    vehicleImage: '/assets/documentary/vehicles/indian_nh3_tractor.webp',
     storyBeats: [
       {
         question: 'WHAT IS NH3?',
@@ -244,8 +244,8 @@ export const INDIAN_VEHICLE_PROFILES = POLLUTANT_DOCUMENTARY_ENVIRONMENTS;
    ========================================================================== */
 export const POLLUTANT_CINEMATIC_THEMES = {
   pm25: {
-    heroImage: '/assets/documentary/vehicles/indian_pm25_truck.jpg',
-    secondaryImage: '/assets/documentary/evidence_combustion.jpg',
+    heroImage: '/assets/documentary/vehicles/indian_pm25_truck.webp',
+    secondaryImage: '/assets/documentary/evidence_combustion.webp',
     accent: '#ef4444',
     accentGlow: 'rgba(239, 68, 68, 0.45)',
     moodClass: 'theme-pm25-haze',
@@ -256,8 +256,8 @@ export const POLLUTANT_CINEMATIC_THEMES = {
     ambientColor: 'rgba(239, 68, 68, 0.12)',
   },
   pm10: {
-    heroImage: '/assets/documentary/vehicles/indian_pm10_tipper.jpg',
-    secondaryImage: '/assets/documentary/evidence_traffic.jpg',
+    heroImage: '/assets/documentary/vehicles/indian_pm10_tipper.webp',
+    secondaryImage: '/assets/documentary/evidence_traffic.webp',
     accent: '#f59e0b',
     accentGlow: 'rgba(245, 158, 11, 0.45)',
     moodClass: 'theme-pm10-dust',
@@ -268,8 +268,8 @@ export const POLLUTANT_CINEMATIC_THEMES = {
     ambientColor: 'rgba(245, 158, 11, 0.12)',
   },
   no2: {
-    heroImage: '/assets/documentary/vehicles/indian_no2_traffic.jpg',
-    secondaryImage: '/assets/documentary/evidence_traffic.jpg',
+    heroImage: '/assets/documentary/vehicles/indian_no2_traffic.webp',
+    secondaryImage: '/assets/documentary/evidence_traffic.webp',
     accent: '#f97316',
     accentGlow: 'rgba(249, 115, 22, 0.45)',
     moodClass: 'theme-no2-combustion',
@@ -280,8 +280,8 @@ export const POLLUTANT_CINEMATIC_THEMES = {
     ambientColor: 'rgba(249, 115, 22, 0.12)',
   },
   so2: {
-    heroImage: '/assets/documentary/vehicles/indian_so2_industrial.jpg',
-    secondaryImage: '/assets/documentary/evidence_combustion.jpg',
+    heroImage: '/assets/documentary/vehicles/indian_so2_industrial.webp',
+    secondaryImage: '/assets/documentary/evidence_combustion.webp',
     accent: '#eab308',
     accentGlow: 'rgba(234, 179, 8, 0.45)',
     moodClass: 'theme-so2-sulfur',
@@ -292,8 +292,8 @@ export const POLLUTANT_CINEMATIC_THEMES = {
     ambientColor: 'rgba(234, 179, 8, 0.12)',
   },
   co: {
-    heroImage: '/assets/documentary/vehicles/indian_co_underpass.jpg',
-    secondaryImage: '/assets/documentary/delhi_night_corridor.jpg',
+    heroImage: '/assets/documentary/vehicles/indian_co_underpass.webp',
+    secondaryImage: '/assets/documentary/delhi_night_corridor.webp',
     accent: '#dc2626',
     accentGlow: 'rgba(220, 38, 38, 0.45)',
     moodClass: 'theme-co-carbon',
@@ -304,8 +304,8 @@ export const POLLUTANT_CINEMATIC_THEMES = {
     ambientColor: 'rgba(220, 38, 38, 0.12)',
   },
   o3: {
-    heroImage: '/assets/documentary/vehicles/indian_o3_sky.jpg',
-    secondaryImage: '/assets/documentary/delhi_dawn_hero.jpg',
+    heroImage: '/assets/documentary/vehicles/indian_o3_sky.webp',
+    secondaryImage: '/assets/documentary/delhi_dawn_hero.webp',
     accent: '#06b6d4',
     accentGlow: 'rgba(6, 182, 212, 0.45)',
     moodClass: 'theme-o3-photochemical',
@@ -316,8 +316,8 @@ export const POLLUTANT_CINEMATIC_THEMES = {
     ambientColor: 'rgba(6, 182, 212, 0.12)',
   },
   nh3: {
-    heroImage: '/assets/documentary/vehicles/indian_nh3_tractor.jpg',
-    secondaryImage: '/assets/documentary/evidence_industry.jpg',
+    heroImage: '/assets/documentary/vehicles/indian_nh3_tractor.webp',
+    secondaryImage: '/assets/documentary/evidence_industry.webp',
     accent: '#10b981',
     accentGlow: 'rgba(16, 185, 129, 0.45)',
     moodClass: 'theme-nh3-agricultural',
@@ -1246,7 +1246,7 @@ export default function PollutantDocumentary({
               <div className="school-dossier-grid">
                 <div className="school-photo-mount">
                   <img
-                    src="/assets/documentary/evidence_school.jpg"
+                    src="/assets/documentary/evidence_school.webp"
                     alt="Delhi School Environment"
                     className="school-evidence-img"
                     loading="lazy"
