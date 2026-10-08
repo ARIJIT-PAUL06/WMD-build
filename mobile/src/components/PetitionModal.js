@@ -142,7 +142,7 @@ export default function PetitionModal({
           setSelectedAuthority(data.authorities[0]);
         }
         if (data.standardDemands?.length > 0 && selectedDemands.length === 0) {
-          setSelectedDemands(data.standardDemands.slice(0, 3));
+          setSelectedDemands(data.standardDemands.slice(0, 3).map((d) => d.text));
         }
       } catch (err) {
         setAuthoritiesError(err.message || 'Unable to load authorities directory');
@@ -988,16 +988,16 @@ export default function PetitionModal({
 
               {/* Standard Demands */}
               <Text style={[styles.inputLabel, { marginTop: 18 }]}>STATUTORY REMEDIATION DEMANDS</Text>
-              {standardDemands.map((demand, idx) => {
-                const isChecked = selectedDemands.includes(demand);
+              {standardDemands.map((demand) => {
+                const isChecked = selectedDemands.includes(demand.text);
                 return (
                   <TouchableOpacity
-                    key={idx}
+                    key={demand.id}
                     onPress={() => {
                       if (isChecked) {
-                        setSelectedDemands(selectedDemands.filter((d) => d !== demand));
+                        setSelectedDemands(selectedDemands.filter((d) => d !== demand.text));
                       } else {
-                        setSelectedDemands([...selectedDemands, demand]);
+                        setSelectedDemands([...selectedDemands, demand.text]);
                       }
                     }}
                     style={styles.demandItem}
@@ -1008,7 +1008,7 @@ export default function PetitionModal({
                       color={isChecked ? '#00f0ff' : '#64748b'}
                     />
                     <Text style={[styles.demandText, isChecked && styles.demandTextChecked]}>
-                      {demand}
+                      {demand.label ? `${demand.label}: ` : ''}{demand.text}
                     </Text>
                   </TouchableOpacity>
                 );
