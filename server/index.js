@@ -51,12 +51,38 @@ app.use((req, res, next) => {
   next();
 });
 
+// Root & Health check endpoints
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ONLINE',
+    service: 'VayuVitals API',
+    version: '2.0.0',
+    endpoints: {
+      health: '/api/health',
+      awsStatus: '/api/aws-status',
+      airQuality: '/api/air-quality?city=Delhi',
+      indiaHeatmap: '/api/india-heatmap',
+      monitorStatus: '/api/monitor/status'
+    }
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'HEALTHY',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 /**
  * Health check & AWS Configuration Status
  * Transparently checks and reports live AWS status without masking errors.
  */
 app.get('/api/aws-status', async (req, res) => {
-  const hasCreds = Boolean(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
+  const accessKey = process.env.APP_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
+  const secretKey = process.env.APP_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+  const hasCreds = Boolean(accessKey && secretKey);
   const region = process.env.AWS_REGION || 'ap-south-1';
   const dynamoDbTable = process.env.DYNAMODB_TABLE_NAME || 'AirQualityReadings';
   const sagemakerEndpoint = process.env.SAGEMAKER_ENDPOINT_NAME || 'wmd-delhi-48h-forecast-endpoint';
@@ -67,10 +93,11 @@ app.get('/api/aws-status', async (req, res) => {
   let bedrockStatus = 'UNAUTHORIZED_OR_NOT_CONFIGURED';
 
   if (hasCreds) {
+    const sessionToken = accessKey?.startsWith('ASIA') ? process.env.AWS_SESSION_TOKEN : undefined;
     const credentials = {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      ...(process.env.AWS_SESSION_TOKEN ? { sessionToken: process.env.AWS_SESSION_TOKEN } : {})
+      accessKeyId: accessKey,
+      secretAccessKey: secretKey,
+      ...(sessionToken ? { sessionToken } : {})
     };
 
     try {
@@ -914,6 +941,15 @@ app.post('/api/ses/verify-identity', async (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
+});
+
+// Catch-all 404 handler (prevents unhandled serverless-express on-finished error)
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Route not found',
+    path: req.originalUrl,
+    method: req.method
+  });
 });
 
 if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
