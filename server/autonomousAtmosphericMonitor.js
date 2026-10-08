@@ -37,6 +37,7 @@ import {
 } from './gridTelemetryService.js';
 import { getSchoolAqiForecast } from './sagemakerService.js';
 import { sendEmailViaSES } from './sesService.js';
+import { getMonitorStateFromDynamoDB, saveMonitorStateToDynamoDB } from './awsServices.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -70,7 +71,7 @@ let monitorState = {
   totalPredictiveAdvisoriesDispatched: 0
 };
 
-// Load persisted state if exists
+// Load persisted local disk state if exists
 try {
   if (fs.existsSync(STATE_FILE)) {
     const raw = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
@@ -80,9 +81,47 @@ try {
   // Fresh start
 }
 
-function persistState() {
+let isStateSyncedFromStorage = false;
+
+/**
+ * Synchronize state from DynamoDB across Lambda cold starts
+ */
+export async function syncStateFromStorage() {
+  if (isStateSyncedFromStorage) return;
+  try {
+    const ddbState = await getMonitorStateFromDynamoDB();
+    if (ddbState) {
+      monitorState = {
+        ...monitorState,
+        ...ddbState,
+        lastPredictiveAdvisoryByFacility: {
+          ...(monitorState.lastPredictiveAdvisoryByFacility || {}),
+          ...(ddbState.lastPredictiveAdvisoryByFacility || {})
+        },
+        lastEmergencySentByGrid: {
+          ...(monitorState.lastEmergencySentByGrid || {}),
+          ...(ddbState.lastEmergencySentByGrid || {})
+        },
+        lastPetitionSentByGrid: {
+          ...(monitorState.lastPetitionSentByGrid || {}),
+          ...(ddbState.lastPetitionSentByGrid || {})
+        }
+      };
+      isStateSyncedFromStorage = true;
+    }
+  } catch (err) {
+    console.warn('[AutonomousMonitor] Could not sync state from DynamoDB:', err.message);
+  }
+}
+
+async function persistState() {
   try {
     fs.writeFileSync(STATE_FILE, JSON.stringify(monitorState, null, 2));
+  } catch (e) {
+    // Non-fatal
+  }
+  try {
+    await saveMonitorStateToDynamoDB(monitorState);
   } catch (e) {
     // Non-fatal
   }
@@ -144,6 +183,15 @@ export async function runPredictiveAdvisoryEvaluation({
   ignoreDebounce = false,
   simulatedPm25 = null
 }) {
+  await syncStateFromStorage();
+
+  const isKillSwitchActive = process.env.DISABLE_AUTOMATIC_MAILING === 'true' || process.env.ENABLE_AUTONOMOUS_EMAIL_DISPATCH === 'false';
+  const shouldDispatchViaSes = Boolean(
+    dispatchViaSes &&
+    !isKillSwitchActive &&
+    (process.env.ENABLE_AUTONOMOUS_EMAIL_DISPATCH === 'true' || facilityId !== null)
+  );
+
   let allFacilities = getAllDirectoryFacilities().facilities;
   if (facilityId) {
     const single = allFacilities.find(f => f.id === facilityId);
@@ -201,60 +249,49 @@ export async function runPredictiveAdvisoryEvaluation({
       }
 
       // RULE 2: Inversion spike predicted. Build advisory and dispatch to institution's designated recipient.
-      // Pass the empirical ground base PM2.5 so the advisory starts from actual sensor telemetry
-      const advisory = await generate630Advisory({ facilityId: facility.id, basePm25: liveBasePm25 || peakArrival });
+      // Pass empirical liveBasePm25 so the advisory starts from actual sensor telemetry
+      const advisory = await generate630Advisory({ facilityId: facility.id, basePm25: liveBasePm25 });
       const actualRecipient = resolveRecipientForFacility(facility.id);
-      const commandCenterEmail = process.env.COMMAND_CENTRE_EMAIL || process.env.MONITOR_ALERT_RECIPIENT || 'psubai2006@gmail.com';
       const senderEmail = process.env.AWS_SES_VERIFIED_SENDER || process.env.SES_SENDER_EMAIL || 'vayuvitals@gmail.com';
 
       let sesResult = null;
-      if (dispatchViaSes) {
-        // 1. PRIMARY MONITORING REQUIREMENT: Always deliver advisory to psubai2006@gmail.com
-        sesResult = await sendEmailViaSES({
-          to: commandCenterEmail,
-          subject: sanitizeHeader(`[VayuVitals Forecast • ${facility.name}] ${advisory.emailPayload.subject}`),
-          htmlBody: advisory.emailPayload.html,
-          fromEmail: senderEmail
-        });
-
-        // 2. If mapped to another recipient, ALSO dispatch to them
-        if (actualRecipient && actualRecipient !== commandCenterEmail) {
-          try {
-            await sendEmailViaSES({
-              to: actualRecipient,
-              subject: sanitizeHeader(`[VayuVitals Forecast • ${facility.name}] ${advisory.emailPayload.subject}`),
-              htmlBody: advisory.emailPayload.html,
-              fromEmail: senderEmail
-            });
-          } catch (e) {
-            // Non-fatal
-          }
+      if (shouldDispatchViaSes) {
+        if (actualRecipient) {
+          sesResult = await sendEmailViaSES({
+            to: actualRecipient,
+            subject: sanitizeHeader(`[VayuVitals Forecast • ${facility.name}] ${advisory.emailPayload.subject}`),
+            htmlBody: advisory.emailPayload.html,
+            fromEmail: senderEmail
+          });
         }
       }
 
       monitorState.lastPredictiveAdvisoryByFacility[facility.id] = now;
       monitorState.totalPredictiveAdvisoriesDispatched++;
-      persistState();
+      await persistState();
 
       recordAudit('PREDICTIVE_ADVISORY_DISPATCHED', {
         facilityId: facility.id,
         facilityName: facility.name,
         predictedPeak: peakArrival,
         recipient: actualRecipient,
-        messageId: sesResult?.messageId || 'SANDBOX_MOCK'
+        messageId: sesResult?.messageId || (shouldDispatchViaSes ? 'SES_DISPATCHED' : 'SUPPRESSED_BY_SAFETY_GATE')
       });
 
       results.push({
         facilityId: facility.id,
         name: facility.name,
-        dispatched: true,
+        dispatched: shouldDispatchViaSes,
         predictedPeak: peakArrival,
         recipient: actualRecipient,
-        messageId: sesResult?.messageId
+        messageId: sesResult?.messageId,
+        note: shouldDispatchViaSes ? 'Dispatched' : 'Suppressed (Automated mailing disabled)'
       });
 
       // Polite spacing between SES dispatches
-      await new Promise(r => setTimeout(r, 400));
+      if (shouldDispatchViaSes) {
+        await new Promise(r => setTimeout(r, 400));
+      }
 
     } catch (err) {
       console.warn(`[AutonomousMonitor] Failed predictive eval for ${facility.name}:`, err.message);
@@ -262,6 +299,7 @@ export async function runPredictiveAdvisoryEvaluation({
     }
   }
 
+  await persistState();
   return results;
 }
 
@@ -279,8 +317,16 @@ export async function dispatchBlockEmergencySurge({
   isSandbox = true,
   ignoreDebounce = false
 }) {
+  await syncStateFromStorage();
   const safePm25 = Math.max(30, parseInt(currentPm25, 10) || 220);
   const safeGridId = sanitizeHeader(gridId);
+
+  const isKillSwitchActive = process.env.DISABLE_AUTOMATIC_MAILING === 'true' || process.env.ENABLE_AUTONOMOUS_EMAIL_DISPATCH === 'false';
+  const shouldDispatchViaSes = Boolean(
+    dispatchViaSes &&
+    !isKillSwitchActive &&
+    process.env.ENABLE_AUTONOMOUS_EMAIL_DISPATCH === 'true'
+  );
 
   // Check 3-Hour Debounce per Grid Block
   const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
@@ -305,7 +351,7 @@ export async function dispatchBlockEmergencySurge({
     };
   }
 
-  console.log(`[AutonomousMonitor] 🚨 Block ${safeGridId} SPIKE DETECTED (${safePm25} µg/m³)! Alerting ${enclosedFacilities.length} facilities...`);
+  console.log(`[AutonomousMonitor] 🚨 Block ${safeGridId} SPIKE DETECTED (${safePm25} µg/m³)! Alerting ${enclosedFacilities.length} facilities... (SES: ${shouldDispatchViaSes ? 'ENABLED' : 'DISABLED'})`);
 
   const dispatchResults = [];
 
@@ -317,7 +363,7 @@ export async function dispatchBlockEmergencySurge({
         currentPm25: safePm25,
         anomalyType,
         isSandbox,
-        dispatchViaSes,
+        dispatchViaSes: shouldDispatchViaSes,
         testEmail: targetEmail
       });
 
@@ -325,13 +371,14 @@ export async function dispatchBlockEmergencySurge({
         facilityId: facility.id,
         name: facility.name,
         facilityClass: facility.facilityClass,
-        status: emergency.dispatchRecord?.status || 'DISPATCHED',
+        status: emergency.dispatchRecord?.status || (shouldDispatchViaSes ? 'DISPATCHED' : 'SUPPRESSED_BY_SAFETY_GATE'),
         recipient: emergency.dispatchRecord?.actualRecipientSentTo,
         messageId: emergency.dispatchRecord?.sesResponse?.messageId
       });
 
-      // Polite spacing between SES dispatches
-      await new Promise(r => setTimeout(r, 350));
+      if (shouldDispatchViaSes) {
+        await new Promise(r => setTimeout(r, 350));
+      }
     } catch (err) {
       console.error(`[AutonomousMonitor] Failed alerting ${facility.name}:`, err.message);
       dispatchResults.push({ facilityId: facility.id, name: facility.name, error: err.message });
@@ -340,7 +387,7 @@ export async function dispatchBlockEmergencySurge({
 
   monitorState.lastEmergencySentByGrid[safeGridId] = Date.now();
   monitorState.totalEmergenciesDispatched++;
-  persistState();
+  await persistState();
 
   recordAudit('BLOCK_EMERGENCY_DISPATCHED', {
     gridId: safeGridId,
@@ -352,7 +399,7 @@ export async function dispatchBlockEmergencySurge({
 
   return {
     success: true,
-    dispatched: true,
+    dispatched: shouldDispatchViaSes,
     gridId: safeGridId,
     pm25: safePm25,
     facilitiesAlerted: dispatchResults.length,
@@ -373,6 +420,15 @@ export async function evaluate14DayChronicBlockPetitions({
   ignoreDebounce = false,
   forcePetition = false
 }) {
+  await syncStateFromStorage();
+
+  const isKillSwitchActive = process.env.DISABLE_AUTOMATIC_MAILING === 'true' || process.env.ENABLE_AUTONOMOUS_EMAIL_DISPATCH === 'false';
+  const shouldDispatchViaSes = Boolean(
+    dispatchViaSes &&
+    !isKillSwitchActive &&
+    process.env.ENABLE_AUTONOMOUS_EMAIL_DISPATCH === 'true'
+  );
+
   const dir = getAllDirectoryFacilities();
   let populatedGridIds = [...new Set(dir.facilities.map(f => f.gridId))];
   if (gridId) {
@@ -443,7 +499,7 @@ export async function evaluate14DayChronicBlockPetitions({
       const targetEmails = [...new Set(facilitiesInGrid.map(f => resolveRecipientForFacility(f.id)))];
       const targetEmail = targetEmails.length ? targetEmails[0] : (process.env.COMMAND_CENTRE_EMAIL || 'psubai2006@gmail.com');
       let sesMsgId = null;
-      if (dispatchViaSes) {
+      if (shouldDispatchViaSes) {
         const sesRes = await sendEmailViaSES({
           to: targetEmail,
           subject: sanitizeHeader(`[VayuVitals Legal Action] ⚖️ STATUTORY SECTION 10 NOTICE: 14-Day Severe Air Violation in Block ${gId}`),
@@ -455,25 +511,26 @@ export async function evaluate14DayChronicBlockPetitions({
 
       monitorState.lastPetitionSentByGrid[gId] = now;
       monitorState.totalPetitionsDispatched++;
-      persistState();
+      await persistState();
 
       recordAudit('14_DAY_PETITION_DISPATCHED', {
         gridId: gId,
         compliance,
         facilitiesCount: facilitiesInGrid.length,
-        messageId: sesMsgId
+        messageId: sesMsgId || (shouldDispatchViaSes ? 'SES_DISPATCHED' : 'SUPPRESSED_BY_SAFETY_GATE')
       });
 
       petitionResults.push({
         gridId: gId,
         compliance,
-        dispatched: true,
+        dispatched: shouldDispatchViaSes,
         facilitiesCount: facilitiesInGrid.length,
         messageId: sesMsgId
       });
     }
   }
 
+  await persistState();
   return petitionResults;
 }
 
@@ -483,11 +540,20 @@ export async function evaluate14DayChronicBlockPetitions({
  * Runs automatically in background or manually on-demand
  * ============================================================================
  */
-export async function runAutonomousMonitoringCycle({ dispatchViaSes = true, isSandbox = true } = {}) {
-  console.log(`[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #${monitorState.totalCyclesExecuted + 1}...`);
+export async function runAutonomousMonitoringCycle({ dispatchViaSes = false, isSandbox = true } = {}) {
+  await syncStateFromStorage();
+
+  const isKillSwitchActive = process.env.DISABLE_AUTOMATIC_MAILING === 'true' || process.env.ENABLE_AUTONOMOUS_EMAIL_DISPATCH === 'false';
+  const safeDispatch = Boolean(
+    dispatchViaSes &&
+    !isKillSwitchActive &&
+    process.env.ENABLE_AUTONOMOUS_EMAIL_DISPATCH === 'true'
+  );
+
+  console.log(`[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #${monitorState.totalCyclesExecuted + 1}... (SES Dispatch: ${safeDispatch ? 'ENABLED' : 'DISABLED'})`);
   monitorState.lastCycleAt = new Date().toISOString();
   monitorState.totalCyclesExecuted++;
-  persistState();
+  await persistState();
 
   const cycleReport = {
     cycleId: monitorState.totalCyclesExecuted,
@@ -495,7 +561,8 @@ export async function runAutonomousMonitoringCycle({ dispatchViaSes = true, isSa
     telemetrySync: null,
     emergencySurgesDetected: [],
     petitionsEvaluated: [],
-    predictiveAdvisoriesEvaluated: []
+    predictiveAdvisoriesEvaluated: [],
+    emailDispatchActive: safeDispatch
   };
 
   try {
@@ -510,7 +577,7 @@ export async function runAutonomousMonitoringCycle({ dispatchViaSes = true, isSa
           gridId: gridSync.gridId,
           currentPm25: gridSync.avgPm25,
           anomalyType: 'Live Planetary Boundary Layer Compression & Severe Inversion Trap',
-          dispatchViaSes,
+          dispatchViaSes: safeDispatch,
           isSandbox
         });
         if (emergencyResult.dispatched) {
@@ -520,7 +587,7 @@ export async function runAutonomousMonitoringCycle({ dispatchViaSes = true, isSa
     }
 
     // 3. Evaluate 14-Day Chronic Non-Compliance Petitions (Pillar 3)
-    const petitionResults = await evaluate14DayChronicBlockPetitions({ dispatchViaSes, isSandbox });
+    const petitionResults = await evaluate14DayChronicBlockPetitions({ dispatchViaSes: safeDispatch, isSandbox });
     cycleReport.petitionsEvaluated = petitionResults;
 
     // 4. If during early morning window (06:00 - 08:30 AM IST), run predictive morning advisory evaluation (Pillar 1)
@@ -529,7 +596,7 @@ export async function runAutonomousMonitoringCycle({ dispatchViaSes = true, isSa
     if (istHour >= 6 && istHour <= 8) {
       const advResults = await runPredictiveAdvisoryEvaluation({
         thresholdPm25: parseInt(process.env.ADVISORY_THRESHOLD_PM25, 10) || 90,
-        dispatchViaSes,
+        dispatchViaSes: safeDispatch,
         isSandbox,
         maxFacilities: 15
       });
@@ -543,6 +610,7 @@ export async function runAutonomousMonitoringCycle({ dispatchViaSes = true, isSa
     cycleReport.error = err.message;
   }
 
+  await persistState();
   return cycleReport;
 }
 

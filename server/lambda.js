@@ -12,13 +12,25 @@ export const handler = async (event, context) => {
     event.action === 'run-cycle'
   ) {
     console.log('[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...');
+
+    // STRICT KILL-SWITCH: Automated email dispatch is DISABLED by default.
+    // It requires explicit opt-in (ENABLE_AUTONOMOUS_EMAIL_DISPATCH === 'true') AND DISABLE_AUTOMATIC_MAILING !== 'true'.
+    const isAutoEmailEnabled =
+      process.env.ENABLE_AUTONOMOUS_EMAIL_DISPATCH === 'true' &&
+      process.env.DISABLE_AUTOMATIC_MAILING !== 'true';
+
+    if (!isAutoEmailEnabled) {
+      console.log('🛑 [Lambda] Automated email dispatch is DISABLED via safety configuration. Running zero-email monitoring cycle.');
+    }
+
     try {
-      const result = await runAutonomousMonitoringCycle({ dispatchViaSes: true, isSandbox: false });
+      const result = await runAutonomousMonitoringCycle({ dispatchViaSes: isAutoEmailEnabled, isSandbox: false });
       return {
         statusCode: 200,
         body: JSON.stringify({
           success: true,
           trigger: 'EVENTBRIDGE_CRON',
+          emailsDispatched: isAutoEmailEnabled,
           result
         })
       };

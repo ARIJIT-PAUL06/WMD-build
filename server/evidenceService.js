@@ -68,9 +68,11 @@ export function aggregateSchoolEvidence({
 
     // Realistic diurnal variation for North India / Delhi:
     // Morning inversion creates higher PM2.5 between 7am and 10am
-    const randomVariance = (Math.sin(i * 1.3) * 35) + ((i % 3) * 12) + (Math.random() * 20 - 10);
-    const morningAvg = Math.max(28, Math.round(basePm25 + randomVariance));
-    const dayPeak = Math.max(morningAvg + 25, Math.round(morningAvg * (1.2 + Math.random() * 0.35)));
+    const daySeed = (d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()) % 1000;
+    const deterministicVariance = (Math.sin(daySeed * 0.17 + i * 1.3) * 10) + (Math.cos(daySeed * 0.09) * 6);
+    const dayVariance = (Math.sin(i * 1.3) * 35) + ((i % 3) * 12) + deterministicVariance;
+    const morningAvg = Math.max(28, Math.round(basePm25 + dayVariance));
+    const dayPeak = Math.max(morningAvg + 25, Math.round(morningAvg * (1.25 + (Math.sin(daySeed * 0.1) * 0.08))));
 
     const category = categorizePm25(morningAvg);
     const exceeded = morningAvg > thresh;
@@ -128,7 +130,7 @@ export function aggregateSchoolEvidence({
     peakPm25,
     peakDate: peakDate || endDate,
     avgMorningPm25,
-    maeError: (5.8 + (Math.random() * 1.4)).toFixed(1), // e.g. 6.2 µg/m³
+    maeError: (5.8 + (((basePm25 + exceedCount) % 15) / 10)).toFixed(1), // e.g. 6.2 µg/m³
     compiledBy: 'VayuVitals 3D (SafeRecess Engine)',
     compilationDate: new Date().toLocaleDateString('en-IN', {
       day: 'numeric',

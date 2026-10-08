@@ -503,6 +503,7 @@ export async function getSchoolAqiForecast({
     },
     compliance14Day,
     threshold: targetThreshold,
+    currentBasePm25: currentBase,
     forecastHorizonHours: 48,
     executionMode,
     sagemakerStatus,

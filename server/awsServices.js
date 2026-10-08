@@ -265,6 +265,55 @@ function getRuleBasedAdvisory(metrics) {
   }
 }
 
+/**
+ * Retrieve persistent autonomous monitor state from DynamoDB
+ */
+export async function getMonitorStateFromDynamoDB() {
+  await initAwsClientsIfNeeded();
+  const tableName = process.env.DYNAMODB_TABLE_NAME || 'AirQualityReadings';
+  if (hasAwsCredentials && ddbDocClient) {
+    try {
+      const { GetCommand } = await import('@aws-sdk/lib-dynamodb');
+      const res = await ddbDocClient.send(new GetCommand({
+        TableName: tableName,
+        Key: { city: 'SYSTEM_MONITOR_STATE', timestamp: 'LATEST' }
+      }));
+      if (res && res.Item && res.Item.stateJson) {
+        return JSON.parse(res.Item.stateJson);
+      }
+    } catch (err) {
+      console.warn('[DynamoDB] Failed reading monitor state:', err.message);
+    }
+  }
+  return null;
+}
+
+/**
+ * Persist autonomous monitor state into DynamoDB across all Lambda cold starts
+ */
+export async function saveMonitorStateToDynamoDB(state) {
+  await initAwsClientsIfNeeded();
+  const tableName = process.env.DYNAMODB_TABLE_NAME || 'AirQualityReadings';
+  if (hasAwsCredentials && ddbDocClient) {
+    try {
+      const { PutCommand } = await import('@aws-sdk/lib-dynamodb');
+      await ddbDocClient.send(new PutCommand({
+        TableName: tableName,
+        Item: {
+          city: 'SYSTEM_MONITOR_STATE',
+          timestamp: 'LATEST',
+          stateJson: JSON.stringify(state),
+          updatedAt: new Date().toISOString()
+        }
+      }));
+      return true;
+    } catch (err) {
+      console.warn('[DynamoDB] Failed saving monitor state:', err.message);
+    }
+  }
+  return false;
+}
+
 function generateSyntheticHistory(city) {
   const now = Date.now();
   const items = [];
@@ -276,8 +325,8 @@ function generateSyntheticHistory(city) {
     const timestamp = now - i * 3600 * 1000;
     const hour = new Date(timestamp).getHours();
     const diurnalFactor = Math.sin((hour - 8) / 12 * Math.PI) * 0.25;
-    const noise = (Math.random() - 0.5) * 20;
-    const aqi = Math.max(20, Math.round(baseAqi * (1 + diurnalFactor) + noise));
+    // Deterministic diurnal variation without random jitter
+    const aqi = Math.max(20, Math.round(baseAqi * (1 + diurnalFactor)));
 
     let status = 'Moderate';
     if (aqi <= 50) status = 'Good';
@@ -295,10 +344,10 @@ function generateSyntheticHistory(city) {
       status,
       pm25: Math.round(aqi * 0.65),
       pm10: Math.round(aqi * 1.15),
-      no2: Math.round(35 + Math.random() * 25),
-      so2: Math.round(12 + Math.random() * 8),
-      o3: Math.round(28 + Math.random() * 15),
-      co: +(0.8 + Math.random() * 0.6).toFixed(1),
+      no2: Math.round(35 + Math.sin(hour / 12 * Math.PI) * 15),
+      so2: Math.round(12 + Math.cos(hour / 12 * Math.PI) * 5),
+      o3: Math.round(28 + Math.sin((hour - 12) / 12 * Math.PI) * 15),
+      co: +(0.8 + Math.max(0, Math.sin(hour / 12 * Math.PI)) * 0.4).toFixed(1),
       temp: Math.round(24 + Math.sin(hour / 24 * Math.PI * 2) * 6),
       humidity: Math.round(55 + Math.cos(hour / 24 * Math.PI * 2) * 15),
       source: 'DynamoDB Synced Archive',
@@ -306,3 +355,4 @@ function generateSyntheticHistory(city) {
   }
   return items;
 }
+

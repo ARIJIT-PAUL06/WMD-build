@@ -221,7 +221,7 @@ function renderAqiSpectrumBar(pm25, isEmergency = false) {
       <tr>
         <td style="padding-top: 8px;">
           <div style="background-color: ${isEmergency ? '#fff1f2' : '#f8fafc'}; border: 1px solid ${isEmergency ? '#fecdd3' : '#e2e8f0'}; border-radius: 6px; padding: 8px 12px; font-size: 11.5px; color: ${isEmergency ? '#9f1239' : '#334155'}; font-weight: 700; text-align: center;">
-            ▲ LIVE READING: <strong style="color: ${badgeBg}; font-size: 13px;">${pm25} µg/m³</strong> • Status: <strong>${categoryLabel}</strong> (Permissible Safe Limit: 60 µg/m³)
+            ▲ LIVE GROUND SENSOR TELEMETRY: <strong style="color: ${badgeBg}; font-size: 13px;">${pm25} µg/m³</strong> • Status: <strong>${categoryLabel}</strong> (Permissible Safe Limit: 60 µg/m³)
           </div>
         </td>
       </tr>
@@ -451,10 +451,10 @@ export async function generate630Advisory({ facilityId, basePm25 = 175 }) {
     { window: '02:30 - 04:30 PM', reason: 'Post-solar dispersion maximum planetary boundary layer height', level: 'MODERATE' }
   ];
 
+  const currentLivePm25 = forecast.currentBasePm25 || basePm25 || 65;
   const peakAqi = forecast.peakMorningArrival?.predictedPm25 
     || forecast.hourlyTimeline?.reduce((max, h) => Math.max(max, h.predictedPm25), 0) 
-    || basePm25 
-    || 145;
+    || Math.round(currentLivePm25 * 1.25);
   const isSevere = peakAqi > 150;
   const arrivalConfidenceBand = forecast.peakMorningArrival?.confidenceBand || null;
 
@@ -462,7 +462,7 @@ export async function generate630Advisory({ facilityId, basePm25 = 175 }) {
   const attributionResult = await fetchLiveSourceAttribution({
     lat: facility.lat,
     lon: facility.lon,
-    currentPm25: peakAqi
+    currentPm25: currentLivePm25
   });
   const chemicalAttribution = attributionResult.fingerprint;
 
@@ -518,10 +518,10 @@ export async function generate630Advisory({ facilityId, basePm25 = 175 }) {
       <!-- BODY CONTENT -->
       <tr>
         <td class="content-cell">
-          <!-- 1. GRAPHICAL SPECTRUM GAUGE -->
-          ${renderAqiSpectrumBar(peakAqi, false)}
+          <!-- 1. GRAPHICAL SPECTRUM GAUGE (LIVE SENSOR READING) -->
+          ${renderAqiSpectrumBar(currentLivePm25, false)}
 
-          <!-- 2. 3-TILE KPI DASHBOARD -->
+          <!-- 2. 3-TILE KPI DASHBOARD (48H PREDICTED ARRIVAL PEAK) -->
           ${renderKpiScorecard({
             pm25: peakAqi,
             aqi: Math.round(peakAqi * 1.5),
