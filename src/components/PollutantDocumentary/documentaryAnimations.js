@@ -91,9 +91,20 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     if (bgBackdrop) {
       heroTl.fromTo(
         bgBackdrop,
-        { opacity: 0.25, scale: 1.05 },
-        { opacity: 1, scale: 1.0, duration: 1.2, ease: 'power2.out' },
+        { opacity: 0.3, scale: 1.04 },
+        { opacity: 1, scale: 1.0, duration: 0.9, ease: 'power2.out' },
         0
+      );
+    }
+
+    // Step 1b: Monumental sculptural watermark glyph reveals softly in the atmospheric depth
+    const heroGlyph = containerEl.querySelector('.documentary-hero-sculptural-glyph');
+    if (heroGlyph) {
+      heroTl.fromTo(
+        heroGlyph,
+        { opacity: 0, scale: 0.94 },
+        { opacity: 0.045, scale: 1.0, duration: 1.2, ease: 'power2.out' },
+        0.04
       );
     }
 
@@ -102,9 +113,9 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     if (nav) {
       heroTl.fromTo(
         nav,
-        { y: -24, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.7, ease: 'power3.out' },
-        0.15
+        { y: -16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' },
+        0.08
       );
     }
 
@@ -113,49 +124,57 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     if (kickerTag) {
       heroTl.fromTo(
         kickerTag,
-        { opacity: 0, y: -10 },
-        { opacity: 1, y: 0, duration: 0.5 },
-        0.25
+        { opacity: 0, y: -6 },
+        { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
+        0.12
       );
     }
 
-    // Step 4: Pollutant title, symbol, and chemical formula reveal
+    // Step 4: Pollutant title, symbol, and chemical formula reveal with masked line motion
+    const pollutantNameEl = containerEl.querySelector('.documentary-pollutant-name');
     const pollutantTitleRow = containerEl.querySelector('.documentary-pollutant-title-row');
-    if (pollutantTitleRow) {
+    if (pollutantNameEl) {
+      heroTl.fromTo(
+        pollutantNameEl,
+        { yPercent: 110, opacity: 0 },
+        { yPercent: 0, opacity: 1, duration: 0.85, ease: 'expo.out' },
+        0.16
+      );
+    } else if (pollutantTitleRow) {
       heroTl.fromTo(
         pollutantTitleRow,
-        { opacity: 0, y: 25 },
-        { opacity: 1, y: 0, duration: 0.75, ease: 'expo.out' },
-        0.35
+        { opacity: 0, y: 18 },
+        { opacity: 1, y: 0, duration: 0.6, ease: 'expo.out' },
+        0.18
       );
     }
 
-    // Step 5: Tagline / headline and editorial statement appear
+    // Step 5: Tagline / headline and editorial statement appear with masked elevation
     const headlineEl = containerEl.querySelector('.documentary-hero-headline');
     const editorialQuote = containerEl.querySelector('.documentary-editorial-quote');
     const editorialDesc = containerEl.querySelector('.documentary-editorial-desc');
     if (headlineEl) {
       heroTl.fromTo(
         headlineEl,
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, duration: 0.6 },
-        0.45
+        { yPercent: 105, opacity: 0 },
+        { yPercent: 0, opacity: 1, duration: 0.65, ease: 'expo.out' },
+        0.22
       );
     }
     if (editorialQuote) {
       heroTl.fromTo(
         editorialQuote,
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, duration: 0.65, ease: 'power2.out' },
-        0.5
+        { opacity: 0, y: 12 },
+        { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' },
+        0.26
       );
     }
     if (editorialDesc) {
       heroTl.fromTo(
         editorialDesc,
-        { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, duration: 0.6 },
-        0.55
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' },
+        0.3
       );
     }
 
@@ -165,17 +184,17 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     if (weatherStrip) {
       heroTl.fromTo(
         weatherStrip,
-        { opacity: 0, y: 10 },
-        { opacity: 1, y: 0, duration: 0.5 },
-        0.6
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
+        0.28
       );
     }
     if (metaRow) {
       heroTl.fromTo(
         metaRow,
         { opacity: 0 },
-        { opacity: 1, duration: 0.5 },
-        0.65
+        { opacity: 1, duration: 0.4 },
+        0.32
       );
     }
 
@@ -186,9 +205,9 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     if (gaugeContainer) {
       heroTl.fromTo(
         gaugeContainer,
-        { opacity: 0, scale: 0.94 },
-        { opacity: 1, scale: 1.0, duration: 0.9, ease: 'power2.out' },
-        0.65
+        { opacity: 0, scale: 0.96 },
+        { opacity: 1, scale: 1.0, duration: 0.7, ease: 'power2.out' },
+        0.32
       );
     }
     if (arcPath) {
@@ -199,8 +218,8 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
       heroTl.fromTo(
         arcPath,
         { strokeDashoffset: totalLength },
-        { strokeDashoffset: currentDashoffset, duration: 1.4, ease: 'power2.inOut' },
-        0.7
+        { strokeDashoffset: currentDashoffset, duration: 1.0, ease: 'power2.inOut' },
+        0.35
       );
 
       if (bead) {
@@ -212,15 +231,15 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
         const beadTracker = { t: 0 };
         heroTl.fromTo(
           bead,
-          { opacity: 0, scale: 0.5 },
-          { opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out' },
-          0.7
+          { opacity: 0, scale: 0.6 },
+          { opacity: 1, scale: 1, duration: 0.25, ease: 'power2.out' },
+          0.35
         );
         heroTl.to(
           beadTracker,
           {
             t: 1,
-            duration: 1.4,
+            duration: 1.0,
             ease: 'power2.inOut',
             onUpdate: () => {
               const curDeg = 150 + beadTracker.t * (targetAngleDeg - 150);
@@ -231,7 +250,7 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
               bead.setAttribute('cy', curY);
             },
           },
-          0.7
+          0.35
         );
       }
     }
@@ -243,9 +262,9 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
       const targetVal = parseFloat(rawText);
       heroTl.fromTo(
         numEl,
-        { opacity: 0, scale: 0.92, filter: 'blur(8px)' },
-        { opacity: 1, scale: 1.0, filter: 'blur(0px)', duration: 0.8, ease: 'power2.out' },
-        0.75
+        { opacity: 0, scale: 0.95, filter: 'blur(6px)' },
+        { opacity: 1, scale: 1.0, filter: 'blur(0px)', duration: 0.65, ease: 'power2.out' },
+        0.38
       );
       if (!isNaN(targetVal) && targetVal > 0) {
         const counter = { val: 0 };
@@ -253,7 +272,7 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
           counter,
           {
             val: targetVal,
-            duration: 1.3,
+            duration: 0.95,
             ease: 'power2.out',
             onUpdate: () => {
               if (numEl) {
@@ -264,28 +283,28 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
               }
             },
           },
-          0.75
+          0.38
         );
       }
     }
 
-    // Step 9: Status pill & location pin appear
+    // Step 9: Status pill & location pin appear smoothly as measurement settles
     const statusPill = containerEl.querySelector('.documentary-value-status-badge');
     const locationPin = containerEl.querySelector('.documentary-value-location');
     if (statusPill) {
       heroTl.fromTo(
         statusPill,
-        { opacity: 0, scale: 0.82 },
-        { opacity: 1, scale: 1.0, duration: 0.6, ease: 'back.out(1.5)' },
-        0.9
+        { opacity: 0, scale: 0.9 },
+        { opacity: 1, scale: 1.0, duration: 0.45, ease: 'power2.out' },
+        0.55
       );
     }
     if (locationPin) {
       heroTl.fromTo(
         locationPin,
-        { opacity: 0, y: 8 },
-        { opacity: 1, y: 0, duration: 0.5 },
-        0.95
+        { opacity: 0, y: 6 },
+        { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
+        0.6
       );
     }
 
@@ -294,9 +313,9 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     if (spatialCard) {
       heroTl.fromTo(
         spatialCard,
-        { opacity: 0, x: 25 },
-        { opacity: 1, x: 0, duration: 0.75, ease: 'power2.out' },
-        0.95
+        { opacity: 0, x: 18 },
+        { opacity: 1, x: 0, duration: 0.6, ease: 'power3.out' },
+        0.65
       );
     }
 
@@ -305,18 +324,18 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     if (bottomDataPanel) {
       heroTl.fromTo(
         bottomDataPanel,
-        { y: 35, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' },
-        1.05
+        { y: 22, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out' },
+        0.75
       );
 
       const chips = bottomDataPanel.querySelectorAll('.doc-pollutant-chip');
       if (chips.length > 0) {
         heroTl.fromTo(
           chips,
-          { opacity: 0, scale: 0.92, y: 8 },
-          { opacity: 1, scale: 1, y: 0, duration: 0.45, stagger: 0.04, ease: 'back.out(1.4)' },
-          1.15
+          { opacity: 0, scale: 0.95, y: 6 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.35, stagger: 0.025, ease: 'power2.out' },
+          0.82
         );
       }
 
@@ -326,8 +345,8 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
         heroTl.fromTo(
           sparklinePath,
           { strokeDasharray: pathLength, strokeDashoffset: pathLength },
-          { strokeDashoffset: 0, duration: 1.2, ease: 'power2.inOut' },
-          1.2
+          { strokeDashoffset: 0, duration: 0.8, ease: 'power2.inOut' },
+          0.85
         );
       }
     }
@@ -341,6 +360,7 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
       const heroPhoto = heroSection.querySelector('.documentary-hero-photo-layer');
       const heroHaze = heroSection.querySelector('.documentary-hero-haze-layer');
       const flowCanvas = heroSection.querySelector('.hero-atmospheric-canvas');
+      const heroGlyph = heroSection.querySelector('.documentary-hero-sculptural-glyph');
       const editorialCol = heroSection.querySelector('.documentary-hero-editorial-col');
       const centerCol = heroSection.querySelector('.documentary-hero-center-col');
       const spatialCol = heroSection.querySelector('.documentary-hero-spatial-col');
@@ -364,11 +384,15 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
       if (flowCanvas) {
         heroScrollTl.to(flowCanvas, { opacity: 0.15, yPercent: -12, ease: 'none' }, 0);
       }
+      if (heroGlyph) {
+        heroScrollTl.to(heroGlyph, { yPercent: -22, scale: 1.15, opacity: 0.01, ease: 'none' }, 0);
+      }
       if (editorialCol) {
         heroScrollTl.to(editorialCol, { y: -35, opacity: 0.4, ease: 'none' }, 0);
       }
       if (centerCol) {
-        heroScrollTl.to(centerCol, { scale: 0.88, y: -25, opacity: 0.5, ease: 'none' }, 0);
+        // Measurement gauge gracefully recedes into atmospheric depth
+        heroScrollTl.to(centerCol, { scale: 0.76, filter: 'blur(8px)', opacity: 0, y: -45, ease: 'power1.in' }, 0);
       }
       if (spatialCol) {
         heroScrollTl.to(spatialCol, { y: -30, opacity: 0.4, ease: 'none' }, 0);
@@ -379,13 +403,14 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     }
 
     // =======================================================================
-    // TIER 3B: FORGE-INSPIRED PINNED STORY SEQUENCE
+    // TIER 3B: FORGE & TRIONN-INSPIRED PINNED STORY SEQUENCE
     // Background image stays pinned while 4 narrative investigation beats
     // crossfade as the user scrolls through the airshed journey.
     // =======================================================================
     const pinnedSection = containerEl.querySelector('.documentary-pinned-story-section');
     if (pinnedSection) {
       const pinnedBgImg = pinnedSection.querySelector('.documentary-pinned-bg-img');
+      const pinnedWatermark = pinnedSection.querySelector('.documentary-pinned-sculptural-watermark');
       const beatCards = pinnedSection.querySelectorAll('.documentary-pinned-card');
       const stepItems = pinnedSection.querySelectorAll('.doc-ribbon-step-item');
 
@@ -429,6 +454,16 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
           );
         }
 
+        // Pinned background sculptural watermark drift
+        if (pinnedWatermark) {
+          pinnedTl.fromTo(
+            pinnedWatermark,
+            { yPercent: 10, scale: 0.95, opacity: 0.03 },
+            { yPercent: -15, scale: 1.08, opacity: 0.07, ease: 'none' },
+            0
+          );
+        }
+
         // Crossfade through the 4 narrative cards
         for (let i = 0; i < beatCards.length - 1; i++) {
           const curr = beatCards[i];
@@ -452,18 +487,36 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     }
 
     // =======================================================================
-    // TIER 3C: CINEMATIC IMAGE PARALLAX & HORIZONTAL MOTION
-    // Image gently scales from 1.08 to 1.0 with subtle horizontal drift
+    // TIER 3C: CINEMATIC IMAGE CLIP-PATH & PARALLAX TRANSFORMATION
+    // Image transitions from framed inset to cinematic bleed with parallax
     // =======================================================================
     const imageSection = containerEl.querySelector('.documentary-image-section');
     if (imageSection) {
+      const imgFrame = imageSection.querySelector('.documentary-image-frame');
       const imgEl = imageSection.querySelector('.documentary-image-element');
+      const captionTitle = imageSection.querySelector('.doc-caption-title');
       const captionOverlay = imageSection.querySelector('.documentary-image-caption-overlay');
 
-      if (imgEl) {
+      if (imgFrame && imgEl) {
+        // Trionn-style clip-path expansion as section enters viewport
+        gsap.fromTo(
+          imgFrame,
+          { clipPath: 'inset(6% 4% 6% 4% round 20px)' },
+          {
+            clipPath: 'inset(0% 0% 0% 0% round 0px)',
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: imageSection,
+              start: 'top 80%',
+              end: 'bottom 80%',
+              scrub: 1.0,
+            },
+          }
+        );
+
         gsap.fromTo(
           imgEl,
-          { scale: 1.08, xPercent: -2 },
+          { scale: 1.12, xPercent: -2 },
           {
             scale: 1.0,
             xPercent: 2,
@@ -478,7 +531,23 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
         );
       }
 
-      if (captionOverlay) {
+      if (captionTitle) {
+        gsap.fromTo(
+          captionTitle,
+          { yPercent: 100, opacity: 0 },
+          {
+            yPercent: 0,
+            opacity: 1,
+            duration: 0.8,
+            ease: 'expo.out',
+            scrollTrigger: {
+              trigger: captionTitle,
+              start: 'top 88%',
+              toggleActions: 'play none none none',
+            },
+          }
+        );
+      } else if (captionOverlay) {
         gsap.fromTo(
           captionOverlay,
           { opacity: 0, y: 30 },
@@ -498,14 +567,30 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     }
 
     // =======================================================================
-    // TIER 2: EDITORIAL SECTION REVEALS & AERODYNAMIC SCALE BARS
+    // TIER 2: EDITORIAL SECTION REVEALS & MASKED TYPOGRAPHY
     // =======================================================================
     const sections = containerEl.querySelectorAll('.documentary-section');
     sections.forEach((section) => {
-      const inner = section.querySelector('.documentary-section-inner') || section;
       const header = section.querySelector('.documentary-section-header');
+      const titleEl = section.querySelector('.documentary-section-title');
 
-      if (header) {
+      if (titleEl) {
+        gsap.fromTo(
+          titleEl,
+          { yPercent: 105, opacity: 0 },
+          {
+            yPercent: 0,
+            opacity: 1,
+            duration: 0.85,
+            ease: 'expo.out',
+            scrollTrigger: {
+              trigger: section,
+              start: 'top 82%',
+              toggleActions: 'play none none none',
+            },
+          }
+        );
+      } else if (header) {
         gsap.fromTo(
           header,
           { opacity: 0, y: 25 },
@@ -525,7 +610,7 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
 
       // Animate cards inside this section with stagger
       const cards = section.querySelectorAll(
-        '.documentary-source-card, .documentary-flow-card, .documentary-impact-card, .doc-standard-card'
+        '.documentary-source-card, .documentary-flow-card, .documentary-impact-card, .doc-standard-card, .doc-chem-metric-card'
       );
       if (cards.length > 0) {
         gsap.fromTo(
@@ -594,10 +679,29 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
       );
     }
 
-    // Science & Telemetry Section: 24-hr Diurnal Chart path draw
+    // Science & Telemetry Section: Title masked reveal and 24-hr Diurnal Chart path draw
+    const dataTitle = containerEl.querySelector('.documentary-data-title');
+    if (dataTitle) {
+      gsap.fromTo(
+        dataTitle,
+        { yPercent: 105, opacity: 0 },
+        {
+          yPercent: 0,
+          opacity: 1,
+          duration: 0.85,
+          ease: 'expo.out',
+          scrollTrigger: {
+            trigger: '.documentary-data-section',
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
+    }
+
     const diurnalSvg = containerEl.querySelector('.doc-diurnal-svg');
     if (diurnalSvg) {
-      const chartPath = diurnalSvg.querySelector('path[fill=\"none\"]');
+      const chartPath = diurnalSvg.querySelector('path[fill="none"]');
       if (chartPath) {
         const pathLength = 800;
         gsap.fromTo(

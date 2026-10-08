@@ -14,8 +14,13 @@
  */
 
 import React, { useMemo } from 'react';
-import { Layers, Activity, AlertTriangle, Wind, Info, AlertCircle, ArrowRight, ShieldCheck, HeartPulse } from 'lucide-react';
+import { Layers, Activity, AlertTriangle, Wind, Info, AlertCircle, ArrowRight, ShieldCheck, HeartPulse, CheckCircle2, Calendar } from 'lucide-react';
 import { POLLUTANT_SYNTHESIS_FLOWS } from './documentaryHelpers.js';
+import PhysiologicalImpactMatrix from '../common/PhysiologicalImpactMatrix';
+import ConnectedProcessFlow from '../common/ConnectedProcessFlow';
+import ComparisonSplitPanel from '../common/ComparisonSplitPanel';
+import RadialProgressMeter from '../common/RadialProgressMeter';
+import AnimatedCounter from '../common/AnimatedCounter';
 
 export default function DocumentarySection({
   pollutantData,
@@ -71,9 +76,11 @@ export default function DocumentarySection({
               <span className="doc-sec-divider">/</span>
               <span className="doc-sec-category">CHEMICAL COMPOSITION</span>
             </div>
-            <h2 className="documentary-section-title">
-              {sections.section01?.title || 'WHAT ARE THEY?'}
-            </h2>
+            <div className="doc-mask-reveal-wrap">
+              <h2 className="documentary-section-title">
+                {sections.section01?.title || 'WHAT ARE THEY?'}
+              </h2>
+            </div>
             <p className="documentary-section-lead">
               {sections.section01?.lead || pollutantData.shortDescription}
             </p>
@@ -158,9 +165,11 @@ export default function DocumentarySection({
               <span className="doc-sec-divider">/</span>
               <span className="doc-sec-category">PHYSICAL SCALE</span>
             </div>
-            <h2 className="documentary-section-title">
-              {sections.section02?.title || 'HOW SMALL ARE THEY?'}
-            </h2>
+            <div className="doc-mask-reveal-wrap">
+              <h2 className="documentary-section-title">
+                {sections.section02?.title || 'HOW SMALL ARE THEY?'}
+              </h2>
+            </div>
             <p className="documentary-section-lead">
               {sections.section02?.lead || 'Scale is the defining property of aerodynamic penetration.'}
             </p>
@@ -216,9 +225,11 @@ export default function DocumentarySection({
               <span className="doc-sec-divider">/</span>
               <span className="doc-sec-category">EMISSION ORIGINS</span>
             </div>
-            <h2 className="documentary-section-title">
-              {sections.section03?.title || 'WHERE IT COMES FROM'}
-            </h2>
+            <div className="doc-mask-reveal-wrap">
+              <h2 className="documentary-section-title">
+                {sections.section03?.title || 'WHERE IT COMES FROM'}
+              </h2>
+            </div>
             <p className="documentary-section-lead">
               {sections.section03?.lead || 'Direct combustion plumes and airborne secondary chemical synthesis.'}
             </p>
@@ -308,6 +319,16 @@ export default function DocumentarySection({
               </div>
             </div>
           </div>
+
+          {/* Visual Side-by-Side Threshold Comparison Split Panel */}
+          <ComparisonSplitPanel
+            currentValue={currentValue != null ? Math.round(currentValue) : 60}
+            limitValue={pollutantData.naaqsLimit || 60}
+            whoValue={pollutantData.whoLimit || 15}
+            unit={unit}
+            pollutantName={pollutantData.name}
+            stationName={currentStation?.name || 'Delhi CAAQMS Ground Network'}
+          />
         </div>
       </section>
 
@@ -322,13 +343,23 @@ export default function DocumentarySection({
               <span className="doc-sec-divider">/</span>
               <span className="doc-sec-category">TRANSPORT MECHANICS</span>
             </div>
-            <h2 className="documentary-section-title">
-              {sections.section04?.title || 'WHAT IT DOES'}
-            </h2>
+            <div className="doc-mask-reveal-wrap">
+              <h2 className="documentary-section-title">
+                {sections.section04?.title || 'WHAT IT DOES'}
+              </h2>
+            </div>
             <p className="documentary-section-lead">
               {sections.section04?.lead || 'The physical journey from initial injection to human exposure.'}
             </p>
           </header>
+
+          {/* Visual Interactive Process Pipeline */}
+          <ConnectedProcessFlow
+            stages={stages}
+            title="ATMOSPHERIC TRANSPORT PIPELINE"
+            subtitle="The physical journey from initial injection to human exposure"
+            accentColor={cinematicTheme?.accentColor || '#10b981'}
+          />
 
           {stages.length > 0 && (
             <div className="documentary-flow-sequence">
@@ -355,9 +386,11 @@ export default function DocumentarySection({
               <span className="doc-sec-divider">/</span>
               <span className="doc-sec-category">FROM CITY TO SCHOOL</span>
             </div>
-            <h2 className="documentary-section-title">
-              FROM CITY TO SCHOOL
-            </h2>
+            <div className="doc-mask-reveal-wrap">
+              <h2 className="documentary-section-title">
+                FROM CITY TO SCHOOL
+              </h2>
+            </div>
             <p className="documentary-section-lead">
               THE CITY IS A MAP. BUT PEOPLE LIVE AT SPECIFIC LOCATIONS.
             </p>
@@ -391,6 +424,13 @@ export default function DocumentarySection({
             </div>
           </div>
 
+          {/* Visual Anatomical & Demographic Vulnerability Matrix */}
+          <PhysiologicalImpactMatrix
+            pollutantId={pollutantData.id}
+            pollutantName={pollutantData.name}
+            accentColor={cinematicTheme?.accentColor || '#ef4444'}
+          />
+
           {/* Physiological Health Points */}
           <div className="documentary-impact-points-grid">
             {impactPoints.map((pt, idx) => (
@@ -420,13 +460,50 @@ export default function DocumentarySection({
               <span className="doc-sec-divider">/</span>
               <span className="doc-sec-category">14-DAY ARCHIVE</span>
             </div>
-            <h2 className="documentary-section-title">
-              14 DAYS OF EVIDENCE
-            </h2>
+            <div className="doc-mask-reveal-wrap">
+              <h2 className="documentary-section-title">
+                14 DAYS OF EVIDENCE
+              </h2>
+            </div>
             <p className="documentary-section-lead">
               Continuous field telemetry evidence window across 14 consecutive calendar days. Verified observations are recorded; missing days remain strictly unpopulated without fabrication.
             </p>
           </header>
+
+          {/* Visual Evidence Summary Telemetry Deck */}
+          {(() => {
+            const verifiedCount = (dailyEvidenceWindow || []).filter(
+              (d) => d.status === 'OBSERVED' || (d.observationCount && d.observationCount > 0)
+            ).length;
+            const covPct = Math.round((verifiedCount / 14) * 100);
+
+            return (
+              <div className="doc-evidence-visual-summary-bar">
+                <div className="doc-ev-pill">
+                  <span className="ev-pill-lbl">MONITORED WINDOW</span>
+                  <span className="ev-pill-val">14 Calendar Days</span>
+                </div>
+                <div className="doc-ev-pill">
+                  <span className="ev-pill-lbl">VERIFIED OBSERVATIONS</span>
+                  <span className="ev-pill-val">
+                    <AnimatedCounter value={verifiedCount} /> / 14 Days
+                  </span>
+                </div>
+                <div className="doc-ev-pill">
+                  <span className="ev-pill-lbl">MISSING OBSERVATIONS</span>
+                  <span className="ev-pill-val">
+                    <AnimatedCounter value={Math.max(0, 14 - verifiedCount)} /> Days (Strict NO DATA)
+                  </span>
+                </div>
+                <div className="doc-ev-pill highlight">
+                  <span className="ev-pill-lbl">EVIDENCE CONTINUITY</span>
+                  <span className="ev-pill-val">
+                    <AnimatedCounter value={covPct} suffix="%" />
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* 14-Day Calendar Cards Grid */}
           <div className="cinematic-14day-grid">

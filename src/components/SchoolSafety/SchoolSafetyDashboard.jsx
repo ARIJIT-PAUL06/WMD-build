@@ -39,7 +39,10 @@ import {
   Lock,
   CheckCircle2,
   AlertCircle,
+  ArrowRight,
 } from 'lucide-react';
+import RadialProgressMeter from '../common/RadialProgressMeter';
+import AnimatedCounter from '../common/AnimatedCounter';
 import schoolsDirectory from '../../data/schoolsDirectory.json';
 import {
   calculateSchoolIdw,
@@ -760,6 +763,37 @@ export default function SchoolSafetyDashboard({
           <div id="why-verdict-content" className="ssd-accordion-content">
             <p className="ssd-explanation-paragraph">{effectiveExplanation}</p>
 
+            {/* Visual Spatial Interpolation Pipeline Flow */}
+            <div className="ssd-spatial-flow-diagram" aria-label="Spatial Estimation Architecture">
+              <div className="ssd-flow-step-node">
+                <div className="flow-step-badge">REGULATORY SENSORS</div>
+                <div className="flow-step-name">{effectiveEstimate?.stationCount || 1} CAAQMS Monitors</div>
+                <div className="flow-step-sub">{selectedSchool.nearestStation || 'Continuous BAM-1020'}</div>
+              </div>
+              <div className="ssd-flow-arrow-connector">
+                <span className="flow-connector-line" />
+                <span className="flow-connector-label">IDW Quadratic Interpolation (p=2.0)</span>
+                <ArrowRight size={14} className="flow-connector-arrow" />
+              </div>
+              <div className="ssd-flow-step-node school">
+                <div className="flow-step-badge">CAMPUS RECEPTOR</div>
+                <div className="flow-step-name">{selectedSchool.name}</div>
+                <div className="flow-step-sub">
+                  Estimated around school: <strong>{effectiveEstimate?.pm25 !== null && effectiveEstimate?.pm25 !== undefined ? `${effectiveEstimate.pm25} µg/m³` : 'Pending'}</strong>
+                </div>
+              </div>
+              <div className="ssd-flow-arrow-connector">
+                <span className="flow-connector-line" />
+                <span className="flow-connector-label">Deterministic Activity Gates</span>
+                <ArrowRight size={14} className="flow-connector-arrow" />
+              </div>
+              <div className="ssd-flow-step-node verdict">
+                <div className="flow-step-badge">OPERATIONAL GUIDANCE</div>
+                <div className="flow-step-name">{userFacingOverallStatus}</div>
+                <div className="flow-step-sub">{effectiveEstimate?.confidence || 'HIGH'} Confidence</div>
+              </div>
+            </div>
+
             <div className="ssd-evidence-grid">
               <div className="ssd-evidence-item">
                 <div className="ssd-evidence-label">Estimation Methodology</div>
@@ -827,10 +861,22 @@ export default function SchoolSafetyDashboard({
 
         {/* Metrics Overview Grid */}
         <div className="ssd-monitoring-metrics-grid">
+          <div className="ssd-metric-card radial-metric-card">
+            <RadialProgressMeter
+              value={effectiveCoverage.coveragePercent}
+              max={100}
+              size={96}
+              strokeWidth={8}
+              unit="%"
+              label="EVIDENCE"
+              color={effectiveCoverage.sufficientForAction ? '#10b981' : '#38bdf8'}
+            />
+          </div>
+
           <div className="ssd-metric-card">
             <div className="ssd-metric-label">Observed Days</div>
             <div className="ssd-metric-value text-green">
-              {effectiveCoverage.observedDays} <span className="ssd-metric-sub">/ 14</span>
+              <AnimatedCounter value={effectiveCoverage.observedDays} /> <span className="ssd-metric-sub">/ 14</span>
             </div>
             <div className="ssd-metric-hint">Verified telemetry days</div>
           </div>
@@ -838,7 +884,7 @@ export default function SchoolSafetyDashboard({
           <div className="ssd-metric-card">
             <div className="ssd-metric-label">Partial Days</div>
             <div className="ssd-metric-value text-yellow">
-              {effectiveCoverage.partialDays}
+              <AnimatedCounter value={effectiveCoverage.partialDays} />
             </div>
             <div className="ssd-metric-hint">Incomplete observations</div>
           </div>
@@ -846,7 +892,7 @@ export default function SchoolSafetyDashboard({
           <div className="ssd-metric-card">
             <div className="ssd-metric-label">Missing Days</div>
             <div className="ssd-metric-value text-muted">
-              {effectiveCoverage.missingDays}
+              <AnimatedCounter value={effectiveCoverage.missingDays} />
             </div>
             <div className="ssd-metric-hint">No telemetry recorded</div>
           </div>
@@ -854,7 +900,7 @@ export default function SchoolSafetyDashboard({
           <div className="ssd-metric-card">
             <div className="ssd-metric-label">Evidence Coverage</div>
             <div className="ssd-metric-value text-cyan">
-              {effectiveCoverage.coveragePercent}%
+              <AnimatedCounter value={effectiveCoverage.coveragePercent} suffix="%" />
             </div>
             <div className="ssd-metric-hint">
               {effectiveCoverage.sufficientForAction ? 'Sufficient for action' : 'Monitoring required'}

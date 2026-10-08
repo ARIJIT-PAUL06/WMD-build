@@ -78,6 +78,12 @@ export default function DocumentaryPinnedStory({
             loading="lazy"
           />
           <div className="documentary-pinned-scrim" />
+          <div
+            className="documentary-pinned-sculptural-watermark"
+            aria-hidden="true"
+          >
+            {pollutantData.symbol}
+          </div>
           <div className="documentary-pinned-ambient-glow" style={{ background: `radial-gradient(ellipse at 50% 60%, ${cinematicTheme.ambientColor || 'rgba(16, 185, 129, 0.12)'} 0%, transparent 70%)` }} />
         </div>
 

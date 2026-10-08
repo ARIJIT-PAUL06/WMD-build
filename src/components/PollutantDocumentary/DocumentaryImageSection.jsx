@@ -58,9 +58,11 @@ export default function DocumentaryImageSection({
             <div className="doc-caption-kicker">
               {env.sourceContext || 'ATMOSPHERIC EMISSION VECTOR'}
             </div>
-            <h3 className="doc-caption-title">
-              {env.visualCaption || `${pollutantData.name} in the Urban Airshed`}
-            </h3>
+            <div className="doc-mask-reveal-wrap">
+              <h3 className="doc-caption-title">
+                {env.visualCaption || `${pollutantData.name} in the Urban Airshed`}
+              </h3>
+            </div>
             <p className="doc-caption-detail single-line">
               Real-world documentation of primary emission vectors shaping ground-level human inhalation exposure across Delhi NCR.
             </p>

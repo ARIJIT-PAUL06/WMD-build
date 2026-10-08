@@ -12,12 +12,13 @@
  * - Bottom data panel: unified horizontal translucent panel
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Wind, Thermometer, Droplets, Gauge } from 'lucide-react';
 import PollutantValue from './PollutantValue.jsx';
 import DocumentaryDataPanel from './DocumentaryDataPanel.jsx';
 import HeroAtmosphericCanvas from './HeroAtmosphericCanvas.jsx';
 import { POLLUTANT_EDITORIAL_HEADLINES } from './documentaryHelpers.js';
+import { useAtmosphericMouseField } from './useAtmosphericMouseField.js';
 
 export default function DocumentaryHero({
   pollutantData,
@@ -29,6 +30,19 @@ export default function DocumentaryHero({
   onSelectPollutant,
   onExploreClick,
 }) {
+  const heroContainerRef = useRef(null);
+  const mouseStateRef = useRef({
+    x: -1000,
+    y: -1000,
+    normX: 0,
+    normY: 0,
+    proximity: 0,
+    active: false,
+  });
+
+  // Activate subtle, organic atmospheric mouse interaction system
+  useAtmosphericMouseField(heroContainerRef, mouseStateRef);
+
   const editorial = useMemo(() => {
     return (
       POLLUTANT_EDITORIAL_HEADLINES[pollutantData.id] || {
@@ -47,7 +61,11 @@ export default function DocumentaryHero({
   const headline = pollutantData.sections?.heroSubtitle || pollutantData.name;
 
   return (
-    <section className="documentary-hero" id="documentary-hero-viewport">
+    <section
+      className="documentary-hero"
+      id="documentary-hero-viewport"
+      ref={heroContainerRef}
+    >
       {/* ATMOSPHERIC BACKGROUND SYSTEM */}
       <div className="documentary-hero-ambient-backdrop" aria-hidden="true">
         {/* Deep Dark Base */}
@@ -69,11 +87,20 @@ export default function DocumentaryHero({
           }}
         />
 
+        {/* Cursor Atmospheric Air Disturbance Field */}
+        <div className="documentary-hero-cursor-field" />
+
         {/* Ambient Atmospheric Flow Field Canvas */}
         <HeroAtmosphericCanvas
           pollutantId={pollutantData.id}
           windSpeed={weatherVariables.windSpeed}
+          mouseStateRef={mouseStateRef}
         />
+
+        {/* Sculptural Monumental Typographic Watermark (Creative scale & depth) */}
+        <div className="documentary-hero-sculptural-glyph" aria-hidden="true">
+          <span>{symbol}</span>
+        </div>
 
         {/* Subtle Wind & Aerosol Flow Lines */}
         <div className="documentary-hero-flow-lines" />
@@ -90,11 +117,13 @@ export default function DocumentaryHero({
               <span className="doc-kicker-text">AIR POLLUTANT // DELHI AIRSHED</span>
             </div>
 
-            {/* Pollutant Identity */}
+            {/* Pollutant Identity with Masked Reveal */}
             <div className="documentary-pollutant-title-row">
-              <h1 className="documentary-pollutant-name" aria-label={symbol}>
-                {symbol}
-              </h1>
+              <div className="doc-mask-reveal-wrap">
+                <h1 className="documentary-pollutant-name" aria-label={symbol}>
+                  {symbol}
+                </h1>
+              </div>
               {plainSymbol !== symbol && (
                 <span className="documentary-pollutant-ascii-symbol">
                   {plainSymbol}
@@ -105,10 +134,12 @@ export default function DocumentaryHero({
               </span>
             </div>
 
-            {/* Hero Subtitle / Dossier Headline */}
-            <h2 className="documentary-hero-headline">
-              {headline}
-            </h2>
+            {/* Hero Subtitle / Dossier Headline with Masked Reveal */}
+            <div className="doc-mask-reveal-wrap">
+              <h2 className="documentary-hero-headline">
+                {headline}
+              </h2>
+            </div>
 
             {/* Editorial Statement */}
             <blockquote className="documentary-editorial-quote">

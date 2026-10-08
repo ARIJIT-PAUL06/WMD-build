@@ -13,6 +13,7 @@
 
 import React, { useMemo } from 'react';
 import { ShieldCheck, AlertCircle, BarChart3, Radio } from 'lucide-react';
+import AnimatedCounter from '../common/AnimatedCounter';
 
 export default function DocumentaryDataSection({
   pollutantData,
@@ -56,7 +57,9 @@ export default function DocumentaryDataSection({
             <Radio size={13} />
             <span>EMPIRICAL TELEMETRY & SCIENTIFIC STANDARDS</span>
           </div>
-          <h2 className="documentary-data-title">WHAT THE DATA SHOWS</h2>
+          <div className="doc-mask-reveal-wrap">
+            <h2 className="documentary-data-title">WHAT THE DATA SHOWS</h2>
+          </div>
           <p className="documentary-data-lead">
             Verified ambient concentrations recorded by Central Pollution Control Board (CPCB) and DPCC continuous telemetry stations.
           </p>
@@ -68,7 +71,11 @@ export default function DocumentaryDataSection({
             <span className="doc-card-kicker">CURRENT FIELD READING</span>
             <div className="doc-card-value-row">
               <span className="doc-card-big-num">
-                {currentValue != null ? Math.round(currentValue) : '—'}
+                {currentValue != null ? (
+                  <AnimatedCounter value={Math.round(currentValue)} />
+                ) : (
+                  '—'
+                )}
               </span>
               <span className="doc-card-unit">{unit}</span>
             </div>
@@ -80,7 +87,13 @@ export default function DocumentaryDataSection({
           <div className="doc-standard-card">
             <span className="doc-card-kicker">INDIAN NAAQS 24-HR LIMIT</span>
             <div className="doc-card-value-row">
-              <span className="doc-card-big-num">{pollutantData.naaqsLimit}</span>
+              <span className="doc-card-big-num">
+                {typeof pollutantData.naaqsLimit === 'number' ? (
+                  <AnimatedCounter value={pollutantData.naaqsLimit} />
+                ) : (
+                  pollutantData.naaqsLimit
+                )}
+              </span>
               <span className="doc-card-unit">{unit}</span>
             </div>
             <p className="doc-card-note">
@@ -93,7 +106,13 @@ export default function DocumentaryDataSection({
           <div className="doc-standard-card">
             <span className="doc-card-kicker">WHO 2021 AIR QUALITY GUIDELINE</span>
             <div className="doc-card-value-row">
-              <span className="doc-card-big-num">{pollutantData.whoLimit}</span>
+              <span className="doc-card-big-num">
+                {typeof pollutantData.whoLimit === 'number' ? (
+                  <AnimatedCounter value={pollutantData.whoLimit} />
+                ) : (
+                  pollutantData.whoLimit
+                )}
+              </span>
               <span className="doc-card-unit">{unit}</span>
             </div>
             <p className="doc-card-note">
@@ -153,19 +172,19 @@ export default function DocumentaryDataSection({
               <div className="doc-diurnal-summary-strip">
                 <div className="doc-diurnal-metric-pill peak">
                   <span className="doc-d-lbl">PEAK</span>
-                  <span className="doc-d-val">{diurnalMetrics.peak} {unit}</span>
+                  <span className="doc-d-val"><AnimatedCounter value={diurnalMetrics.peak} /> {unit}</span>
                 </div>
                 <div className="doc-diurnal-metric-pill avg">
                   <span className="doc-d-lbl">AVERAGE</span>
-                  <span className="doc-d-val">{diurnalMetrics.avg} {unit}</span>
+                  <span className="doc-d-val"><AnimatedCounter value={diurnalMetrics.avg} /> {unit}</span>
                 </div>
                 <div className="doc-diurnal-metric-pill low">
                   <span className="doc-d-lbl">LOW</span>
-                  <span className="doc-d-val">{diurnalMetrics.low} {unit}</span>
+                  <span className="doc-d-val"><AnimatedCounter value={diurnalMetrics.low} /> {unit}</span>
                 </div>
                 <div className="doc-diurnal-metric-pill curr">
                   <span className="doc-d-lbl">CURRENT</span>
-                  <span className="doc-d-val">{diurnalMetrics.curr} {unit}</span>
+                  <span className="doc-d-val"><AnimatedCounter value={diurnalMetrics.curr} /> {unit}</span>
                 </div>
               </div>
             )}
@@ -257,7 +276,14 @@ export default function DocumentaryDataSection({
                   <h4 className="doc-st-name">{st.name.split(',')[0]}</h4>
                   <div className="doc-st-value-row">
                     <span className="doc-st-num">
-                      {st[pollutantData.id] ?? st.pm25 ?? '—'}
+                      {(() => {
+                        const val = st[pollutantData.id] ?? st.pm25;
+                        return typeof val === 'number' ? (
+                          <AnimatedCounter value={Math.round(val)} />
+                        ) : (
+                          val ?? '—'
+                        );
+                      })()}
                     </span>
                     <span className="doc-st-unit">{unit}</span>
                   </div>

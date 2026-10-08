@@ -234,6 +234,15 @@
   padding-top: 84px;
   padding-bottom: 24px;
   overflow: hidden;
+  /* Mouse Atmospheric Field Custom Properties */
+  --doc-mouse-norm-x: 0;
+  --doc-mouse-norm-y: 0;
+  --doc-hero-prox: 0;
+  --doc-tilt-x: 0deg;
+  --doc-tilt-y: 0deg;
+  --doc-mouse-px: -1000px;
+  --doc-mouse-py: -1000px;
+  --doc-mouse-active: 0;
 }
 
 .documentary-hero-ambient-backdrop {
@@ -249,6 +258,23 @@
   background: radial-gradient(circle at 50% 30%, #101718 0%, #0b1011 75%, #070a0a 100%);
 }
 
+/* Subtle Cursor Atmospheric Air Disturbance Field (Pure air refraction, zero neon pointer) */
+.documentary-hero-cursor-field {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle 240px at var(--doc-mouse-px, -1000px) var(--doc-mouse-py, -1000px),
+    rgba(255, 255, 255, 0.038) 0%,
+    rgba(255, 255, 255, 0.015) 40%,
+    transparent 72%
+  );
+  opacity: var(--doc-mouse-active, 0);
+  mix-blend-mode: screen;
+  transition: opacity 0.35s ease;
+  z-index: 3;
+}
+
 .documentary-hero-photo-layer {
   position: absolute;
   inset: -15px;
@@ -258,7 +284,9 @@
   mix-blend-mode: luminosity;
   filter: blur(2px);
   animation: docPhotoSlowDrift 28s ease-in-out infinite;
-  will-change: transform;
+  translate: calc(var(--doc-mouse-norm-x, 0) * -5px) calc(var(--doc-mouse-norm-y, 0) * -3.5px);
+  transition: translate 0.18s cubic-bezier(0.2, 0, 0.2, 1);
+  will-change: transform, translate;
 }
 
 .documentary-hero-haze-layer {
@@ -266,7 +294,10 @@
   inset: -20px;
   pointer-events: none;
   animation: docHazeShift 22s ease-in-out infinite;
-  will-change: transform, opacity;
+  translate: calc(var(--doc-mouse-norm-x, 0) * -11px) calc(var(--doc-mouse-norm-y, 0) * -7.5px);
+  opacity: calc(0.85 + 0.25 * var(--doc-hero-prox, 0));
+  transition: translate 0.18s cubic-bezier(0.2, 0, 0.2, 1), opacity 0.25s ease;
+  will-change: transform, opacity, translate;
 }
 
 .hero-atmospheric-canvas {
@@ -287,6 +318,59 @@
     radial-gradient(ellipse at 70% 60%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
   opacity: 0.7;
   animation: docFlowLinesDrift 18s ease-in-out infinite;
+}
+
+/* Monumental Sculptural Typographic Watermark (Trionn-Level Scale & Depth) */
+.documentary-hero-sculptural-glyph {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  translate: calc(var(--doc-mouse-norm-x, 0) * -7px) calc(var(--doc-mouse-norm-y, 0) * -4.5px);
+  transition: translate 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+  font-size: clamp(10rem, 24vw, 24rem);
+  font-weight: 900;
+  line-height: 0.8;
+  letter-spacing: -0.06em;
+  color: var(--pollutant-accent, #10b981);
+  opacity: 0.045;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+  white-space: nowrap;
+  text-shadow: 0 0 80px var(--pollutant-glow, rgba(16, 185, 129, 0.4));
+  will-change: transform, opacity, translate;
+}
+
+.documentary-pinned-sculptural-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(8rem, 20vw, 20rem);
+  font-weight: 900;
+  line-height: 0.8;
+  letter-spacing: -0.06em;
+  color: var(--pollutant-accent, #10b981);
+  opacity: 0.035;
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+  white-space: nowrap;
+  will-change: transform, opacity;
+}
+
+/* Masked Typography Reveal Wrapper (Trionn-Level Motion Craft) */
+.doc-mask-reveal-wrap {
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: top;
+  max-width: 100%;
+}
+
+.doc-mask-reveal-wrap > * {
+  margin: 0;
+  will-change: transform, opacity;
 }
 
 .documentary-hero-container {
@@ -353,6 +437,9 @@
   line-height: 1;
   color: #ffffff;
   margin: 0;
+  translate: calc(var(--doc-mouse-norm-x, 0) * -3.5px) calc(var(--doc-mouse-norm-y, 0) * -2.5px);
+  transition: translate 0.16s cubic-bezier(0.2, 0, 0.2, 1);
+  will-change: translate;
 }
 
 .documentary-pollutant-chem-formula {
@@ -360,23 +447,95 @@
   font-weight: 600;
   color: #64748b;
   letter-spacing: 0.04em;
+  translate: calc(var(--doc-mouse-norm-x, 0) * -2.5px) calc(var(--doc-mouse-norm-y, 0) * -1.8px);
+  transition: translate 0.18s cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+.documentary-hero-headline {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pollutant-accent, #10b981);
+  line-height: 1.3;
+  translate: calc(var(--doc-mouse-norm-x, 0) * -2px) calc(var(--doc-mouse-norm-y, 0) * -1.5px);
+  transition: translate 0.16s cubic-bezier(0.2, 0, 0.2, 1);
+  will-change: translate;
 }
 
 .documentary-editorial-quote {
   margin: 0;
   padding: 0;
-  font-size: 1.9rem;
+  font-size: 1.68rem;
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.3;
   letter-spacing: -0.02em;
   color: #f1f5f9;
+  translate: calc(var(--doc-mouse-norm-x, 0) * -1.4px) calc(var(--doc-mouse-norm-y, 0) * -1px);
+  transition: translate 0.18s cubic-bezier(0.2, 0, 0.2, 1);
+  will-change: translate;
 }
 
 .documentary-editorial-desc {
   margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.6;
+  font-size: 0.92rem;
+  line-height: 1.55;
   color: #94a3b8;
+  max-width: 420px;
+  translate: calc(var(--doc-mouse-norm-x, 0) * -1px) calc(var(--doc-mouse-norm-y, 0) * -0.7px);
+  transition: translate 0.18s cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+.documentary-hero-weather-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  width: fit-content;
+  font-size: 0.74rem;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  translate: calc(var(--doc-mouse-norm-x, 0) * -0.8px) calc(var(--doc-mouse-norm-y, 0) * -0.6px);
+  transition: translate 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+.doc-weather-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #94a3b8;
+  transition: color 0.2s ease;
+}
+
+.doc-weather-item:hover {
+  color: #f8fafc;
+}
+
+.doc-weather-icon {
+  color: var(--pollutant-accent, #10b981);
+  flex-shrink: 0;
+}
+
+.doc-weather-label {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-size: 0.68rem;
+  color: #64748b;
+}
+
+.doc-weather-val {
+  font-weight: 700;
+  color: #e2e8f0;
+  font-family: "SF Mono", Monaco, Consolas, monospace;
+}
+
+.doc-weather-divider {
+  color: rgba(255, 255, 255, 0.16);
+  font-size: 0.65rem;
 }
 
 .documentary-editorial-metadata {
@@ -388,6 +547,8 @@
   color: #64748b;
   padding-top: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+  translate: calc(var(--doc-mouse-norm-x, 0) * -0.6px) calc(var(--doc-mouse-norm-y, 0) * -0.4px);
+  transition: translate 0.2s cubic-bezier(0.2, 0, 0.2, 1);
 }
 
 .doc-meta-label {
@@ -420,6 +581,7 @@
   justify-content: center;
   width: 320px;
   height: 320px;
+  perspective: 900px;
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -434,9 +596,10 @@
   border-radius: 50%;
   background: radial-gradient(circle, var(--val-risk-glow, rgba(16, 185, 129, 0.25)) 0%, transparent 70%);
   pointer-events: none;
-  filter: blur(24px);
-  opacity: 0.85;
+  filter: blur(calc(24px + 10px * var(--doc-hero-prox, 0)));
+  opacity: calc(0.75 + 0.35 * var(--doc-hero-prox, 0));
   animation: docAtmosphericBreathe 5s ease-in-out infinite;
+  transition: opacity 0.25s ease, filter 0.25s ease;
   will-change: transform, opacity;
 }
 
@@ -444,6 +607,11 @@
   position: relative;
   width: 320px;
   height: 320px;
+  transform: rotateX(var(--doc-tilt-x, 0deg)) rotateY(var(--doc-tilt-y, 0deg));
+  translate: calc(var(--doc-mouse-norm-x, 0) * 3px * var(--doc-hero-prox, 0)) calc(var(--doc-mouse-norm-y, 0) * 3px * var(--doc-hero-prox, 0));
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0.2, 1), translate 0.12s cubic-bezier(0.2, 0, 0.2, 1);
+  transform-style: preserve-3d;
+  will-change: transform, translate;
 }
 
 .documentary-value-arc-svg {
@@ -456,7 +624,8 @@
 }
 
 .documentary-gauge-progress-path {
-  transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1), filter 0.25s ease;
+  filter: drop-shadow(0 0 calc(4px + 8px * var(--doc-hero-prox, 0)) var(--val-risk-glow, rgba(16, 185, 129, 0.4)));
 }
 
 .documentary-gauge-bead {
@@ -510,18 +679,26 @@
   letter-spacing: -0.04em;
   color: #ffffff;
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
   line-height: 1;
+  text-shadow: 0 0 calc(30px + 15px * var(--doc-hero-prox, 0)) var(--val-risk-glow, rgba(255, 255, 255, 0.15));
+  translate: calc(var(--doc-mouse-norm-x, 0) * 2.2px * var(--doc-hero-prox, 0)) calc(var(--doc-mouse-norm-y, 0) * 1.6px * var(--doc-hero-prox, 0));
+  transition: translate 0.15s cubic-bezier(0.2, 0, 0.2, 1), text-shadow 0.25s ease;
+  will-change: translate;
 }
 
 .documentary-value-unit-row {
+  margin-top: -2px;
   margin-bottom: 8px;
 }
 
 .documentary-value-unit {
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: #94a3b8;
+  font-family: "SF Mono", Monaco, Consolas, monospace;
 }
 
 .documentary-value-status-badge {
@@ -576,7 +753,9 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  translate: calc(var(--doc-mouse-norm-x, 0) * 2.5px) calc(var(--doc-mouse-norm-y, 0) * 1.8px);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), translate 0.16s cubic-bezier(0.2, 0, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  will-change: translate;
 }
 
 .documentary-spatial-map-card:hover {
@@ -605,7 +784,9 @@
   border-radius: 50%;
   background: radial-gradient(circle, rgba(239, 68, 68, 0.45) 0%, transparent 70%);
   filter: blur(12px);
+  opacity: calc(0.85 + var(--doc-hero-prox, 0) * 0.25);
   animation: docAirshedFieldBreath 6s ease-in-out infinite;
+  transition: opacity 0.25s ease;
 }
 
 .doc-spatial-receptor-ping {
@@ -660,14 +841,18 @@
   display: flex;
   justify-content: center;
   margin-top: 10px;
+  translate: calc(var(--doc-mouse-norm-x, 0) * -1.5px) calc(var(--doc-mouse-norm-y, 0) * -1px);
+  transition: translate 0.18s cubic-bezier(0.2, 0, 0.2, 1);
+  will-change: translate;
 }
 
 .documentary-data-panel {
   width: 100%;
-  background: rgba(16, 23, 24, 0.75);
+  background: rgba(16, 23, 24, 0.78);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 16px;
   padding: 16px 24px;
   display: grid;
@@ -675,11 +860,12 @@
   align-items: center;
   gap: 20px;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
-  transition: border-color 0.25s ease;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .documentary-data-panel:hover {
   border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.6);
 }
 
 .documentary-data-separator {
@@ -754,19 +940,46 @@
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .doc-pollutant-chip:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
 }
 
 .doc-pollutant-chip.active {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--pollutant-accent, #10b981);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--pollutant-accent, #10b981) 28%, transparent);
   color: #ffffff;
+}
+
+/* ==========================================================================
+   POLLUTANT-SPECIFIC ATMOSPHERIC PERSONALITIES
+   ========================================================================== */
+.documentary-page.theme-pm25-haze {
+  --pollutant-tint: rgba(239, 68, 68, 0.08);
+}
+.documentary-page.theme-pm10-dust {
+  --pollutant-tint: rgba(245, 158, 11, 0.08);
+}
+.documentary-page.theme-no2-combustion {
+  --pollutant-tint: rgba(249, 115, 22, 0.08);
+}
+.documentary-page.theme-so2-sulfur {
+  --pollutant-tint: rgba(234, 179, 8, 0.08);
+}
+.documentary-page.theme-co-carbon {
+  --pollutant-tint: rgba(220, 38, 38, 0.08);
+}
+.documentary-page.theme-o3-photochemical {
+  --pollutant-tint: rgba(6, 182, 212, 0.08);
+}
+.documentary-page.theme-nh3-agricultural {
+  --pollutant-tint: rgba(16, 185, 129, 0.08);
 }
 
 .doc-chip-val {
@@ -841,10 +1054,10 @@
   position: relative;
   width: 100%;
   background: #0b1011;
-  padding: 80px 0;
+  padding: 100px 0;
   display: flex;
   flex-direction: column;
-  gap: 80px;
+  gap: 96px;
 }
 
 .documentary-section {
@@ -858,7 +1071,7 @@
   padding: 0 32px;
   display: flex;
   flex-direction: column;
-  gap: 36px;
+  gap: 48px;
 }
 
 .documentary-section-header {
@@ -913,16 +1126,17 @@
   background: rgba(16, 23, 24, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  padding: 24px;
+  padding: 26px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  transition: border-color 0.25s ease, transform 0.25s ease;
+  transition: border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .documentary-source-card:hover {
-  border-color: rgba(255, 255, 255, 0.16);
-  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
 }
 
 .documentary-source-card-header {
@@ -1145,7 +1359,7 @@
 .documentary-image-section {
   position: relative;
   width: 100%;
-  padding: 40px 0;
+  padding: 90px 0;
   background: #0b1011;
 }
 
@@ -1190,7 +1404,8 @@
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+  will-change: clip-path;
 }
 
 .documentary-image-element {
@@ -1199,11 +1414,12 @@
   object-fit: cover;
   object-position: center;
   display: block;
-  transition: transform 0.8s ease;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
 }
 
 .documentary-image-frame:hover .documentary-image-element {
-  transform: scale(1.02);
+  transform: scale(1.025);
 }
 
 .documentary-image-scrim {
@@ -1795,6 +2011,11 @@
     justify-content: center;
   }
 
+  .documentary-hero-weather-strip {
+    justify-content: center;
+    margin: 0 auto;
+  }
+
   .documentary-value-container {
     width: 280px;
     height: 280px;
@@ -2006,6 +2227,44 @@
 }
 
 /* 14-Day Empirical Evidence Archive Grid */
+.doc-evidence-visual-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.doc-ev-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ev-pill-lbl {
+  font-family: monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.ev-pill-val {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #e2e8f0;
+}
+
+.doc-ev-pill.highlight .ev-pill-val {
+  color: #10b981;
+}
+
 .cinematic-14day-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -2809,10 +3068,53 @@
     animation: none !important;
   }
 
+  .documentary-hero-cursor-field {
+    display: none !important;
+  }
+
+  .documentary-hero-photo-layer,
+  .documentary-hero-haze-layer,
+  .documentary-hero-sculptural-glyph,
+  .documentary-pollutant-name,
+  .documentary-pollutant-chem-formula,
+  .documentary-hero-headline,
+  .documentary-editorial-quote,
+  .documentary-editorial-desc,
+  .documentary-hero-weather-strip,
+  .documentary-editorial-metadata,
+  .documentary-value-gauge-wrapper,
+  .documentary-value-number,
+  .documentary-spatial-map-card,
+  .documentary-hero-bottom-deck,
   .documentary-source-card,
   .documentary-footer-cargo-btn,
   .documentary-image-element {
     transition: none !important;
+    transform: none !important;
+    translate: 0 0 !important;
+  }
+}
+
+@media (hover: none) or (pointer: coarse) {
+  .documentary-hero-cursor-field {
+    display: none !important;
+  }
+
+  .documentary-hero-photo-layer,
+  .documentary-hero-haze-layer,
+  .documentary-hero-sculptural-glyph,
+  .documentary-pollutant-name,
+  .documentary-pollutant-chem-formula,
+  .documentary-hero-headline,
+  .documentary-editorial-quote,
+  .documentary-editorial-desc,
+  .documentary-hero-weather-strip,
+  .documentary-editorial-metadata,
+  .documentary-value-gauge-wrapper,
+  .documentary-value-number,
+  .documentary-spatial-map-card,
+  .documentary-hero-bottom-deck {
+    translate: 0 0 !important;
     transform: none !important;
   }
 }

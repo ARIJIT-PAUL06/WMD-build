@@ -744,6 +744,115 @@
   margin-bottom: 1rem;
 }
 
+/* Spatial Flow Diagram */
+.ssd-spatial-flow-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md, 14px);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 860px) {
+  .ssd-spatial-flow-diagram {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+}
+
+.ssd-flow-step-node {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.ssd-flow-step-node:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-2px);
+}
+
+.ssd-flow-step-node.school {
+  border-color: rgba(56, 189, 248, 0.3);
+  background: rgba(14, 165, 233, 0.07);
+}
+
+.ssd-flow-step-node.verdict {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.07);
+}
+
+.flow-step-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.flow-step-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.flow-step-sub {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.flow-step-sub strong {
+  color: #38bdf8;
+}
+
+.ssd-flow-arrow-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  color: #64748b;
+}
+
+.flow-connector-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  max-width: 140px;
+  text-align: center;
+}
+
+.flow-connector-arrow {
+  color: #38bdf8;
+}
+
+@media (max-width: 860px) {
+  .ssd-flow-arrow-connector {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+.radial-metric-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
 .ssd-evidence-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

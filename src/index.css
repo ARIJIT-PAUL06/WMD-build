@@ -1,3 +1,5 @@
+@import './components/common/commonVisuals.css';
+
 :root {
   --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-heading: 'Outfit', sans-serif;

@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import CrtScreenLensCanvas from './CrtScreenLensCanvas';
+import AnimatedCounter from '../common/AnimatedCounter';
 import './PanoramicScrollHero.css';
 
 /**
@@ -311,6 +312,20 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             >
               VAYUVITALS
             </span>
+          </div>
+
+          <div className="hero-hud-telemetry-cluster">
+            <div className="hero-hud-pill live-network">
+              <span className="hero-hud-pulse-dot" />
+              <span>
+                <strong><AnimatedCounter value={108} duration={800} /></strong> CAAQMS STATIONS
+              </span>
+            </div>
+            <div className="hero-hud-pill phase-indicator">
+              <span>
+                AIRSHED: <strong style={{ color: brandTheme.textColor }}>{isLeftPhase ? 'WINTER INVERSION' : isMidPhase ? 'SCRUB TRANSITION' : 'LIVING CANOPY'}</strong>
+              </span>
+            </div>
           </div>
         </div>
       </div>
