@@ -460,6 +460,8 @@ export async function getSchoolAqiForecast({
     },
     dangerWindows,
     safeWindows,
+    peakMorningArrival: { predictedPm25: arrivalAvg, confidenceBand: hourlyTimeline[0]?.confidenceBand },
+    hourlyTimeline,
     hourlyForecast: hourlyTimeline
   };
 }

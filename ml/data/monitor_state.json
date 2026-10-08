@@ -1,26 +1,30 @@
 {
-  "lastCycleAt": "2026-10-07T17:41:53.392Z",
+  "lastCycleAt": "2026-10-08T05:35:34.016Z",
   "lastPredictiveAdvisoryByFacility": {
-    "dps_rk_puram": 1791160643017,
-    "modern_barakhamba": 1791160643017,
-    "modern_vasant_vihar": 1791160643017,
-    "dps_mathura_road": 1791160643017,
-    "dps_rohini": 1791160643017,
-    "dps_vasant_kunj": 1791160643017,
-    "sanskriti_school": 1791160643017,
-    "mothers_international": 1791160643017,
-    "sardar_patel_vidyalaya": 1791160643017,
-    "springdales_pusa_road": 1791160643017,
-    "springdales_dhaula_kuan": 1791160643017,
-    "st_columbas": 1791160643017,
-    "convent_jesus_mary": 1791160643017,
-    "dav_shreshtha_vihar": 1791160643017,
-    "dav_vasant_kunj": 1791160643017
+    "dps_rk_puram": 1791437803610,
+    "modern_barakhamba": 1791429880246,
+    "modern_vasant_vihar": 1791429880246,
+    "dps_mathura_road": 1791429898014,
+    "dps_rohini": 1791429898014,
+    "dps_vasant_kunj": 1791429898014,
+    "sanskriti_school": 1791429898014,
+    "mothers_international": 1791429898014,
+    "sardar_patel_vidyalaya": 1791429898014,
+    "springdales_pusa_road": 1791429898014,
+    "springdales_dhaula_kuan": 1791429898014,
+    "st_columbas": 1791429898014,
+    "convent_jesus_mary": 1791429898014,
+    "dav_shreshtha_vihar": 1791429898014,
+    "dav_vasant_kunj": 1791429898014
   },
-  "lastEmergencySentByGrid": {},
-  "lastPetitionSentByGrid": {},
-  "totalCyclesExecuted": 123,
-  "totalEmergenciesDispatched": 4,
-  "totalPetitionsDispatched": 4,
-  "totalPredictiveAdvisoriesDispatched": 21
+  "lastEmergencySentByGrid": {
+    "GRID_R03_C05": 1791437883518
+  },
+  "lastPetitionSentByGrid": {
+    "GRID_R03_C05": 1791429894998
+  },
+  "totalCyclesExecuted": 130,
+  "totalEmergenciesDispatched": 7,
+  "totalPetitionsDispatched": 6,
+  "totalPredictiveAdvisoriesDispatched": 54
 }

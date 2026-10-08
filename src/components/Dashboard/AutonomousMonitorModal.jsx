@@ -36,7 +36,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
   // Pillar 1 state (Morning Predictive Advisory)
   const [p1Search, setP1Search] = useState('');
   const [p1FacilityId, setP1FacilityId] = useState('dps_rk_puram');
-  const [p1Threshold, setP1Threshold] = useState(120);
+  const [p1Threshold, setP1Threshold] = useState(75);
   const [p1SimulatedPm25, setP1SimulatedPm25] = useState(245);
   const [p1Scenario, setP1Scenario] = useState('hazardous'); // 'hazardous' | 'clean'
   const [p1Loading, setP1Loading] = useState(false);
@@ -863,7 +863,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
                     </div>
                     <input
                       type="range"
-                      min="180"
+                      min="105"
                       max="480"
                       step="5"
                       value={p2CurrentPm25}
@@ -871,7 +871,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
                       style={{ width: '100%', accentColor: '#ef4444', cursor: 'pointer' }}
                     />
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#64748b', marginTop: '4px' }}>
-                      <span>180 (Threshold)</span>
+                      <span>105 (Threshold)</span>
                       <span>300 (Hazardous)</span>
                       <span>480 (Severe Emergency)</span>
                     </div>

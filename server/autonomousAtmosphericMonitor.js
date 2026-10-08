@@ -176,7 +176,7 @@ function isValidEmail(email) {
  */
 export async function runPredictiveAdvisoryEvaluation({
   facilityId = null,
-  thresholdPm25 = 120,
+  thresholdPm25 = parseInt(process.env.ADVISORY_THRESHOLD_PM25, 10) || 75,
   dispatchViaSes = true,
   isSandbox = true,
   maxFacilities = 10,
@@ -233,7 +233,7 @@ export async function runPredictiveAdvisoryEvaluation({
           basePm25: liveBasePm25,
           threshold: thresholdPm25
         });
-        peakArrival = forecast.peakMorningArrival?.predictedPm25 || 0;
+        peakArrival = forecast.summary?.peakPm25 || forecast.peakMorningArrival?.predictedPm25 || forecast.summary?.arrivalAverage || 0;
       }
 
       // RULE 1: If safe/acceptable, DO NOT SPAM. Suppress advisory.
@@ -571,8 +571,9 @@ export async function runAutonomousMonitoringCycle({ dispatchViaSes = false, isS
     cycleReport.telemetrySync = { syncedBlocksCount: syncedGrids.length };
 
     // 2. Scan for Sudden Block-Level Spikes (Pillar 2)
+    const blockThreshold = parseInt(process.env.BLOCK_EMERGENCY_THRESHOLD_PM25, 10) || 105;
     for (const gridSync of syncedGrids) {
-      if (gridSync.avgPm25 >= 180) { // Severe block threshold
+      if (gridSync.avgPm25 >= blockThreshold) {
         const emergencyResult = await dispatchBlockEmergencySurge({
           gridId: gridSync.gridId,
           currentPm25: gridSync.avgPm25,
@@ -590,18 +591,15 @@ export async function runAutonomousMonitoringCycle({ dispatchViaSes = false, isS
     const petitionResults = await evaluate14DayChronicBlockPetitions({ dispatchViaSes: safeDispatch, isSandbox });
     cycleReport.petitionsEvaluated = petitionResults;
 
-    // 4. If during early morning window (06:00 - 08:30 AM IST), run predictive morning advisory evaluation (Pillar 1)
-    const istHourStr = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', hour: 'numeric', hour12: false }).format(new Date());
-    const istHour = parseInt(istHourStr, 10);
-    if (istHour >= 6 && istHour <= 8) {
-      const advResults = await runPredictiveAdvisoryEvaluation({
-        thresholdPm25: parseInt(process.env.ADVISORY_THRESHOLD_PM25, 10) || 90,
-        dispatchViaSes: safeDispatch,
-        isSandbox,
-        maxFacilities: 15
-      });
-      cycleReport.predictiveAdvisoriesEvaluated = advResults;
-    }
+    // 4. Run predictive morning advisory evaluation (Pillar 1) if not already dispatched today
+    // Strictly debounced per facility in IST to prevent alert fatigue
+    const advResults = await runPredictiveAdvisoryEvaluation({
+      thresholdPm25: parseInt(process.env.ADVISORY_THRESHOLD_PM25, 10) || 75,
+      dispatchViaSes: safeDispatch,
+      isSandbox,
+      maxFacilities: 5
+    });
+    cycleReport.predictiveAdvisoriesEvaluated = advResults;
 
     recordAudit('CYCLE_COMPLETED', cycleReport);
 

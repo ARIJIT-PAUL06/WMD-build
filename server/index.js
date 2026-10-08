@@ -760,7 +760,7 @@ app.post('/api/monitor/predictive-advisories', async (req, res) => {
   try {
     const {
       facilityId,
-      thresholdPm25 = 120,
+      thresholdPm25 = parseInt(process.env.ADVISORY_THRESHOLD_PM25, 10) || 75,
       dispatchViaSes = true,
       isSandbox = true,
       maxFacilities = 15,
@@ -839,7 +839,7 @@ app.post('/api/advisory/test-dispatch', async (req, res) => {
  */
 app.post('/api/advisory/evaluate-morning', async (req, res) => {
   try {
-    const { facilityId = 'dps_rk_puram', thresholdPm25 = 120, basePm25, testEmail, isSandbox = true } = req.body;
+    const { facilityId = 'dps_rk_puram', thresholdPm25 = parseInt(process.env.ADVISORY_THRESHOLD_PM25, 10) || 75, basePm25, testEmail, isSandbox = true } = req.body;
     const result = await evaluateMorningAdvisories({
       facilityId,
       thresholdPm25: Number(thresholdPm25),

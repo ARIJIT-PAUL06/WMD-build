@@ -672,7 +672,7 @@ export async function testDispatch630Advisory({ facilityId, testEmail = null, is
  */
 export async function evaluateMorningAdvisories({
   facilityId = 'dps_rk_puram',
-  thresholdPm25 = 120,
+  thresholdPm25 = parseInt(process.env.ADVISORY_THRESHOLD_PM25, 10) || 75,
   basePm25 = null,
   testEmail = null,
   isSandbox = true,
