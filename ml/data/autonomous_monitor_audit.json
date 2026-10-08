@@ -3061,5 +3061,157 @@
         "messageId": "010001a11a04c847-e4747abd-c34e-498c-87bc-02fc42fa98a6-000000"
       }
     ]
+  },
+  {
+    "timestamp": "2026-10-08T05:51:17.613Z",
+    "eventType": "PREDICTIVE_ADVISORY_DISPATCHED",
+    "facilityId": "dps_rk_puram",
+    "facilityName": "Delhi Public School, R.K. Puram",
+    "predictedPeak": 265,
+    "recipient": "psubai2006@gmail.com",
+    "messageId": "010001a11a10e72a-99c995c0-efe0-4ee1-be1e-379c2fc2a2f5-000000"
+  },
+  {
+    "timestamp": "2026-10-08T05:51:30.657Z",
+    "eventType": "BLOCK_EMERGENCY_DISPATCHED",
+    "gridId": "GRID_R03_C05",
+    "pm25": 275,
+    "anomalyType": "Sudden Atmospheric Stagnation & Particulate Incursion",
+    "facilitiesCount": 17,
+    "results": [
+      {
+        "facilityId": "dps_rk_puram",
+        "name": "Delhi Public School, R.K. Puram",
+        "facilityClass": "educational",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "modern_vasant_vihar",
+        "name": "Modern School, Vasant Vihar",
+        "facilityClass": "educational",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "sanskriti_school",
+        "name": "Sanskriti School, Chanakyapuri",
+        "facilityClass": "educational",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "springdales_dhaula_kuan",
+        "name": "Springdales School, Dhaula Kuan",
+        "facilityClass": "educational",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "tagore_vasant_vihar",
+        "name": "Tagore International School, Vasant Vihar",
+        "facilityClass": "educational",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "air_force_golden_jubilee",
+        "name": "Air Force Golden Jubilee Institute",
+        "facilityClass": "educational",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "delhi_university_south",
+        "name": "University of Delhi (South Campus)",
+        "facilityClass": "educational",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "govt_girls_senior_secondary_sc",
+        "name": "Govt. Girls Senior Secondary School",
+        "facilityClass": "educational",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "dps_international_school",
+        "name": "DPS International School",
+        "facilityClass": "educational",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "jose_martin_sarvodya_vidyalya",
+        "name": "Jose Martin Sarvodya Vidyalya",
+        "facilityClass": "educational",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "dcac",
+        "name": "DCAC",
+        "facilityClass": "educational",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "mount_carmel_school_senior_win",
+        "name": "Mount Carmel School (Senior Wing)",
+        "facilityClass": "educational",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "dav_public_school",
+        "name": "DAV Public School",
+        "facilityClass": "educational",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "kendriya_vidyalaya",
+        "name": "Kendriya Vidyalaya",
+        "facilityClass": "educational",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "masjid_e_quba_madrasa_islamia",
+        "name": "Masjid-e-Quba Madrasa Islamia",
+        "facilityClass": "educational",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "goyal_mri_diagnostic_centre",
+        "name": "Goyal MRI & Diagnostic Centre",
+        "facilityClass": "healthcare",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      },
+      {
+        "facilityId": "diyos",
+        "name": "Diyos",
+        "facilityClass": "healthcare",
+        "status": "DISPATCHED",
+        "recipient": "psubai2006@gmail.com"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-10-08T05:51:30.742Z",
+    "eventType": "14_DAY_PETITION_DISPATCHED",
+    "gridId": "GRID_R03_C05",
+    "compliance": {
+      "totalHours": 107,
+      "severeHours": 31,
+      "avgPm25": 193,
+      "totalDaysRecorded": 5,
+      "petitionEligible": false
+    },
+    "facilitiesCount": 17,
+    "messageId": "SUPPRESSED_BY_SAFETY_GATE"
   }
 ]

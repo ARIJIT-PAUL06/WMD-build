@@ -23,14 +23,17 @@ const __dirname = path.dirname(__filename);
 const sagemakerRegion = process.env.AWS_REGION || 'ap-south-1';
 const endpointName = process.env.SAGEMAKER_ENDPOINT_NAME || 'wmd-delhi-48h-forecast-endpoint';
 
+const smAccessKey = process.env.APP_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
+const smSecretKey = process.env.APP_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+
 let sagemakerClient = null;
-if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+if (smAccessKey && smSecretKey) {
   try {
     sagemakerClient = new SageMakerRuntimeClient({
       region: sagemakerRegion,
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        accessKeyId: smAccessKey,
+        secretAccessKey: smSecretKey,
         ...(process.env.AWS_SESSION_TOKEN ? { sessionToken: process.env.AWS_SESSION_TOKEN } : {})
       }
     });

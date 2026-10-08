@@ -3,7 +3,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const region = process.env.AWS_REGION || 'ap-south-1';
-const hasAwsCredentials = Boolean(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
+const accessKey = process.env.APP_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
+const secretKey = process.env.APP_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+const hasAwsCredentials = Boolean(accessKey && secretKey);
 
 // In-memory fallback database for local hackathon demo when AWS credentials are not yet configured
 const localHistoryStore = new Map();
@@ -22,9 +24,15 @@ async function initAwsClientsIfNeeded() {
       const { DynamoDBDocumentClient } = await import('@aws-sdk/lib-dynamodb');
       const { BedrockRuntimeClient } = await import('@aws-sdk/client-bedrock-runtime');
 
-      const ddbClient = new DynamoDBClient({ region });
+      const awsCreds = {
+        accessKeyId: accessKey,
+        secretAccessKey: secretKey,
+        ...(process.env.AWS_SESSION_TOKEN ? { sessionToken: process.env.AWS_SESSION_TOKEN } : {})
+      };
+
+      const ddbClient = new DynamoDBClient({ region, credentials: awsCreds });
       ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
-      bedrockClient = new BedrockRuntimeClient({ region });
+      bedrockClient = new BedrockRuntimeClient({ region, credentials: awsCreds });
       console.log(`[AWS Services] Initialized with live AWS credentials in region: ${region}`);
     } catch (err) {
       console.warn(`[AWS Services] Error initializing AWS SDK, falling back to local simulation:`, err.message);

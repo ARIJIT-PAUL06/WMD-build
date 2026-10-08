@@ -1,30 +1,16 @@
 {
   "lastCycleAt": "2026-10-08T05:35:34.016Z",
   "lastPredictiveAdvisoryByFacility": {
-    "dps_rk_puram": 1791437803610,
-    "modern_barakhamba": 1791429880246,
-    "modern_vasant_vihar": 1791429880246,
-    "dps_mathura_road": 1791429898014,
-    "dps_rohini": 1791429898014,
-    "dps_vasant_kunj": 1791429898014,
-    "sanskriti_school": 1791429898014,
-    "mothers_international": 1791429898014,
-    "sardar_patel_vidyalaya": 1791429898014,
-    "springdales_pusa_road": 1791429898014,
-    "springdales_dhaula_kuan": 1791429898014,
-    "st_columbas": 1791429898014,
-    "convent_jesus_mary": 1791429898014,
-    "dav_shreshtha_vihar": 1791429898014,
-    "dav_vasant_kunj": 1791429898014
+    "dps_rk_puram": 1791438663294
   },
   "lastEmergencySentByGrid": {
-    "GRID_R03_C05": 1791437883518
+    "GRID_R03_C05": 1791438690604
   },
   "lastPetitionSentByGrid": {
-    "GRID_R03_C05": 1791429894998
+    "GRID_R03_C05": 1791438690669
   },
   "totalCyclesExecuted": 130,
-  "totalEmergenciesDispatched": 7,
-  "totalPetitionsDispatched": 6,
-  "totalPredictiveAdvisoriesDispatched": 54
+  "totalEmergenciesDispatched": 8,
+  "totalPetitionsDispatched": 7,
+  "totalPredictiveAdvisoriesDispatched": 55
 }
