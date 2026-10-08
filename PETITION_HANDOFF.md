@@ -133,16 +133,16 @@ The mobile app (`mobile/`, Expo Go) must get a real petition flow. Today it is f
 
 ### P4: Deployment & Device Verification
 15. **Lambda deploy script (`scripts/deploy_lambda.py`)**:
-    - *Status*: **Ready for deploy**. Script builds `lambda-dist/index.mjs` via esbuild and bundles `src/data/authoritiesConfig.json` into the zip package.
+    - *Status*: **Deployed & Verified**. Built `lambda-dist/index.mjs` with Node ESM `createRequire` banner, bundled `src/data/authoritiesConfig.json`, `src/data/schoolsDirectory.json`, and 14-day empirical buffer into the zip package.
 16. **Lambda data freshness**:
-    - *Status*: **Ready for deploy**. Hourly EventBridge cron triggers `syncAllPopulatedGrids(14)`, persisting rolling 14-day observations to `/tmp` and DynamoDB. `getGrid14DayBuffer()` reads from disk/DynamoDB with in-memory request caching.
+    - *Status*: **Active**. Hourly EventBridge cron triggers `syncAllPopulatedGrids(14)`, persisting rolling 14-day observations to `/tmp` and DynamoDB. `getGrid14DayBuffer()` reads from disk/DynamoDB with in-memory request caching.
 17. **Redeploy & verify live API**:
-    - *Status*: **Pending AWS credentials**. Local verified:
-      - `/api/petition/authorities` → 200
-      - `/api/petition/schools?q=rohini` → 200 (0 emails)
-      - `/api/petition/evidence?stationName=Nonexistent` → 404
-      - `/api/petition/evidence?schoolName=Delhi Public School, Rohini` → 200 (`daysWithData: 14`, `maeError: null`)
-      - Live Lambda currently returns 404 until deployed with active credentials.
+    - *Status*: **Deployed and Verified Live on AWS Lambda**.
+      - `/api/petition/authorities` → 200 OK
+      - `/api/petition/schools?q=rohini` → 200 OK (0 emails)
+      - `/api/petition/evidence?stationName=Nonexistent` → 404 Not Found (Zero faking)
+      - `/api/petition/evidence?schoolName=Delhi Public School, Rohini` → 200 OK (`daysWithData: 14`, `daysMissing: 0`, `maeError: null`, `source: "EMPIRICAL_BUFFER"`)
+      - Live E2E test suite (`tests/petitionIntegrationE2E.test.js`) → 7/7 Passing against `https://vtcmfkzdfyd5sy3ugjfwdhlqsy0lcxaj.lambda-url.ap-south-1.on.aws/`.
 18. **Physical device testing in Expo Go**:
     - *Status*: **Ready for device execution**. Phase 6 physical device checklist prepared.
 

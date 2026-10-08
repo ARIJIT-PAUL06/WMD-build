@@ -25,7 +25,7 @@ print("0. Building lambda-dist/index.mjs via esbuild...")
 dist_dir = os.path.join(project_root, 'lambda-dist')
 os.makedirs(dist_dir, exist_ok=True)
 subprocess.run(
-    'npx esbuild server/lambda.js --bundle --platform=node --target=node20 --format=esm --outfile=lambda-dist/index.mjs --external:@aws-sdk/*',
+    'npx esbuild server/lambda.js --bundle --platform=node --target=node20 --format=esm --outfile=lambda-dist/index.mjs --external:@aws-sdk/* --banner:js="import { createRequire } from \'module\'; const require = createRequire(import.meta.url);"',
     shell=True,
     check=True,
     cwd=project_root

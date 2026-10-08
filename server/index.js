@@ -1225,7 +1225,7 @@ app.use((req, res) => {
   });
 });
 
-if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
+if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME && process.env.NODE_ENV !== 'test' && !process.env.NODE_TEST_CONTEXT) {
   app.listen(PORT, () => {
     console.log(`=======================================================`);
     console.log(`🌿 AWS Environmental Hacks API Server running on port ${PORT}`);

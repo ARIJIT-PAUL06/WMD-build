@@ -93,7 +93,26 @@ export async function searchSchools(query = '') {
     if (res.ok) {
       const data = await res.json();
       if (data.success && Array.isArray(data.schools)) {
-        return data.schools.map(s => ({ ...s, sourceLabel: 'live server' }));
+        const rawFallback = Array.isArray(fallbackSchools)
+          ? fallbackSchools
+          : (fallbackSchools.educationalInstitutions || fallbackSchools.schools || []);
+        return data.schools.map(s => {
+          const match = rawFallback.find(f => f.id === s.id || (f.name && f.name.toLowerCase() === s.name?.toLowerCase()));
+          const nearestStation = s.nearestStation || match?.nearestStation || null;
+          const dist = s.nearestStationDistanceKm !== undefined
+            ? s.nearestStationDistanceKm
+            : (s.stationDistanceKm !== undefined
+              ? s.stationDistanceKm
+              : (match?.nearestStationDistanceKm !== undefined
+                ? match.nearestStationDistanceKm
+                : (match?.stationDistanceKm != null ? match.stationDistanceKm : null)));
+          return {
+            ...s,
+            nearestStation,
+            nearestStationDistanceKm: dist,
+            sourceLabel: 'live server'
+          };
+        });
       }
     }
   } catch (_err) {
