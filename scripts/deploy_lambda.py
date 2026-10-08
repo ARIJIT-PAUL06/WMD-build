@@ -19,12 +19,25 @@ session = boto3.Session(
 )
 lam = session.client('lambda')
 
+import subprocess
+
+print("0. Building lambda-dist/index.mjs via esbuild...")
+dist_dir = os.path.join(project_root, 'lambda-dist')
+os.makedirs(dist_dir, exist_ok=True)
+subprocess.run(
+    'npx esbuild server/lambda.js --bundle --platform=node --target=node20 --format=esm --outfile=lambda-dist/index.mjs --external:@aws-sdk/*',
+    shell=True,
+    check=True,
+    cwd=project_root
+)
+
 print("1. Packaging Lambda bundle from lambda-dist/index.mjs and model/data files...")
 buf = io.BytesIO()
 with zipfile.ZipFile(buf, 'w', compression=zipfile.ZIP_DEFLATED) as z:
     z.write(os.path.join(project_root, 'lambda-dist', 'index.mjs'), arcname='index.mjs')
     z.write(os.path.join(project_root, 'ml', 'data', 'spatial_grids.json'), arcname='ml/data/spatial_grids.json')
     z.write(os.path.join(project_root, 'src', 'data', 'schoolsDirectory.json'), arcname='src/data/schoolsDirectory.json')
+    z.write(os.path.join(project_root, 'src', 'data', 'authoritiesConfig.json'), arcname='src/data/authoritiesConfig.json')
     z.write(os.path.join(project_root, 'ml', 'model', 'sagemaker_forecast_metadata.json'), arcname='ml/model/sagemaker_forecast_metadata.json')
     z.write(os.path.join(project_root, 'ml', 'model', 'xgboost_forecast_model.json'), arcname='ml/model/xgboost_forecast_model.json')
     buf_path = os.path.join(project_root, 'ml', 'data', 'grid_14day_buffer.json')

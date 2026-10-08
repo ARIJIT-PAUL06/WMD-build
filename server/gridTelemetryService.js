@@ -195,7 +195,7 @@ export function get14DayCompliance(gridId) {
  */
 export async function fetchLiveTelemetryForGrid(gridId, lat, lon, daysPast = 14) {
   try {
-    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm2_5,pm10,nitrogen_dioxide,carbon_monoxide&past_days=${daysPast}`;
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm2_5,pm10,nitrogen_dioxide,carbon_monoxide&past_days=${daysPast}&timezone=GMT`;
     const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
     if (!res.ok) return null;
 
@@ -216,8 +216,10 @@ export async function fetchLiveTelemetryForGrid(gridId, lat, lon, daysPast = 14)
     const buffer = [];
     for (let i = 0; i < times.length; i++) {
       if (pm25s[i] !== null && pm25s[i] !== undefined) {
+        const rawTime = times[i];
+        const formattedTimestamp = rawTime.endsWith('Z') ? rawTime : `${rawTime}Z`;
         buffer.push({
-          timestamp: times[i],
+          timestamp: formattedTimestamp,
           pm25: Math.round(pm25s[i] * 10) / 10,
           pm10: pm10s[i] !== null ? Math.round(pm10s[i] * 10) / 10 : null,
           no2: no2s[i] !== null ? Math.round(no2s[i] * 10) / 10 : null,
@@ -255,7 +257,7 @@ export async function fetchLiveTelemetryBatch(gridsChunk, daysPast = 14) {
   try {
     const lats = gridsChunk.map(g => g.centroid.lat).join(',');
     const lons = gridsChunk.map(g => g.centroid.lon).join(',');
-    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lons}&hourly=pm2_5,pm10,nitrogen_dioxide,carbon_monoxide&past_days=${daysPast}`;
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lons}&hourly=pm2_5,pm10,nitrogen_dioxide,carbon_monoxide&past_days=${daysPast}&timezone=GMT`;
 
     const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
     if (!res.ok) return [];
@@ -285,8 +287,10 @@ export async function fetchLiveTelemetryBatch(gridsChunk, daysPast = 14) {
       const buffer = [];
       for (let j = 0; j < times.length; j++) {
         if (pm25s[j] !== null && pm25s[j] !== undefined) {
+          const rawTime = times[j];
+          const formattedTimestamp = rawTime.endsWith('Z') ? rawTime : `${rawTime}Z`;
           buffer.push({
-            timestamp: times[j],
+            timestamp: formattedTimestamp,
             pm25: Math.round(pm25s[j] * 10) / 10,
             pm10: pm10s[j] !== null ? Math.round(pm10s[j] * 10) / 10 : null,
             no2: no2s[j] !== null ? Math.round(no2s[j] * 10) / 10 : null,
@@ -334,6 +338,25 @@ export async function syncAllPopulatedGrids(daysPast = 14) {
     fs.writeFileSync(BUFFER_PATH, JSON.stringify(grid14DayBuffer, null, 2));
   } catch (e) {
     // Non-fatal (e.g. read-only Lambda /tmp or in-memory)
+  }
+
+  // Update in-memory evidenceService cache and persist to DynamoDB per Fix 16
+  try {
+    const { setCachedGridBuffer } = await import('./evidenceService.js');
+    setCachedGridBuffer(grid14DayBuffer);
+  } catch (_e) {
+    // Non-fatal
+  }
+
+  try {
+    const { saveGridBufferToDynamoDB } = await import('./awsServices.js');
+    for (const r of results) {
+      if (r.gridId && grid14DayBuffer[r.gridId]) {
+        await saveGridBufferToDynamoDB(r.gridId, grid14DayBuffer[r.gridId]);
+      }
+    }
+  } catch (_e) {
+    // Non-fatal if AWS not configured
   }
 
   return results;

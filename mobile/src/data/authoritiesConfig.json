@@ -1,0 +1,92 @@
+{
+  "authorities": [
+    {
+      "id": "doe_delhi",
+      "name": "Directorate of Education (DoE)",
+      "fullName": "Directorate of Education, Government of NCT of Delhi",
+      "department": "Department of School Education",
+      "designation": "The Director of Education",
+      "email": "diredu@nic.in",
+      "portalUrl": "https://www.edudel.nic.in",
+      "portalName": "Delhi Education Portal",
+      "jurisdiction": "School schedules, morning outdoor sports advisories, classroom air purification sanctions, and hybrid schooling mandates during GRAP stages.",
+      "address": "Old Secretariat, Civil Lines, Delhi - 110054"
+    },
+    {
+      "id": "dpcc",
+      "name": "Delhi Pollution Control Committee (DPCC)",
+      "fullName": "Delhi Pollution Control Committee, GNCTD",
+      "department": "Air Pollution Control & Monitoring Division",
+      "designation": "The Member Secretary",
+      "email": "msdpcc@nic.in",
+      "portalUrl": "https://dpcc.delhigovt.nic.in/grievance",
+      "portalName": "DPCC Public Grievance Portal",
+      "jurisdiction": "Industrial emissions, ambient air station monitoring, anti-smog water sprinkler enforcement, and episodic pollution hotspots.",
+      "address": "4th-5th Floor, ISBT Building, Kashmere Gate, Delhi - 110006"
+    },
+    {
+      "id": "mcd",
+      "name": "Municipal Corporation of Delhi (MCD)",
+      "fullName": "Municipal Corporation of Delhi",
+      "department": "Environment Management Services (DEMS)",
+      "designation": "The Municipal Commissioner",
+      "email": "commissioner-mcd@delhi.gov.in",
+      "portalUrl": "https://mcdonline.nic.in",
+      "portalName": "MCD 311 Citizen Services",
+      "jurisdiction": "Construction and demolition (C&D) dust suppression, open garbage/leaf burning, mechanical road sweeping around school zones.",
+      "address": "Dr. S.P.M. Civic Centre, Minto Road, New Delhi - 110002"
+    },
+    {
+      "id": "cpcb",
+      "name": "Central Pollution Control Board (CPCB)",
+      "fullName": "Central Pollution Control Board, Ministry of Environment, Forest and CC",
+      "department": "Air Quality Management Division",
+      "designation": "The Chairman / Member Secretary",
+      "email": "cpcb@nic.in",
+      "portalUrl": "https://cpcb.nic.in/air-quality-data/",
+      "portalName": "CPCB Sameer Public Portal",
+      "jurisdiction": "National Clean Air Programme (NCAP), inter-state airshed coordination, and CAAQMS sensor accuracy benchmarks.",
+      "address": "Parivesh Bhawan, East Arjun Nagar, Delhi - 110032"
+    },
+    {
+      "id": "cpgrams",
+      "name": "CPGRAMS Central Grievance Portal",
+      "fullName": "Centralised Public Grievance Redress and Monitoring System (CPGRAMS)",
+      "department": "Department of Administrative Reforms and Public Grievances (DARPG)",
+      "designation": "Nodal Grievance Officer (Environment & School Health)",
+      "email": "cpgrams-darpg@nic.in",
+      "portalUrl": "https://pgportal.gov.in",
+      "portalName": "CPGRAMS Official Portal",
+      "jurisdiction": "Apex government-wide public grievance monitoring mechanism ensuring statutory 21-day timeline tracking.",
+      "address": "Sardar Patel Bhawan, Sansad Marg, New Delhi - 110001"
+    }
+  ],
+  "standardDemands": [
+    {
+      "id": "smog_guns",
+      "label": "Deploy Anti-Smog Water Sprinklers",
+      "text": "Immediate deployment of motorized anti-smog guns and misting sprinklers along school access roads and intersections between 06:30 AM and 09:30 AM on high-AQI school days."
+    },
+    {
+      "id": "construction_halt",
+      "label": "Halt Uncovered Construction & Dust Near Campus",
+      "text": "Strict inspection and enforcement of covered construction protocols or mandatory temporary cessation of dust-generating civil works within a 1-kilometer radius during school operating hours."
+    },
+    {
+      "id": "traffic_diversion",
+      "label": "School Gate Traffic Bottleneck Mitigation",
+      "text": "Stationing municipal/traffic marshals at school perimeter gates to strictly prohibit heavy vehicle transit and eliminate engine idling during student arrival (07:00–08:30 AM) and dispersal (01:30–02:30 PM)."
+    },
+    {
+      "id": "hepa_grant",
+      "label": "Sanction Indoor Air Filtration / HEPA Grants",
+      "text": "Administrative approval and municipal grant assistance for installing certified True-HEPA air cleaning units and air curtains across primary school classrooms and assembly corridors."
+    },
+    {
+      "id": "recess_guidelines",
+      "label": "Official Air Quality Protocols for Recess & PE",
+      "text": "Issue an enforceable circular requiring non-penalized indoor recess, cancellation of outdoor physical endurance drills, and relocation of morning assemblies whenever local PM2.5 crosses 120 µg/m³."
+    }
+  ],
+  "dpdpaDisclaimer": "Notice under India's Digital Personal Data Protection (DPDP) Act, 2023: Personal information (Name, Role, Email, Phone) entered into this tool is processed entirely locally within your browser session to render this civic complaint draft. No personal data is stored on remote servers or sold without explicit authorization."
+}

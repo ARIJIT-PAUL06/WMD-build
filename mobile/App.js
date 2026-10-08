@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Platform,
+  Share,
+  Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,7 +23,15 @@ import MapCanvas, {
 import MapControlDeck from './src/components/MapControlDeck';
 import BottomDialogBox from './src/components/BottomDialogBox';
 import BottomNavBar from './src/components/BottomNavBar';
+import PetitionModal from './src/components/PetitionModal';
 import indiaStations from './src/data/indiaStations.json';
+import {
+  getAllDockets,
+  deleteDocket,
+  deleteAllDockets,
+  updateDocketStatus,
+  DOCKET_STATUS
+} from './src/services/petitionService';
 
 const initialStations = indiaStations.map(s => ({
   ...s,
@@ -33,6 +43,97 @@ export default function App() {
   const [stations, setStations] = useState(initialStations);
   const [selectedStation, setSelectedStation] = useState(initialStations[0]);
   const [isDrawerExpanded, setIsDrawerExpanded] = useState(false);
+
+  // Civic Petition Modal & On-Device Dockets State (DPDP Act Compliance)
+  const [isPetitionModalVisible, setIsPetitionModalVisible] = useState(false);
+  const [petitionTargetStation, setPetitionTargetStation] = useState(null);
+  const [localDockets, setLocalDockets] = useState([]);
+
+  const refreshDockets = useCallback(async () => {
+    try {
+      const list = await getAllDockets();
+      setLocalDockets(list);
+    } catch (err) {
+      console.warn('Failed reading local grievance dockets:', err);
+      Alert.alert(
+        'Docket Storage Error',
+        'Could not load saved grievance dockets due to corrupted local data. The raw storage was kept intact and not overwritten.'
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshDockets();
+  }, [refreshDockets]);
+
+  const handleShareDocket = async (docket) => {
+    try {
+      const text = docket.sentDraftText || docket.activeDraftText || (docket.selectedLanguage === 'hi' ? docket.letterTextHi : docket.letterTextEn);
+      const res = await Share.share({
+        title: docket.subject,
+        message: `${docket.subject}\n\n${text}`
+      });
+      if (res && res.action === Share.sharedAction) {
+        await updateDocketStatus(docket.id, DOCKET_STATUS.SHARED);
+        refreshDockets();
+      }
+    } catch (err) {
+      console.warn('Failed sharing docket:', err);
+    }
+  };
+
+  const handleMarkDocketSent = (docket) => {
+    Alert.alert(
+      'Confirm Submission',
+      `Mark grievance [${docket.referenceId}] as sent?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Mark as Sent',
+          onPress: async () => {
+            await updateDocketStatus(docket.id, DOCKET_STATUS.MARKED_AS_SENT);
+            refreshDockets();
+          }
+        }
+      ]
+    );
+  };
+
+  const handleDeleteDocket = (docket) => {
+    Alert.alert(
+      'Delete Docket Record',
+      `Remove grievance docket [${docket.referenceId}] from this device?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteDocket(docket.id);
+            refreshDockets();
+          }
+        }
+      ]
+    );
+  };
+
+  const handleDeleteAllDockets = () => {
+    Alert.alert(
+      'Right to Erasure (DPDP Act)',
+      'Permanently erase all saved grievance dockets and evidence snapshots from this device?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Purge All Records',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteAllDockets();
+            refreshDockets();
+          }
+        }
+      ]
+    );
+  };
 
   // Map Filter & Layer States
   const [activePollutant, setActivePollutant] = useState('aqi');
@@ -167,13 +268,23 @@ export default function App() {
         endpoint = 'http://localhost:3001/api/india-heatmap';
       }
 
+      const fetchWithTimeout = async (url, ms) => {
+        const c = new AbortController();
+        const t = setTimeout(() => c.abort(), ms);
+        try {
+          return await fetch(url, { signal: c.signal });
+        } finally {
+          clearTimeout(t);
+        }
+      };
+
       let res = null;
       try {
-        res = await fetch(endpoint, { signal: AbortSignal.timeout(4000) });
+        res = await fetchWithTimeout(endpoint, 4000);
       } catch (e) {
         if (endpoint !== '/api/india-heatmap') {
           try {
-            res = await fetch('/api/india-heatmap', { signal: AbortSignal.timeout(3000) });
+            res = await fetchWithTimeout('/api/india-heatmap', 3000);
           } catch (e2) {}
         }
       }
@@ -197,7 +308,7 @@ export default function App() {
       const lons = indiaStations.map((s) => s.lon).join(',');
       const omUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lons}&current=us_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone&timezone=auto`;
 
-      const omRes = await fetch(omUrl, { signal: AbortSignal.timeout(8000) });
+      const omRes = await fetchWithTimeout(omUrl, 8000);
       if (omRes.ok) {
         const json = await omRes.json();
         const dataList = Array.isArray(json) ? json : [json];
@@ -308,7 +419,10 @@ export default function App() {
             station={selectedStation}
             isExpanded={isDrawerExpanded}
             onToggleExpand={() => setIsDrawerExpanded(!isDrawerExpanded)}
-            onOpenPetition={() => alert('Civic Petition Filed under Section 10 Delhi Air Act')}
+            onOpenPetition={() => {
+              setPetitionTargetStation(selectedStation);
+              setIsPetitionModalVisible(true);
+            }}
             onOpenShield={() => alert('Autonomous Shield Test Bench Activated')}
             activeRange={activeRange}
             isAdaptiveMode={isAdaptiveMode}
@@ -415,8 +529,10 @@ export default function App() {
 
                 <View style={styles.profileStatusItem}>
                   <Ionicons name="document-text-outline" size={18} color="#38bdf8" />
-                  <Text style={styles.profileStatusLabel}>SEC 10 PETITION</Text>
-                  <Text style={[styles.profileStatusValue, { color: '#38bdf8' }]}>FILED</Text>
+                  <Text style={styles.profileStatusLabel}>CIVIC DOCKETS</Text>
+                  <Text style={[styles.profileStatusValue, { color: '#38bdf8' }]}>
+                    {localDockets.length} SAVED
+                  </Text>
                 </View>
 
                 <View style={styles.profileStatusDivider} />
@@ -427,6 +543,133 @@ export default function App() {
                   <Text style={[styles.profileStatusValue, { color: '#10b981' }]}>ONLINE</Text>
                 </View>
               </View>
+            </View>
+
+            {/* Civic Grievance Petition Launcher */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => {
+                setPetitionTargetStation(selectedStation);
+                setIsPetitionModalVisible(true);
+              }}
+              style={styles.draftPetitionBanner}
+            >
+              <View style={styles.draftPetitionBannerLeft}>
+                <View style={styles.draftBannerIconBox}>
+                  <Ionicons name="document-text" size={22} color="#00f0ff" />
+                </View>
+                <View style={{ marginLeft: 12, flex: 1 }}>
+                  <Text style={styles.draftPetitionBannerTitle}>DRAFT NEW CIVIC GRIEVANCE</Text>
+                  <Text style={styles.draftPetitionBannerSub}>
+                    Section 10 Delhi Air Act · Empirical Continuous Telemetry
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="arrow-forward-circle" size={24} color="#00f0ff" />
+            </TouchableOpacity>
+
+            {/* Local Grievance Dockets Audit Log (DPDP Act 2023) */}
+            <View style={styles.actionSectionTitle}>
+              <View style={styles.docketsSectionHeader}>
+                <Text style={styles.sectionHeading}>LOCAL GRIEVANCE DOCKETS ({localDockets.length})</Text>
+                {localDockets.length > 0 && (
+                  <TouchableOpacity onPress={handleDeleteAllDockets}>
+                    <Text style={styles.purgeAllText}>PURGE ALL (DPDP)</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
+            {localDockets.length === 0 ? (
+              <View style={styles.emptyDocketsCard}>
+                <Ionicons name="folder-open-outline" size={28} color="#475569" />
+                <Text style={styles.emptyDocketsTitle}>NO LOCAL DOCKETS STORED</Text>
+                <Text style={styles.emptyDocketsSub}>
+                  Grievances drafted, shared, or opened in mail on this device will appear here. No data is synced remotely.
+                </Text>
+              </View>
+            ) : (
+              localDockets.map((docket) => {
+                const isSent = docket.status === DOCKET_STATUS.MARKED_AS_SENT;
+                const isShared = docket.status === DOCKET_STATUS.SHARED;
+                const isMail = docket.status === DOCKET_STATUS.OPENED_IN_MAIL;
+                const statusColor = isSent ? '#10b981' : isShared ? '#00f0ff' : isMail ? '#a855f7' : '#94a3b8';
+
+                return (
+                  <View key={docket.id} style={styles.docketCard}>
+                    <View style={styles.docketCardHeader}>
+                      <View style={styles.docketRefBadge}>
+                        <Ionicons name="bookmark" size={11} color="#00f0ff" />
+                        <Text style={styles.docketRefText}>{docket.referenceId}</Text>
+                      </View>
+                      <View style={[styles.docketStatusPill, { borderColor: statusColor }]}>
+                        <View style={[styles.docketStatusDot, { backgroundColor: statusColor }]} />
+                        <Text style={[styles.docketStatusText, { color: statusColor }]}>
+                          {docket.status.toUpperCase()}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <Text style={styles.docketTargetName}>{docket.targetName}</Text>
+                    <Text style={styles.docketAuthorityName}>
+                      Authority: {docket.authorityName || 'Government of NCT Delhi'}
+                    </Text>
+
+                    <View style={styles.docketDateRow}>
+                      <Ionicons name="time-outline" size={12} color="#64748b" />
+                      <Text style={styles.docketDateText}>
+                        {new Date(docket.createdAt).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </Text>
+                    </View>
+
+                    {/* Docket Action Buttons */}
+                    <View style={styles.docketActionsRow}>
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => handleShareDocket(docket)}
+                        style={styles.docketActionBtn}
+                      >
+                        <Ionicons name="share-social-outline" size={13} color="#00f0ff" />
+                        <Text style={styles.docketActionBtnText}>SHARE</Text>
+                      </TouchableOpacity>
+
+                      {!isSent && (
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => handleMarkDocketSent(docket)}
+                          style={[styles.docketActionBtn, { borderColor: 'rgba(16, 185, 129, 0.4)' }]}
+                        >
+                          <Ionicons name="checkmark-circle-outline" size={13} color="#10b981" />
+                          <Text style={[styles.docketActionBtnText, { color: '#10b981' }]}>MARK SENT</Text>
+                        </TouchableOpacity>
+                      )}
+
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => handleDeleteDocket(docket)}
+                        style={[styles.docketActionBtn, { borderColor: 'rgba(239, 68, 68, 0.4)' }]}
+                      >
+                        <Ionicons name="trash-outline" size={13} color="#ef4444" />
+                        <Text style={[styles.docketActionBtnText, { color: '#ef4444' }]}>DELETE</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })
+            )}
+
+            {/* DPDP Act 2023 Local Storage Disclosure */}
+            <View style={styles.dpdpNoticeCard}>
+              <Ionicons name="shield-checkmark" size={15} color="#38bdf8" />
+              <Text style={styles.dpdpNoticeText}>
+                🔒 DPDP Act 2023 Compliance: All petition drafts, sender contact details, and evidence dockets are stored strictly in local device memory. Zero personal identifiers or grievances are synced to remote analytics servers.
+              </Text>
             </View>
 
             {/* Quick Actions */}
@@ -464,6 +707,16 @@ export default function App() {
         <BottomNavBar
           activeTab={activeTab}
           onSelectTab={setActiveTab}
+        />
+
+        {/* ============================================================== */}
+        {/* CIVIC PETITION GENERATOR MODAL (WIZARD)                        */}
+        {/* ============================================================== */}
+        <PetitionModal
+          visible={isPetitionModalVisible}
+          onClose={() => setIsPetitionModalVisible(false)}
+          initialStation={petitionTargetStation || selectedStation}
+          onDocketSaved={refreshDockets}
         />
       </View>
     </SafeAreaView>
@@ -711,5 +964,196 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#64748b',
     marginTop: 2,
+  },
+
+  // Civic Grievance Petition Banner & Dockets Styles
+  draftPetitionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(0, 240, 255, 0.08)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#00f0ff',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    marginBottom: 16,
+  },
+  draftPetitionBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  draftBannerIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0, 240, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: '#00f0ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  draftPetitionBannerTitle: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#00f0ff',
+    fontFamily: 'monospace',
+    letterSpacing: 0.5,
+  },
+  draftPetitionBannerSub: {
+    fontSize: 10,
+    color: '#94a3b8',
+    marginTop: 2,
+    lineHeight: 14,
+  },
+  docketsSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  purgeAllText: {
+    fontSize: 9,
+    fontFamily: 'monospace',
+    fontWeight: '800',
+    color: '#ef4444',
+    letterSpacing: 0.5,
+  },
+  emptyDocketsCard: {
+    backgroundColor: 'rgba(11, 19, 38, 0.6)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.15)',
+    borderStyle: 'dashed',
+    padding: 18,
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  emptyDocketsTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#64748b',
+    fontFamily: 'monospace',
+    marginTop: 8,
+  },
+  emptyDocketsSub: {
+    fontSize: 10,
+    color: '#475569',
+    textAlign: 'center',
+    marginTop: 4,
+    lineHeight: 14,
+  },
+  docketCard: {
+    backgroundColor: 'rgba(11, 19, 38, 0.85)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.25)',
+    padding: 12,
+    marginBottom: 10,
+  },
+  docketCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  docketRefBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 240, 255, 0.1)',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  docketRefText: {
+    fontSize: 10,
+    fontFamily: 'monospace',
+    fontWeight: '800',
+    color: '#00f0ff',
+    marginLeft: 4,
+  },
+  docketStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 0.8,
+  },
+  docketStatusDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    marginRight: 4,
+  },
+  docketStatusText: {
+    fontSize: 8,
+    fontFamily: 'monospace',
+    fontWeight: '800',
+  },
+  docketTargetName: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#f8fafc',
+    marginBottom: 2,
+  },
+  docketAuthorityName: {
+    fontSize: 10,
+    color: '#94a3b8',
+    marginBottom: 6,
+  },
+  docketDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  docketDateText: {
+    fontSize: 9,
+    color: '#64748b',
+    fontFamily: 'monospace',
+    marginLeft: 4,
+  },
+  docketActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(56, 189, 248, 0.1)',
+    paddingTop: 8,
+  },
+  docketActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.3)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginLeft: 6,
+  },
+  docketActionBtnText: {
+    fontSize: 9,
+    fontFamily: 'monospace',
+    fontWeight: '800',
+    color: '#00f0ff',
+    marginLeft: 4,
+  },
+  dpdpNoticeCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.15)',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 16,
+  },
+  dpdpNoticeText: {
+    fontSize: 9,
+    color: '#64748b',
+    marginLeft: 8,
+    flex: 1,
+    lineHeight: 13,
   },
 });
