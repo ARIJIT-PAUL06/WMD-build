@@ -432,7 +432,7 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
                 {POLLUTANT_SPECS.map(p => {
                   const val = pollutantValues[p.id] || 0;
                   const ratio = val / p.naaqsLimit;
-                  
+
                   // RELATIVE NORMALIZED HEIGHT SCALING SYSTEM:
                   // The highest pollutant bar in the active payload defines the ceiling (capped safely at 35% viewport height).
                   // Minimum crate height is 12.5% (94px) so labels & numbers always remain clearly legible.

@@ -1,2563 +1,2215 @@
 /**
  * PollutantDocumentary.css
- * VayuVitals — Chapter-by-Chapter Visual Storybook Documentary
+ * VayuVitals - Unified Environmental Intelligence Documentary Design System
  *
- * "THE AIR WE BREATHE"
- * An investigative physical scrapbook documentary into air pollution in Delhi.
+ * Scoped strictly to the 7 pollutant documentary pages:
+ * PM2.5, PM10, NO2, SO2, CO, O3, NH3.
  *
  * Visual System:
- * - Tactile scrapbook textures (wood surfaces, graph paper, metal plates, corkboard, parchment, manila folder, acetate slides)
- * - Layered physical artifacts: pushpins, masking tape strips, paper clips, rubber stamps, polaroid mounts
- * - Imperfect, organic rotation and physical stacking
- * - Distinct, unique visual theme for EVERY single chapter
- * - Complete responsive mobile layout for every chapter
- * - Strict prefers-reduced-motion compliance and zero horizontal overflow
+ * - Dark atmospheric environment (#0B1011, #101718, dark charcoal tones)
+ * - Compact floating navigation bar with subtle blur and thin borders
+ * - Large central circular arc gauge & real telemetry readout
+ * - Editorial typography with generous whitespace and clear hierarchy
+ * - Single horizontal bottom data panel with pollutant switcher, sparkline, and risk legend
+ * - Spacious editorial sections (Where it comes from, What it does, Why it matters)
+ * - Cinematic Indian environmental photographic showcase
+ * - Empirical telemetry & scientific standards section
+ * - Fully responsive across Desktop, Laptop, Tablet, and Mobile
+ * - Zero global style contamination; respects prefers-reduced-motion
  */
 
-:root {
-  --doc-bg-deep: #050811;
-  --doc-bg-surface: rgba(15, 23, 42, 0.75);
-  --doc-border: rgba(255, 255, 255, 0.1);
-  --doc-border-hover: rgba(255, 255, 255, 0.25);
-  --doc-text-main: #f8fafc;
-  --doc-text-muted: #94a3b8;
-  --doc-text-dim: #64748b;
-  --doc-accent-blue: #38bdf8;
-  --doc-accent-emerald: #10b981;
-  --doc-accent-amber: #f59e0b;
-  --doc-accent-rose: #f43f5e;
-  --font-serif: "Georgia", "Cambria", "Times New Roman", serif;
-  --font-typewriter: "Courier New", Courier, monospace;
-}
-
 /* ==========================================================================
-   1. Root Canvas & Base Structure
+   1. ROOT PAGE CANVAS & ATMOSPHERE
    ========================================================================== */
-.doc-root {
+.documentary-page {
   position: relative;
   width: 100%;
   min-height: 100vh;
-  background-color: var(--doc-bg-deep);
-  color: var(--doc-text-main);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #0b1011;
+  color: #f8fafc;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   overflow-x: hidden;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.documentary-page *,
+.documentary-page *::before,
+.documentary-page *::after {
   box-sizing: border-box;
 }
 
-.doc-ambient-canvas {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(circle at 50% 10%, rgba(30, 41, 59, 0.4) 0%, transparent 65%),
-    radial-gradient(circle at 80% 85%, rgba(15, 23, 42, 0.5) 0%, transparent 60%);
-  z-index: 0;
-}
-
-.doc-grid-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 48px 48px;
-  z-index: 1;
-}
-
-
-/* ==========================================================================
-   19. CINEMATIC EDITORIAL POLLUTANT DOCUMENTARY STYLES
-   Visual Inspiration: Reference 2 — Photographic, full-width, film grain,
-   integrated editorial typography, date/chapter markers, dark grading,
-   ragged torn photographic edges, and continuous gapless transitions.
-   ========================================================================== */
-
-.cinematic-pollutant-documentary {
+.documentary-main-flow {
   position: relative;
   width: 100%;
-  min-height: 100vh;
-  background-color: #050811;
-  color: #f1f5f9;
-  font-family: var(--font-sans);
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
-
-/* Layer 1: Ambient Film Grain */
-.cinematic-film-grain {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 40;
-  opacity: 0.055;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-}
-
-/* Layer 2: Vignette Overlay */
-.cinematic-vignette-overlay {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 35;
-  background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(2, 4, 8, 0.55) 80%, rgba(1, 2, 4, 0.95) 100%);
-}
-
-/* Layer 3: Gapless Atmospheric Transition Veil (Zero White Flash) */
-.cinematic-transition-veil {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9999;
-  pointer-events: none;
-  background: radial-gradient(circle at 50% 50%, #0d1527 0%, #050811 75%, #020306 100%);
-  opacity: 0;
-  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
 }
 
-.cinematic-transition-veil.active {
-  pointer-events: auto;
-  opacity: 1;
-}
-
-.cinematic-transition-veil.phase-expanded {
-  opacity: 1;
-}
-
-.cinematic-transition-veil.phase-reveal {
-  opacity: 0;
-  transition: opacity 0.45s ease-out;
-}
-
-.transition-veil-kicker {
-  font-family: var(--font-typewriter);
-  font-size: 0.9rem;
-  letter-spacing: 0.25em;
-  color: #94a3b8;
-  text-transform: uppercase;
-  font-weight: 700;
-  margin-top: 1.5rem;
-  animation: veilPulse 1s infinite alternate ease-in-out;
-}
-
-@keyframes veilPulse {
-  0% {
-    opacity: 0.4;
-    transform: translateY(0);
-  }
-
-  100% {
-    opacity: 0.9;
-    transform: translateY(-3px);
-  }
-}
-
-/* Minimalist Translucent Topbar */
-.cinematic-doc-topbar {
+/* ==========================================================================
+   2. FLOATING COMPACT NAVIGATION BAR
+   ========================================================================== */
+.documentary-nav-wrapper {
   position: fixed;
-  top: 0;
+  top: 16px;
   left: 0;
+  right: 0;
   width: 100%;
-  height: 64px;
+  display: flex;
+  justify-content: center;
   z-index: 100;
+  padding: 0 24px;
+  pointer-events: none;
+}
+
+.documentary-nav {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 1140px;
+  height: 52px;
+  background: rgba(16, 23, 24, 0.78);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
-  background: linear-gradient(180deg, rgba(3, 5, 11, 0.92) 0%, rgba(3, 5, 11, 0.6) 70%, rgba(3, 5, 11, 0) 100%);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  box-sizing: border-box;
+  padding: 0 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  transition: border-color 0.25s ease, background-color 0.25s ease;
 }
 
-.cinematic-topbar-left {
+.documentary-nav:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.documentary-nav-brand {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 10px;
+  text-decoration: none;
 }
 
-.cinematic-ghost-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #cbd5e1;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 6px 14px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(4px);
-}
-
-.cinematic-ghost-btn:hover {
-  background: rgba(30, 41, 59, 0.85);
-  border-color: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-  transform: translateY(-1px);
-}
-
-.cinematic-topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.cinematic-chapter-tag {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-family: var(--font-typewriter);
-  font-size: 0.72rem;
-  color: #94a3b8;
-  letter-spacing: 0.12em;
-}
-
-.cinematic-pulse-dot {
-  width: 7px;
-  height: 7px;
+.documentary-nav-logo-icon {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: var(--pollutant-accent, #ef4444);
-  box-shadow: 0 0 8px var(--pollutant-accent, #ef4444);
-  animation: pulseDot 2s infinite ease-in-out;
-}
-
-@keyframes pulseDot {
-
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.4;
-    transform: scale(0.8);
-  }
-}
-
-.cinematic-telemetry-pill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 5px 14px;
-  border-radius: 20px;
-  font-size: 0.78rem;
-  color: #cbd5e1;
-}
-
-.cinematic-telemetry-pill .pill-divider {
-  color: #475569;
-}
-
-/* Scrollway Container */
-.cinematic-film-scrollway {
-  position: relative;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* ==========================================================================
-   CHAPTER 00: FULL-SCREEN CINEMATIC OPENING (HERO)
-   ========================================================================== */
-.cinematic-chapter-hero {
-  position: relative;
-  min-height: 100vh;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 8rem 2rem 5rem 2rem;
-  overflow: hidden;
-  box-sizing: border-box;
+  color: #10b981;
 }
 
-.cinematic-hero-bg-photo {
+.documentary-nav-brand-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #f8fafc;
+  text-transform: uppercase;
+}
+
+.documentary-nav-brand-sub {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+}
+
+/* Nav Links */
+.documentary-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.documentary-nav-link {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.documentary-nav-link:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.documentary-nav-link.active {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+}
+
+/* Right Status & Cargo Return Button */
+.documentary-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.documentary-nav-live-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.documentary-live-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: docPulse 1.8s infinite ease-in-out;
+}
+
+.documentary-live-text {
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.documentary-live-divider {
+  color: rgba(16, 185, 129, 0.4);
+}
+
+.documentary-live-location {
+  color: #cbd5e1;
+  font-weight: 500;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.documentary-nav-cargo-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.documentary-nav-cargo-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ==========================================================================
+   3. ATMOSPHERIC HERO SECTION
+   ========================================================================== */
+.documentary-hero {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-top: 84px;
+  padding-bottom: 24px;
+  overflow: hidden;
+}
+
+.documentary-hero-ambient-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.documentary-hero-bg-deep {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 30%, #101718 0%, #0b1011 75%, #070a0a 100%);
+}
+
+.documentary-hero-photo-layer {
+  position: absolute;
+  inset: -15px;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.22;
+  mix-blend-mode: luminosity;
+  filter: blur(2px);
+  animation: docPhotoSlowDrift 28s ease-in-out infinite;
+  will-change: transform;
+}
+
+.documentary-hero-haze-layer {
+  position: absolute;
+  inset: -20px;
+  pointer-events: none;
+  animation: docHazeShift 22s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.hero-atmospheric-canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center 35%;
-  filter: contrast(1.15) brightness(0.55) saturate(0.85);
-  animation: heroSlowZoom 28s infinite alternate ease-in-out;
-  transform-origin: center center;
-  z-index: 1;
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: screen;
 }
 
-@keyframes heroSlowZoom {
-  0% {
-    transform: scale(1.02);
-  }
-
-  100% {
-    transform: scale(1.12);
-  }
-}
-
-.cinematic-hero-scrim {
+.documentary-hero-flow-lines {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 45%, rgba(5, 8, 17, 0.35) 0%, rgba(5, 8, 17, 0.85) 75%, #050811 100%);
-  z-index: 2;
+  background-image:
+    radial-gradient(ellipse at 30% 40%, rgba(255, 255, 255, 0.03) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 60%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
+  opacity: 0.7;
+  animation: docFlowLinesDrift 18s ease-in-out infinite;
 }
 
-.cinematic-hero-content {
+.documentary-hero-container {
   position: relative;
-  z-index: 10;
-  max-width: 900px;
+  z-index: 2;
+  width: 100%;
+  max-width: 1280px;
   margin: 0 auto;
+  padding: 16px 32px 0;
   display: flex;
   flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+/* Triad Row: Left (Editorial), Center (Gauge), Right (Spatial) */
+.documentary-hero-main-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1.3fr 0.8fr;
   align-items: center;
+  gap: 36px;
+  flex: 1;
+  min-height: 480px;
 }
 
-.cinematic-date-marker {
-  font-family: var(--font-serif);
-  font-size: clamp(1.8rem, 4vw, 2.5rem);
-  font-weight: 400;
-  letter-spacing: 0.35em;
-  color: #cbd5e1;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
-  margin-bottom: 0.35rem;
-}
-
-.cinematic-date-sub {
-  font-family: var(--font-typewriter);
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  color: #94a3b8;
-  margin-bottom: 2rem;
-  text-transform: uppercase;
-}
-
-.cinematic-hero-symbol {
-  font-size: clamp(5rem, 14vw, 11rem);
-  font-weight: 900;
-  line-height: 0.9;
-  margin: 0;
-  color: #ffffff;
-  letter-spacing: -0.02em;
-  text-shadow: 0 0 70px var(--pollutant-glow, rgba(239, 68, 68, 0.45));
-}
-
-.cinematic-hero-headline {
-  font-family: var(--font-serif);
-  font-size: clamp(1.8rem, 4vw, 3.2rem);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  margin: 1.5rem 0 0.5rem 0;
-  color: #f8fafc;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.85);
-}
-
-.cinematic-hero-kicker-lead {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 1.15rem;
-  color: #94a3b8;
-  margin: 0 0 1.25rem 0;
-}
-
-.cinematic-hero-lead {
-  font-size: 1.15rem;
-  line-height: 1.75;
-  color: #cbd5e1;
-  max-width: 680px;
-  margin: 0 auto 2.5rem auto;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
-}
-
-.cinematic-hero-meta-row {
+/* --- Left Editorial Column --- */
+.documentary-hero-editorial-col {
   display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 440px;
+}
+
+.documentary-pollutant-kicker-tag {
+  display: inline-flex;
   align-items: center;
-  gap: 14px;
-  font-family: var(--font-typewriter);
+  gap: 8px;
   font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #10b981;
+  text-transform: uppercase;
+}
+
+.doc-kicker-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.documentary-pollutant-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.documentary-pollutant-name {
+  font-size: 3.6rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: #ffffff;
+  margin: 0;
+}
+
+.documentary-pollutant-chem-formula {
+  font-size: 1.3rem;
+  font-weight: 600;
   color: #64748b;
-  letter-spacing: 0.12em;
-  margin-bottom: 3.5rem;
+  letter-spacing: 0.04em;
+}
+
+.documentary-editorial-quote {
+  margin: 0;
+  padding: 0;
+  font-size: 1.9rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: #f1f5f9;
+}
+
+.documentary-editorial-desc {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #94a3b8;
+}
+
+.documentary-editorial-metadata {
+  display: flex;
+  align-items: center;
   flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: #64748b;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.doc-meta-label {
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.doc-meta-val {
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.doc-meta-divider {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* --- Center Column: Circular Measurement Arc --- */
+.documentary-hero-center-col {
+  display: flex;
   justify-content: center;
+  align-items: center;
 }
 
-.cinematic-hero-meta-row .sep {
-  color: #334155;
-}
-
-.cinematic-scroll-cue {
+.documentary-value-container {
+  position: relative;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 320px;
+  height: 320px;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.documentary-value-container:hover {
+  transform: scale(1.02);
+}
+
+.documentary-value-atmospheric-glow {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--val-risk-glow, rgba(16, 185, 129, 0.25)) 0%, transparent 70%);
+  pointer-events: none;
+  filter: blur(24px);
+  opacity: 0.85;
+  animation: docAtmosphericBreathe 5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.documentary-value-gauge-wrapper {
+  position: relative;
+  width: 320px;
+  height: 320px;
+}
+
+.documentary-value-arc-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.documentary-gauge-progress-path {
+  transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.documentary-gauge-bead {
+  transition: cx 1s cubic-bezier(0.4, 0, 0.2, 1), cy 1s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: docBeadGlow 3.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.documentary-value-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-top: 14px;
+}
+
+.documentary-value-kicker-symbol {
+  display: flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--font-typewriter);
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  color: #64748b;
-  animation: scrollCueFloat 2.5s infinite ease-in-out;
-}
-
-.cue-chevron {
-  color: var(--pollutant-accent, #ef4444);
-}
-
-@keyframes scrollCueFloat {
-
-  0%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.6;
-  }
-
-  50% {
-    transform: translateY(6px);
-    opacity: 1;
-  }
-}
-
-/* ==========================================================================
-   CHAPTER 01: THE INVISIBLE PARTICLES (SECTION 01)
-   Split Photographic / Ragged Torn Edge Spread (Inspired by Reference 2)
-   ========================================================================== */
-.cinematic-chapter-spread {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  padding: 7rem 4rem;
-  background-color: #070b16;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
-  box-sizing: border-box;
-}
-
-.cinematic-spread-grid {
-  display: grid;
-  grid-template-columns: 1.15fr 1fr;
-  gap: 4.5rem;
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  align-items: center;
-}
-
-.cinematic-chapter-marker {
-  font-family: var(--font-serif);
-  font-size: clamp(1.4rem, 2.8vw, 2rem);
-  font-weight: 400;
-  letter-spacing: 0.25em;
-  color: #cbd5e1;
-  margin-bottom: 0.25rem;
-}
-
-.cinematic-chapter-marker.dark {
-  color: #1e293b;
-}
-
-.cinematic-marker-sub {
-  font-family: var(--font-typewriter);
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.18em;
-  color: var(--pollutant-accent, #ef4444);
-  margin-bottom: 1.5rem;
+  letter-spacing: 0.12em;
+  color: #94a3b8;
   text-transform: uppercase;
 }
 
-.cinematic-marker-sub.dark {
-  color: #0284c7;
-}
-
-.cinematic-editorial-title {
-  font-family: var(--font-serif);
-  font-size: clamp(2rem, 3.8vw, 3rem);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+.doc-symbol-txt {
   color: #f8fafc;
-  margin: 0 0 1rem 0;
 }
 
-.cinematic-editorial-title.dark {
-  color: #0f172a;
-}
-
-.cinematic-sub-annotation {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 1.5rem;
-}
-
-.annotation-tag {
-  background: var(--pollutant-accent, #ef4444);
-  color: #050811;
-  font-family: var(--font-typewriter);
-  font-size: 0.75rem;
-  font-weight: 800;
-  padding: 3px 8px;
-  border-radius: 2px;
-}
-
-.annotation-spec {
-  font-family: var(--font-typewriter);
-  font-size: 0.76rem;
-  color: #94a3b8;
-  letter-spacing: 0.08em;
-}
-
-.cinematic-editorial-lead {
-  font-size: 1.18rem;
-  line-height: 1.6;
-  color: #e2e8f0;
-  margin-bottom: 1.25rem;
-}
-
-.cinematic-editorial-lead.dark {
-  color: #334155;
-}
-
-.cinematic-editorial-body {
-  font-size: 1.02rem;
-  line-height: 1.8;
-  color: #94a3b8;
-  margin-bottom: 1.25rem;
-}
-
-.cinematic-editorial-body.secondary {
+.doc-symbol-dot {
   color: #64748b;
+}
+
+.doc-symbol-ctx {
+  color: #94a3b8;
+}
+
+.documentary-value-number-row {
+  line-height: 1;
+  margin: 6px 0 2px;
+}
+
+.documentary-value-number {
+  font-size: 5.2rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.documentary-value-unit-row {
+  margin-bottom: 8px;
+}
+
+.documentary-value-unit {
   font-size: 0.95rem;
-}
-
-.cinematic-editorial-body.dark {
-  color: #475569;
-}
-
-.cinematic-field-citation {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border-left: 2px solid var(--pollutant-accent, #ef4444);
-  padding: 8px 14px;
-  font-family: var(--font-typewriter);
-  font-size: 0.72rem;
-  color: #64748b;
-  margin-top: 2rem;
-}
-
-.cinematic-field-citation .citation-num {
-  font-weight: 800;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   color: #94a3b8;
 }
 
-/* Reference 2 Inspired Torn-Photo Composition */
-.cinematic-torn-photo-spread {
+.documentary-value-status-badge {
+  margin-bottom: 8px;
+}
+
+.documentary-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  border: 1px solid;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.documentary-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.documentary-value-location {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+.doc-loc-pin {
+  color: #10b981;
+}
+
+/* --- Right Column: Spatial Airshed Map Card --- */
+.documentary-hero-spatial-col {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.documentary-spatial-map-card {
+  width: 220px;
+  background: rgba(16, 23, 24, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.documentary-spatial-map-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+.doc-spatial-map-graphic {
   position: relative;
   width: 100%;
-  border-radius: 2px;
+  height: 110px;
+  border-radius: 8px;
+  background: radial-gradient(ellipse at 60% 40%, rgba(239, 68, 68, 0.25) 0%, rgba(234, 179, 8, 0.15) 40%, rgba(15, 23, 42, 0.6) 80%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   overflow: hidden;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75);
-}
-
-.cinematic-photo-base {
-  display: block;
-  width: 100%;
-  height: 480px;
-  object-fit: cover;
-  filter: contrast(1.18) brightness(0.7) saturate(0.8);
-  transition: transform 0.6s ease;
-}
-
-.cinematic-photo-base:hover {
-  transform: scale(1.03);
-}
-
-.torn-paper-edge-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  box-shadow: inset 0 0 50px rgba(5, 8, 17, 0.8), inset 0 0 100px rgba(5, 8, 17, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.cinematic-photo-caption {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 1.5rem 1.75rem;
-  background: linear-gradient(180deg, transparent 0%, rgba(5, 8, 17, 0.95) 100%);
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-family: var(--font-typewriter);
-  font-size: 0.72rem;
+  justify-content: center;
+}
+
+.doc-spatial-airshed-glow {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.45) 0%, transparent 70%);
+  filter: blur(12px);
+  animation: docAirshedFieldBreath 6s ease-in-out infinite;
+}
+
+.doc-spatial-receptor-ping {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.doc-ping-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid #ef4444;
+  animation: docPing 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.doc-ping-core {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.doc-spatial-meta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.doc-spatial-coord {
+  font-family: "SF Mono", Monaco, Consolas, monospace;
+  font-size: 0.68rem;
   color: #94a3b8;
 }
 
-.caption-tag {
-  color: var(--pollutant-accent, #ef4444);
-  font-weight: 800;
+.doc-spatial-loc-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #e2e8f0;
 }
 
 /* ==========================================================================
-   CHAPTER 02: HOW SMALL ARE THEY? (SECTION 02)
-   Scientific Laboratory / Calipers & Concentric Proportions
+   4. BOTTOM TRANSLUCENT DATA PANEL
    ========================================================================== */
-.cinematic-chapter-scale {
-  position: relative;
-  min-height: 100vh;
-  padding: 7rem 4rem;
-  background-color: #f1f5f9;
-  background-image: radial-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 0);
-  background-size: 24px 24px;
-  color: #0f172a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-}
-
-.cinematic-scale-container {
+.documentary-hero-bottom-deck {
   width: 100%;
-  max-width: 1300px;
-  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
 }
 
-.cinematic-scale-header {
-  text-align: center;
-  max-width: 800px;
-  margin: 0 auto 3.5rem auto;
-}
-
-.cinematic-scale-visual-deck {
+.documentary-data-panel {
+  width: 100%;
+  background: rgba(16, 23, 24, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px 24px;
   display: grid;
-  grid-template-columns: 1fr 1.35fr;
-  gap: 4rem;
+  grid-template-columns: 1.4fr auto 1fr auto 1fr;
   align-items: center;
-  background: #ffffff;
-  padding: 3.5rem;
-  border-radius: 4px;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.1);
-  border: 1px solid #cbd5e1;
+  gap: 20px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+  transition: border-color 0.25s ease;
 }
 
-.cinematic-proportional-diagram {
+.documentary-data-panel:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.documentary-data-separator {
+  width: 1px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.documentary-data-col {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  gap: 10px;
 }
 
-.scale-ring-outer.hair {
-  position: relative;
-  width: 260px;
-  height: 260px;
-  border-radius: 50%;
-  background: rgba(148, 163, 184, 0.18);
-  border: 2px dashed #64748b;
+.doc-col-title-row {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
 }
 
-.scale-ring-mid.pm10 {
-  position: relative;
-  width: 76px;
-  height: 76px;
-  border-radius: 50%;
-  background: rgba(245, 158, 11, 0.25);
-  border: 2px solid #f59e0b;
+.doc-col-heading {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.doc-col-badge {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+}
+
+.doc-col-live-tag {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #f97316;
 }
 
-.scale-ring-inner.pm25 {
-  position: relative;
-  width: 24px;
-  height: 24px;
+.doc-live-dot {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #ef4444;
-  box-shadow: 0 0 14px rgba(239, 68, 68, 0.6);
+  background: #f97316;
+  box-shadow: 0 0 6px #f97316;
+}
+
+/* Pollutants Chips Grid */
+.doc-pollutants-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.doc-pollutant-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: #cbd5e1;
+  font-size: 0.76rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.scale-ring-core.ultrafine {
+.doc-pollutant-chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.doc-pollutant-chip.active {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+.doc-chip-val {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.doc-chip-active-dot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
   background: #ffffff;
 }
 
-.scale-diagram-legend {
-  margin-top: 2rem;
+/* Sparkline */
+.doc-sparkline-box {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: #334155;
+  gap: 4px;
 }
 
-.legend-entry {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.doc-sparkline-svg {
+  width: 100%;
+  height: 38px;
 }
 
-.legend-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.legend-indicator.hair-ind {
-  background: #64748b;
-}
-
-.legend-indicator.pm10-ind {
-  background: #f59e0b;
-}
-
-.legend-indicator.pm25-ind {
-  background: #ef4444;
-}
-
-.cinematic-scale-bars-board {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.cinematic-scale-bar-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.cinematic-scale-bar-row .bar-labels {
+.doc-sparkline-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.cinematic-scale-bar-row .bar-track {
-  width: 100%;
-  height: 14px;
-  background: #e2e8f0;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.cinematic-scale-bar-row .bar-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.8s ease;
-}
-
-.cinematic-scale-bar-row .bar-fill.hair {
-  background: #64748b;
-}
-
-.cinematic-scale-bar-row .bar-fill.sand {
-  background: #94a3b8;
-}
-
-.cinematic-scale-bar-row .bar-fill.pm10 {
-  background: #f59e0b;
-}
-
-.cinematic-scale-bar-row .bar-fill.pm25 {
-  background: #ef4444;
-}
-
-.cinematic-scale-bar-row .bar-fill.ultrafine {
-  background: #3b82f6;
-}
-
-.cinematic-scale-footer-prose {
-  margin-top: 3rem;
-  text-align: center;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* ==========================================================================
-   CHAPTER 03: WHERE IT BEGINS (SECTION 03)
-   Photographic Emissions Grid
-   ========================================================================== */
-.cinematic-chapter-sources {
-  position: relative;
-  min-height: 100vh;
-  padding: 7rem 4rem;
-  background: linear-gradient(180deg, #050811 0%, #090e1a 50%, #050811 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-}
-
-.cinematic-sources-inner {
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.cinematic-sources-photographic-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-  margin: 3.5rem 0 2.5rem 0;
-}
-
-.cinematic-source-frame {
-  background: #090e1a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-  padding: 2rem 1.5rem;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.3s ease, border-color 0.3s ease;
-}
-
-.cinematic-source-frame:hover {
-  transform: translateY(-4px);
-  border-color: var(--pollutant-accent, #ef4444);
-}
-
-.source-frame-header {
-  margin-bottom: 1rem;
-}
-
-.source-idx {
-  font-family: var(--font-typewriter);
-  font-size: 0.72rem;
-  color: var(--pollutant-accent, #ef4444);
-  font-weight: 800;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.source-name {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #f8fafc;
-  margin: 0;
-  line-height: 1.3;
-}
-
-.source-desc {
-  font-size: 0.88rem;
-  line-height: 1.6;
-  color: #94a3b8;
-  flex-grow: 1;
-  margin: 0 0 1.5rem 0;
-}
-
-.source-frame-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: 10px;
-}
-
-.source-tag {
-  font-family: var(--font-typewriter);
   font-size: 0.65rem;
   color: #64748b;
-  letter-spacing: 0.1em;
+  font-family: monospace;
 }
 
-.cinematic-attribution-disclaimer {
+/* Risk Legend */
+.doc-risk-legend-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.doc-legend-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: rgba(15, 23, 42, 0.5);
-  border-left: 2px solid #64748b;
-  padding: 12px 18px;
-  font-size: 0.82rem;
-  color: #94a3b8;
-  line-height: 1.5;
-}
-
-/* ==========================================================================
-   CHAPTER 04: HOW IT MOVES (SECTION 04)
-   Atmospheric Column & Weather Telemetry
-   ========================================================================== */
-.cinematic-chapter-transport {
-  position: relative;
-  min-height: 100vh;
-  padding: 7rem 4rem;
-  background: #070b16;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-}
-
-.cinematic-transport-inner {
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.cinematic-weather-telemetry-strip {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-  padding: 1.5rem 2rem;
-  margin: 2.5rem 0 3.5rem 0;
-}
-
-.weather-metric-col {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.weather-metric-col .m-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-typewriter);
-  font-size: 0.7rem;
-  color: #64748b;
-  letter-spacing: 0.1em;
-}
-
-.weather-metric-col .m-val {
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: #f1f5f9;
-}
-
-.cinematic-transport-flow-deck {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 1.25rem;
-}
-
-.cinematic-transport-flow-card {
-  background: #090e1a;
-  border-top: 3px solid var(--pollutant-accent, #ef4444);
-  padding: 1.75rem 1.25rem;
-  border-radius: 0 0 4px 4px;
-}
-
-.stage-top {
-  margin-bottom: 0.75rem;
-}
-
-.stage-num {
-  font-family: var(--font-typewriter);
+  gap: 5px;
   font-size: 0.72rem;
-  font-weight: 800;
-  color: var(--pollutant-accent, #ef4444);
-  display: block;
 }
 
-.stage-name {
-  font-size: 0.98rem;
-  font-weight: 700;
-  color: #f8fafc;
-  margin: 4px 0 0 0;
-}
-
-.stage-detail {
-  font-size: 0.82rem;
-  line-height: 1.55;
-  color: #94a3b8;
-  margin: 0;
-}
-
-/* ==========================================================================
-   CHAPTER 05: DELHI RIGHT NOW (SECTION 05)
-   Monolith Live Observation Readout
-   ========================================================================== */
-.cinematic-chapter-live {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 7rem 2rem;
-  background: radial-gradient(circle at 50% 50%, #0d1527 0%, #050811 75%, #020306 100%);
-  box-sizing: border-box;
-}
-
-.cinematic-live-monolith-container {
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.cinematic-live-hero-readout {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 2rem;
-}
-
-.cinematic-live-number-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 3.5rem;
-}
-
-.cinematic-city-callout {
-  font-family: var(--font-serif);
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 700;
-  letter-spacing: 0.35em;
-  color: #94a3b8;
-  margin-bottom: 0.5rem;
-}
-
-.cinematic-giant-value {
-  font-size: clamp(6rem, 16vw, 13rem);
-  font-weight: 900;
-  line-height: 0.88;
-  color: #ffffff;
-  letter-spacing: -0.03em;
-  text-shadow: 0 0 80px var(--pollutant-glow, rgba(239, 68, 68, 0.45));
-}
-
-.cinematic-giant-unit {
-  font-family: var(--font-typewriter);
-  font-size: clamp(1.5rem, 3.5vw, 2.8rem);
-  font-weight: 700;
-  color: #94a3b8;
-  margin: 0.5rem 0;
-}
-
-.cinematic-giant-symbol {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: var(--pollutant-accent, #ef4444);
-  letter-spacing: 0.15em;
-  margin-bottom: 1.5rem;
-}
-
-.cinematic-live-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid var(--pollutant-accent, #ef4444);
-  padding: 6px 18px;
-  border-radius: 20px;
-  font-family: var(--font-typewriter);
-  font-size: 0.76rem;
-  font-weight: 800;
-  color: #f1f5f9;
-  letter-spacing: 0.15em;
-}
-
-.cinematic-live-meta-tableau {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 2rem;
-  width: 100%;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 2.5rem;
-  text-align: left;
-}
-
-.meta-tableau-cell .meta-tbl-kicker {
-  font-family: var(--font-typewriter);
-  font-size: 0.68rem;
-  color: #64748b;
-  letter-spacing: 0.1em;
-  margin-bottom: 6px;
-}
-
-.meta-tableau-cell .meta-tbl-val {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #f8fafc;
-}
-
-.cinematic-live-unavailable {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  color: #64748b;
-  padding: 4rem 2rem;
-}
-
-/* ==========================================================================
-   CHAPTER 06: THE CITY IS NOT ONE NUMBER (SECTION 06)
-   Spatial Stations Deck & Diurnal Chart
-   ========================================================================== */
-.cinematic-chapter-spatial {
-  position: relative;
-  min-height: 100vh;
-  padding: 7rem 4rem;
-  background: #070b16;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-}
-
-.cinematic-spatial-inner {
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.cinematic-stations-spatial-deck {
-  margin: 3.5rem 0;
-}
-
-.spatial-deck-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: var(--font-typewriter);
-  font-size: 0.74rem;
-  color: #64748b;
-  letter-spacing: 0.1em;
-  margin-bottom: 1.25rem;
-}
-
-.legend-tag .dot.measured {
-  display: inline-block;
+.doc-legend-indicator {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #10b981;
-  margin-right: 5px;
 }
 
-.spatial-stations-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
+.doc-legend-color-name {
+  font-weight: 600;
 }
 
-.cinematic-station-node-card {
-  background: #090e1a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-  padding: 1.75rem 1.5rem;
-  position: relative;
+.doc-legend-arrow {
+  color: #475569;
 }
 
-.st-zone {
-  font-family: var(--font-typewriter);
-  font-size: 0.68rem;
-  color: #64748b;
-  text-transform: uppercase;
-}
-
-.st-name {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #f8fafc;
-  margin: 4px 0 1rem 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.st-val-row {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  margin-bottom: 0.75rem;
-}
-
-.st-val {
-  font-size: 1.8rem;
-  font-weight: 900;
-  color: #ffffff;
-}
-
-.st-unit {
-  font-size: 0.85rem;
-  color: #64748b;
-}
-
-.measured-badge {
-  display: inline-block;
-  font-family: var(--font-typewriter);
-  font-size: 0.62rem;
-  font-weight: 800;
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-  padding: 2px 6px;
-  border-radius: 2px;
-}
-
-.cinematic-diurnal-chart-box {
-  background: #090e1a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-  padding: 2rem;
-  margin-top: 2rem;
-}
-
-.chart-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.chart-title {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: #f1f5f9;
-}
-
-.chart-unit {
-  font-family: var(--font-typewriter);
-  font-size: 0.74rem;
-  color: #64748b;
+.doc-legend-label {
+  color: #94a3b8;
 }
 
 /* ==========================================================================
-   CHAPTER 07: FROM CITY TO SCHOOL (SECTION 07)
-   School Proximity & Health Impacts
+   5. EDITORIAL NARRATIVE SECTIONS (WHERE, WHAT, WHY)
    ========================================================================== */
-.cinematic-chapter-school {
+.documentary-editorial-sections-wrapper {
   position: relative;
-  min-height: 100vh;
-  padding: 7rem 4rem;
-  background: #050811;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-}
-
-.cinematic-school-inner {
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.cinematic-school-dossier-card {
-  background: #090e1a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-  padding: 3rem;
-  margin: 3.5rem 0;
-}
-
-.school-dossier-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.35fr;
-  gap: 3.5rem;
-  align-items: center;
-}
-
-.school-photo-mount {
-  position: relative;
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
-}
-
-.school-evidence-img {
-  display: block;
-  width: 100%;
-  height: 380px;
-  object-fit: cover;
-  filter: contrast(1.15) brightness(0.75);
-}
-
-.school-photo-caption {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 1.25rem;
-  background: linear-gradient(180deg, transparent 0%, rgba(5, 8, 17, 0.95) 100%);
-  font-family: var(--font-typewriter);
-  font-size: 0.72rem;
-  color: #cbd5e1;
-}
-
-.school-telemetry-breakdown {
+  background: #0b1011;
+  padding: 80px 0;
   display: flex;
   flex-direction: column;
+  gap: 80px;
 }
 
-.breakdown-kicker {
-  font-family: var(--font-typewriter);
-  font-size: 0.7rem;
+.documentary-section {
+  width: 100%;
+}
+
+.documentary-section-inner {
+  width: 100%;
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.documentary-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 760px;
+}
+
+.documentary-section-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #10b981;
+}
+
+.doc-sec-num {
+  font-family: monospace;
+}
+
+.doc-sec-divider {
+  color: #475569;
+}
+
+.documentary-section-title {
+  font-size: 2.4rem;
   font-weight: 800;
-  color: #0284c7;
-  letter-spacing: 0.12em;
-  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+  color: #f8fafc;
+  margin: 0;
+  line-height: 1.15;
 }
 
-.school-idw-readout-row {
+.documentary-section-lead {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* Sources Editorial Grid */
+.documentary-sources-editorial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.documentary-source-card {
+  background: rgba(16, 23, 24, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+
+.documentary-source-card:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-2px);
+}
+
+.documentary-source-card-header {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  margin-bottom: 1.5rem;
+  gap: 12px;
 }
 
-.idw-large-value {
-  font-size: clamp(3rem, 6vw, 4.5rem);
-  font-weight: 900;
-  line-height: 1;
-  color: #ffffff;
-}
-
-.idw-unit {
-  font-size: 1.25rem;
-  color: #64748b;
-}
-
-.idw-badge-box {
-  margin-left: auto;
-}
-
-.idw-badge {
-  background: rgba(2, 132, 199, 0.15);
-  border: 1px solid #0284c7;
-  color: #38bdf8;
-  font-family: var(--font-typewriter);
-  font-size: 0.7rem;
-  font-weight: 800;
-  padding: 5px 12px;
-  border-radius: 3px;
-  letter-spacing: 0.08em;
-}
-
-.school-stations-connection-trace {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
-}
-
-.trace-header {
-  font-family: var(--font-typewriter);
-  font-size: 0.72rem;
-  color: #94a3b8;
-  margin-bottom: 8px;
-}
-
-.trace-stations-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.trace-station-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.84rem;
-  color: #cbd5e1;
-}
-
-.trace-station-item .st-marker {
-  font-family: var(--font-typewriter);
-  font-size: 0.65rem;
-  color: #64748b;
-  font-weight: 800;
-}
-
-.trace-station-item .st-dist {
-  color: #64748b;
-  font-size: 0.78rem;
-}
-
-.trace-station-item .st-val {
-  margin-left: auto;
+.doc-card-idx {
+  font-family: monospace;
+  font-size: 0.82rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #10b981;
 }
 
-.school-spatial-disclaimer-box {
+.doc-card-category {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0;
+}
+
+.doc-card-body {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #94a3b8;
+  margin: 0;
+  flex: 1;
+}
+
+.documentary-source-card-footer {
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.doc-card-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #64748b;
+}
+
+.documentary-editorial-note {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  background: rgba(245, 158, 11, 0.08);
-  border-left: 2px solid #f59e0b;
-  padding: 10px 14px;
-  font-size: 0.78rem;
-  line-height: 1.5;
-  color: #cbd5e1;
+  gap: 12px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  max-width: 820px;
 }
 
-.school-spatial-disclaimer-box svg {
-  color: #f59e0b;
+.doc-note-icon {
+  color: #10b981;
   flex-shrink: 0;
   margin-top: 2px;
 }
 
-.cinematic-impacts-deck {
-  margin-top: 4rem;
+.doc-note-text {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #64748b;
+  margin: 0;
 }
 
-.impacts-deck-title {
-  font-family: var(--font-typewriter);
-  font-size: 0.76rem;
-  font-weight: 800;
-  color: #94a3b8;
-  letter-spacing: 0.15em;
-  margin-bottom: 1.5rem;
-}
-
-.impacts-points-grid {
+/* Atmospheric Transport Flow Sequence */
+.documentary-flow-sequence {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
 }
 
-.cinematic-impact-point-card {
+.documentary-flow-card {
+  background: rgba(16, 23, 24, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.doc-flow-step-num {
+  font-family: monospace;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.doc-flow-stage-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin: 0;
+}
+
+.doc-flow-detail {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.documentary-behavior-editorial-block {
+  background: rgba(16, 23, 24, 0.7);
+  border-left: 3px solid #10b981;
+  border-radius: 0 10px 10px 0;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 900px;
+}
+
+.doc-behavior-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #10b981;
+}
+
+.doc-behavior-text {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+/* Physiological Impact Points */
+.documentary-impact-points-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.documentary-impact-card {
+  background: rgba(239, 68, 68, 0.04);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: 10px;
+  padding: 20px;
   display: flex;
   gap: 14px;
-  background: #090e1a;
-  border-left: 3px solid var(--pollutant-accent, #ef4444);
-  padding: 1.25rem 1.5rem;
-  border-radius: 0 4px 4px 0;
 }
 
-.cinematic-impact-point-card .point-idx {
-  font-family: var(--font-typewriter);
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: var(--pollutant-accent, #ef4444);
+.doc-impact-idx {
+  font-family: monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ef4444;
 }
 
-.cinematic-impact-point-card .point-text {
-  font-size: 0.92rem;
-  line-height: 1.6;
+.doc-impact-text {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #e2e8f0;
+  margin: 0;
+}
+
+.documentary-impact-prose-block {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 900px;
+}
+
+.doc-impact-prose {
+  font-size: 1rem;
+  line-height: 1.7;
   color: #cbd5e1;
+  margin: 0;
+}
+
+.doc-impact-standards-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.doc-standard-box {
+  background: rgba(16, 23, 24, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 220px;
+}
+
+.doc-standard-box.highlight {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.doc-std-org {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+}
+
+.doc-std-val {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.doc-std-scope {
+  font-size: 0.72rem;
+  color: #64748b;
 }
 
 /* ==========================================================================
-   CHAPTER 08: 14 DAYS OF EVIDENCE (SECTION 08)
-   Investigative Field Dossier
+   6. CINEMATIC INDIAN ENVIRONMENTAL IMAGE SECTION
    ========================================================================== */
-.cinematic-chapter-evidence {
+.documentary-image-section {
   position: relative;
-  min-height: 100vh;
-  padding: 7rem 4rem;
-  background: #070b16;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  width: 100%;
+  padding: 40px 0;
+  background: #0b1011;
+}
+
+.documentary-image-container {
+  width: 100%;
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.documentary-image-kicker-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
+  justify-content: space-between;
 }
 
-.cinematic-evidence-inner {
+.doc-img-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #94a3b8;
+}
+
+.doc-img-location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+.documentary-image-frame {
+  position: relative;
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
+  aspect-ratio: 16 / 9;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
 }
 
+.documentary-image-element {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform 0.8s ease;
+}
+
+.documentary-image-frame:hover .documentary-image-element {
+  transform: scale(1.02);
+}
+
+.documentary-image-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(11, 16, 17, 0.75) 75%, rgba(11, 16, 17, 0.95) 100%);
+  pointer-events: none;
+}
+
+.documentary-image-caption-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 800px;
+}
+
+.doc-caption-kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #10b981;
+}
+
+.doc-caption-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.doc-caption-detail {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+/* ==========================================================================
+   7. SCIENCE & TELEMETRY DATA SECTION
+   ========================================================================== */
+.documentary-data-section {
+  position: relative;
+  width: 100%;
+  background: #0b1011;
+  padding: 80px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.documentary-data-container {
+  width: 100%;
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+}
+
+.documentary-data-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 760px;
+}
+
+.doc-data-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #10b981;
+}
+
+.documentary-data-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.documentary-data-lead {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* Standards Tableau */
+.documentary-standards-tableau {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.doc-standard-card {
+  background: rgba(16, 23, 24, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doc-card-kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #94a3b8;
+}
+
+.doc-card-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 4px 0;
+}
+
+.doc-card-big-num {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.doc-card-unit {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.doc-card-note {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Aerodynamic Scale Comparison */
+.documentary-scale-editorial-block {
+  background: rgba(16, 23, 24, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.doc-block-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.doc-block-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0;
+}
+
+.doc-block-subtitle {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.doc-scale-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.doc-scale-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.doc-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+}
+
+.doc-scale-name {
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.doc-scale-size {
+  font-family: monospace;
+  color: #94a3b8;
+}
+
+.doc-scale-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.doc-scale-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: #10b981;
+}
+
+.doc-scale-fill.hair {
+  background: #64748b;
+}
+
+.doc-scale-fill.pm10 {
+  background: #f59e0b;
+}
+
+.doc-scale-fill.pm25 {
+  background: #ef4444;
+}
+
+.doc-scale-fill.gas {
+  background: #06b6d4;
+}
+
+.doc-scale-prose {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* 24-hr Diurnal Block */
+.documentary-diurnal-block {
+  background: rgba(16, 23, 24, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.doc-diurnal-chart-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doc-diurnal-svg {
+  width: 100%;
+  height: 140px;
+}
+
+.doc-diurnal-time-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-family: monospace;
+  padding: 0 40px;
+}
+
+/* Ground Stations Grid */
+.documentary-stations-editorial-block {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.documentary-stations-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.doc-station-mini-card {
+  background: rgba(16, 23, 24, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.doc-st-zone {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.doc-st-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0;
+}
+
+.doc-st-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.doc-st-num {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #10b981;
+}
+
+.doc-st-unit {
+  font-size: 0.76rem;
+  color: #94a3b8;
+}
+
+.doc-st-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+   8. CLEAN ENVIRONMENTAL CLOSING & FOOTER
+   ========================================================================== */
+.documentary-footer {
+  position: relative;
+  width: 100%;
+  background: #080c0d;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 70px 0 50px;
+}
+
+.documentary-footer-container {
+  width: 100%;
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 40px;
+}
+
+.documentary-footer-credo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doc-credo-line-1,
+.doc-credo-line-2,
+.doc-credo-line-3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+.doc-credo-line-3 {
+  color: #10b981;
+}
+
+.doc-footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 14px;
+}
+
+.doc-footer-brand-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  color: #ffffff;
+}
+
+.doc-footer-brand-desc {
+  font-size: 0.72rem;
+  color: #64748b;
+  letter-spacing: 0.08em;
+}
+
+/* Explore Another Pollutant Navigation */
+.documentary-footer-nav-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.doc-footer-nav-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+}
+
+.doc-footer-nav-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.doc-arrow-icon {
+  color: #10b981;
+}
+
+.doc-footer-nav-desc {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+  max-width: 500px;
+}
+
+.documentary-footer-pollutant-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.doc-footer-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.doc-footer-chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.doc-footer-chip.active {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #ffffff;
+}
+
+.doc-chip-number {
+  font-family: monospace;
+  font-size: 0.72rem;
+  color: #10b981;
+}
+
+.doc-chip-indicator {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+/* Back to Cargo Hauler Action */
+.documentary-footer-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.documentary-footer-cargo-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  font-size: 0.86rem;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.documentary-footer-cargo-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   9. RESPONSIVE MEDIA QUERIES
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .documentary-hero-main-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  .documentary-hero-spatial-col {
+    display: none;
+  }
+
+  .documentary-data-panel {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .documentary-data-separator {
+    display: none;
+  }
+
+  .documentary-data-col-pollutants {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .documentary-nav {
+    height: 48px;
+    padding: 0 14px;
+  }
+
+  .documentary-nav-links {
+    display: none;
+  }
+
+  .documentary-nav-brand-sub {
+    display: none;
+  }
+
+  .documentary-live-location {
+    display: none;
+  }
+
+  .documentary-hero {
+    padding-top: 76px;
+    min-height: auto;
+  }
+
+  .documentary-hero-container {
+    padding: 12px 16px 0;
+    gap: 24px;
+  }
+
+  .documentary-hero-main-row {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    text-align: center;
+  }
+
+  .documentary-hero-editorial-col {
+    max-width: 100%;
+    align-items: center;
+  }
+
+  .documentary-pollutant-title-row {
+    justify-content: center;
+  }
+
+  .documentary-pollutant-name {
+    font-size: 3rem;
+  }
+
+  .documentary-editorial-quote {
+    font-size: 1.5rem;
+  }
+
+  .documentary-editorial-desc {
+    font-size: 0.9rem;
+  }
+
+  .documentary-editorial-metadata {
+    justify-content: center;
+  }
+
+  .documentary-value-container {
+    width: 280px;
+    height: 280px;
+  }
+
+  .documentary-value-gauge-wrapper {
+    width: 280px;
+    height: 280px;
+  }
+
+  .documentary-value-number {
+    font-size: 4.2rem;
+  }
+
+  .documentary-data-panel {
+    grid-template-columns: 1fr;
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .documentary-data-col-pollutants {
+    grid-column: span 1;
+  }
+
+  .documentary-section-inner,
+  .documentary-image-container,
+  .documentary-data-container,
+  .documentary-footer-container {
+    padding: 0 16px;
+  }
+
+  .documentary-section-title,
+  .documentary-data-title {
+    font-size: 1.8rem;
+  }
+
+  .documentary-section-lead,
+  .documentary-data-lead {
+    font-size: 1rem;
+  }
+
+  .documentary-image-frame {
+    aspect-ratio: 4 / 3;
+  }
+
+  .documentary-image-caption-overlay {
+    padding: 16px;
+  }
+
+  .doc-caption-title {
+    font-size: 1.2rem;
+  }
+
+  .documentary-standards-tableau {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   10. ANIMATION & REDUCED MOTION SAFEGUARDS
+   ========================================================================== */
+@keyframes docPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes docPing {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes docPhotoSlowDrift {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  50% {
+    transform: scale(1.025) translate(-4px, -2px);
+  }
+  100% {
+    transform: scale(1) translate(0, 0);
+  }
+}
+
+@keyframes docHazeShift {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translate(12px, -8px) scale(1.06);
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.75;
+  }
+}
+
+@keyframes docFlowLinesDrift {
+  0% {
+    background-position: 0% 0%;
+    opacity: 0.6;
+  }
+  50% {
+    background-position: 12% 8%;
+    opacity: 0.8;
+  }
+  100% {
+    background-position: 0% 0%;
+    opacity: 0.6;
+  }
+}
+
+@keyframes docAtmosphericBreathe {
+  0%, 100% {
+    transform: scale(0.96);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.95;
+  }
+}
+
+@keyframes docBeadGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px var(--val-risk-color, #10b981));
+  }
+  50% {
+    filter: drop-shadow(0 0 14px var(--val-risk-color, #10b981));
+  }
+}
+
+@keyframes docAirshedFieldBreath {
+  0%, 100% {
+    transform: scale(0.92);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.85;
+  }
+}
+
+/* ==========================================================================
+   11. SOURCE EXPOSURE & VEHICLE INTEGRATION RULES
+   ========================================================================== */
+.doc-source-exposure-section {
+  width: 100%;
+}
+
+.exposure-body-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 0.9fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .exposure-body-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.exposure-statement-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.exposure-telemetry-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.exposure-behavior-box {
+  background: rgba(16, 23, 24, 0.7);
+  border-left: 3px solid #10b981;
+  border-radius: 0 10px 10px 0;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Scrim & Hero Image Brightness Optimization */
+.documentary-hero-photo-layer,
+.doc-forge-vehicle-img,
+.documentary-image-element {
+  filter: brightness(0.98);
+}
+
+.doc-forge-vehicle-scrim,
+.exposure-photo-scrim {
+  background: linear-gradient(90deg, rgba(6, 8, 13, 0.6) 0%, transparent 80%);
+}
+
+.doc-forge-road-depth-gradient {
+  height: 18%;
+}
+
+/* 14-Day Empirical Evidence Archive Grid */
 .cinematic-14day-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 1rem;
-  margin: 3.5rem 0;
+  gap: 12px;
+}
+
+@media (max-width: 1024px) {
+  .cinematic-14day-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .cinematic-14day-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
 }
 
 .cinematic-day-frame {
-  background: #090e1a;
+  background: rgba(16, 23, 24, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-  padding: 1rem 0.85rem;
+  border-radius: 8px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s ease, border-color 0.2s ease;
-}
-
-.cinematic-day-frame:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.2);
+  gap: 8px;
 }
 
 .day-frame-top {
   display: flex;
   justify-content: space-between;
-  font-family: var(--font-typewriter);
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   color: #64748b;
-  margin-bottom: 0.75rem;
-}
-
-.day-frame-top .day-frame-idx {
-  font-weight: 800;
-  color: #94a3b8;
+  font-family: monospace;
 }
 
 .day-frame-mid {
-  margin: 0.5rem 0;
-  min-height: 38px;
   display: flex;
-  align-items: center;
+  align-items: baseline;
+  gap: 4px;
 }
 
 .day-frame-nodata {
-  font-family: var(--font-typewriter);
-  font-size: 0.76rem;
-  font-weight: 800;
-  color: #e11d48;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #64748b;
   letter-spacing: 0.05em;
 }
 
 .day-frame-value-block {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: 3px;
 }
 
-.day-frame-value-block .df-val {
-  font-size: 1.35rem;
-  font-weight: 900;
-  color: #ffffff;
+.df-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #f1f5f9;
 }
 
-.day-frame-value-block .df-unit {
-  font-size: 0.65rem;
-  color: #64748b;
+.df-unit {
+  font-size: 0.7rem;
+  color: #94a3b8;
 }
 
 .day-frame-bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: 6px;
-  margin-top: 0.5rem;
-}
-
-.df-obs-count {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   color: #64748b;
 }
 
 .df-badge {
-  font-family: var(--font-typewriter);
-  font-size: 0.58rem;
-  font-weight: 800;
-  padding: 1px 4px;
-  border-radius: 2px;
-}
-
-.df-badge.complete {
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-}
-
-.df-badge.partial {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .df-badge.no_data {
-  background: rgba(225, 29, 72, 0.15);
-  color: #e11d48;
-}
-
-.cinematic-takeaway-quote-deck {
-  text-align: center;
-  padding: 3rem 2rem 0 2rem;
-  max-width: 850px;
-  margin: 0 auto;
-}
-
-.cinematic-takeaway-quote {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: clamp(1.4rem, 2.8vw, 1.9rem);
-  line-height: 1.5;
-  color: #f8fafc;
-  margin: 0 0 1rem 0;
-}
-
-.cinematic-takeaway-subtext {
-  font-size: 0.95rem;
-  line-height: 1.6;
   color: #94a3b8;
-  margin: 0;
 }
 
-/* ==========================================================================
-   CHAPTER 09: FINAL TAKEAWAY (CLOSING SCENE)
-   Solemn darkness fadeout
-   ========================================================================== */
-.cinematic-chapter-takeaway {
-  position: relative;
-  min-height: 80vh;
-  padding: 8rem 2rem;
-  background: #020408;
-  display: flex;
+/* School Proximity Dossier Card */
+.documentary-school-dossier-card {
+  background: rgba(16, 23, 24, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 24px;
+}
+
+.school-dossier-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  box-sizing: border-box;
 }
 
-.cinematic-takeaway-inner {
-  max-width: 800px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.cinematic-closing-line {
-  font-family: var(--font-serif);
-  font-size: clamp(1.6rem, 3.5vw, 2.5rem);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #f1f5f9;
-  margin: 0;
-  line-height: 1.3;
-}
-
-.cinematic-closing-line.line-1 {
-  opacity: 0.85;
-}
-
-.cinematic-closing-line.line-2 {
-  opacity: 0.95;
-}
-
-.cinematic-closing-line.line-3 {
-  color: var(--pollutant-accent, #ef4444);
-  text-shadow: 0 0 30px var(--pollutant-glow, rgba(239, 68, 68, 0.4));
-}
-
-.cinematic-closing-brand {
-  margin-top: 3.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 2rem;
-  width: 100%;
-}
-
-.brand-title {
-  font-family: var(--font-typewriter);
-  font-size: 1.1rem;
-  font-weight: 900;
-  letter-spacing: 0.35em;
-  color: #ffffff;
-  margin: 0 0 0.5rem 0;
-}
-
-.brand-credo {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 0.92rem;
-  color: #64748b;
-  letter-spacing: 0.08em;
-  margin: 0;
-}
-
-/* ==========================================================================
-   CHAPTER 10: POLLUTANT NAVIGATION FOOTER
-   ========================================================================== */
-.cinematic-pollutant-nav-footer {
-  position: relative;
-  padding: 5rem 2rem 6rem 2rem;
-  background: #03060d;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  text-align: center;
-  box-sizing: border-box;
-}
-
-.nav-footer-inner {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.return-to-story-wrap {
-  margin-bottom: 3.5rem;
-}
-
-.cinematic-return-btn {
-  background: var(--pollutant-accent, #38bdf8);
-  color: #050811;
-  border: none;
-  font-weight: 800;
-  font-size: 0.92rem;
-  padding: 12px 30px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
-}
-
-.cinematic-return-btn:hover {
-  filter: brightness(1.15);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px var(--pollutant-glow, rgba(56, 189, 248, 0.4));
-}
-
-.cinematic-nav-heading {
-  font-family: var(--font-typewriter);
-  font-size: 0.85rem;
-  font-weight: 800;
-  letter-spacing: 0.25em;
-  color: #94a3b8;
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-}
-
-.cinematic-nav-sub {
-  font-size: 0.88rem;
-  color: #64748b;
-  margin: 0 0 2rem 0;
-}
-
-.cinematic-pollutant-chapters-row {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.cinematic-chapter-chip {
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #cbd5e1;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  transition: all 0.25s ease;
-  position: relative;
-}
-
-.cinematic-chapter-chip .chip-chapter-num {
-  font-family: var(--font-typewriter);
-  font-size: 0.7rem;
-  color: #64748b;
-}
-
-.cinematic-chapter-chip:hover {
-  border-color: var(--chip-accent, #38bdf8);
-  color: #ffffff;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px var(--chip-glow, rgba(56, 189, 248, 0.3));
-}
-
-.cinematic-chapter-chip.active {
-  border-color: var(--chip-accent, #38bdf8);
-  background: rgba(15, 23, 42, 0.95);
-  color: #ffffff;
-  box-shadow: 0 0 20px var(--chip-glow, rgba(56, 189, 248, 0.4));
-}
-
-.chip-active-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--chip-accent, #38bdf8);
-  box-shadow: 0 0 6px var(--chip-accent, #38bdf8);
-}
-
-/* Pollutant-Specific Visual Identity Themes */
-.theme-pm25-haze {
-  --pollutant-bg-grade: #070a12;
-}
-
-.theme-pm10-dust {
-  --pollutant-bg-grade: #110e08;
-}
-
-.theme-no2-combustion {
-  --pollutant-bg-grade: #120905;
-}
-
-.theme-so2-sulfur {
-  --pollutant-bg-grade: #111005;
-}
-
-.theme-co-carbon {
-  --pollutant-bg-grade: #120505;
-}
-
-.theme-o3-photochemical {
-  --pollutant-bg-grade: #050f14;
-}
-
-.theme-nh3-agricultural {
-  --pollutant-bg-grade: #05120d;
-}
-
-/* ==========================================================================
-   20. Dedicated Mobile Responsive Compositions (max-width: 768px)
-   ========================================================================== */
 @media (max-width: 768px) {
-  .doc-storybook-hero {
-    padding: 3rem 1rem;
-    min-height: auto;
-  }
-
-  .doc-hero-paper-stack {
-    padding: 3rem 1.5rem;
-    transform: none;
-  }
-
-  .doc-chapter-section {
-    padding: 3.5rem 1rem;
-  }
-
-  /* Chapter 01 Mobile */
-  .city-scrapbook-layout {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  .city-evidence-note-card {
-    padding: 2rem 1.5rem;
-    transform: none;
-  }
-
-  /* Chapter 02 Mobile */
-  .lab-notebook-sheet {
-    padding: 2.5rem 1.25rem 2.5rem 2.5rem;
-    transform: none;
-  }
-
-  .lab-notebook-spiral {
-    left: 8px;
-  }
-
-  /* Chapter 03 Mobile */
-  .cargo-manifest-board {
-    padding: 1.5rem 1rem;
-  }
-
-  .cargo-manifest-document {
-    padding: 1.5rem 1rem;
-  }
-
-  .cargo-row-entry {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-
-  /* Chapter 04 Mobile */
-  .corkboard-surface {
-    padding: 2rem 1rem;
-  }
-
-  .corkboard-header-note {
-    padding: 1.5rem 1rem;
-    transform: none;
-  }
-
-  .investigation-flow-threads {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .thread-line {
-    height: 24px;
-    width: 2px;
-    flex-direction: column;
-  }
-
-  .thread-arrow {
-    transform: rotate(90deg);
-  }
-
-  .pinned-evidence-cards-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .evidence-clipping-card {
-    transform: none !important;
-  }
-
-  /* Chapter 05 Mobile */
-  .weather-drafting-table {
-    padding: 2rem 1rem;
-  }
-
-  .vintage-instruments-deck {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-
-  /* Chapter 06 Mobile */
-  .newsprint-bulletin-sheet {
-    padding: 2rem 1.25rem;
-  }
-
-  .newsprint-teletype-box {
-    padding: 1.5rem 1rem;
-  }
-
-  .teletype-metadata-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  /* Chapter 07 Mobile */
-  .cartographer-parchment-sheet {
-    padding: 2rem 1.25rem;
-    transform: none;
-  }
-
-  .cartographer-aphorisms {
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .parchment-stations-grid {
-    grid-template-columns: 1fr;
-  }
-
-  /* Chapter 08 Mobile */
-  .acetate-lightbox-table {
-    padding: 2rem 1rem;
-  }
-
-  .acetate-slides-split {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .acetate-slide {
-    transform: none !important;
-  }
-
-  /* Chapter 09 Mobile */
-  .school-clipboard-board {
-    padding: 3rem 1rem 2rem 1rem;
-  }
-
-  .clipboard-field-sheet {
-    padding: 2rem 1.25rem;
-  }
-
-  .school-log-top {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  /* Chapter 10 Mobile */
-  .manila-folder-body {
-    padding: 2rem 1.25rem;
-  }
-
-  .dossier-metrics-strip {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-
-  .dossier-day-strip {
-    grid-template-columns: 60px 90px 1fr;
-    gap: 8px;
-  }
-
-  .strip-count,
-  .strip-status {
-    display: none;
-  }
-
-  /* Chapter 11 Mobile */
-  .split-boards-container {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  .split-page {
-    padding: 2.5rem 1.5rem;
-    transform: none;
-  }
-
-  /* Chapter 12 Mobile */
-  .minimal-final-sheet {
-    padding: 3rem 1.5rem;
-    transform: none;
-  }
-
-  /* Deep Dive & Cinematic Mobile */
-  .doc-story-section {
-    padding: 2rem 1.25rem;
-  }
-
-  .doc-sources-grid,
-  .doc-behavior-traits-grid,
-  .doc-telemetry-meta-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .cinematic-doc-topbar {
-    padding: 0 1rem;
-    height: 56px;
-  }
-
-  .cinematic-chapter-tag {
-    display: none;
-  }
-
-  .cinematic-chapter-hero {
-    padding: 6rem 1.25rem 4rem 1.25rem;
-  }
-
-  .cinematic-hero-meta-row {
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .cinematic-hero-meta-row .sep {
-    display: none;
-  }
-
-  .cinematic-spread-grid {
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
-  }
-
-  .cinematic-chapter-spread {
-    padding: 4.5rem 1.25rem;
-  }
-
-  .cinematic-chapter-scale {
-    padding: 4.5rem 1.25rem;
-  }
-
-  .cinematic-scale-visual-deck {
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
-    padding: 2rem 1.25rem;
-  }
-
-  .scale-ring-outer.hair {
-    width: 200px;
-    height: 200px;
-  }
-
-  .cinematic-chapter-sources {
-    padding: 4.5rem 1.25rem;
-  }
-
-  .cinematic-sources-photographic-grid {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-  }
-
-  .cinematic-chapter-transport {
-    padding: 4.5rem 1.25rem;
-  }
-
-  .cinematic-weather-telemetry-strip {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    padding: 1.25rem;
-  }
-
-  .cinematic-transport-flow-deck {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .cinematic-chapter-live {
-    padding: 5rem 1.25rem;
-  }
-
-  .cinematic-live-meta-tableau {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-    text-align: center;
-  }
-
-  .cinematic-chapter-spatial {
-    padding: 4.5rem 1.25rem;
-  }
-
-  .spatial-stations-row {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .cinematic-chapter-school {
-    padding: 4.5rem 1.25rem;
-  }
-
   .school-dossier-grid {
     grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  .impacts-points-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .cinematic-chapter-evidence {
-    padding: 4.5rem 1.25rem;
-  }
-
-  .cinematic-14day-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-  }
-
-  .cinematic-chapter-takeaway {
-    padding: 5rem 1.25rem;
-  }
-
-  .cinematic-pollutant-chapters-row {
-    gap: 8px;
-  }
-
-  .cinematic-chapter-chip {
-    padding: 8px 14px;
-    font-size: 0.82rem;
   }
 }
 
-/* ==========================================================================
-   21. Accessibility & Reduced Motion
-   ========================================================================== */
-@media (prefers-reduced-motion: reduce) {
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-
-  .doc-investigation-dot {
-    animation: none !important;
-  }
-
-  .isobar-streamline {
-    animation: none !important;
-  }
-
-  .cinematic-hero-bg-photo {
-    animation: none !important;
-  }
-
-  .cinematic-scroll-cue {
-    animation: none !important;
-  }
-
-  .cinematic-pulse-dot {
-    animation: none !important;
-  }
-
-  .transition-veil-kicker {
-    animation: none !important;
-  }
-
-  .scrapbook-polaroid:hover,
-  .doc-back-btn:hover,
-  .doc-begin-investigation-cta:hover,
-  .cargo-row-entry:hover,
-  .cinematic-chapter-chip:hover,
-  .cinematic-return-btn:hover,
-  .cinematic-ghost-btn:hover {
-    transform: none !important;
-  }
-}
-
-/* ==========================================================================
-   22. GSAP Cinematic Animation System - Hardware Acceleration & Smoothing
-   Scoped strictly to .cinematic-pollutant-documentary to avoid global pollution.
-   ========================================================================== */
-.cinematic-pollutant-documentary .cinematic-hero-bg-photo,
-.cinematic-pollutant-documentary .cinematic-hero-symbol,
-.cinematic-pollutant-documentary .cinematic-hero-headline,
-.cinematic-pollutant-documentary .torn-photo-wrap,
-.cinematic-pollutant-documentary .torn-photo-inner,
-.cinematic-pollutant-documentary .cinematic-scale-visual-deck,
-.cinematic-pollutant-documentary .cinematic-live-monolith-container,
-.cinematic-pollutant-documentary .cinematic-live-hero-readout {
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-.cinematic-pollutant-documentary .torn-photo-wrap {
-  overflow: hidden;
-  position: relative;
-}
-
-/* ==========================================================================
-   23. FORGE AUTOMOTIVE CINEMATIC VEHICLE SYSTEM (VayuVitals Environmental Documentary)
-   Scoped strictly to .cinematic-pollutant-documentary to protect all other pages.
-   ========================================================================== */
-
-/* Conic gradient rotation property if supported */
-@property --gradient-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
-@keyframes forgeRotateGradient {
-  0% {
-    --gradient-angle: 0deg;
-  }
-  100% {
-    --gradient-angle: 360deg;
-  }
-}
-
-@keyframes forgeShimmerGleam {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-/* VEHICLE HERO SECTION */
-.cinematic-pollutant-documentary .doc-forge-hero-section {
-  position: relative;
-  min-height: 100vh;
-  width: 100%;
-  overflow: hidden;
-  background: #07090e;
+.school-info-mount {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 6rem 3.5rem 3rem 3.5rem;
-  box-sizing: border-box;
-}
-
-.cinematic-pollutant-documentary .doc-forge-hero-stage {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.cinematic-pollutant-documentary .doc-forge-hero-atmosphere {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 30%, rgba(20, 25, 38, 0.6) 0%, #06080d 90%);
-  z-index: 1;
-}
-
-.cinematic-pollutant-documentary .doc-forge-haze-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  mix-blend-mode: screen;
-  pointer-events: none;
-}
-
-.cinematic-pollutant-documentary .doc-forge-vehicle-frame {
-  position: absolute;
-  inset: -5% -5% -5% -5%;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.cinematic-pollutant-documentary .doc-forge-vehicle-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 60%;
-  filter: contrast(1.04) brightness(0.98) saturate(1.03);
-  transform-origin: center center;
-}
-
-.cinematic-pollutant-documentary .doc-forge-vehicle-scrim {
-  position: absolute;
-  inset: 0;
-  /* Directional text-contrast scrim: subtle falloff on left behind title, leaving upper/right and background clear & vibrant */
-  background:
-    linear-gradient(
-      90deg,
-      rgba(6, 8, 13, 0.58) 0%,
-      rgba(6, 8, 13, 0.3) 32%,
-      rgba(6, 8, 13, 0.05) 58%,
-      transparent 80%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(6, 8, 13, 0.32) 0%,
-      transparent 18%,
-      transparent 65%,
-      rgba(6, 8, 13, 0.42) 100%
-    );
-  z-index: 3;
-  pointer-events: none;
-}
-
-.cinematic-pollutant-documentary .doc-forge-road-depth-gradient {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 18%;
-  background: linear-gradient(
-    0deg,
-    rgba(7, 9, 14, 0.48) 0%,
-    rgba(7, 9, 14, 0.15) 50%,
-    transparent 100%
-  );
-  z-index: 4;
-  pointer-events: none;
-}
-
-/* Hero Foreground Overlay */
-.cinematic-pollutant-documentary .doc-forge-hero-overlay {
-  position: relative;
-  z-index: 10;
-  width: 100%;
-  max-width: 1500px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: calc(100vh - 9rem);
-}
-
-.cinematic-pollutant-documentary .doc-forge-kicker-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.cinematic-pollutant-documentary .doc-forge-kicker-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  color: #e2e8f0;
-}
-
-.cinematic-pollutant-documentary .doc-forge-shimmer-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background-color: var(--pollutant-accent, #ef4444);
-  box-shadow: 0 0 10px var(--pollutant-glow, rgba(239, 68, 68, 0.5));
-}
-
-.cinematic-pollutant-documentary .doc-forge-coordinates {
-  display: inline-flex;
-  align-items: center;
   gap: 6px;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.72rem;
-  color: #94a3b8;
-  letter-spacing: 0.1em;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
 }
 
-/* Oversized Title Monolith */
-.cinematic-pollutant-documentary .doc-forge-title-monolith {
-  margin: auto 0;
-  padding: 3rem 0;
-}
-
-.cinematic-pollutant-documentary .doc-forge-oversized-symbol {
-  font-family: var(--font-display, sans-serif);
-  font-size: clamp(4.5rem, 13vw, 12rem);
-  font-weight: 950;
-  line-height: 0.9;
-  letter-spacing: -0.04em;
-  text-transform: uppercase;
-  color: #ffffff;
-  display: flex;
-  align-items: baseline;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.75), 0 10px 40px rgba(0, 0, 0, 0.85);
-  margin-bottom: 1rem;
-}
-
-.cinematic-pollutant-documentary .symbol-part-primary {
-  background: linear-gradient(180deg, #ffffff 40%, rgba(255, 255, 255, 0.55) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.cinematic-pollutant-documentary .symbol-part-sub {
-  font-size: 0.72em;
-  font-weight: 850;
-  margin-left: 0.05em;
-}
-
-.cinematic-pollutant-documentary .doc-forge-headline {
-  font-family: var(--font-heading, Georgia, serif);
-  font-size: clamp(1.8rem, 3.8vw, 3.2rem);
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  color: #f1f5f9;
-  max-width: 900px;
-  margin: 0 0 1.25rem 0;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85), 0 4px 28px rgba(0, 0, 0, 0.65);
-}
-
-.cinematic-pollutant-documentary .doc-forge-lead {
-  font-family: var(--font-body, sans-serif);
-  font-size: clamp(1rem, 1.3vw, 1.2rem);
-  line-height: 1.65;
-  color: #cbd5e1;
-  max-width: 780px;
-  margin: 0;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85);
-}
-
-/* Bottom Technical HUD Strip */
-.cinematic-pollutant-documentary .doc-forge-hud-strip {
-  display: grid;
-  grid-template-columns: 1.2fr 1.2fr 1fr;
-  gap: 1.5rem;
-  padding-top: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.cinematic-pollutant-documentary .doc-forge-hud-card {
-  background: rgba(12, 16, 26, 0.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-  padding: 1.25rem 1.5rem;
-  transition: border-color 0.3s ease, background 0.3s ease;
-}
-
-.cinematic-pollutant-documentary .doc-forge-hud-card:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(15, 20, 32, 0.85);
-}
-
-.cinematic-pollutant-documentary .hud-card-label {
-  font-family: var(--font-mono, monospace);
+.school-badge-tag {
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: #64748b;
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  color: #10b981;
 }
 
-.cinematic-pollutant-documentary .hud-card-label .live-pulse {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--pollutant-accent, #ef4444);
-  box-shadow: 0 0 8px var(--pollutant-accent, #ef4444);
-  animation: pulseBeacon 1.8s infinite;
-}
-
-.cinematic-pollutant-documentary .hud-card-val {
-  font-family: var(--font-display, sans-serif);
-  font-size: 1.05rem;
-  font-weight: 700;
+.school-name-title {
+  font-size: 1.3rem;
+  font-weight: 800;
   color: #f8fafc;
-  margin-bottom: 4px;
+  margin: 0;
 }
 
-.cinematic-pollutant-documentary .hud-card-val.telemetry-val {
-  font-size: 1.5rem;
-  font-weight: 900;
-}
-
-.cinematic-pollutant-documentary .hud-card-sub {
-  font-size: 0.78rem;
+.school-locality-tag {
+  font-size: 0.82rem;
   color: #94a3b8;
-  line-height: 1.4;
 }
 
-/* Scroll indicator */
-.cinematic-pollutant-documentary .doc-forge-scroll-indicator {
+.school-telemetry-breakdown {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.school-idw-readout-row {
+  display: flex;
+  align-items: baseline;
   gap: 8px;
-  margin-top: 1.5rem;
-  color: #94a3b8;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.7rem;
-  letter-spacing: 0.14em;
-  cursor: pointer;
-  width: fit-content;
-  transition: color 0.25s ease;
+  flex-wrap: wrap;
 }
 
-.cinematic-pollutant-documentary .doc-forge-scroll-indicator:hover {
+.idw-large-value {
+  font-size: 2.4rem;
+  font-weight: 900;
   color: #ffffff;
+  line-height: 1;
 }
 
-.cinematic-pollutant-documentary .scroll-chevron {
-  animation: chevronBounce 2s infinite ease-in-out;
+.idw-unit {
+  font-size: 0.9rem;
+  color: #94a3b8;
 }
 
-@keyframes chevronBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(5px); }
+.idw-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #f97316;
+  background: rgba(249, 115, 22, 0.1);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  padding: 3px 8px;
+  border-radius: 9999px;
 }
 
-/* PINNED STORY SECTION */
-.cinematic-pollutant-documentary .doc-pinned-story-section {
+.school-spatial-disclaimer-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.disclaimer-icon {
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.disclaimer-text {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* ==========================================================================
+   FORGE-INSPIRED PINNED AIRSHED STORY SEQUENCE (SOURCE -> MOVEMENT -> EXPOSURE -> IMPACT)
+   ========================================================================== */
+.documentary-pinned-story-section {
   position: relative;
   width: 100%;
   min-height: 100vh;
-  background: #05070c;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: #0b1011;
+  overflow: hidden;
 }
 
-.cinematic-pollutant-documentary .doc-pinned-viewport {
+.documentary-pinned-viewport {
   position: relative;
   width: 100%;
   height: 100vh;
@@ -2565,574 +2217,602 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 4rem 3.5rem;
+  padding: 96px 40px 48px;
   box-sizing: border-box;
 }
 
-.cinematic-pollutant-documentary .doc-pinned-bg-canvas {
+.documentary-pinned-bg-canvas {
   position: absolute;
-  inset: -5% -5% -5% -5%;
+  inset: 0;
   z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
 }
 
-.cinematic-pollutant-documentary .doc-pinned-bg-img {
+.documentary-pinned-bg-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center;
-  filter: contrast(1.18) brightness(0.45) saturate(1.1);
-  transform-origin: center center;
+  filter: brightness(0.98) saturate(1.05) contrast(1.05);
+  will-change: transform;
 }
 
-.cinematic-pollutant-documentary .doc-pinned-scrim {
+.documentary-pinned-scrim {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 60% 40%, rgba(5, 7, 12, 0.4) 0%, rgba(5, 7, 12, 0.92) 80%);
+  background:
+    linear-gradient(180deg, rgba(11, 16, 17, 0.8) 0%, rgba(11, 16, 17, 0.35) 45%, rgba(11, 16, 17, 0.9) 100%),
+    linear-gradient(90deg, rgba(11, 16, 17, 0.9) 0%, rgba(11, 16, 17, 0.45) 55%, transparent 80%);
 }
 
-.cinematic-pollutant-documentary .doc-pinned-grain-overlay {
+.documentary-pinned-ambient-glow {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.6;
 }
 
-.cinematic-pollutant-documentary .doc-pinned-top-ribbon {
+/* Top Progress Stepper Ribbon */
+.documentary-pinned-top-ribbon {
   position: relative;
   z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  max-width: 1140px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 12px 24px;
+  background: rgba(16, 23, 24, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
 }
 
-.cinematic-pollutant-documentary .ribbon-tag {
-  display: inline-flex;
+.doc-ribbon-tag {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono, monospace);
+  gap: 10px;
   font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.12em;
   color: #e2e8f0;
 }
 
-.cinematic-pollutant-documentary .ribbon-pulse {
-  width: 7px;
-  height: 7px;
+.doc-ribbon-pulse {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
 }
 
-.cinematic-pollutant-documentary .ribbon-stepper {
+.doc-ribbon-stepper {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 28px;
 }
 
-.cinematic-pollutant-documentary .step-indicator {
+.doc-ribbon-step-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  opacity: 0.4;
-  transition: opacity 0.3s ease;
-}
-
-.cinematic-pollutant-documentary .step-indicator.active {
-  opacity: 1;
-}
-
-.cinematic-pollutant-documentary .step-indicator .step-num {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: #ffffff;
-}
-
-.cinematic-pollutant-documentary .step-indicator .step-bar {
-  width: 32px;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.2);
-  transition: background 0.3s ease, width 0.3s ease;
-}
-
-.cinematic-pollutant-documentary .step-indicator.active .step-bar {
-  background: var(--pollutant-accent, #ef4444);
-  width: 50px;
-}
-
-.cinematic-pollutant-documentary .ribbon-spec {
-  font-family: var(--font-mono, monospace);
   font-size: 0.72rem;
-  color: #94a3b8;
-  letter-spacing: 0.1em;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.08em;
+  transition: color 0.3s ease;
 }
 
-/* Narrative Pinned Cards Deck */
-.cinematic-pollutant-documentary .doc-pinned-cards-deck {
+.doc-ribbon-step-item.active {
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.doc-step-num {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.doc-step-bar {
+  width: 24px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 1px;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.doc-ribbon-step-item.active .doc-step-bar {
+  background: var(--pollutant-accent, #10b981);
+  box-shadow: 0 0 8px var(--pollutant-accent, #10b981);
+}
+
+.doc-ribbon-spec {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+}
+
+/* Narrative Cards Deck */
+.documentary-pinned-cards-deck {
   position: relative;
   z-index: 10;
+  max-width: 720px;
+  margin: auto auto 24px 40px;
   width: 100%;
-  max-width: 900px;
-  margin: auto 0;
-  min-height: 380px;
+  min-height: 280px;
+  display: flex;
+  align-items: flex-end;
 }
 
-.cinematic-pollutant-documentary .doc-pinned-card {
-  position: absolute;
-  top: 0;
-  left: 0;
+.documentary-pinned-card {
+  background: rgba(16, 23, 24, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 36px 40px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
   width: 100%;
-  background: rgba(10, 14, 23, 0.82);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 3rem;
-  box-sizing: border-box;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
 }
 
-.cinematic-pollutant-documentary .card-kicker-row {
+.doc-card-kicker-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.25rem;
+  margin-bottom: 14px;
 }
 
-.cinematic-pollutant-documentary .card-kicker-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-}
-
-.cinematic-pollutant-documentary .card-counter {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.7rem;
-  color: #64748b;
-  letter-spacing: 0.12em;
-}
-
-.cinematic-pollutant-documentary .card-headline {
-  font-family: var(--font-heading, Georgia, serif);
-  font-size: clamp(1.8rem, 3.2vw, 2.8rem);
-  font-weight: 400;
-  line-height: 1.2;
-  color: #ffffff;
-  margin: 0 0 1rem 0;
-}
-
-.cinematic-pollutant-documentary .card-lead {
-  font-size: 1.15rem;
-  line-height: 1.6;
-  color: #cbd5e1;
-  margin: 0 0 1.5rem 0;
-}
-
-.cinematic-pollutant-documentary .card-detail-box {
+.doc-card-kicker-badge {
   display: flex;
-  gap: 1.25rem;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.doc-card-counter {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #64748b;
+}
+
+.doc-card-headline {
+  font-size: 1.85rem;
+  font-weight: 800;
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+  color: #f8fafc;
+  margin: 0 0 12px;
+}
+
+.doc-card-lead {
+  font-size: 1.02rem;
+  line-height: 1.55;
+  color: #cbd5e1;
+  margin: 0 0 18px;
+  font-weight: 400;
+}
+
+.doc-card-detail-box {
+  display: flex;
+  gap: 14px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 4px;
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
 }
 
-.cinematic-pollutant-documentary .detail-accent-bar {
+.doc-detail-accent-bar {
   width: 3px;
   border-radius: 2px;
   flex-shrink: 0;
 }
 
-.cinematic-pollutant-documentary .detail-text {
-  font-size: 0.92rem;
-  line-height: 1.6;
+.doc-detail-text {
+  font-size: 0.88rem;
+  line-height: 1.5;
   color: #94a3b8;
   margin: 0;
 }
 
-.cinematic-pollutant-documentary .card-footer-trace {
+.doc-card-footer-trace {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-mono, monospace);
   font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
+.doc-trace-label {
   color: #64748b;
+  font-weight: 600;
 }
 
-.cinematic-pollutant-documentary .card-footer-trace .trace-val {
-  color: #cbd5e1;
-}
-
-/* CINEMATIC ENVIRONMENTAL SOURCE EXPOSURE SECTION */
-.cinematic-pollutant-documentary .doc-source-exposure-section {
-  position: relative;
-  width: 100%;
-  min-height: 100vh;
-  background: #06080d;
-  overflow: hidden;
-  padding: 6.5rem 3.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  box-sizing: border-box;
-}
-
-.cinematic-pollutant-documentary .doc-source-exposure-backdrop {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.cinematic-pollutant-documentary .exposure-photo-container {
-  position: absolute;
-  inset: -10% -10% -10% -10%;
-  z-index: 1;
-}
-
-.cinematic-pollutant-documentary .exposure-vehicle-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  filter: contrast(1.15) brightness(0.38) saturate(1.05);
-}
-
-.cinematic-pollutant-documentary .exposure-photo-scrim {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 45% 50%, rgba(6, 8, 13, 0.65) 0%, rgba(6, 8, 13, 0.96) 88%);
-}
-
-.cinematic-pollutant-documentary .exposure-atmosphere-gradient {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(6, 8, 13, 0.9) 0%, transparent 25%, transparent 75%, rgba(6, 8, 13, 0.95) 100%);
-  z-index: 2;
-  pointer-events: none;
-}
-
-.cinematic-pollutant-documentary .doc-source-exposure-inner {
-  position: relative;
-  z-index: 10;
-  width: 100%;
-  max-width: 1500px;
-  margin: 0 auto;
-}
-
-.cinematic-pollutant-documentary .exposure-kicker-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 3.5rem;
-}
-
-.cinematic-pollutant-documentary .exposure-badge-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
+.doc-trace-val {
   color: #e2e8f0;
-}
-
-.cinematic-pollutant-documentary .exposure-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  box-shadow: 0 0 10px currentColor;
-}
-
-.cinematic-pollutant-documentary .kicker-location-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.72rem;
-  color: #94a3b8;
-  letter-spacing: 0.1em;
-}
-
-.cinematic-pollutant-documentary .exposure-body-grid {
-  display: grid;
-  grid-template-columns: 1.15fr 1fr;
-  gap: 4rem;
-  align-items: start;
-}
-
-/* Left Column: Statement & Atmospheric Behavior */
-.cinematic-pollutant-documentary .exposure-category-kicker {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  margin-bottom: 0.75rem;
-  text-transform: uppercase;
-}
-
-.cinematic-pollutant-documentary .exposure-headline {
-  font-family: var(--font-heading, Georgia, serif);
-  font-size: clamp(2rem, 3.5vw, 3rem);
-  font-weight: 400;
-  line-height: 1.15;
-  color: #ffffff;
-  margin: 0 0 1.25rem 0;
-}
-
-.cinematic-pollutant-documentary .exposure-lead {
-  font-size: 1.05rem;
-  line-height: 1.7;
-  color: #cbd5e1;
-  margin: 0 0 2rem 0;
-}
-
-.cinematic-pollutant-documentary .exposure-behavior-box {
-  background: rgba(12, 16, 26, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: 3px solid var(--pollutant-accent, #ef4444);
-  border-radius: 6px;
-  padding: 1.5rem;
-  margin-bottom: 1.75rem;
-}
-
-.cinematic-pollutant-documentary .behavior-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: #94a3b8;
-  letter-spacing: 0.12em;
-  margin-bottom: 0.65rem;
-}
-
-.cinematic-pollutant-documentary .behavior-text {
-  font-size: 0.95rem;
-  line-height: 1.65;
-  color: #e2e8f0;
-  margin: 0;
-}
-
-.cinematic-pollutant-documentary .exposure-caption-note {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-size: 0.82rem;
-  color: #64748b;
-  font-family: var(--font-mono, monospace);
-}
-
-.cinematic-pollutant-documentary .caption-tag {
-  color: #94a3b8;
   font-weight: 700;
 }
 
-.cinematic-pollutant-documentary .caption-body {
-  font-style: italic;
-}
-
-/* Right Column: Telemetry Card */
-.cinematic-pollutant-documentary .exposure-telemetry-card {
-  background: rgba(12, 16, 26, 0.8);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 2.25rem;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-}
-
-.cinematic-pollutant-documentary .card-top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-}
-
-.cinematic-pollutant-documentary .live-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: #e2e8f0;
-  letter-spacing: 0.12em;
-}
-
-.cinematic-pollutant-documentary .card-measurement-block {
-  margin-bottom: 2rem;
-  padding-bottom: 1.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.cinematic-pollutant-documentary .measurement-symbol {
-  font-family: var(--font-display, sans-serif);
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: #94a3b8;
-  margin-bottom: 0.35rem;
-}
-
-.cinematic-pollutant-documentary .measurement-val-row {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 0.75rem;
-}
-
-.cinematic-pollutant-documentary .measurement-number {
-  font-family: var(--font-display, sans-serif);
-  font-size: clamp(3.5rem, 6vw, 5rem);
-  font-weight: 950;
-  line-height: 1;
-  letter-spacing: -0.03em;
-}
-
-.cinematic-pollutant-documentary .measurement-unit {
-  font-size: 1.25rem;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.cinematic-pollutant-documentary .measurement-sublabel {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: #cbd5e1;
-}
-
-.cinematic-pollutant-documentary .card-naaqs-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 1.75rem;
-}
-
-.cinematic-pollutant-documentary .naaqs-header,
-.cinematic-pollutant-documentary .naaqs-footer {
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.68rem;
-  color: #94a3b8;
-}
-
-.cinematic-pollutant-documentary .naaqs-progress-track {
-  width: 100%;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.cinematic-pollutant-documentary .naaqs-progress-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.6s ease;
-}
-
-.cinematic-pollutant-documentary .card-disclaimer {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 0.75rem;
-  color: #64748b;
-  line-height: 1.5;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-/* RESPONSIVE & MOBILE ADAPTATION FOR FORGE COMPONENTS */
 @media (max-width: 1024px) {
-  .cinematic-pollutant-documentary .doc-forge-hero-section {
-    padding: 5rem 2rem 2.5rem 2rem;
+  .documentary-pinned-viewport {
+    padding: 80px 24px 36px;
   }
-
-  .cinematic-pollutant-documentary .doc-forge-hud-strip {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .cinematic-pollutant-documentary .exposure-body-grid {
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
+  .documentary-pinned-cards-deck {
+    margin-left: 0;
+    max-width: 100%;
   }
 }
 
 @media (max-width: 768px) {
-  .cinematic-pollutant-documentary .doc-forge-hero-section {
-    padding: 4.5rem 1.25rem 2rem 1.25rem;
-    min-height: auto;
-  }
-
-  .cinematic-pollutant-documentary .doc-forge-hero-overlay {
-    min-height: auto;
-  }
-
-  .cinematic-pollutant-documentary .doc-forge-kicker-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
-  .cinematic-pollutant-documentary .doc-forge-oversized-symbol {
-    font-size: clamp(3.5rem, 18vw, 6rem);
-  }
-
-  .cinematic-pollutant-documentary .doc-forge-headline {
-    font-size: 1.75rem;
-  }
-
-  .cinematic-pollutant-documentary .doc-forge-hud-strip {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .cinematic-pollutant-documentary .doc-pinned-viewport {
+  .documentary-pinned-viewport {
     height: auto;
     min-height: 100vh;
-    padding: 3.5rem 1.25rem;
+    padding: 80px 16px 32px;
   }
-
-  .cinematic-pollutant-documentary .doc-pinned-cards-deck {
-    position: relative;
-    min-height: auto;
-    display: flex;
+  .documentary-pinned-top-ribbon {
     flex-direction: column;
-    gap: 1.5rem;
-    margin: 2rem 0;
-  }
-
-  .cinematic-pollutant-documentary .doc-pinned-card {
-    position: relative;
-    top: auto;
-    left: auto;
-    padding: 1.75rem;
-  }
-
-  .cinematic-pollutant-documentary .doc-source-exposure-section {
-    padding: 4rem 1.25rem;
-  }
-
-  .cinematic-pollutant-documentary .exposure-kicker-header {
-    flex-direction: column;
+    gap: 12px;
     align-items: flex-start;
-    gap: 0.75rem;
-    margin-bottom: 2rem;
+    border-radius: 16px;
+    padding: 12px 16px;
+  }
+  .doc-ribbon-stepper {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .doc-step-name {
+    display: none;
+  }
+  .documentary-pinned-cards-deck {
+    min-height: auto;
+    margin: 20px 0 0;
+  }
+  .documentary-pinned-card {
+    padding: 24px 20px;
+    border-radius: 16px;
+  }
+  .doc-card-headline {
+    font-size: 1.35rem;
+  }
+  .doc-card-lead {
+    font-size: 0.92rem;
+  }
+}
+
+/* ==========================================================================
+   VISUAL DATA & REFINED METRICS (REDUCE TEXT -> INCREASE VISUAL DATA)
+   ========================================================================== */
+.single-line {
+  margin: 0 0 8px !important;
+  line-height: 1.5 !important;
+  color: #cbd5e1 !important;
+}
+
+/* 1. Chemical & Aerodynamic Profile Grid */
+.doc-chem-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin: 20px 0 18px;
+}
+
+.doc-chem-metric-card {
+  background: rgba(16, 23, 24, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+
+.doc-chem-metric-card:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+.doc-metric-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.doc-metric-num {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.doc-metric-note {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* 2. Visual Formation & Synthesis Flowchart */
+.doc-visual-synthesis-flow {
+  background: rgba(16, 23, 24, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.doc-flow-header {
+  margin-bottom: 12px;
+}
+
+.doc-flow-kicker {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--pollutant-accent, #10b981);
+  text-transform: uppercase;
+}
+
+.doc-flow-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.doc-flow-step-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.doc-flow-step-num {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.doc-flow-step-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  letter-spacing: 0.04em;
+}
+
+.doc-flow-step-sub {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+
+.doc-flow-arrow {
+  color: #475569;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* 3. Scale Ratio Badge */
+.doc-scale-ratio-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* 4. Atmospheric Behavior Chips */
+.doc-behavior-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.doc-behavior-chip {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+/* 5. Statutory Variance & Ratio Metric Card */
+.doc-data-diff-card {
+  background: rgba(16, 23, 24, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.doc-diff-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.doc-diff-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.doc-diff-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.doc-diff-badge.exceeded {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.doc-diff-badge.compliant {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.doc-diff-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.doc-diff-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.doc-diff-lbl {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.06em;
+}
+
+.doc-diff-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #f8fafc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* 6. Diurnal Summary Strip (PEAK, AVERAGE, LOW, CURRENT) */
+.doc-diurnal-summary-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.doc-diurnal-metric-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.doc-d-lbl {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.doc-d-val {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #f8fafc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.doc-diurnal-metric-pill.peak .doc-d-val {
+  color: #f87171;
+}
+
+.doc-diurnal-metric-pill.low .doc-d-val {
+  color: #34d399;
+}
+
+.doc-diurnal-metric-pill.curr .doc-d-val {
+  color: #60a5fa;
+}
+
+/* 7. Image Section Tag Strip */
+.doc-caption-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.doc-c-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+@media (max-width: 1024px) {
+  .doc-chem-metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .doc-chem-metric-grid {
+    grid-template-columns: 1fr;
+  }
+  .doc-flow-steps {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .doc-flow-arrow {
+    transform: rotate(90deg);
+    text-align: center;
+    margin: -4px 0;
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .documentary-live-pulse-dot,
+  .doc-ping-ring,
+  .documentary-hero-photo-layer,
+  .documentary-hero-haze-layer,
+  .documentary-hero-flow-lines,
+  .documentary-value-atmospheric-glow,
+  .documentary-gauge-bead,
+  .doc-spatial-airshed-glow {
+    animation: none !important;
   }
 
-  .cinematic-pollutant-documentary .exposure-telemetry-card {
-    padding: 1.5rem;
+  .documentary-source-card,
+  .documentary-footer-cargo-btn,
+  .documentary-image-element {
+    transition: none !important;
+    transform: none !important;
   }
 }

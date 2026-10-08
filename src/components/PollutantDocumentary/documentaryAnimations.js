@@ -1,18 +1,21 @@
 /**
  * documentaryAnimations.js
- * VayuVitals - GSAP & ScrollTrigger Cinematic Animation Engine
+ * VayuVitals - Forge-Inspired Motion & Cinematic Animation Engine
  *
- * Scoped exclusively to the seven pollutant documentary pages:
- * PM2.5, PM10, NO2, SO2, CO, O3, NH3.
+ * Implements 3-tier motion architecture inspired by Forge Automotive:
  *
- * Inspired by the cinematic interaction and motion language of Forge Automotive:
- * - Real Indian vehicles as visual protagonists (large visual subjects, camera-like parallax)
- * - Oversized typography choreography and independent multi-layer depth
- * - Pinned ScrollTrigger narrative moments ("WHAT IS IT?", "WHERE DOES IT EMERGE?", "WHY DOES IT MATTER?")
- * - Dedicated Vehicle Showcase Atelier with scroll-driven tracking and real-time live data HUD reveals
- * - Masked clip-path image reveals and film-cut transitions
- * - 100% React lifecycle safe with gsap.context() and total ScrollTrigger cleanup
- * - Zero global style contamination; respects prefers-reduced-motion and mobile ergonomics
+ * LEVEL 1 (100-300ms): Micro-interactions (buttons, hover, tabs, chips)
+ * LEVEL 2 (400-900ms): Staggered component reveals & masked typography
+ * LEVEL 3 (Scroll-driven):
+ *   - Hero entrance choreography with controlled stagger
+ *   - Circular arc gauge stroke draw & number counter interpolation
+ *   - Pinned interactive airshed storytelling sequence (SOURCE -> MOVEMENT -> EXPOSURE -> IMPACT)
+ *   - Cinematic image parallax with subtle horizontal drift (scale 1.08 -> 1.0)
+ *   - Proportional aerodynamic scale bars progressive fill
+ *   - 24-hr diurnal SVG line draw
+ *
+ * Full React lifecycle safety with gsap.context(), synchronous scroll reset,
+ * ScrollTrigger.clearScrollMemory(), and prefers-reduced-motion compliance.
  */
 
 import gsap from 'gsap';
@@ -23,73 +26,11 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 }
 
 /**
- * Pollutant-specific motion personality parameters
- */
-export const POLLUTANT_MOTION_PERSONALITIES = {
-  pm25: {
-    ease: 'power2.out',
-    durationMultiplier: 1.15,
-    heroScaleStart: 1.12,
-    staggerDelay: 0.12,
-    accentGlowDuration: 2.4,
-    descriptor: 'Dense Atmospheric Suspension',
-  },
-  pm10: {
-    ease: 'power3.out',
-    durationMultiplier: 0.95,
-    heroScaleStart: 1.08,
-    staggerDelay: 0.09,
-    accentGlowDuration: 1.8,
-    descriptor: 'Coarse Particulate Mechanical Friction',
-  },
-  no2: {
-    ease: 'expo.out',
-    durationMultiplier: 0.9,
-    heroScaleStart: 1.1,
-    staggerDelay: 0.08,
-    accentGlowDuration: 1.6,
-    descriptor: 'Combustion Traffic Plume',
-  },
-  so2: {
-    ease: 'power2.inOut',
-    durationMultiplier: 1.1,
-    heroScaleStart: 1.09,
-    staggerDelay: 0.11,
-    accentGlowDuration: 2.2,
-    descriptor: 'Thermal & Industrial Kiln Flue',
-  },
-  co: {
-    ease: 'sine.out',
-    durationMultiplier: 1.25,
-    heroScaleStart: 1.06,
-    staggerDelay: 0.14,
-    accentGlowDuration: 2.8,
-    descriptor: 'Silent Incomplete Combustion',
-  },
-  o3: {
-    ease: 'power1.out',
-    durationMultiplier: 1.05,
-    heroScaleStart: 1.14,
-    staggerDelay: 0.1,
-    accentGlowDuration: 2.0,
-    descriptor: 'Solar Photochemical Expansion',
-  },
-  nh3: {
-    ease: 'power2.out',
-    durationMultiplier: 1.0,
-    heroScaleStart: 1.08,
-    staggerDelay: 0.1,
-    accentGlowDuration: 2.1,
-    descriptor: 'Agricultural Alkaline Synthesis',
-  },
-};
-
-/**
- * Initialize all GSAP and ScrollTrigger animations for the current pollutant documentary.
+ * Initialize all GSAP and ScrollTrigger animations for the active pollutant documentary.
  * Scoped strictly to containerEl using gsap.context().
  *
- * @param {HTMLElement} containerEl - Root element of the pollutant documentary (.cinematic-pollutant-documentary)
- * @param {string} pollutantId - 'pm25' | 'pm10' | 'no2' | 'so2' | 'co' | 'o3' | 'nh3'
+ * @param {HTMLElement} containerEl - Root element (.documentary-page)
+ * @param {string} pollutantId - Active pollutant ID ('pm25', 'pm10', 'no2', 'so2', 'co', 'o3', 'nh3')
  * @returns {Function} cleanup - Function to revert animations and kill ScrollTriggers
  */
 export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
@@ -97,1037 +38,614 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     return () => {};
   }
 
-  // 1. Enforce scroll reset to top (scrollY = 0) immediately before measuring DOM bounding rects
+  // 1. Enforce scroll reset to top (scrollY = 0) and clear ScrollTrigger memory
+  if (ScrollTrigger.clearScrollMemory) {
+    ScrollTrigger.clearScrollMemory();
+  }
   window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   if (document.documentElement) document.documentElement.scrollTop = 0;
   if (document.body) document.body.scrollTop = 0;
 
-  // 2. Clear GSAP ScrollTrigger cached scroll memory to prevent unexpected scroll position restoration
-  try {
-    if (typeof ScrollTrigger.clearScrollMemory === 'function') {
-      ScrollTrigger.clearScrollMemory();
-    }
-  } catch (err) {
-    // Safe no-op in test/non-browser environment
-  }
-
-  const personality =
-    POLLUTANT_MOTION_PERSONALITIES[pollutantId] || POLLUTANT_MOTION_PERSONALITIES.pm25;
-
+  // 2. Check for prefers-reduced-motion
   const prefersReducedMotion =
     window.matchMedia &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const isMobile = window.innerWidth <= 768;
+  if (prefersReducedMotion) {
+    // Reveal all elements statically with zero transitions
+    const elements = containerEl.querySelectorAll(
+      '.documentary-nav, .documentary-hero-editorial-col, .documentary-value-container, .documentary-data-panel, .documentary-section, .documentary-image-frame, .documentary-data-section, .documentary-pinned-card, .doc-scale-fill'
+    );
+    elements.forEach((el) => {
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+      if (el.classList.contains('documentary-pinned-card')) {
+        el.style.display = 'block';
+      }
+    });
+    return () => {};
+  }
 
-  // Use gsap.context to ensure every selector is scoped to containerEl
-  const ctx = gsap.context((self) => {
-    // ------------------------------------------------------------------------
-    // REDUCED MOTION SAFEGUARD: Instant clean reveal without transforms/pins
-    // ------------------------------------------------------------------------
-    if (prefersReducedMotion) {
-      gsap.set(
-        [
-          '.doc-forge-hero-section',
-          '.doc-forge-vehicle-img',
-          '.doc-forge-oversized-symbol',
-          '.doc-forge-headline',
-          '.doc-forge-hud-card',
-          '.doc-pinned-story-section',
-          '.doc-pinned-card',
-          '.doc-forge-showcase-section',
-          '.showcase-vehicle-image',
-          '.showcase-live-hud-panel',
-          '.specs-panel-frame',
-          '.cinematic-spread-grid',
-          '.cinematic-scale-visual-deck',
-          '.cinematic-source-frame',
-          '.cinematic-weather-telemetry-strip',
-          '.cinematic-transport-flow-card',
-          '.cinematic-live-hero-readout',
-          '.cinematic-station-node-card',
-          '.cinematic-school-dossier-card',
-          '.cinematic-impact-point-card',
-          '.cinematic-day-frame',
-          '.cinematic-closing-line',
-          '.cinematic-chapter-chip',
-        ],
-        { opacity: 1, clearProps: 'transform,clipPath' }
-      );
-      return;
-    }
-
-    // ========================================================================
-    // 1. VEHICLE HERO ANIMATION (Forge Automotive Protagonist Experience)
-    // ========================================================================
-    const heroSection = self.selector('#doc-forge-hero')[0];
-    const heroVehicleImg = self.selector('.doc-forge-vehicle-img')[0];
-    const heroHaze = self.selector('.doc-forge-haze-layer')[0];
-    const heroKicker = self.selector('.doc-forge-kicker-badge')[0];
-    const heroCoords = self.selector('.doc-forge-coordinates')[0];
-    const heroSymbol = self.selector('.doc-forge-oversized-symbol')[0];
-    const heroHeadline = self.selector('.doc-forge-headline')[0];
-    const heroLead = self.selector('.doc-forge-lead')[0];
-    const heroHudCards = self.selector('.doc-forge-hud-card');
-    const scrollIndicator = self.selector('.doc-forge-scroll-indicator')[0];
-
-    const tlHero = gsap.timeline({
-      defaults: { ease: personality.ease },
+  // 3. Create scoped GSAP context for complete React lifecycle safety
+  const ctx = gsap.context(() => {
+    // =======================================================================
+    // TIER 3A: HERO ENTRANCE CHOREOGRAPHY (Live Environmental Monitoring Sequence)
+    // 1. Background atmosphere establishes itself
+    // 2. Navigation appears
+    // 3. Small environmental label reveals
+    // 4. Pollutant title reveals
+    // 5. Tagline appears
+    // 6. Environmental parameters appear
+    // 7. Central visualization draws
+    // 8. Current value resolves into view (subtle scale, blur-to-sharp, opacity)
+    // 9. Status appears
+    // 10. Location visualization activates
+    // 11. Bottom telemetry appears
+    // =======================================================================
+    const heroTl = gsap.timeline({
+      defaults: { ease: 'power3.out' },
     });
 
-    if (heroVehicleImg) {
-      tlHero.fromTo(
-        heroVehicleImg,
-        { scale: personality.heroScaleStart, opacity: 0.85, y: 15 },
-        { scale: 1.02, opacity: 1, y: 0, duration: 1.5 * personality.durationMultiplier }
+    // Step 1: Background atmospheric layer establishes itself
+    const bgBackdrop = containerEl.querySelector('.documentary-hero-ambient-backdrop');
+    if (bgBackdrop) {
+      heroTl.fromTo(
+        bgBackdrop,
+        { opacity: 0.25, scale: 1.05 },
+        { opacity: 1, scale: 1.0, duration: 1.2, ease: 'power2.out' },
+        0
       );
     }
 
-    if (heroHaze) {
-      tlHero.fromTo(
-        heroHaze,
-        { opacity: 0, scale: 0.95 },
-        { opacity: 0.85, scale: 1, duration: 2.0 },
-        '-=1.6'
+    // Step 2: Floating navigation bar drops down smoothly
+    const nav = containerEl.querySelector('.documentary-nav');
+    if (nav) {
+      heroTl.fromTo(
+        nav,
+        { y: -24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, ease: 'power3.out' },
+        0.15
       );
     }
 
-    if (heroKicker) {
-      tlHero.fromTo(
-        heroKicker,
-        { y: -25, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8 },
-        '-=1.4'
+    // Step 3: Small environmental label / kicker reveals
+    const kickerTag = containerEl.querySelector('.documentary-pollutant-kicker-tag');
+    if (kickerTag) {
+      heroTl.fromTo(
+        kickerTag,
+        { opacity: 0, y: -10 },
+        { opacity: 1, y: 0, duration: 0.5 },
+        0.25
       );
     }
 
-    if (heroCoords) {
-      tlHero.fromTo(
-        heroCoords,
-        { y: -15, opacity: 0 },
-        { y: 0, opacity: 0.85, duration: 0.7 },
-        '-=1.1'
+    // Step 4: Pollutant title, symbol, and chemical formula reveal
+    const pollutantTitleRow = containerEl.querySelector('.documentary-pollutant-title-row');
+    if (pollutantTitleRow) {
+      heroTl.fromTo(
+        pollutantTitleRow,
+        { opacity: 0, y: 25 },
+        { opacity: 1, y: 0, duration: 0.75, ease: 'expo.out' },
+        0.35
       );
     }
 
-    if (heroSymbol) {
-      tlHero.fromTo(
-        heroSymbol,
-        { y: 70, opacity: 0, scale: 0.92 },
-        { y: 0, opacity: 1, scale: 1, duration: 1.15 * personality.durationMultiplier },
-        '-=0.9'
+    // Step 5: Tagline / headline and editorial statement appear
+    const headlineEl = containerEl.querySelector('.documentary-hero-headline');
+    const editorialQuote = containerEl.querySelector('.documentary-editorial-quote');
+    const editorialDesc = containerEl.querySelector('.documentary-editorial-desc');
+    if (headlineEl) {
+      heroTl.fromTo(
+        headlineEl,
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.6 },
+        0.45
       );
     }
-
-    if (heroHeadline) {
-      tlHero.fromTo(
-        heroHeadline,
-        { y: 35, opacity: 0, clipPath: 'inset(100% 0 0 0)' },
-        { y: 0, opacity: 1, clipPath: 'inset(0% 0 0 0)', duration: 0.95 },
-        '-=0.8'
+    if (editorialQuote) {
+      heroTl.fromTo(
+        editorialQuote,
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.65, ease: 'power2.out' },
+        0.5
       );
     }
-
-    if (heroLead) {
-      tlHero.fromTo(
-        heroLead,
-        { y: 25, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8 },
-        '-=0.6'
-      );
-    }
-
-    if (heroHudCards && heroHudCards.length > 0) {
-      tlHero.fromTo(
-        heroHudCards,
-        { y: 30, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.75, stagger: 0.1 },
-        '-=0.5'
-      );
-    }
-
-    if (scrollIndicator) {
-      tlHero.fromTo(
-        scrollIndicator,
+    if (editorialDesc) {
+      heroTl.fromTo(
+        editorialDesc,
         { opacity: 0, y: 12 },
-        { opacity: 0.9, y: 0, duration: 0.7 },
-        '-=0.3'
+        { opacity: 1, y: 0, duration: 0.6 },
+        0.55
       );
     }
 
-    // Scroll-driven Hero Camera Motion:
-    // Vehicle moves slowly, image scales subtly, typography drifts independently
-    if (heroSection && heroVehicleImg && !isMobile) {
-      // Vehicle slow forward camera push & slight lateral tracking
-      gsap.to(heroVehicleImg, {
-        scale: 1.08,
-        yPercent: 18,
-        xPercent: 3,
-        ease: 'none',
+    // Step 6: Environmental parameters (weather strip & metadata) appear
+    const weatherStrip = containerEl.querySelector('.documentary-hero-weather-strip');
+    const metaRow = containerEl.querySelector('.documentary-editorial-metadata');
+    if (weatherStrip) {
+      heroTl.fromTo(
+        weatherStrip,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.5 },
+        0.6
+      );
+    }
+    if (metaRow) {
+      heroTl.fromTo(
+        metaRow,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.5 },
+        0.65
+      );
+    }
+
+    // Step 7: Central visualization draws (circular arc & gauge container)
+    const gaugeContainer = containerEl.querySelector('.documentary-value-container');
+    const arcPath = containerEl.querySelector('#doc-active-gauge-arc');
+    const bead = containerEl.querySelector('.documentary-gauge-bead');
+    if (gaugeContainer) {
+      heroTl.fromTo(
+        gaugeContainer,
+        { opacity: 0, scale: 0.94 },
+        { opacity: 1, scale: 1.0, duration: 0.9, ease: 'power2.out' },
+        0.65
+      );
+    }
+    if (arcPath) {
+      const currentDashoffset = parseFloat(arcPath.getAttribute('stroke-dashoffset') || '0');
+      const strokeDasharray = arcPath.getAttribute('stroke-dasharray') || '';
+      const totalLength = parseFloat(strokeDasharray.split(' ')[0] || '586');
+
+      heroTl.fromTo(
+        arcPath,
+        { strokeDashoffset: totalLength },
+        { strokeDashoffset: currentDashoffset, duration: 1.4, ease: 'power2.inOut' },
+        0.7
+      );
+
+      if (bead) {
+        const targetX = parseFloat(bead.getAttribute('cx') || '160');
+        const targetY = parseFloat(bead.getAttribute('cy') || '160');
+        let targetAngleDeg = (Math.atan2(targetY - 160, targetX - 160) * 180) / Math.PI;
+        if (targetAngleDeg < 149.9) targetAngleDeg += 360;
+
+        const beadTracker = { t: 0 };
+        heroTl.fromTo(
+          bead,
+          { opacity: 0, scale: 0.5 },
+          { opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out' },
+          0.7
+        );
+        heroTl.to(
+          beadTracker,
+          {
+            t: 1,
+            duration: 1.4,
+            ease: 'power2.inOut',
+            onUpdate: () => {
+              const curDeg = 150 + beadTracker.t * (targetAngleDeg - 150);
+              const curRad = (curDeg * Math.PI) / 180;
+              const curX = (160 + 140 * Math.cos(curRad)).toFixed(2);
+              const curY = (160 + 140 * Math.sin(curRad)).toFixed(2);
+              bead.setAttribute('cx', curX);
+              bead.setAttribute('cy', curY);
+            },
+          },
+          0.7
+        );
+      }
+    }
+
+    // Step 8: Current value resolves into view with subtle scale, blur-to-sharp, and count-up
+    const numEl = containerEl.querySelector('#doc-central-numeric-readout');
+    if (numEl) {
+      const rawText = numEl.innerText.trim();
+      const targetVal = parseFloat(rawText);
+      heroTl.fromTo(
+        numEl,
+        { opacity: 0, scale: 0.92, filter: 'blur(8px)' },
+        { opacity: 1, scale: 1.0, filter: 'blur(0px)', duration: 0.8, ease: 'power2.out' },
+        0.75
+      );
+      if (!isNaN(targetVal) && targetVal > 0) {
+        const counter = { val: 0 };
+        heroTl.to(
+          counter,
+          {
+            val: targetVal,
+            duration: 1.3,
+            ease: 'power2.out',
+            onUpdate: () => {
+              if (numEl) {
+                numEl.innerText =
+                  targetVal >= 10
+                    ? Math.round(counter.val)
+                    : counter.val.toFixed(1);
+              }
+            },
+          },
+          0.75
+        );
+      }
+    }
+
+    // Step 9: Status pill & location pin appear
+    const statusPill = containerEl.querySelector('.documentary-value-status-badge');
+    const locationPin = containerEl.querySelector('.documentary-value-location');
+    if (statusPill) {
+      heroTl.fromTo(
+        statusPill,
+        { opacity: 0, scale: 0.82 },
+        { opacity: 1, scale: 1.0, duration: 0.6, ease: 'back.out(1.5)' },
+        0.9
+      );
+    }
+    if (locationPin) {
+      heroTl.fromTo(
+        locationPin,
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, duration: 0.5 },
+        0.95
+      );
+    }
+
+    // Step 10: Location visualization activates
+    const spatialCard = containerEl.querySelector('.documentary-spatial-map-card');
+    if (spatialCard) {
+      heroTl.fromTo(
+        spatialCard,
+        { opacity: 0, x: 25 },
+        { opacity: 1, x: 0, duration: 0.75, ease: 'power2.out' },
+        0.95
+      );
+    }
+
+    // Step 11: Bottom telemetry appears with sequential chip stagger and sparkline progressive draw
+    const bottomDataPanel = containerEl.querySelector('.documentary-data-panel');
+    if (bottomDataPanel) {
+      heroTl.fromTo(
+        bottomDataPanel,
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' },
+        1.05
+      );
+
+      const chips = bottomDataPanel.querySelectorAll('.doc-pollutant-chip');
+      if (chips.length > 0) {
+        heroTl.fromTo(
+          chips,
+          { opacity: 0, scale: 0.92, y: 8 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.45, stagger: 0.04, ease: 'back.out(1.4)' },
+          1.15
+        );
+      }
+
+      const sparklinePath = bottomDataPanel.querySelector('.doc-sparkline-path');
+      if (sparklinePath) {
+        const pathLength = 320;
+        heroTl.fromTo(
+          sparklinePath,
+          { strokeDasharray: pathLength, strokeDashoffset: pathLength },
+          { strokeDashoffset: 0, duration: 1.2, ease: 'power2.inOut' },
+          1.2
+        );
+      }
+    }
+
+    // =======================================================================
+    // TIER 3A-2: HERO SCROLL-DRIVEN TRANSFORMATION (AIR MONITORING -> DEEP ANALYSIS)
+    // As user scrolls, hero gracefully transforms into the deep documentary flow.
+    // =======================================================================
+    const heroSection = containerEl.querySelector('#documentary-hero-viewport');
+    if (heroSection) {
+      const heroPhoto = heroSection.querySelector('.documentary-hero-photo-layer');
+      const heroHaze = heroSection.querySelector('.documentary-hero-haze-layer');
+      const flowCanvas = heroSection.querySelector('.hero-atmospheric-canvas');
+      const editorialCol = heroSection.querySelector('.documentary-hero-editorial-col');
+      const centerCol = heroSection.querySelector('.documentary-hero-center-col');
+      const spatialCol = heroSection.querySelector('.documentary-hero-spatial-col');
+      const bottomDeck = heroSection.querySelector('.documentary-hero-bottom-deck');
+
+      const heroScrollTl = gsap.timeline({
         scrollTrigger: {
           trigger: heroSection,
           start: 'top top',
           end: 'bottom top',
-          scrub: 0.6,
+          scrub: 0.8,
         },
       });
 
-      // Foreground typography moves upward faster (camera parallax separation)
-      const heroOverlay = self.selector('.doc-forge-hero-overlay')[0];
-      if (heroOverlay) {
-        gsap.to(heroOverlay, {
-          yPercent: -22,
-          opacity: 0.1,
-          ease: 'none',
+      if (heroPhoto) {
+        heroScrollTl.to(heroPhoto, { scale: 1.12, yPercent: 6, ease: 'none' }, 0);
+      }
+      if (heroHaze) {
+        heroScrollTl.to(heroHaze, { opacity: 0.35, yPercent: -10, ease: 'none' }, 0);
+      }
+      if (flowCanvas) {
+        heroScrollTl.to(flowCanvas, { opacity: 0.15, yPercent: -12, ease: 'none' }, 0);
+      }
+      if (editorialCol) {
+        heroScrollTl.to(editorialCol, { y: -35, opacity: 0.4, ease: 'none' }, 0);
+      }
+      if (centerCol) {
+        heroScrollTl.to(centerCol, { scale: 0.88, y: -25, opacity: 0.5, ease: 'none' }, 0);
+      }
+      if (spatialCol) {
+        heroScrollTl.to(spatialCol, { y: -30, opacity: 0.4, ease: 'none' }, 0);
+      }
+      if (bottomDeck) {
+        heroScrollTl.to(bottomDeck, { y: 35, opacity: 0, ease: 'none' }, 0);
+      }
+    }
+
+    // =======================================================================
+    // TIER 3B: FORGE-INSPIRED PINNED STORY SEQUENCE
+    // Background image stays pinned while 4 narrative investigation beats
+    // crossfade as the user scrolls through the airshed journey.
+    // =======================================================================
+    const pinnedSection = containerEl.querySelector('.documentary-pinned-story-section');
+    if (pinnedSection) {
+      const pinnedBgImg = pinnedSection.querySelector('.documentary-pinned-bg-img');
+      const beatCards = pinnedSection.querySelectorAll('.documentary-pinned-card');
+      const stepItems = pinnedSection.querySelectorAll('.doc-ribbon-step-item');
+
+      if (beatCards.length > 0) {
+        // Initial state: first card visible, others hidden
+        gsap.set(beatCards, { opacity: 0, y: 40, display: 'none' });
+        gsap.set(beatCards[0], { opacity: 1, y: 0, display: 'block' });
+
+        const pinnedTl = gsap.timeline({
           scrollTrigger: {
-            trigger: heroSection,
+            trigger: pinnedSection,
             start: 'top top',
-            end: '85% top',
-            scrub: true,
+            end: '+=250%',
+            pin: true,
+            scrub: 0.8,
+            anticipatePin: 1,
+            onUpdate: (self) => {
+              const progress = self.progress; // 0 to 1
+              const activeIndex = Math.min(
+                beatCards.length - 1,
+                Math.floor(progress * beatCards.length)
+              );
+              stepItems.forEach((item, idx) => {
+                if (idx <= activeIndex) {
+                  item.classList.add('active');
+                } else {
+                  item.classList.remove('active');
+                }
+              });
+            },
           },
         });
-      }
-    }
 
-    // ========================================================================
-    // 2. PINNED STORY SCENE (ScrollTrigger Pinned Narrative Moment)
-    // ========================================================================
-    const pinnedSection = self.selector('#doc-pinned-story-scene')[0];
-    const pinnedCanvas = self.selector('.doc-pinned-bg-canvas')[0];
-    const pinnedImg = self.selector('.doc-pinned-bg-img')[0];
-    const pinnedCards = self.selector('.doc-pinned-card');
-    const stepIndicators = self.selector('.step-indicator');
-
-    if (pinnedSection && pinnedCards && pinnedCards.length >= 3 && !isMobile) {
-      // Pinned timeline driving sequential narrative beats
-      const pinTimeline = gsap.timeline({
-        scrollTrigger: {
-          trigger: pinnedSection,
-          start: 'top top',
-          end: '+=180%',
-          pin: true,
-          scrub: 0.7,
-        },
-      });
-
-      // Background subtle zoom & contrast shift during scroll
-      if (pinnedImg) {
-        pinTimeline.to(pinnedImg, {
-          scale: 1.08,
-          ease: 'none',
-          duration: 3,
-        }, 0);
-      }
-
-      // Initial state: Card 0 is visible, Cards 1 & 2 are hidden
-      gsap.set(pinnedCards[0], { opacity: 1, y: 0, pointerEvents: 'auto' });
-      gsap.set([pinnedCards[1], pinnedCards[2]], {
-        opacity: 0,
-        y: 50,
-        pointerEvents: 'none',
-        clipPath: 'inset(100% 0 0 0)',
-      });
-      if (stepIndicators[0]) stepIndicators[0].classList.add('active');
-
-      // Beat 0 -> Beat 1 transition
-      pinTimeline
-        .to(pinnedCards[0], {
-          opacity: 0,
-          y: -40,
-          clipPath: 'inset(0 0 100% 0)',
-          duration: 0.8,
-          onStart: () => {
-            if (stepIndicators[0]) stepIndicators[0].classList.add('active');
-            if (stepIndicators[1]) stepIndicators[1].classList.remove('active');
-          },
-        }, 0.6)
-        .to(pinnedCards[1], {
-          opacity: 1,
-          y: 0,
-          clipPath: 'inset(0% 0 0% 0)',
-          pointerEvents: 'auto',
-          duration: 0.8,
-          onStart: () => {
-            if (stepIndicators[0]) stepIndicators[0].classList.remove('active');
-            if (stepIndicators[1]) stepIndicators[1].classList.add('active');
-          },
-        }, 1.0);
-
-      // Beat 1 -> Beat 2 transition
-      pinTimeline
-        .to(pinnedCards[1], {
-          opacity: 0,
-          y: -40,
-          clipPath: 'inset(0 0 100% 0)',
-          duration: 0.8,
-          onStart: () => {
-            if (stepIndicators[1]) stepIndicators[1].classList.add('active');
-            if (stepIndicators[2]) stepIndicators[2].classList.remove('active');
-          },
-        }, 1.8)
-        .to(pinnedCards[2], {
-          opacity: 1,
-          y: 0,
-          clipPath: 'inset(0% 0 0% 0)',
-          pointerEvents: 'auto',
-          duration: 0.8,
-          onStart: () => {
-            if (stepIndicators[1]) stepIndicators[1].classList.remove('active');
-            if (stepIndicators[2]) stepIndicators[2].classList.add('active');
-          },
-        }, 2.2);
-    } else if (pinnedCards && pinnedCards.length > 0) {
-      // Mobile / non-pin fallback: stagger cards cleanly
-      gsap.fromTo(
-        pinnedCards,
-        { opacity: 0, y: 35 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          stagger: 0.2,
-          scrollTrigger: {
-            trigger: pinnedSection || pinnedCards[0],
-            start: 'top 80%',
-            toggleActions: 'play none none reverse',
-          },
+        // Background image slow cinematic camera scale
+        if (pinnedBgImg) {
+          pinnedTl.fromTo(
+            pinnedBgImg,
+            { scale: 1.08, y: 0 },
+            { scale: 1.0, y: -15, ease: 'none' },
+            0
+          );
         }
-      );
-    }
 
-    // ========================================================================
-    // 3. CINEMATIC SOURCE EXPOSURE (Atmospheric Source & Live Receptor Telemetry)
-    // ========================================================================
-    const exposureSection =
-      self.selector('#doc-source-exposure-scene')[0] ||
-      self.selector('#doc-vehicle-showcase-scene')[0];
-    const exposureImg =
-      self.selector('.exposure-vehicle-image')[0] ||
-      self.selector('.showcase-vehicle-image')[0];
-    const exposureStatementCol =
-      self.selector('.exposure-statement-col')[0] ||
-      self.selector('.showcase-identity-col')[0];
-    const exposureTelemetryCol =
-      self.selector('.exposure-telemetry-col')[0] ||
-      self.selector('.showcase-specs-col')[0];
-    const exposureBehaviorBox = self.selector('.exposure-behavior-box')[0];
-    const naaqsProgressFill =
-      self.selector('.naaqs-progress-fill')[0] ||
-      self.selector('.naaqs-fill')[0];
-    const measurementNum =
-      self.selector('.measurement-number')[0] ||
-      self.selector('.readout-val')[0];
+        // Crossfade through the 4 narrative cards
+        for (let i = 0; i < beatCards.length - 1; i++) {
+          const curr = beatCards[i];
+          const next = beatCards[i + 1];
 
-    if (exposureSection) {
-      // Horizontal vehicle tracking across viewport during scroll
-      if (exposureImg && !isMobile) {
-        gsap.fromTo(
-          exposureImg,
-          { xPercent: -4, scale: 1.0 },
-          {
-            xPercent: 4,
-            scale: 1.06,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: exposureSection,
-              start: 'top bottom',
-              end: 'bottom top',
-              scrub: 0.8,
-            },
-          }
-        );
-      }
+          pinnedTl.to(
+            curr,
+            { opacity: 0, y: -30, duration: 0.4, onComplete: () => { curr.style.display = 'none'; } },
+            `beat-${i}`
+          );
 
-      // Entrance animation for Statement & Atmospheric column
-      if (exposureStatementCol) {
-        gsap.fromTo(
-          exposureStatementCol,
-          { opacity: 0, x: -35 },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.9,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: exposureSection,
-              start: 'top 75%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
+          pinnedTl.set(next, { display: 'block', y: 30, opacity: 0 });
 
-      // Entrance animation for Telemetry card column
-      if (exposureTelemetryCol) {
-        gsap.fromTo(
-          exposureTelemetryCol,
-          { opacity: 0, x: 35 },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.9,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: exposureSection,
-              start: 'top 75%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-
-      // Atmospheric behavior box entrance
-      if (exposureBehaviorBox) {
-        gsap.fromTo(
-          exposureBehaviorBox,
-          { opacity: 0, y: 20 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.8,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: exposureSection,
-              start: 'top 65%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-
-      // NAAQS fill progress bar reveal
-      if (naaqsProgressFill) {
-        gsap.fromTo(
-          naaqsProgressFill,
-          { transformOrigin: 'left center', scaleX: 0 },
-          {
-            scaleX: 1,
-            duration: 1.2,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: exposureSection,
-              start: 'top 70%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-
-      // Live measurement number text-shadow glow
-      if (measurementNum) {
-        gsap.fromTo(
-          measurementNum,
-          { textShadow: '0 0 10px rgba(255,255,255,0.1)' },
-          {
-            textShadow: '0 0 35px var(--pollutant-glow, rgba(239, 68, 68, 0.45))',
-            duration: personality.accentGlowDuration,
-            ease: 'sine.inOut',
-            repeat: -1,
-            yoyo: true,
-          }
-        );
-      }
-    }
-
-    // ========================================================================
-    // 4. CHAPTER 01: THE INVISIBLE PARTICLES (Clip-path photographic wipe)
-    // ========================================================================
-    const sec01 = self.selector('#section-01-what-are-they')[0];
-    if (sec01) {
-      const textCol = sec01.querySelector('.cinematic-spread-text-col');
-      const photoSpread = sec01.querySelector('.cinematic-torn-photo-spread');
-      const photoImg = sec01.querySelector('.cinematic-photo-base');
-
-      if (textCol) {
-        gsap.fromTo(
-          textCol.children,
-          { opacity: 0, y: 35 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.85,
-            stagger: 0.08,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: sec01,
-              start: 'top 78%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-
-      if (photoSpread && photoImg) {
-        gsap.fromTo(
-          photoSpread,
-          { opacity: 0, y: 40, clipPath: 'inset(15% 0 15% 0)' },
-          {
-            opacity: 1,
-            y: 0,
-            clipPath: 'inset(0% 0 0% 0)',
-            duration: 1.15 * personality.durationMultiplier,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: sec01,
-              start: 'top 72%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-
-        if (!isMobile) {
-          gsap.fromTo(
-            photoImg,
-            { scale: 1.09 },
-            {
-              scale: 1.0,
-              ease: 'none',
-              scrollTrigger: {
-                trigger: sec01,
-                start: 'top bottom',
-                end: 'bottom top',
-                scrub: true,
-              },
-            }
+          pinnedTl.to(
+            next,
+            { opacity: 1, y: 0, duration: 0.4 },
+            `beat-${i}+=0.15`
           );
         }
       }
     }
 
-    // ========================================================================
-    // 5. CHAPTER 02: PHYSICAL SCALE COMPARISON (Dynamic bar expansion)
-    // ========================================================================
-    const sec02 = self.selector('#section-02-how-small')[0];
-    if (sec02) {
-      const scaleHeader = sec02.querySelector('.cinematic-scale-header');
-      const scaleDiagram = sec02.querySelector('.cinematic-proportional-diagram');
-      const scaleBars = sec02.querySelectorAll('.cinematic-scale-bar-row');
-      const barFills = sec02.querySelectorAll('.bar-fill');
+    // =======================================================================
+    // TIER 3C: CINEMATIC IMAGE PARALLAX & HORIZONTAL MOTION
+    // Image gently scales from 1.08 to 1.0 with subtle horizontal drift
+    // =======================================================================
+    const imageSection = containerEl.querySelector('.documentary-image-section');
+    if (imageSection) {
+      const imgEl = imageSection.querySelector('.documentary-image-element');
+      const captionOverlay = imageSection.querySelector('.documentary-image-caption-overlay');
 
-      if (scaleHeader) {
+      if (imgEl) {
         gsap.fromTo(
-          scaleHeader.children,
-          { opacity: 0, y: 30 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.75,
-            stagger: 0.08,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: sec02,
-              start: 'top 80%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-
-      if (scaleDiagram) {
-        gsap.fromTo(
-          scaleDiagram,
-          { opacity: 0, scale: 0.88 },
-          {
-            opacity: 1,
-            scale: 1,
-            duration: 1.0 * personality.durationMultiplier,
-            ease: 'back.out(1.2)',
-            scrollTrigger: {
-              trigger: scaleDiagram,
-              start: 'top 82%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-
-      if (barFills && barFills.length > 0) {
-        gsap.fromTo(
-          barFills,
-          { transformOrigin: 'left center', scaleX: 0 },
-          {
-            scaleX: 1,
-            duration: 1.1,
-            stagger: 0.1,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: sec02.querySelector('.cinematic-scale-bars-board') || sec02,
-              start: 'top 78%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-
-      if (scaleBars && scaleBars.length > 0) {
-        gsap.fromTo(
-          scaleBars,
-          { opacity: 0, x: -25 },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.7,
-            stagger: 0.09,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: sec02.querySelector('.cinematic-scale-bars-board') || sec02,
-              start: 'top 82%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-    }
-
-    // ========================================================================
-    // 6. CHAPTER 03: WHERE IT BEGINS (Sources grid staggered elevation)
-    // ========================================================================
-    const sec03 = self.selector('#section-03-sources')[0];
-    if (sec03) {
-      const sourceFrames = sec03.querySelectorAll('.cinematic-source-frame');
-      const innerHeader = sec03.querySelector('.cinematic-sources-inner');
-
-      if (innerHeader) {
-        const headerElems = [
-          innerHeader.querySelector('.cinematic-chapter-marker'),
-          innerHeader.querySelector('.cinematic-marker-sub'),
-          innerHeader.querySelector('.cinematic-editorial-title'),
-          innerHeader.querySelector('.cinematic-editorial-lead'),
-        ].filter(Boolean);
-
-        gsap.fromTo(
-          headerElems,
-          { opacity: 0, y: 30 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.8,
-            stagger: 0.08,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: sec03,
-              start: 'top 78%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-
-      if (sourceFrames && sourceFrames.length > 0) {
-        gsap.fromTo(
-          sourceFrames,
-          { opacity: 0, y: 45, scale: 0.96 },
-          {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.85,
-            stagger: personality.staggerDelay,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: sec03.querySelector('.cinematic-sources-photographic-grid') || sec03,
-              start: 'top 80%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-    }
-
-    // ========================================================================
-    // 7. CHAPTER 04: HOW IT MOVES (Atmospheric weather & transport vectors)
-    // ========================================================================
-    const sec04 = self.selector('#section-04-atmospheric-transport')[0];
-    if (sec04) {
-      const weatherStrip = sec04.querySelector('.cinematic-weather-telemetry-strip');
-      const weatherCols = sec04.querySelectorAll('.weather-metric-col');
-      const flowCards = sec04.querySelectorAll('.cinematic-transport-flow-card');
-
-      if (weatherCols && weatherCols.length > 0) {
-        gsap.fromTo(
-          weatherCols,
-          { opacity: 0, y: 25 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.7,
-            stagger: 0.08,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: weatherStrip || sec04,
-              start: 'top 82%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-
-      if (flowCards && flowCards.length > 0) {
-        gsap.fromTo(
-          flowCards,
-          { opacity: 0, x: -30 },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.8,
-            stagger: 0.12,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: sec04.querySelector('.cinematic-transport-flow-deck') || sec04,
-              start: 'top 80%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-    }
-
-    // ========================================================================
-    // 8. CHAPTER 05: DELHI RIGHT NOW (Giant live telemetry focal reveal)
-    // ========================================================================
-    const sec05 = self.selector('#section-05-delhi-right-now')[0];
-    if (sec05) {
-      const liveNumberBlock = sec05.querySelector('.cinematic-live-number-block');
-      const giantValue = sec05.querySelector('.cinematic-giant-value');
-      const metaCells = sec05.querySelectorAll('.meta-tableau-cell');
-
-      if (liveNumberBlock) {
-        gsap.fromTo(
-          liveNumberBlock,
-          { opacity: 0, scale: 0.91, y: 35 },
-          {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            duration: 1.15 * personality.durationMultiplier,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: sec05,
-              start: 'top 75%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-
-      if (giantValue) {
-        gsap.fromTo(
-          giantValue,
-          { textShadow: '0 0 10px rgba(255,255,255,0.1)' },
-          {
-            textShadow: '0 0 45px var(--pollutant-glow, rgba(239, 68, 68, 0.45))',
-            duration: personality.accentGlowDuration,
-            ease: 'sine.inOut',
-            repeat: -1,
-            yoyo: true,
-          }
-        );
-      }
-
-      if (metaCells && metaCells.length > 0) {
-        gsap.fromTo(
-          metaCells,
-          { opacity: 0, y: 30 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.75,
-            stagger: 0.08,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: sec05.querySelector('.cinematic-live-meta-tableau') || sec05,
-              start: 'top 80%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-    }
-
-    // ========================================================================
-    // 9. CHAPTER 06: THE CITY IS NOT ONE NUMBER (Spatial nodes & Diurnal trace)
-    // ========================================================================
-    const sec06 = self.selector('#section-06-trends')[0];
-    if (sec06) {
-      const stationNodes = sec06.querySelectorAll('.cinematic-station-node-card');
-      const diurnalBox = sec06.querySelector('.cinematic-diurnal-chart-box');
-      const chartSvg = sec06.querySelector('.doc-chart-svg');
-
-      if (stationNodes && stationNodes.length > 0) {
-        gsap.fromTo(
-          stationNodes,
-          { opacity: 0, y: 35, scale: 0.94 },
-          {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.8,
-            stagger: 0.1,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: sec06.querySelector('.spatial-stations-row') || sec06,
-              start: 'top 82%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-
-      if (diurnalBox && chartSvg) {
-        gsap.fromTo(
-          chartSvg,
-          { opacity: 0, clipPath: 'inset(0 100% 0 0)' },
-          {
-            opacity: 1,
-            clipPath: 'inset(0 0% 0 0)',
-            duration: 1.4,
-            ease: 'power2.inOut',
-            scrollTrigger: {
-              trigger: diurnalBox,
-              start: 'top 80%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-    }
-
-    // ========================================================================
-    // 10. CHAPTER 07: FROM CITY TO SCHOOL (School proximity & IDW dossier)
-    // ========================================================================
-    const sec07 = self.selector('#section-07-why-it-matters')[0];
-    if (sec07) {
-      const schoolCard = sec07.querySelector('.cinematic-school-dossier-card');
-      const schoolPhoto = sec07.querySelector('.school-evidence-img');
-      const traceStations = sec07.querySelectorAll('.trace-station-item');
-      const impactCards = sec07.querySelectorAll('.cinematic-impact-point-card');
-
-      if (schoolCard) {
-        gsap.fromTo(
-          schoolCard,
-          { opacity: 0, y: 40 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.9,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: sec07,
-              start: 'top 78%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-
-      if (schoolPhoto) {
-        gsap.fromTo(
-          schoolPhoto,
-          { scale: 1.08 },
+          imgEl,
+          { scale: 1.08, xPercent: -2 },
           {
             scale: 1.0,
-            duration: 1.1,
-            ease: 'power2.out',
+            xPercent: 2,
+            ease: 'none',
             scrollTrigger: {
-              trigger: schoolCard || sec07,
-              start: 'top 78%',
-              toggleActions: 'play none none reverse',
+              trigger: imageSection,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: 1.2,
             },
           }
         );
       }
 
-      if (traceStations && traceStations.length > 0) {
+      if (captionOverlay) {
         gsap.fromTo(
-          traceStations,
-          { opacity: 0, x: 20 },
+          captionOverlay,
+          { opacity: 0, y: 30 },
           {
             opacity: 1,
-            x: 0,
-            duration: 0.6,
-            stagger: 0.08,
-            ease: personality.ease,
+            y: 0,
+            duration: 0.8,
+            ease: 'power2.out',
             scrollTrigger: {
-              trigger: schoolCard || sec07,
-              start: 'top 72%',
-              toggleActions: 'play none none reverse',
+              trigger: captionOverlay,
+              start: 'top 85%',
+              toggleActions: 'play none none none',
             },
           }
         );
       }
+    }
 
-      if (impactCards && impactCards.length > 0) {
+    // =======================================================================
+    // TIER 2: EDITORIAL SECTION REVEALS & AERODYNAMIC SCALE BARS
+    // =======================================================================
+    const sections = containerEl.querySelectorAll('.documentary-section');
+    sections.forEach((section) => {
+      const inner = section.querySelector('.documentary-section-inner') || section;
+      const header = section.querySelector('.documentary-section-header');
+
+      if (header) {
         gsap.fromTo(
-          impactCards,
-          { opacity: 0, y: 30 },
+          header,
+          { opacity: 0, y: 25 },
           {
             opacity: 1,
             y: 0,
             duration: 0.75,
-            stagger: 0.1,
-            ease: personality.ease,
+            ease: 'power2.out',
             scrollTrigger: {
-              trigger: sec07.querySelector('.cinematic-impacts-deck') || sec07,
-              start: 'top 80%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-    }
-
-    // ========================================================================
-    // 11. CHAPTER 08: 14 DAYS OF EVIDENCE (Calendar dossier wave)
-    // ========================================================================
-    const sec08 = self.selector('#section-08-the-takeaway')[0];
-    if (sec08) {
-      const dayFrames = sec08.querySelectorAll('.cinematic-day-frame');
-      const quoteDeck = sec08.querySelector('.cinematic-takeaway-quote-deck');
-
-      if (dayFrames && dayFrames.length > 0) {
-        gsap.fromTo(
-          dayFrames,
-          { opacity: 0, y: 25 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.65,
-            stagger: 0.035,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: sec08.querySelector('.cinematic-14day-grid') || sec08,
+              trigger: section,
               start: 'top 82%',
-              toggleActions: 'play none none reverse',
+              toggleActions: 'play none none none',
             },
           }
         );
       }
 
-      if (quoteDeck) {
+      // Animate cards inside this section with stagger
+      const cards = section.querySelectorAll(
+        '.documentary-source-card, .documentary-flow-card, .documentary-impact-card, .doc-standard-card'
+      );
+      if (cards.length > 0) {
         gsap.fromTo(
-          quoteDeck,
-          { opacity: 0, y: 35 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.9,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: quoteDeck,
-              start: 'top 85%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-    }
-
-    // ========================================================================
-    // 12. CHAPTER 09: FINAL TAKEAWAY (Solemn editorial closing cadence)
-    // ========================================================================
-    const sec09 = self.selector('.cinematic-chapter-takeaway')[0];
-    if (sec09) {
-      const lines = sec09.querySelectorAll('.cinematic-closing-line');
-      const brand = sec09.querySelector('.cinematic-closing-brand');
-
-      if (lines && lines.length > 0) {
-        gsap.fromTo(
-          lines,
-          { opacity: 0, y: 30 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.9,
-            stagger: 0.35,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: sec09,
-              start: 'top 75%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
-
-      if (brand) {
-        gsap.fromTo(
-          brand,
+          cards,
           { opacity: 0, y: 25 },
           {
             opacity: 1,
             y: 0,
-            duration: 1.0,
+            duration: 0.7,
+            stagger: 0.08,
             ease: 'power2.out',
             scrollTrigger: {
-              trigger: brand,
-              start: 'top 85%',
-              toggleActions: 'play none none reverse',
+              trigger: section,
+              start: 'top 78%',
+              toggleActions: 'play none none none',
+            },
+          }
+        );
+      }
+    });
+
+    // Aerodynamic scale comparison bars progressive fill on scroll
+    const scaleRows = containerEl.querySelectorAll('.doc-scale-row');
+    if (scaleRows.length > 0) {
+      scaleRows.forEach((row, idx) => {
+        const fill = row.querySelector('.doc-scale-fill');
+        if (fill) {
+          const targetWidth = fill.style.width || '50%';
+          gsap.fromTo(
+            fill,
+            { width: '0%' },
+            {
+              width: targetWidth,
+              duration: 1.0,
+              delay: idx * 0.1,
+              ease: 'power2.out',
+              scrollTrigger: {
+                trigger: row,
+                start: 'top 88%',
+                toggleActions: 'play none none none',
+              },
+            }
+          );
+        }
+      });
+    }
+
+    // 14-Day Calendar cards staggered entrance
+    const dayFrames = containerEl.querySelectorAll('.cinematic-day-frame');
+    if (dayFrames.length > 0) {
+      gsap.fromTo(
+        dayFrames,
+        { opacity: 0, scale: 0.95 },
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 0.5,
+          stagger: 0.04,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: '.cinematic-14day-grid',
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
+    }
+
+    // Science & Telemetry Section: 24-hr Diurnal Chart path draw
+    const diurnalSvg = containerEl.querySelector('.doc-diurnal-svg');
+    if (diurnalSvg) {
+      const chartPath = diurnalSvg.querySelector('path[fill=\"none\"]');
+      if (chartPath) {
+        const pathLength = 800;
+        gsap.fromTo(
+          chartPath,
+          { strokeDasharray: pathLength, strokeDashoffset: pathLength },
+          {
+            strokeDashoffset: 0,
+            duration: 1.5,
+            ease: 'power2.inOut',
+            scrollTrigger: {
+              trigger: diurnalSvg,
+              start: 'top 82%',
+              toggleActions: 'play none none none',
             },
           }
         );
       }
     }
 
-    // ========================================================================
-    // 13. POLLUTANT FOOTER (Chapter chips cascade)
-    // ========================================================================
-    const footer = self.selector('.cinematic-pollutant-nav-footer')[0];
+    // Footer Credo & Chapter exploration chips reveal
+    const footer = containerEl.querySelector('.documentary-footer');
     if (footer) {
-      const chips = footer.querySelectorAll('.cinematic-chapter-chip');
-      if (chips && chips.length > 0) {
-        gsap.fromTo(
-          chips,
-          { opacity: 0, y: 20 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.6,
-            stagger: 0.06,
-            ease: personality.ease,
-            scrollTrigger: {
-              trigger: footer,
-              start: 'top 85%',
-              toggleActions: 'play none none reverse',
-            },
-          }
-        );
-      }
+      gsap.fromTo(
+        footer.querySelectorAll('.doc-credo-line-1, .doc-credo-line-2, .doc-credo-line-3'),
+        { opacity: 0, y: 15 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.7,
+          stagger: 0.12,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: footer,
+            start: 'top 90%',
+            toggleActions: 'play none none none',
+          },
+        }
+      );
     }
   }, containerEl);
 
-  // Handle bfcache (browser back/forward navigation)
-  const handlePageShow = (event) => {
-    if (event.persisted && typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      if (document.documentElement) document.documentElement.scrollTop = 0;
-      if (document.body) document.body.scrollTop = 0;
-      try {
-        ScrollTrigger.refresh();
-      } catch (err) {}
-    }
-  };
-
-  if (typeof window !== 'undefined') {
-    window.addEventListener('pageshow', handlePageShow);
-  }
-
-  if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
-    window.requestAnimationFrame(() => {
-      try {
-        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-        if (document.documentElement) document.documentElement.scrollTop = 0;
-        if (document.body) document.body.scrollTop = 0;
-        ScrollTrigger.refresh();
-      } catch (err) {
-        // Safe no-op in testing/headless environments
-      }
-    });
-  }
+  // Refresh ScrollTrigger once DOM layout and images are primed
+  const refreshTimer = setTimeout(() => {
+    ScrollTrigger.refresh();
+  }, 120);
 
   return () => {
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('pageshow', handlePageShow);
-    }
+    clearTimeout(refreshTimer);
     ctx.revert();
   };
 }

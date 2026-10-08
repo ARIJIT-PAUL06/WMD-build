@@ -424,10 +424,21 @@
   letter-spacing: 0.02em;
 }
 
-.status-go .ssd-verdict-badge { color: #10b981; }
-.status-modify .ssd-verdict-badge { color: #f59e0b; }
-.status-indoors .ssd-verdict-badge { color: #ef4444; }
-.status-insufficient .ssd-verdict-badge { color: #94a3b8; }
+.status-go .ssd-verdict-badge {
+  color: #10b981;
+}
+
+.status-modify .ssd-verdict-badge {
+  color: #f59e0b;
+}
+
+.status-indoors .ssd-verdict-badge {
+  color: #ef4444;
+}
+
+.status-insufficient .ssd-verdict-badge {
+  color: #94a3b8;
+}
 
 .ssd-verdict-subtext {
   font-size: 0.82rem;
@@ -811,8 +822,13 @@
 }
 
 @keyframes ssd-shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .ssd-error-container {
@@ -963,10 +979,21 @@
   color: var(--text-secondary, #94a3b8);
 }
 
-.text-green { color: #34d399; }
-.text-yellow { color: #fbbf24; }
-.text-cyan { color: #38bdf8; }
-.text-muted { color: #94a3b8; }
+.text-green {
+  color: #34d399;
+}
+
+.text-yellow {
+  color: #fbbf24;
+}
+
+.text-cyan {
+  color: #38bdf8;
+}
+
+.text-muted {
+  color: #94a3b8;
+}
 
 /* 14-Day Timeline Calendar Grid */
 .ssd-timeline-container {
@@ -1102,10 +1129,22 @@
   font-weight: 600;
 }
 
-.quality-high { color: #34d399; }
-.quality-medium { color: #38bdf8; }
-.quality-low { color: #fbbf24; }
-.quality-insufficient, .quality-no-data { color: #64748b; }
+.quality-high {
+  color: #34d399;
+}
+
+.quality-medium {
+  color: #38bdf8;
+}
+
+.quality-low {
+  color: #fbbf24;
+}
+
+.quality-insufficient,
+.quality-no-data {
+  color: #64748b;
+}
 
 /* -------------------------------------------------------------------------- */
 /* Phase 5: Civic Action Section & Card                                       */
@@ -1279,4 +1318,3 @@
   color: var(--text-muted, #64748b);
   max-width: 480px;
 }
-
