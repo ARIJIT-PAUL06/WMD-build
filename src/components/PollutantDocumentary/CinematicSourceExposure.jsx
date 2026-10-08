@@ -11,6 +11,7 @@
 
 import React from 'react';
 import { Compass, Wind, AlertCircle } from 'lucide-react';
+import AnimatedCounter from '../common/AnimatedCounter';
 
 export default function CinematicSourceExposure({
   pollutantData,
@@ -109,7 +110,14 @@ export default function CinematicSourceExposure({
                 <div className="measurement-symbol">{pollutantData.symbol}</div>
                 <div className="measurement-val-row">
                   <span className="measurement-number" style={{ color: cinematicTheme.accent }}>
-                    {currentReading != null ? currentReading : '—'}
+                    {currentReading != null ? (
+                      <AnimatedCounter
+                        value={currentReading}
+                        decimals={String(currentReading).includes('.') ? 1 : 0}
+                      />
+                    ) : (
+                      '—'
+                    )}
                   </span>
                   <span className="measurement-unit">{unit}</span>
                 </div>

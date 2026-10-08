@@ -18,8 +18,10 @@ import {
   ChevronRight,
   ExternalLink,
   Layers,
-  MapPin
+  MapPin,
+  ArrowRight
 } from 'lucide-react';
+import AnimatedCounter from '../common/AnimatedCounter';
 
 export default function AutonomousMonitorModal({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState('status'); // 'status' | 'pillar1' | 'pillar2' | 'pillar3' | 'audit'
@@ -521,20 +523,24 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
                 <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '16px', padding: '16px' }}>
                   <div style={{ fontSize: '0.74rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Coverage Scope</div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#ffffff', margin: '6px 0 2px 0' }}>453</div>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#ffffff', margin: '6px 0 2px 0' }}>
+                    <AnimatedCounter value={453} />
+                  </div>
                   <div style={{ fontSize: '0.72rem', color: '#38bdf8' }}>200 Schools + 253 Hospitals</div>
                 </div>
 
                 <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '16px', padding: '16px' }}>
                   <div style={{ fontSize: '0.74rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Spatial Grids</div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#34d399', margin: '6px 0 2px 0' }}>60 Blocks</div>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#34d399', margin: '6px 0 2px 0' }}>
+                    <AnimatedCounter value={60} suffix=" Blocks" />
+                  </div>
                   <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>5km × 5km Continuous Grids</div>
                 </div>
 
                 <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '16px', padding: '16px' }}>
                   <div style={{ fontSize: '0.74rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Autonomous Cycles</div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fbbf24', margin: '6px 0 2px 0' }}>
-                    {daemonStatus?.state?.totalCyclesExecuted || 1}
+                    <AnimatedCounter value={daemonStatus?.state?.totalCyclesExecuted || 1} />
                   </div>
                   <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Runs every 30 mins</div>
                 </div>
@@ -542,9 +548,88 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
                 <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '16px', padding: '16px' }}>
                   <div style={{ fontSize: '0.74rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Dispatched Alerts</div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#f87171', margin: '6px 0 2px 0' }}>
-                    {(daemonStatus?.state?.totalEmergenciesDispatched || 0) + (daemonStatus?.state?.totalPredictiveAdvisoriesDispatched || 0)}
+                    <AnimatedCounter value={(daemonStatus?.state?.totalEmergenciesDispatched || 0) + (daemonStatus?.state?.totalPredictiveAdvisoriesDispatched || 0)} />
                   </div>
                   <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Verified Amazon SES Sandbox</div>
+                </div>
+              </div>
+
+              {/* VISUAL 3-PILLAR PROTECTIVE ARCHITECTURE */}
+              <div
+                style={{
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '16px',
+                  padding: '18px 20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    AUTONOMOUS 3-PILLAR PROTECTIVE ARCHITECTURE
+                  </span>
+                  <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Click any pillar to run testbench simulation</span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                  <div
+                    onClick={() => setActiveTab('pillar1')}
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      border: '1px solid rgba(56, 189, 248, 0.2)',
+                      borderRadius: '12px',
+                      padding: '14px',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease, border-color 0.2s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#38bdf8' }}>PILLAR 1</span>
+                      <span style={{ fontSize: '0.62rem', color: '#94a3b8', background: 'rgba(255, 255, 255, 0.06)', padding: '2px 6px', borderRadius: '4px' }}>07:00 IST</span>
+                    </div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#ffffff' }}>Predictive Morning Advisory</div>
+                    <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '4px' }}>Simulates school day exposure and suggests PE scheduling changes before campus bells.</div>
+                  </div>
+
+                  <div
+                    onClick={() => setActiveTab('pillar2')}
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      border: '1px solid rgba(248, 113, 113, 0.2)',
+                      borderRadius: '12px',
+                      padding: '14px',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease, border-color 0.2s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#f87171' }}>PILLAR 2</span>
+                      <span style={{ fontSize: '0.62rem', color: '#94a3b8', background: 'rgba(255, 255, 255, 0.06)', padding: '2px 6px', borderRadius: '4px' }}>Real-Time 30m</span>
+                    </div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#ffffff' }}>Block Surge Emergency</div>
+                    <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '4px' }}>Detects sudden inversion traps and dispatches immediate outdoor sports ground halts.</div>
+                  </div>
+
+                  <div
+                    onClick={() => setActiveTab('pillar3')}
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      border: '1px solid rgba(52, 211, 153, 0.2)',
+                      borderRadius: '12px',
+                      padding: '14px',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease, border-color 0.2s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#34d399' }}>PILLAR 3</span>
+                      <span style={{ fontSize: '0.62rem', color: '#94a3b8', background: 'rgba(255, 255, 255, 0.06)', padding: '2px 6px', borderRadius: '4px' }}>14-Day Cycle</span>
+                    </div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#ffffff' }}>Chronic Evidence Petition</div>
+                    <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '4px' }}>Aggregates 14 consecutive unmonitored/severe days and triggers DPCC grievance petitions.</div>
+                  </div>
                 </div>
               </div>
 

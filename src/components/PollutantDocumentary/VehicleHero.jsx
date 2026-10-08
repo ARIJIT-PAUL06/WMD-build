@@ -23,9 +23,9 @@ export default function VehicleHero({
   const env = environmentData || vehicleProfile || {};
   const symbol = pollutantData.symbol || 'PM2.5';
   // Split symbol for oversized typographic treatment (e.g., "PM" & "2.5")
-  const symbolParts = symbol.includes('.') 
+  const symbolParts = symbol.includes('.')
     ? [symbol.split('.')[0], `.${symbol.split('.')[1]}`]
-    : symbol.length > 2 
+    : symbol.length > 2
       ? [symbol.slice(0, 2), symbol.slice(2)]
       : [symbol, ''];
 

@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { POLLUTANTS_DATA } from '../../data/pollutantsDetailData';
 import LungsCanvas from '../ThreeScene/LungsCanvas';
+import AnimatedCounter from '../common/AnimatedCounter';
+import PhysiologicalImpactMatrix from '../common/PhysiologicalImpactMatrix';
 import './PollutantDetailPage.css';
 
 export default function PollutantDetailPage({ pollutantId = 'pm25', onBack, onSelectPollutant }) {
@@ -170,7 +172,9 @@ export default function PollutantDetailPage({ pollutantId = 'pm25', onBack, onSe
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', marginBottom: '4px' }}>
                   <span style={{ color: '#cbd5e1' }}>Delhi Winter Peak:</span>
-                  <strong style={{ color: '#ef4444' }}>{data.delhiPeakSmog} {data.unit}</strong>
+                  <strong style={{ color: '#ef4444' }}>
+                    <AnimatedCounter value={data.delhiPeakSmog} /> {data.unit}
+                  </strong>
                 </div>
                 <div style={{ height: '7px', background: 'rgba(255, 255, 255, 0.08)', borderRadius: '4px', overflow: 'hidden' }}>
                   <div style={{ width: '100%', height: '100%', background: 'linear-gradient(90deg, #f97316, #ef4444)' }} />
@@ -180,7 +184,9 @@ export default function PollutantDetailPage({ pollutantId = 'pm25', onBack, onSe
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', marginBottom: '4px' }}>
                   <span style={{ color: '#cbd5e1' }}>India NAAQS Limit:</span>
-                  <strong style={{ color: '#fbbf24' }}>{data.naaqs24h} {data.unit}</strong>
+                  <strong style={{ color: '#fbbf24' }}>
+                    <AnimatedCounter value={data.naaqs24h} /> {data.unit}
+                  </strong>
                 </div>
                 <div style={{ height: '7px', background: 'rgba(255, 255, 255, 0.08)', borderRadius: '4px', overflow: 'hidden' }}>
                   <div style={{ width: `${Math.min(100, (data.naaqs24h / data.delhiPeakSmog) * 100)}%`, height: '100%', background: '#fbbf24' }} />
@@ -190,7 +196,9 @@ export default function PollutantDetailPage({ pollutantId = 'pm25', onBack, onSe
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', marginBottom: '4px' }}>
                   <span style={{ color: '#cbd5e1' }}>WHO Safe Guideline:</span>
-                  <strong style={{ color: '#10b981' }}>{data.whoGuideline} {data.unit}</strong>
+                  <strong style={{ color: '#10b981' }}>
+                    <AnimatedCounter value={data.whoGuideline} /> {data.unit}
+                  </strong>
                 </div>
                 <div style={{ height: '7px', background: 'rgba(255, 255, 255, 0.08)', borderRadius: '4px', overflow: 'hidden' }}>
                   <div style={{ width: `${Math.min(100, (data.whoGuideline / data.delhiPeakSmog) * 100)}%`, height: '100%', background: '#10b981' }} />
@@ -204,7 +212,9 @@ export default function PollutantDetailPage({ pollutantId = 'pm25', onBack, onSe
             <div className="pollutant-metric-box">
               <div className="pollutant-metric-label">Indian Standard (24H)</div>
               <div className="pollutant-metric-value-row">
-                <span className="pollutant-metric-val" style={{ color: '#fbbf24' }}>{data.naaqs24h}</span>
+                <span className="pollutant-metric-val" style={{ color: '#fbbf24' }}>
+                  <AnimatedCounter value={data.naaqs24h} />
+                </span>
                 <span className="pollutant-metric-unit">{data.unit}</span>
               </div>
               <div className="pollutant-metric-note">National Ambient Air Quality Standard</div>
@@ -213,7 +223,9 @@ export default function PollutantDetailPage({ pollutantId = 'pm25', onBack, onSe
             <div className="pollutant-metric-box">
               <div className="pollutant-metric-label">WHO Safe Threshold</div>
               <div className="pollutant-metric-value-row">
-                <span className="pollutant-metric-val" style={{ color: '#10b981' }}>{data.whoGuideline}</span>
+                <span className="pollutant-metric-val" style={{ color: '#10b981' }}>
+                  <AnimatedCounter value={data.whoGuideline} />
+                </span>
                 <span className="pollutant-metric-unit">{data.unit}</span>
               </div>
               <div className="pollutant-metric-note">Global Health Organization limit</div>
@@ -222,7 +234,9 @@ export default function PollutantDetailPage({ pollutantId = 'pm25', onBack, onSe
             <div className="pollutant-metric-box">
               <div className="pollutant-metric-label">Delhi Winter Smog Peak</div>
               <div className="pollutant-metric-value-row">
-                <span className="pollutant-metric-val" style={{ color: '#ef4444' }}>{data.delhiPeakSmog}</span>
+                <span className="pollutant-metric-val" style={{ color: '#ef4444' }}>
+                  <AnimatedCounter value={data.delhiPeakSmog} />
+                </span>
                 <span className="pollutant-metric-unit">{data.unit}</span>
               </div>
               <div className="pollutant-metric-note">Over {Math.round(data.delhiPeakSmog / data.whoGuideline)}x above WHO safe limit</div>
@@ -302,6 +316,17 @@ export default function PollutantDetailPage({ pollutantId = 'pm25', onBack, onSe
               </div>
             </div>
           </div>
+        </section>
+
+        {/* ============================================================== */}
+        {/* 3B. PHYSIOLOGICAL VULNERABILITY & DEMOGRAPHIC SENSITIVITY MATRIX */}
+        {/* ============================================================== */}
+        <section style={{ margin: '14px 0 28px' }}>
+          <PhysiologicalImpactMatrix
+            pollutantId={data.id}
+            pollutantName={data.name}
+            accentColor={theme.primary}
+          />
         </section>
 
         {/* ============================================================== */}

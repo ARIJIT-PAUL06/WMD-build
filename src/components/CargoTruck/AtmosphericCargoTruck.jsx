@@ -4,9 +4,12 @@ import {
   AlertTriangle,
   Activity,
   Radio,
-  Wind
+  Wind,
+  ChevronRight,
+  Info
 } from 'lucide-react';
 import useInView from '../../hooks/useInView';
+import AnimatedCounter from '../common/AnimatedCounter';
 import './AtmosphericCargoTruck.css';
 
 // Master Indian Pollutants Specification (NAAQS Benchmark Standards)
@@ -432,7 +435,7 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
                 {POLLUTANT_SPECS.map(p => {
                   const val = pollutantValues[p.id] || 0;
                   const ratio = val / p.naaqsLimit;
-                  
+
                   // RELATIVE NORMALIZED HEIGHT SCALING SYSTEM:
                   // The highest pollutant bar in the active payload defines the ceiling (capped safely at 35% viewport height).
                   // Minimum crate height is 12.5% (94px) so labels & numbers always remain clearly legible.
@@ -588,7 +591,9 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
               <span>Gross Payload Mass</span>
             </div>
             <div className="telemetry-value-row">
-              <span className="telemetry-big-number">{payloadStats.grossTons}</span>
+              <span className="telemetry-big-number">
+                <AnimatedCounter value={parseFloat(payloadStats.grossTons) || 0} decimals={1} />
+              </span>
               <span className="telemetry-unit">Tons</span>
             </div>
           </div>
@@ -599,7 +604,9 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
               <span>Trailer Load</span>
             </div>
             <div className="telemetry-value-row">
-              <span className="telemetry-big-number">{payloadStats.suspensionLoad}%</span>
+              <span className="telemetry-big-number">
+                <AnimatedCounter value={payloadStats.suspensionLoad} decimals={0} suffix="%" />
+              </span>
             </div>
             <div className="telemetry-gauge-bar">
               <div
@@ -624,6 +631,79 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
               <span className="telemetry-unit" style={{ fontSize: '0.82rem', color: '#94a3b8' }}>
                 {payloadStats.hazardTier}
               </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Active Chemical Inspection & Airshed Exposure Deck */}
+        <div className="cargo-active-inspector-card" style={{ marginTop: '2rem' }}>
+          <div className="inspector-card-header">
+            <div className="inspector-badge-group">
+              <span className="inspector-dot" style={{ background: activePollutant.accentColor }} />
+              <span className="inspector-code" style={{ color: activePollutant.accentColor }}>
+                {activePollutant.symbol}
+              </span>
+              <span className="inspector-fullname">{activePollutant.name}</span>
+            </div>
+            <button
+              type="button"
+              className="inspector-launch-btn"
+              onClick={handleTruckClick}
+              aria-label={`Open full ${activePollutant.symbol} documentary`}
+            >
+              <span>Explore {activePollutant.symbol} Documentary</span>
+              <ChevronRight size={14} />
+            </button>
+          </div>
+
+          <div className="inspector-card-body">
+            {/* Visual Concentration vs NAAQS Gauge */}
+            <div className="inspector-metric-block">
+              <span className="inspector-metric-lbl">SELECTED CRATE CONCENTRATION</span>
+              <div className="inspector-val-row">
+                <span className="inspector-big-val">
+                  <AnimatedCounter
+                    value={pollutantValues[activePollutant.id] || 0}
+                    decimals={activePollutant.id === 'co' ? 1 : 0}
+                  />
+                </span>
+                <span className="inspector-unit">{activePollutant.unit}</span>
+              </div>
+              <div className="inspector-progress-track">
+                <div
+                  className="inspector-progress-fill"
+                  style={{
+                    width: `${Math.min(100, Math.round(((pollutantValues[activePollutant.id] || 0) / activePollutant.naaqsLimit) * 100))}%`,
+                    background: activePollutant.accentColor,
+                    boxShadow: `0 0 10px ${activePollutant.contGlow}`,
+                  }}
+                />
+              </div>
+              <span className="inspector-statutory-note">
+                CPCB NAAQS Benchmark: <strong>{activePollutant.naaqsLimit} {activePollutant.unit}</strong>
+              </span>
+            </div>
+
+            {/* Physiological Target Systems */}
+            <div className="inspector-pathology-block">
+              <span className="inspector-metric-lbl">TARGET PHYSIOLOGICAL SYSTEMS</span>
+              <div className="inspector-organ-chips">
+                <span className="inspector-chip">
+                  <span>🫁 Pulmonary Mucosa</span>
+                  <strong className="chip-alert">High</strong>
+                </span>
+                <span className="inspector-chip">
+                  <span>❤️ Vascular System</span>
+                  <strong className="chip-alert">Elevated</strong>
+                </span>
+                <span className="inspector-chip">
+                  <span>👶 Pediatric Sensitive</span>
+                  <strong className="chip-alert">2.5x</strong>
+                </span>
+              </div>
+              <p className="inspector-source-line">
+                <strong>Primary Airshed Vector:</strong> {activePollutant.source.split('.')[0] + '.'}
+              </p>
             </div>
           </div>
         </div>
