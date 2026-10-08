@@ -5,7 +5,6 @@ dotenv.config();
 const region = process.env.AWS_REGION || 'ap-south-1';
 const accessKey = process.env.APP_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
 const secretKey = process.env.APP_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
-const hasAwsCredentials = Boolean(accessKey && secretKey);
 
 // In-memory fallback database for local hackathon demo when AWS credentials are not yet configured
 const localHistoryStore = new Map();
@@ -18,28 +17,27 @@ async function initAwsClientsIfNeeded() {
   if (isAwsInitialized) return;
   isAwsInitialized = true;
 
-  if (hasAwsCredentials) {
-    try {
-      const { DynamoDBClient } = await import('@aws-sdk/client-dynamodb');
-      const { DynamoDBDocumentClient } = await import('@aws-sdk/lib-dynamodb');
-      const { BedrockRuntimeClient } = await import('@aws-sdk/client-bedrock-runtime');
+  try {
+    const { DynamoDBClient } = await import('@aws-sdk/client-dynamodb');
+    const { DynamoDBDocumentClient } = await import('@aws-sdk/lib-dynamodb');
+    const { BedrockRuntimeClient } = await import('@aws-sdk/client-bedrock-runtime');
 
+    const clientConfig = { region };
+    if (accessKey && secretKey) {
       const ddbSessionToken = accessKey?.startsWith('ASIA') ? process.env.AWS_SESSION_TOKEN : undefined;
-      const awsCreds = {
+      clientConfig.credentials = {
         accessKeyId: accessKey,
         secretAccessKey: secretKey,
         ...(ddbSessionToken ? { sessionToken: ddbSessionToken } : {})
       };
-
-      const ddbClient = new DynamoDBClient({ region, credentials: awsCreds });
-      ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
-      bedrockClient = new BedrockRuntimeClient({ region, credentials: awsCreds });
-      console.log(`[AWS Services] Initialized with live AWS credentials in region: ${region}`);
-    } catch (err) {
-      console.warn(`[AWS Services] Error initializing AWS SDK, falling back to local simulation:`, err.message);
     }
-  } else {
-    console.log(`[AWS Services] Running in local simulation mode (No AWS_ACCESS_KEY_ID provided). Live fallback active.`);
+
+    const ddbClient = new DynamoDBClient(clientConfig);
+    ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
+    bedrockClient = new BedrockRuntimeClient(clientConfig);
+    console.log(`[AWS Services] AWS SDK clients initialized in region: ${region}`);
+  } catch (err) {
+    console.warn(`[AWS Services] Error initializing AWS SDK:`, err.message);
   }
 }
 
@@ -81,7 +79,7 @@ export async function saveReadingToDynamoDB(reading) {
     cityHistory.shift();
   }
 
-  if (hasAwsCredentials && ddbDocClient) {
+  if (ddbDocClient) {
     try {
       const { PutCommand } = await import('@aws-sdk/lib-dynamodb');
       await ddbDocClient.send(new PutCommand({
@@ -124,7 +122,7 @@ export async function getHistoricalReadings(city, limit = 24) {
   const startTime = Date.now();
   const tableName = process.env.DYNAMODB_TABLE_NAME || 'AirQualityReadings';
 
-  if (hasAwsCredentials && ddbDocClient) {
+  if (ddbDocClient) {
     try {
       const { QueryCommand } = await import('@aws-sdk/lib-dynamodb');
       const result = await ddbDocClient.send(new QueryCommand({
@@ -196,7 +194,7 @@ Include:
 2. One specific actionable recommendation for school commutes, outdoor activities, or air filtration.
 Format: Return ONLY the explanation and recommendation. No preamble or meta commentary.`;
 
-  if (hasAwsCredentials && bedrockClient) {
+  if (bedrockClient) {
     try {
       const { InvokeModelCommand } = await import('@aws-sdk/client-bedrock-runtime');
       let requestBody;
@@ -297,7 +295,7 @@ export function getClinicalHealthGuidelines(metrics) {
 export async function getMonitorStateFromDynamoDB() {
   await initAwsClientsIfNeeded();
   const tableName = process.env.DYNAMODB_TABLE_NAME || 'AirQualityReadings';
-  if (hasAwsCredentials && ddbDocClient) {
+  if (ddbDocClient) {
     try {
       const { GetCommand } = await import('@aws-sdk/lib-dynamodb');
       const res = await ddbDocClient.send(new GetCommand({
@@ -320,7 +318,7 @@ export async function getMonitorStateFromDynamoDB() {
 export async function saveMonitorStateToDynamoDB(state) {
   await initAwsClientsIfNeeded();
   const tableName = process.env.DYNAMODB_TABLE_NAME || 'AirQualityReadings';
-  if (hasAwsCredentials && ddbDocClient) {
+  if (ddbDocClient) {
     try {
       const { PutCommand } = await import('@aws-sdk/lib-dynamodb');
       await ddbDocClient.send(new PutCommand({
@@ -346,7 +344,7 @@ export async function saveMonitorStateToDynamoDB(state) {
 export async function getGridBufferFromDynamoDB(gridId) {
   await initAwsClientsIfNeeded();
   const tableName = process.env.DYNAMODB_TABLE_NAME || 'AirQualityReadings';
-  if (hasAwsCredentials && ddbDocClient) {
+  if (ddbDocClient) {
     try {
       const { GetCommand } = await import('@aws-sdk/lib-dynamodb');
       const res = await ddbDocClient.send(new GetCommand({
@@ -369,7 +367,7 @@ export async function getGridBufferFromDynamoDB(gridId) {
 export async function saveGridBufferToDynamoDB(gridId, gridData) {
   await initAwsClientsIfNeeded();
   const tableName = process.env.DYNAMODB_TABLE_NAME || 'AirQualityReadings';
-  if (hasAwsCredentials && ddbDocClient) {
+  if (ddbDocClient) {
     try {
       const { PutCommand } = await import('@aws-sdk/lib-dynamodb');
       await ddbDocClient.send(new PutCommand({

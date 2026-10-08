@@ -9,36 +9,26 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const region = process.env.AWS_SES_REGION || 'us-east-1';
+const region = process.env.AWS_SES_REGION || process.env.AWS_REGION || 'us-east-1';
 const accessKeyId = process.env.APP_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
 const secretAccessKey = process.env.APP_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
-const defaultSender = process.env.SES_SENDER_EMAIL || 'vayuvitals@gmail.com';
+const defaultSender = process.env.SES_SENDER_EMAIL || process.env.AWS_SES_VERIFIED_SENDER || 'vayuvitals@gmail.com';
 
-let sesClient = null;
-
-const sessionToken = accessKeyId?.startsWith('ASIA') ? process.env.AWS_SESSION_TOKEN : undefined;
-
+const clientConfig = { region };
 if (accessKeyId && secretAccessKey) {
-  try {
-    sesClient = new SESClient({
-      region,
-      credentials: {
-        accessKeyId,
-        secretAccessKey,
-        ...(sessionToken ? { sessionToken } : {})
-      }
-    });
-  } catch (err) {
-    console.warn('[SES Service] Could not initialize SESClient:', err.message);
-  }
+  const sessionToken = accessKeyId?.startsWith('ASIA') ? process.env.AWS_SESSION_TOKEN : undefined;
+  clientConfig.credentials = {
+    accessKeyId,
+    secretAccessKey,
+    ...(sessionToken ? { sessionToken } : {})
+  };
 }
 
-if (!sesClient) {
-  try {
-    sesClient = new SESClient({ region });
-  } catch (err) {
-    console.warn('[SES Service] Could not initialize default SESClient:', err.message);
-  }
+let sesClient = null;
+try {
+  sesClient = new SESClient(clientConfig);
+} catch (err) {
+  console.warn('[SES Service] Could not initialize SESClient:', err.message);
 }
 
 // Rate limiting & quota safety guards
@@ -138,7 +128,7 @@ export async function sendEmailViaSES({
     if (err.name === 'MessageRejected') {
       diagnosticHint = `Email rejected by Amazon SES. Ensure the sender address '${fromEmail}' is verified in AWS SES Console (or account is moved out of sandbox).`;
     } else if (err.message?.includes('not authorized') || err.name === 'AccessDeniedException') {
-      diagnosticHint = `IAM permission 'ses:SendEmail' is missing for user 'Arijit_Paul'. Attach 'AmazonSESFullAccess' policy in the AWS IAM Console.`;
+      diagnosticHint = "IAM permission 'ses:SendEmail' is missing. Ensure the execution role or IAM user has SES send permissions attached.";
     }
 
     return {

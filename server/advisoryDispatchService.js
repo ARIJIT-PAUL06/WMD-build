@@ -86,7 +86,8 @@ export const FACILITY_TEST_MAPPINGS = {
  * Resolves the live recipient email for any facility
  */
 export function resolveRecipientForFacility(facilityId, overrideEmail = null) {
-  if (overrideEmail && overrideEmail !== 'tester@wmd-civic.in' && overrideEmail !== 'vayuvitals@gmail.com') {
+  // Disallow arbitrary recipient overrides in production to prevent open relay
+  if (process.env.NODE_ENV !== 'production' && overrideEmail && overrideEmail.endsWith('@wmd-civic.in')) {
     return overrideEmail;
   }
   if (FACILITY_TEST_MAPPINGS[facilityId]) {

@@ -28,20 +28,20 @@ const smSecretKey = process.env.APP_AWS_SECRET_ACCESS_KEY || process.env.AWS_SEC
 
 const smSessionToken = smAccessKey?.startsWith('ASIA') ? process.env.AWS_SESSION_TOKEN : undefined;
 
-let sagemakerClient = null;
+const clientConfig = { region: sagemakerRegion };
 if (smAccessKey && smSecretKey) {
-  try {
-    sagemakerClient = new SageMakerRuntimeClient({
-      region: sagemakerRegion,
-      credentials: {
-        accessKeyId: smAccessKey,
-        secretAccessKey: smSecretKey,
-        ...(smSessionToken ? { sessionToken: smSessionToken } : {})
-      }
-    });
-  } catch (err) {
-    console.warn('[SageMakerService] Failed initializing SageMakerRuntimeClient:', err.message);
-  }
+  clientConfig.credentials = {
+    accessKeyId: smAccessKey,
+    secretAccessKey: smSecretKey,
+    ...(smSessionToken ? { sessionToken: smSessionToken } : {})
+  };
+}
+
+let sagemakerClient = null;
+try {
+  sagemakerClient = new SageMakerRuntimeClient(clientConfig);
+} catch (err) {
+  console.warn('[SageMakerService] Failed initializing SageMakerRuntimeClient:', err.message);
 }
 
 function resolveDataPath(relPath) {

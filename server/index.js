@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
@@ -27,7 +28,7 @@ import {
   craftAndDispatchMidDayEmergency,
   FACILITY_TEST_MAPPINGS
 } from './advisoryDispatchService.js';
-import { getSesHealth, sendEmailViaSES, triggerEmailVerification } from './sesService.js';
+import { getSesHealth, sendEmailViaSES } from './sesService.js';
 import { analyzeChemicalFingerprint, fetchLiveSourceAttribution } from './sourceAttributionService.js';
 import { syncAllPopulatedGrids, fetchLiveTelemetryForGrid, get14DayCompliance, findGridForCoordinates } from './gridTelemetryService.js';
 import {
@@ -44,6 +45,43 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Trust reverse proxy (API Gateway, CloudFront, Vercel)
+app.set('trust proxy', 1);
+
+// General rate limiter across all public APIs (150 requests / minute / IP)
+const generalApiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 150,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many requests. Please slow down.' }
+});
+
+// Stricter rate limiter for compute & LLM operations (venue-safe: 60 requests / 15 minutes / IP)
+const computeLlmLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'AI/Compute rate limit reached for this session. Please wait before retrying.' }
+});
+
+// Admin authorization gate for sensitive mutations, monitoring, and dispatch routes
+const requireAdminKey = (req, res, next) => {
+  const adminKey = process.env.ADMIN_API_KEY || process.env.ADMIN_SECRET_KEY;
+  if (!adminKey) {
+    if (process.env.NODE_ENV !== 'production') {
+      return next();
+    }
+    return res.status(500).json({ success: false, error: 'ADMIN_API_KEY is not configured on the server.' });
+  }
+  const clientKey = req.headers['x-admin-key'] || req.headers['x-api-key'] || req.query.adminKey;
+  if (!clientKey || clientKey !== adminKey) {
+    return res.status(401).json({ success: false, error: 'Unauthorized: Valid x-admin-key required for administrative operations.' });
+  }
+  next();
+};
 
 const allowedOrigins = [
   'http://localhost:3000',
@@ -74,6 +112,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+app.use('/api/', generalApiLimiter);
 
 // Logger middleware
 app.use((req, res, next) => {
@@ -115,7 +154,6 @@ app.get('/api/health', (req, res) => {
 app.get('/api/aws-status', async (req, res) => {
   const accessKey = process.env.APP_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
   const secretKey = process.env.APP_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
-  const hasCreds = Boolean(accessKey && secretKey);
   const region = process.env.AWS_REGION || 'ap-south-1';
   const dynamoDbTable = process.env.DYNAMODB_TABLE_NAME || 'AirQualityReadings';
   const sagemakerEndpoint = process.env.SAGEMAKER_ENDPOINT_NAME || 'wmd-delhi-48h-forecast-endpoint';
@@ -123,38 +161,41 @@ app.get('/api/aws-status', async (req, res) => {
 
   let dynamoStatus = 'NOT_CHECKED';
   let sagemakerStatus = 'OFFLINE_NO_ENDPOINT';
-  let bedrockStatus = 'UNAUTHORIZED_OR_NOT_CONFIGURED';
+  let bedrockStatus = 'CONFIGURED';
 
-  if (hasCreds) {
+  const clientConfig = { region };
+  if (accessKey && secretKey) {
     const sessionToken = accessKey?.startsWith('ASIA') ? process.env.AWS_SESSION_TOKEN : undefined;
-    const credentials = {
+    clientConfig.credentials = {
       accessKeyId: accessKey,
       secretAccessKey: secretKey,
       ...(sessionToken ? { sessionToken } : {})
     };
-
-    try {
-      const { DynamoDBClient, DescribeTableCommand } = await import('@aws-sdk/client-dynamodb');
-      const ddbClient = new DynamoDBClient({ region, credentials });
-      const tableDesc = await ddbClient.send(new DescribeTableCommand({ TableName: dynamoDbTable }));
-      dynamoStatus = tableDesc?.Table?.TableStatus === 'ACTIVE' ? 'ONLINE_ACTIVE' : tableDesc?.Table?.TableStatus || 'UNKNOWN';
-    } catch (e) {
-      dynamoStatus = `ERROR: ${e.message}`;
-    }
-
-    try {
-      const { SageMakerClient, DescribeEndpointCommand } = await import('@aws-sdk/client-sagemaker');
-      const smClient = new SageMakerClient({ region, credentials });
-      const epDesc = await smClient.send(new DescribeEndpointCommand({ EndpointName: sagemakerEndpoint }));
-      sagemakerStatus = epDesc?.EndpointStatus || 'UNKNOWN';
-    } catch (e) {
-      sagemakerStatus = `NOT_DEPLOYED (${e.name || e.message})`;
-    }
   }
+
+  try {
+    const { DynamoDBClient, DescribeTableCommand } = await import('@aws-sdk/client-dynamodb');
+    const ddbClient = new DynamoDBClient(clientConfig);
+    const tableDesc = await ddbClient.send(new DescribeTableCommand({ TableName: dynamoDbTable }));
+    dynamoStatus = tableDesc?.Table?.TableStatus === 'ACTIVE' ? 'ONLINE_ACTIVE' : tableDesc?.Table?.TableStatus || 'UNKNOWN';
+  } catch (e) {
+    dynamoStatus = `ERROR: ${e.message}`;
+  }
+
+  try {
+    const { SageMakerClient, DescribeEndpointCommand } = await import('@aws-sdk/client-sagemaker');
+    const smClient = new SageMakerClient(clientConfig);
+    const epDesc = await smClient.send(new DescribeEndpointCommand({ EndpointName: sagemakerEndpoint }));
+    sagemakerStatus = epDesc?.EndpointStatus || 'UNKNOWN';
+  } catch (e) {
+    sagemakerStatus = `NOT_DEPLOYED (${e.name || e.message})`;
+  }
+
+  const isAwsOnline = dynamoStatus.includes('ACTIVE') || sagemakerStatus.includes('InService');
 
   res.json({
     status: 'ONLINE',
-    awsConnected: hasCreds,
+    awsConnected: isAwsOnline || Boolean(accessKey && secretKey),
     region,
     dynamoDb: {
       tableName: dynamoDbTable,
@@ -228,7 +269,7 @@ app.get('/api/region-heatmap', async (req, res) => {
  * Main Air Quality Endpoint:
  * Simulates: Sensor/OpenMeteo -> API Gateway -> Lambda -> DynamoDB -> Bedrock -> Response
  */
-app.get('/api/air-quality', async (req, res) => {
+app.get('/api/air-quality', computeLlmLimiter, async (req, res) => {
   try {
     const city = req.query.city || 'Delhi (DTU / Bawana)';
     const simulateAqi = req.query.simulateAqi !== undefined ? Number(req.query.simulateAqi) : null;
@@ -295,7 +336,7 @@ app.get('/api/history', async (req, res) => {
 /**
  * Token-Optimized Google Gemini AI Health & Commute Advisory
  */
-app.post('/api/gemini-advisory', async (req, res) => {
+app.post('/api/gemini-advisory', computeLlmLimiter, async (req, res) => {
   try {
     const metrics = req.body;
     if (!metrics || metrics.aqi === undefined) {
@@ -312,7 +353,7 @@ app.post('/api/gemini-advisory', async (req, res) => {
 /**
  * Standalone Amazon Bedrock Advisory Generator
  */
-app.post('/api/bedrock-advisory', async (req, res) => {
+app.post('/api/bedrock-advisory', computeLlmLimiter, async (req, res) => {
   try {
     const metrics = req.body;
     if (!metrics || !metrics.city) {
@@ -332,7 +373,7 @@ app.post('/api/bedrock-advisory', async (req, res) => {
  * Simulates physical air-quality sensors pushing via MQTT/IoT Core:
  * Sensor -> IoT Core -> Lambda -> DynamoDB
  */
-app.post('/api/sensor-ingest', async (req, res) => {
+app.post('/api/sensor-ingest', requireAdminKey, async (req, res) => {
   try {
     const { deviceId, city, aqi, pm25, pm10, temp, humidity } = req.body;
 
@@ -714,14 +755,23 @@ Strict Guardrails (DO NOT VIOLATE):
 3. Maintain the recipient address, subject, specific demands, and sender closing intact.
 4. Output ONLY the polished letter text. No meta-commentary, no conversational filler, no markdown wrappers like \`\`\`.`;
 
-    // Try Bedrock first if AWS credentials present
-    const hasAws = Boolean(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
-    if (hasAws) {
-      try {
-        const { BedrockRuntimeClient, InvokeModelCommand } = await import('@aws-sdk/client-bedrock-runtime');
-        const region = process.env.AWS_REGION || 'ap-south-1';
-        const client = new BedrockRuntimeClient({ region });
-        const modelId = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-haiku-20240307-v1:0';
+    // Try Bedrock first
+    try {
+      const { BedrockRuntimeClient, InvokeModelCommand } = await import('@aws-sdk/client-bedrock-runtime');
+      const region = process.env.AWS_REGION || 'ap-south-1';
+      const accessKey = process.env.APP_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
+      const secretKey = process.env.APP_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+      const clientConfig = { region };
+      if (accessKey && secretKey) {
+        const sessionToken = accessKey?.startsWith('ASIA') ? process.env.AWS_SESSION_TOKEN : undefined;
+        clientConfig.credentials = {
+          accessKeyId: accessKey,
+          secretAccessKey: secretKey,
+          ...(sessionToken ? { sessionToken } : {})
+        };
+      }
+      const client = new BedrockRuntimeClient(clientConfig);
+      const modelId = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-haiku-20240307-v1:0';
 
         const requestBody = JSON.stringify({
           anthropic_version: 'bedrock-2023-05-31',
@@ -766,7 +816,6 @@ Strict Guardrails (DO NOT VIOLATE):
       } catch (bedrockErr) {
         console.warn('[Bedrock polish-draft failed, trying Gemini]:', bedrockErr.message);
       }
-    }
 
     // Try Gemini if GEMINI_API_KEY present
     const geminiKey = process.env.GEMINI_API_KEY;
@@ -943,7 +992,7 @@ app.get('/api/source-attribution', async (req, res) => {
 /**
  * Synchronize 14-Day Empirical Multi-Gas Telemetry across Delhi-NCR Grids from Open-Meteo
  */
-app.post('/api/telemetry/sync-grids', async (req, res) => {
+app.post('/api/telemetry/sync-grids', requireAdminKey, async (req, res) => {
   try {
     const daysPast = parseInt(req.body?.daysPast, 10) || 14;
     const synced = await syncAllPopulatedGrids(daysPast);
@@ -1017,7 +1066,7 @@ app.get('/api/monitor/status', (req, res) => {
   }
 });
 
-app.post('/api/monitor/run-cycle', async (req, res) => {
+app.post('/api/monitor/run-cycle', requireAdminKey, async (req, res) => {
   try {
     const { dispatchViaSes = true, isSandbox = true } = req.body || {};
     const report = await runAutonomousMonitoringCycle({ dispatchViaSes, isSandbox });
@@ -1027,7 +1076,7 @@ app.post('/api/monitor/run-cycle', async (req, res) => {
   }
 });
 
-app.post('/api/monitor/clear-debounces', (req, res) => {
+app.post('/api/monitor/clear-debounces', requireAdminKey, (req, res) => {
   try {
     const result = clearMonitorDebounces();
     res.json(result);
@@ -1036,7 +1085,7 @@ app.post('/api/monitor/clear-debounces', (req, res) => {
   }
 });
 
-app.post('/api/monitor/block-emergency', async (req, res) => {
+app.post('/api/monitor/block-emergency', requireAdminKey, async (req, res) => {
   try {
     const { gridId, currentPm25 = 245, anomalyType, dispatchViaSes = true, isSandbox = true, ignoreDebounce = false } = req.body;
     if (!gridId) {
@@ -1056,7 +1105,7 @@ app.post('/api/monitor/block-emergency', async (req, res) => {
   }
 });
 
-app.post('/api/monitor/predictive-advisories', async (req, res) => {
+app.post('/api/monitor/predictive-advisories', requireAdminKey, async (req, res) => {
   try {
     const {
       facilityId,
@@ -1082,7 +1131,7 @@ app.post('/api/monitor/predictive-advisories', async (req, res) => {
   }
 });
 
-app.post('/api/monitor/chronic-petitions', async (req, res) => {
+app.post('/api/monitor/chronic-petitions', requireAdminKey, async (req, res) => {
   try {
     const { gridId, dispatchViaSes = true, isSandbox = true, ignoreDebounce = false, forcePetition = false } = req.body || {};
     const results = await evaluate14DayChronicBlockPetitions({
@@ -1118,9 +1167,9 @@ app.get('/api/advisory/preview-630', async (req, res) => {
 /**
  * Test or simulate dispatching the 6:30 AM bulletin
  */
-app.post('/api/advisory/test-dispatch', async (req, res) => {
+app.post('/api/advisory/test-dispatch', requireAdminKey, async (req, res) => {
   try {
-    const { facilityId = 'dps_rk_puram', testEmail = 'tester@wmd-civic.in', isSandbox = true, dispatchViaSes = false } = req.body;
+    const { facilityId = 'dps_rk_puram', testEmail = null, isSandbox = true, dispatchViaSes = false } = req.body;
     const result = await testDispatch630Advisory({
       facilityId,
       testEmail,
@@ -1137,7 +1186,7 @@ app.post('/api/advisory/test-dispatch', async (req, res) => {
 /**
  * Threshold-gated 6:30 AM Advisory check (suppressed on clean summer/monsoon days)
  */
-app.post('/api/advisory/evaluate-morning', async (req, res) => {
+app.post('/api/advisory/evaluate-morning', requireAdminKey, async (req, res) => {
   try {
     const { facilityId = 'dps_rk_puram', thresholdPm25 = parseInt(process.env.ADVISORY_THRESHOLD_PM25, 10) || 75, basePm25, testEmail, isSandbox = true } = req.body;
     const result = await evaluateMorningAdvisories({
@@ -1157,7 +1206,7 @@ app.post('/api/advisory/evaluate-morning', async (req, res) => {
 /**
  * Gemini-Crafted 12:00 PM Mid-Day Emergency Flash Alert (for sudden unexpected spikes)
  */
-app.post('/api/advisory/emergency-midday', async (req, res) => {
+app.post('/api/advisory/emergency-midday', requireAdminKey, computeLlmLimiter, async (req, res) => {
   try {
     const { facilityId = 'dps_rk_puram', currentPm25 = 295, anomalyType, testEmail, isSandbox = true, dispatchViaSes = false } = req.body;
     const result = await craftAndDispatchMidDayEmergency({
@@ -1177,43 +1226,12 @@ app.post('/api/advisory/emergency-midday', async (req, res) => {
 
 /**
  * ============================================================================
- * Amazon SES (Simple Email Service) Endpoints
+ * Amazon SES (Simple Email Service) Status
  * ============================================================================
  */
 app.get('/api/ses/health', async (req, res) => {
   const health = await getSesHealth();
   res.json(health);
-});
-
-app.post('/api/ses/send-test', async (req, res) => {
-  try {
-    const { to, subject = 'WMD Environmental Alert Test', htmlBody, fromEmail } = req.body;
-    if (!to) {
-      return res.status(400).json({ success: false, error: 'Recipient email "to" is required' });
-    }
-    const result = await sendEmailViaSES({
-      to,
-      subject,
-      htmlBody: htmlBody || '<p>This is a test notification from WMD Air Intelligence via Amazon SES.</p>',
-      fromEmail
-    });
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-app.post('/api/ses/verify-identity', async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ success: false, error: 'Email address is required' });
-    }
-    const result = await triggerEmailVerification(email);
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
 });
 
 // Catch-all 404 handler (prevents unhandled serverless-express on-finished error)

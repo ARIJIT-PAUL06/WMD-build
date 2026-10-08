@@ -56,21 +56,20 @@ print("   Code updated successfully.")
 
 print("3. Updating environment variables and timeouts...")
 updated_env = {
-    'ENABLE_AUTONOMOUS_EMAIL_DISPATCH': 'true',
-    'DISABLE_AUTOMATIC_MAILING': 'false',
-    'COMMAND_CENTRE_EMAIL': 'psubai2006@gmail.com',
-    'MONITOR_ALERT_RECIPIENT': 'psubai2006@gmail.com',
-    'AWS_SES_VERIFIED_SENDER': 'vayuvitals@gmail.com',
-    'SES_SENDER_EMAIL': 'vayuvitals@gmail.com',
-    'AWS_SES_REGION': 'us-east-1',
-    'SAGEMAKER_REGION': 'ap-south-1',
-    'SAGEMAKER_ENDPOINT_NAME': 'wmd-delhi-48h-forecast-endpoint',
-    'ADVISORY_THRESHOLD_PM25': '75',
-    'BLOCK_EMERGENCY_THRESHOLD_PM25': '105',
-    'DYNAMODB_TABLE_NAME': 'AirQualityReadings',
+    'ENABLE_AUTONOMOUS_EMAIL_DISPATCH': os.getenv('ENABLE_AUTONOMOUS_EMAIL_DISPATCH', 'false'),
+    'DISABLE_AUTOMATIC_MAILING': os.getenv('DISABLE_AUTOMATIC_MAILING', 'true'),
+    'COMMAND_CENTRE_EMAIL': os.getenv('COMMAND_CENTRE_EMAIL', 'psubai2006@gmail.com'),
+    'MONITOR_ALERT_RECIPIENT': os.getenv('MONITOR_ALERT_RECIPIENT', 'psubai2006@gmail.com'),
+    'AWS_SES_VERIFIED_SENDER': os.getenv('AWS_SES_VERIFIED_SENDER', 'vayuvitals@gmail.com'),
+    'SES_SENDER_EMAIL': os.getenv('SES_SENDER_EMAIL', 'vayuvitals@gmail.com'),
+    'AWS_SES_REGION': os.getenv('AWS_SES_REGION', 'us-east-1'),
+    'SAGEMAKER_REGION': os.getenv('SAGEMAKER_REGION', 'ap-south-1'),
+    'SAGEMAKER_ENDPOINT_NAME': os.getenv('SAGEMAKER_ENDPOINT_NAME', 'wmd-delhi-48h-forecast-endpoint'),
+    'ADVISORY_THRESHOLD_PM25': os.getenv('ADVISORY_THRESHOLD_PM25', '75'),
+    'BLOCK_EMERGENCY_THRESHOLD_PM25': os.getenv('BLOCK_EMERGENCY_THRESHOLD_PM25', '105'),
+    'DYNAMODB_TABLE_NAME': os.getenv('DYNAMODB_TABLE_NAME', 'AirQualityReadings'),
     'NODE_ENV': 'production',
-    'APP_AWS_ACCESS_KEY_ID': aws_key,
-    'APP_AWS_SECRET_ACCESS_KEY': aws_secret,
+    'ADMIN_API_KEY': os.getenv('ADMIN_API_KEY', ''),
     'GEMINI_API_KEY': os.getenv('GEMINI_API_KEY', '')
 }
 
@@ -85,17 +84,27 @@ print("   Configuration updated successfully.")
 
 print("4. Ensuring EventBridge invoke permissions...")
 try:
+    lam.remove_permission(
+        FunctionName='wmd-backend',
+        StatementId='EventBridgeInvokePermission'
+    )
+    print("   Removed legacy EventBridge permission.")
+except Exception:
+    pass
+
+try:
+    sts = session.client('sts')
+    account_id = sts.get_caller_identity()['Account']
     lam.add_permission(
         FunctionName='wmd-backend',
         StatementId='EventBridgeInvokePermission',
         Action='lambda:InvokeFunction',
-        Principal='events.amazonaws.com'
+        Principal='events.amazonaws.com',
+        SourceArn=f"arn:aws:events:{region}:{account_id}:rule/*",
+        SourceAccount=account_id
     )
-    print("   Permission added for events.amazonaws.com.")
+    print(f"   Scoped permission added for events.amazonaws.com (Account: {account_id}).")
 except Exception as e:
-    if 'ResourceConflictException' in str(e):
-        print("   Permission already exists.")
-    else:
-        print(f"   Note: {e}")
+    print(f"   Note on EventBridge permission: {e}")
 
 print("=== Deployment to AWS Lambda Complete ===")

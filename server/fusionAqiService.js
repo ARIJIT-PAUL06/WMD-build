@@ -193,7 +193,19 @@ export async function getDelhiHeatmapData(userLat = 28.7495, userLon = 77.1171) 
     if (cachedHeatmapData) {
       return await recomputeUserMetrics(cachedHeatmapData, userLat, userLon);
     }
-    throw err;
+    const fallbackStations = DELHI_STATION_COORDS.map((meta) => {
+      const pm25 = meta.pm25 || 120;
+      return {
+        ...meta,
+        aqi: calculateUncappedAqiFromPm25(pm25),
+        pm25,
+        pm10: meta.pm10 || Math.round(pm25 * 1.6),
+        source: 'Station Calibration Baseline (Offline Fallback)',
+        updatedAt: new Date().toISOString()
+      };
+    });
+    cachedHeatmapData = fallbackStations;
+    return await recomputeUserMetrics(fallbackStations, userLat, userLon);
   }
 }
 

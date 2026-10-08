@@ -157,16 +157,27 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
   }, [facilities, p2GridId]);
 
   // Trigger Immediate Full Autonomous Monitoring Cycle
+  const getAuthHeaders = () => {
+    const adminKey = (typeof window !== 'undefined' && (localStorage.getItem('wmd_admin_key') || sessionStorage.getItem('wmd_admin_key'))) || '';
+    const headers = { 'Content-Type': 'application/json' };
+    if (adminKey) headers['x-admin-key'] = adminKey;
+    return headers;
+  };
+
   const handleRunFullCycle = async () => {
     try {
       setCycleLoading(true);
       setActionMessage(null);
       const res = await fetch('/api/monitor/run-cycle', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dispatchViaSes: true, isSandbox: true })
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ dispatchViaSes: false, isSandbox: true })
       });
       const data = await res.json();
+      if (!res.ok) {
+        setActionMessage(`Cycle Note: ${data.error || 'Admin key required for live monitoring execution.'}`);
+        return;
+      }
       setCycleReport(data.report);
       setActionMessage('Full autonomous cycle executed and audit trail updated!');
       fetchStatus();
@@ -180,8 +191,15 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
   // Clear Debounce Cooldowns
   const handleClearDebounces = async () => {
     try {
-      const res = await fetch('/api/monitor/clear-debounces', { method: 'POST' });
+      const res = await fetch('/api/monitor/clear-debounces', {
+        method: 'POST',
+        headers: getAuthHeaders()
+      });
       const data = await res.json();
+      if (!res.ok) {
+        setActionMessage(`Clear Note: ${data.error || 'Admin key required.'}`);
+        return;
+      }
       setActionMessage('All 3h and 24h debouncing cooldowns cleared! Ready for immediate re-test.');
       fetchStatus();
     } catch (err) {
@@ -198,17 +216,21 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
       
       const res = await fetch('/api/monitor/predictive-advisories', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           facilityId: p1FacilityId,
           thresholdPm25: p1Threshold,
           simulatedPm25: simulatedValue,
-          dispatchViaSes: true,
+          dispatchViaSes: false,
           isSandbox: true,
           ignoreDebounce: true
         })
       });
       const data = await res.json();
+      if (!res.ok) {
+        setP1Result({ error: data.error || 'Admin key required to run simulation.' });
+        return;
+      }
       setP1Result(data);
       fetchStatus();
     } catch (err) {
@@ -225,17 +247,21 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
       setP2Result(null);
       const res = await fetch('/api/monitor/block-emergency', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           gridId: p2GridId,
           currentPm25: p2CurrentPm25,
           anomalyType: p2AnomalyType,
-          dispatchViaSes: true,
+          dispatchViaSes: false,
           isSandbox: true,
           ignoreDebounce: p2IgnoreDebounce
         })
       });
       const data = await res.json();
+      if (!res.ok) {
+        setP2Result({ error: data.error || 'Admin key required.' });
+        return;
+      }
       setP2Result(data);
       fetchStatus();
     } catch (err) {
@@ -252,16 +278,20 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
       setP3Result(null);
       const res = await fetch('/api/monitor/chronic-petitions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           gridId: p3GridId,
-          dispatchViaSes: true,
+          dispatchViaSes: false,
           isSandbox: true,
           ignoreDebounce: true,
           forcePetition: p3ForcePetition
         })
       });
       const data = await res.json();
+      if (!res.ok) {
+        setP3Result({ error: data.error || 'Admin key required.' });
+        return;
+      }
       setP3Result(data);
       fetchStatus();
     } catch (err) {
