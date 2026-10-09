@@ -8,7 +8,8 @@ import {
   X,
   Zap,
   Clock,
-  Key
+  Key,
+  Info
 } from 'lucide-react';
 import MonitorStatusTab from './MonitorStatusTab';
 import MonitorPillar1Tab from './MonitorPillar1Tab';
@@ -567,7 +568,10 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
               justifyContent: 'space-between'
             }}
           >
-            <span>ℹ️ {actionMessage}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <Info size={14} />
+              <span>{actionMessage}</span>
+            </span>
             <button
               onClick={() => setActionMessage(null)}
               style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: '0.75rem' }}

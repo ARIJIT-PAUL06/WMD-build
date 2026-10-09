@@ -73,7 +73,7 @@ export default function MonitorPillar3Tab({
                 <div>Severe Hours: <strong style={{ color: '#f87171' }}>{p3Compliance.severeHours} hrs</strong></div>
                 <div>14-Day Mean: <strong style={{ color: '#fbbf24' }}>{p3Compliance.avgPm25} µg/m³</strong></div>
                 <div>Status: <strong style={{ color: p3Compliance.petitionEligible ? '#ef4444' : '#10b981' }}>
-                  {p3Compliance.petitionEligible ? 'Non-Compliant ⚠️' : 'Within Limits'}
+                  {p3Compliance.petitionEligible ? 'Non-Compliant' : 'Within Limits'}
                 </strong></div>
               </div>
             </div>

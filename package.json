@@ -12,6 +12,7 @@
     "test": "node --test --test-concurrency=1 tests/*.test.js",
     "test:monitor": "node scripts/test_autonomous_monitor.js",
     "build:lambda": "node scripts/build_lambda.mjs",
+    "sync:buffer": "node scripts/sync_buffer.js",
     "export:android": "npm --prefix mobile run export:android"
   },
   "dependencies": {

@@ -90,22 +90,22 @@ export default function MonitorAuditTab({
               <div style={{ fontSize: '0.74rem', color: '#cbd5e1', lineHeight: '1.5' }}>
                 {ev.eventType === 'BLOCK_EMERGENCY_DISPATCHED' && (
                   <span>
-                    🚨 Block <b>{ev.gridId}</b> spike ({ev.pm25} µg/m³) alerted <b>{ev.facilitiesCount} institutions</b>.
+                    Block <b>{ev.gridId}</b> spike ({ev.pm25} µg/m³) alerted <b>{ev.facilitiesCount} institutions</b>.
                   </span>
                 )}
                 {ev.eventType === 'PREDICTIVE_ADVISORY_DISPATCHED' && (
                   <span>
-                    🌅 Advisory sent to <b>{ev.facilityName}</b> (Predicted Peak: {ev.predictedPeak} µg/m³).
+                    Advisory sent to <b>{ev.facilityName}</b> (Predicted Peak: {ev.predictedPeak} µg/m³).
                   </span>
                 )}
                 {ev.eventType === '14_DAY_PETITION_DISPATCHED' && (
                   <span>
-                    ⚖️ Section 10 Petition filed for Block <b>{ev.gridId}</b> ({ev.facilitiesCount} facilities).
+                    Section 10 Petition filed for Block <b>{ev.gridId}</b> ({ev.facilitiesCount} facilities).
                   </span>
                 )}
                 {ev.eventType === 'CYCLE_COMPLETED' && (
                   <span>
-                    🔄 Cycle #{ev.cycleId} completed. Synced {ev.telemetrySync?.syncedBlocksCount || 0} blocks.
+                    Cycle #{ev.cycleId} completed. Synced {ev.telemetrySync?.syncedBlocksCount || 0} blocks.
                   </span>
                 )}
               </div>

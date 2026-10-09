@@ -41,7 +41,13 @@ export default function CrtScreenLensCanvas({
     // WebGL Renderer
     // Full-screen quad shader: MSAA buys nothing, and DPR is capped to keep fill-rate bounded
     const MAX_DPR = 1.5;
-    const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: 'high-performance' });
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: 'high-performance' });
+    } catch (err) {
+      console.warn('CrtScreenLensCanvas: WebGL context creation failed', err);
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_DPR));
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);

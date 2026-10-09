@@ -1,16 +1,10 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
-  Truck,
-  AlertTriangle,
-  Activity,
   Radio,
-  Wind,
-  ChevronRight,
-  Info
+  Wind
 } from 'lucide-react';
 import useInView from '../../hooks/useInView';
-import AnimatedCounter from '../common/AnimatedCounter';
-import { apiFetch } from '../../utils/apiFetch';
+import AtmosphericCargoCanvas from './AtmosphericCargoCanvas';
 import './AtmosphericCargoTruck.css';
 
 // Master Indian Pollutants Specification (NAAQS Benchmark Standards)
@@ -24,6 +18,7 @@ const POLLUTANT_SPECS = [
     whoLimit: 15,
     source: 'Automotive diesel exhausts, biomass burning, crop residue combustion, thermal power units.',
     healthImpact: 'Ultra-fine particles (<2.5µm) penetrate alveolar capillary membranes directly into circulation, elevating cardiopulmonary mortality.',
+    targetSystems: ['Pulmonary Mucosa', 'Vascular System', 'Pediatric Sensitivity'],
     accentColor: '#ef4444',
     contBg: 'linear-gradient(180deg, #7f1d1d 0%, #450a0a 100%)',
     contBorder: '#ef4444',
@@ -38,6 +33,7 @@ const POLLUTANT_SPECS = [
     whoLimit: 45,
     source: 'Roadside dust resuspension, construction debris, soil erosion, coal-fired industrial units.',
     healthImpact: 'Trapped in upper tracheobronchial airways causing chronic bronchitis, emphysema, and acute asthma exacerbations.',
+    targetSystems: ['Upper Respiratory Tract', 'Bronchial Mucosa', 'Pediatric Sensitivity'],
     accentColor: '#f97316',
     contBg: 'linear-gradient(180deg, #7c2d12 0%, #431407 100%)',
     contBorder: '#f97316',
@@ -52,6 +48,7 @@ const POLLUTANT_SPECS = [
     whoLimit: 25,
     source: 'High-temperature internal combustion engines (heavy trucks, buses) and thermal generation stations.',
     healthImpact: 'Deep airway mucosal inflamer, precursor to secondary particulate nitrates and ground-level ozone formation.',
+    targetSystems: ['Deep Airway Mucosa', 'Vascular Endothelium', 'Pediatric Sensitivity'],
     accentColor: '#eab308',
     contBg: 'linear-gradient(180deg, #713f12 0%, #3f2008 100%)',
     contBorder: '#eab308',
@@ -66,6 +63,7 @@ const POLLUTANT_SPECS = [
     whoLimit: 40,
     source: 'Coal-fired power plants, petroleum refineries, heavy furnace oil combustion in industrial estates.',
     healthImpact: 'Potent bronchoconstrictor; drives acidic aerosol formation and environmental acid precipitation.',
+    targetSystems: ['Bronchial Mucosa', 'Nasopharyngeal Tract', 'Respiratory Sensitivity'],
     accentColor: '#10b981',
     contBg: 'linear-gradient(180deg, #064e3b 0%, #022c22 100%)',
     contBorder: '#10b981',
@@ -80,6 +78,7 @@ const POLLUTANT_SPECS = [
     whoLimit: 4.0,
     source: 'Incomplete combustion in idling motor vehicles, biomass cooking chulhas, forest brushfires.',
     healthImpact: 'Binds with hemoglobin to form carboxyhemoglobin, impairing oxygen delivery to myocardial and cerebral tissues.',
+    targetSystems: ['Myocardial Tissue', 'Cerebral Microvasculature', 'Fetal Hemoglobin Sensitivity'],
     accentColor: '#f43f5e',
     contBg: 'linear-gradient(180deg, #881337 0%, #4c0519 100%)',
     contBorder: '#f43f5e',
@@ -94,6 +93,7 @@ const POLLUTANT_SPECS = [
     whoLimit: 100,
     source: 'Secondary photochemical pollutant formed by solar reaction of NOx and VOCs on hot sunny afternoons.',
     healthImpact: 'Powerful cellular oxidant; damages alveolar linings, induces coughing, chest tightness, and long-term lung scarring.',
+    targetSystems: ['Alveolar Epithelium', 'Tracheobronchial Lining', 'Pediatric Sensitivity'],
     accentColor: '#06b6d4',
     contBg: 'linear-gradient(180deg, #164e63 0%, #083344 100%)',
     contBorder: '#06b6d4',
@@ -108,6 +108,7 @@ const POLLUTANT_SPECS = [
     whoLimit: 100,
     source: 'Agricultural fertilizer volatilization, livestock farming, untreated municipal sewage gutters.',
     healthImpact: 'Reacts with atmospheric nitric and sulfuric acids to synthesize regional ammonium salt smog hazes.',
+    targetSystems: ['Nasopharyngeal Mucosa', 'Upper Respiratory Tract', 'Ocular Mucosa'],
     accentColor: '#a855f7',
     contBg: 'linear-gradient(180deg, #581c87 0%, #2e1065 100%)',
     contBorder: '#a855f7',
@@ -163,21 +164,88 @@ const PRESETS = {
 
 export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumentary }) {
   const sectionRef = useRef(null);
+  const stageRef = useRef(null);
   // Infinite CSS animations are paused while the section is off screen
   const sectionInView = useInView(sectionRef);
   const [activePreset, setActivePreset] = useState('india_avg');
   const [pollutantValues, setPollutantValues] = useState(PRESETS.india_avg.values);
   const [selectedPollutantId, setSelectedPollutantId] = useState('pm25');
+  const [hoveredPollutantId, setHoveredPollutantId] = useState(null);
+  const [mouseNorm, setMouseNorm] = useState({ x: 0, y: 0 });
   const [isPurging, setIsPurging] = useState(false);
   const [isLiveLoading, setIsLiveLoading] = useState(false);
 
-  const handleTruckClick = (e) => {
-    const target = selectedPollutantId || 'pm25';
+  // 3D Spatial Stage Mouse Tracking with Inertial Damping
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage || typeof window === 'undefined') return;
+
+    const prefersReducedMotion =
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    const canHoverFine =
+      window.matchMedia &&
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (!canHoverFine) return;
+
+    let targetX = 0;
+    let targetY = 0;
+    let currX = 0;
+    let currY = 0;
+    let rafId = null;
+
+    const handleMouseMove = (e) => {
+      const rect = stage.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const normX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const normY = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+      targetX = Math.max(-1, Math.min(1, normX));
+      targetY = Math.max(-1, Math.min(1, normY));
+    };
+
+    const handleMouseLeave = () => {
+      targetX = 0;
+      targetY = 0;
+      setHoveredPollutantId(null);
+    };
+
+    const updatePhysics = () => {
+      const lerp = 0.065;
+      currX += (targetX - currX) * lerp;
+      currY += (targetY - currY) * lerp;
+
+      // Only pass normalized mouse coordinates to background atmospheric particle canvas
+      setMouseNorm({ x: currX, y: currY });
+
+      rafId = requestAnimationFrame(updatePhysics);
+    };
+
+    stage.addEventListener('mousemove', handleMouseMove, { passive: true });
+    stage.addEventListener('mouseleave', handleMouseLeave);
+    rafId = requestAnimationFrame(updatePhysics);
+
+    return () => {
+      stage.removeEventListener('mousemove', handleMouseMove);
+      stage.removeEventListener('mouseleave', handleMouseLeave);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  // Pollutant Container Selection & Documentary Navigation (Truck Remains Stationary)
+  const triggerTransition = (targetId) => {
+    const id = targetId || 'pm25';
+    setSelectedPollutantId(id);
     if (onOpenDocumentary) {
-      onOpenDocumentary(target);
+      onOpenDocumentary(id);
     } else if (onSelectPollutant) {
-      onSelectPollutant(target);
+      onSelectPollutant(id);
     }
+  };
+
+  const handleTruckClick = (e) => {
+    triggerTransition(selectedPollutantId || 'pm25');
   };
 
   const handleTruckKeyDown = (e) => {
@@ -386,8 +454,23 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
           </div>
         </div>
 
-        {/* The Weighbridge Platform with the Truck */}
-        <div className="weighbridge-stage">
+        {/* The Weighbridge Platform with the Stationary Truck Rig */}
+        <div
+          ref={stageRef}
+          className="weighbridge-stage"
+          style={{
+            '--cargo-active-accent': activePollutant.accentColor,
+            '--cargo-active-glow': activePollutant.contGlow,
+          }}
+        >
+          {/* Volumetric 3D Environmental Particle & Spatial Lighting Engine */}
+          <AtmosphericCargoCanvas
+            activePollutantId={selectedPollutantId}
+            hoveredPollutantId={hoveredPollutantId}
+            mouseNorm={mouseNorm}
+            inView={sectionInView}
+          />
+
           <div className="weighbridge-spotlight"></div>
 
           {/* Truck Viewport */}
@@ -400,7 +483,6 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
             role="button"
             tabIndex={0}
             aria-label="Explore the atmospheric cargo documentary"
-            title="Explore the atmospheric cargo documentary"
           >
             {/* Ground Highway Runway Line (Positioned below the wheels on the road plane) */}
             <div className="weighbridge-runway-line"></div>
@@ -408,7 +490,6 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
             <div
               className="truck-chassis"
               style={{
-                transform: `translateY(${payloadStats.chassisSag}px)`,
                 '--underglow-color': payloadStats.underglowColor
               }}
             >
@@ -433,16 +514,14 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
                   Mounted on physical deck surface
                   ======================================================= */}
               <div className="containers-flatbed-deck" style={deckStyle}>
-                {POLLUTANT_SPECS.map(p => {
+                {POLLUTANT_SPECS.map((p, idx) => {
                   const val = pollutantValues[p.id] || 0;
                   const ratio = val / p.naaqsLimit;
 
                   // RELATIVE NORMALIZED HEIGHT SCALING SYSTEM:
-                  // The highest pollutant bar in the active payload defines the ceiling (capped safely at 35% viewport height).
-                  // Minimum crate height is 12.5% (94px) so labels & numbers always remain clearly legible.
                   const maxRatio = Math.max(1, payloadStats.maxOverloadRatio);
-                  const normalizedRatio = ratio / maxRatio; // 0 to 1 relative to highest pollutant
-                  const heightPercent = 12.5 + normalizedRatio * 23.5; // 12.5% (min) to 36% (max ceiling)
+                  const normalizedRatio = ratio / maxRatio;
+                  const heightPercent = 12.5 + normalizedRatio * 23.5;
                   const heightPx = heightPercent * 7.51;
 
                   // Severity & Strobe Logic
@@ -462,37 +541,30 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
                   }
 
                   const isSelected = selectedPollutantId === p.id;
+                  const isHovered = hoveredPollutantId === p.id;
+                  const isDimmed = hoveredPollutantId && hoveredPollutantId !== p.id;
 
                   return (
                     <div
                       key={p.id}
                       id={`cargo-container-${p.id}`}
-                      className={`pollutant-container-unit ${isSelected ? 'selected' : ''}`}
+                      className={`pollutant-container-unit ${isSelected ? 'selected' : ''} ${isHovered ? 'hovered' : ''} ${isDimmed ? 'dimmed' : ''}`}
+                      onMouseEnter={() => setHoveredPollutantId(p.id)}
+                      onMouseLeave={() => setHoveredPollutantId(null)}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedPollutantId(p.id);
-                        if (onOpenDocumentary) {
-                          onOpenDocumentary(p.id);
-                        } else if (onSelectPollutant) {
-                          onSelectPollutant(p.id);
-                        }
+                        triggerTransition(p.id);
                       }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
                           e.stopPropagation();
-                          setSelectedPollutantId(p.id);
-                          if (onOpenDocumentary) {
-                            onOpenDocumentary(p.id);
-                          } else if (onSelectPollutant) {
-                            onSelectPollutant(p.id);
-                          }
+                          triggerTransition(p.id);
                         }
                       }}
                       role="button"
                       tabIndex={0}
                       aria-label={`Explore ${p.name} (${p.symbol}) documentary`}
-                      title={`Click to open full ${p.name} (${p.symbol}) deep-dive investigation & health analysis`}
                       style={{ cursor: 'pointer' }}
                     >
                       <div
@@ -500,7 +572,7 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
                         style={{
                           height: `${heightPx}px`,
                           '--cont-bg': p.contBg,
-                          '--cont-border': isSelected ? '#ffffff' : p.contBorder,
+                          '--cont-border': isSelected || isHovered ? '#ffffff' : p.contBorder,
                           '--cont-glow': p.contGlow,
                           '--cont-text-color': p.accentColor,
                           '--beacon-color': beaconColor
@@ -545,14 +617,12 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
               </div>
             </div>
           </div>
-
-
         </div>
 
         {/* Mobile Quick-Select Pollutant Bar (Optimized for finger touch on small screens) */}
         <div className="cargo-mobile-pollutant-bar" aria-label="Quick Select Pollutant">
           <div className="cargo-mobile-bar-label">
-            <span>Tap any crate below or choose a pollutant to inspect:</span>
+            <span>Select a pollutant to inspect:</span>
           </div>
           <div className="cargo-mobile-pills-row">
             {POLLUTANT_SPECS.map(p => {
@@ -563,12 +633,7 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
                   key={p.id}
                   onClick={(e) => {
                     e.stopPropagation();
-                    setSelectedPollutantId(p.id);
-                    if (onOpenDocumentary) {
-                      onOpenDocumentary(p.id);
-                    } else if (onSelectPollutant) {
-                      onSelectPollutant(p.id);
-                    }
+                    triggerTransition(p.id);
                   }}
                   className={`cargo-mobile-pill-btn ${isSelected ? 'active' : ''}`}
                   style={{
@@ -584,130 +649,6 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
           </div>
         </div>
 
-        {/* Telemetry Readout Grid Below Truck (Clean, Minimal, High-Impact) */}
-        <div className="cargo-telemetry-hud" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', marginTop: '2rem' }}>
-          <div className="telemetry-card">
-            <div className="telemetry-label">
-              <Truck size={14} />
-              <span>Gross Payload Mass</span>
-            </div>
-            <div className="telemetry-value-row">
-              <span className="telemetry-big-number">
-                <AnimatedCounter value={parseFloat(payloadStats.grossTons) || 0} decimals={1} />
-              </span>
-              <span className="telemetry-unit">Tons</span>
-            </div>
-          </div>
-
-          <div className="telemetry-card">
-            <div className="telemetry-label">
-              <Activity size={14} />
-              <span>Trailer Load</span>
-            </div>
-            <div className="telemetry-value-row">
-              <span className="telemetry-big-number">
-                <AnimatedCounter value={payloadStats.suspensionLoad} decimals={0} suffix="%" />
-              </span>
-            </div>
-            <div className="telemetry-gauge-bar">
-              <div
-                className="telemetry-gauge-fill"
-                style={{
-                  width: `${payloadStats.suspensionLoad}%`,
-                  background: payloadStats.suspensionLoad > 85 ? '#ef4444' : payloadStats.suspensionLoad > 65 ? '#f59e0b' : '#10b981'
-                }}
-              ></div>
-            </div>
-          </div>
-
-          <div className="telemetry-card">
-            <div className="telemetry-label">
-              <AlertTriangle size={14} />
-              <span>Dominant Hazard</span>
-            </div>
-            <div className="telemetry-value-row">
-              <span className="telemetry-big-number" style={{ color: payloadStats.worstPollutant.accentColor }}>
-                {payloadStats.worstPollutant.symbol}
-              </span>
-              <span className="telemetry-unit" style={{ fontSize: '0.82rem', color: '#94a3b8' }}>
-                {payloadStats.hazardTier}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Active Chemical Inspection & Airshed Exposure Deck */}
-        <div className="cargo-active-inspector-card" style={{ marginTop: '2rem' }}>
-          <div className="inspector-card-header">
-            <div className="inspector-badge-group">
-              <span className="inspector-dot" style={{ background: activePollutant.accentColor }} />
-              <span className="inspector-code" style={{ color: activePollutant.accentColor }}>
-                {activePollutant.symbol}
-              </span>
-              <span className="inspector-fullname">{activePollutant.name}</span>
-            </div>
-            <button
-              type="button"
-              className="inspector-launch-btn"
-              onClick={handleTruckClick}
-              aria-label={`Open full ${activePollutant.symbol} documentary`}
-            >
-              <span>Explore {activePollutant.symbol} Documentary</span>
-              <ChevronRight size={14} />
-            </button>
-          </div>
-
-          <div className="inspector-card-body">
-            {/* Visual Concentration vs NAAQS Gauge */}
-            <div className="inspector-metric-block">
-              <span className="inspector-metric-lbl">SELECTED CRATE CONCENTRATION</span>
-              <div className="inspector-val-row">
-                <span className="inspector-big-val">
-                  <AnimatedCounter
-                    value={pollutantValues[activePollutant.id] || 0}
-                    decimals={activePollutant.id === 'co' ? 1 : 0}
-                  />
-                </span>
-                <span className="inspector-unit">{activePollutant.unit}</span>
-              </div>
-              <div className="inspector-progress-track">
-                <div
-                  className="inspector-progress-fill"
-                  style={{
-                    width: `${Math.min(100, Math.round(((pollutantValues[activePollutant.id] || 0) / activePollutant.naaqsLimit) * 100))}%`,
-                    background: activePollutant.accentColor,
-                    boxShadow: `0 0 10px ${activePollutant.contGlow}`,
-                  }}
-                />
-              </div>
-              <span className="inspector-statutory-note">
-                CPCB NAAQS Benchmark: <strong>{activePollutant.naaqsLimit} {activePollutant.unit}</strong>
-              </span>
-            </div>
-
-            {/* Physiological Target Systems */}
-            <div className="inspector-pathology-block">
-              <span className="inspector-metric-lbl">TARGET PHYSIOLOGICAL SYSTEMS</span>
-              <div className="inspector-organ-chips">
-                <span className="inspector-chip">
-                  <span>🫁 Pulmonary Mucosa</span>
-                  <strong className="chip-alert">High</strong>
-                </span>
-                <span className="inspector-chip">
-                  <span>❤️ Vascular System</span>
-                  <strong className="chip-alert">Elevated</strong>
-                </span>
-                <span className="inspector-chip">
-                  <span>👶 Pediatric Sensitive</span>
-                  <strong className="chip-alert">2.5x</strong>
-                </span>
-              </div>
-              <p className="inspector-source-line">
-                <strong>Primary Airshed Vector:</strong> {activePollutant.source.split('.')[0] + '.'}
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );
