@@ -19,6 +19,7 @@
  */
 
 import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import {
   POLLUTANT_DOCUMENTARIES,
   POLLUTANT_DOCUMENTARY_LIST,
@@ -27,7 +28,6 @@ import { apiFetch } from '../../utils/apiFetch';
 import { fetchDeduplicatedJson } from '../../services/documentaryMapService.js';
 import { setupDocumentaryAnimations } from './documentaryAnimations.js';
 import DocumentaryHero from './DocumentaryHero.jsx';
-import DocumentaryPinnedStory from './DocumentaryPinnedStory.jsx';
 import DocumentarySection from './DocumentarySection.jsx';
 import DocumentaryImageSection from './DocumentaryImageSection.jsx';
 import DocumentaryDataSection from './DocumentaryDataSection.jsx';
@@ -128,7 +128,7 @@ export const DEFAULT_DELHI_BASELINE = {
 export const POLLUTANT_DOCUMENTARY_ENVIRONMENTS = {
   pm25: {
     sourceContext: 'HEAVY DIESEL FREIGHT TRANSPORT',
-    environmentContext: 'Outer Ring Road, Delhi NCR // Winter Inversion Corridor',
+    environmentContext: 'Outer Ring Road, Delhi NCR, Winter Inversion Corridor',
     visualCaption: 'Heavy commercial hauler operating through morning particulate haze',
     vehicleImage: '/assets/documentary/vehicles/indian_pm25_truck.webp',
   },
@@ -158,7 +158,7 @@ export const POLLUTANT_DOCUMENTARY_ENVIRONMENTS = {
   },
   o3: {
     sourceContext: 'HIGHWAY PRECURSORS & PHOTOCHEMICAL REACTION',
-    environmentContext: 'Peripheral Expressway Arterial // High Solar Irradiance Corridor',
+    environmentContext: 'Peripheral Expressway Arterial, High Solar Irradiance Corridor',
     visualCaption: 'Highway transit cruising under expansive sunlit tropospheric layer',
     vehicleImage: '/assets/documentary/vehicles/indian_o3_sky.webp',
   },
@@ -411,6 +411,39 @@ export default function PollutantDocumentary({
     [activePollutantId, onSelectPollutant]
   );
 
+  // Unified back navigation: prefers window.history.back(), falls back to onBack or dashboard
+  const handleGoBack = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      const hasHistory = window.history.length > 1;
+      if (hasHistory) {
+        window.history.back();
+        // Fallback protection: if history.back didn't trigger a popstate/URL change after 120ms
+        setTimeout(() => {
+          const currentUrl = new URL(window.location);
+          if (currentUrl.searchParams.get('documentary')) {
+            if (onBack) {
+              onBack();
+            } else {
+              currentUrl.searchParams.delete('documentary');
+              window.history.pushState({}, '', currentUrl);
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }
+          }
+        }, 120);
+        return;
+      }
+    }
+
+    if (onBack) {
+      onBack();
+    } else if (typeof window !== 'undefined') {
+      const url = new URL(window.location);
+      url.searchParams.delete('documentary');
+      window.history.pushState({}, '', url);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
+  }, [onBack]);
+
   return (
     <div
       ref={containerRef}
@@ -422,6 +455,20 @@ export default function PollutantDocumentary({
         '--pollutant-ambient': cinematicTheme.ambientColor,
       }}
     >
+      {/* 1. REUSABLE TOP-LEFT BACK BUTTON */}
+      <div className="doc-back-button-root">
+        <button
+          type="button"
+          className="doc-back-button"
+          onClick={handleGoBack}
+          aria-label="Go back"
+          id={`doc-back-btn-${pollutantData.id}`}
+        >
+          <ArrowLeft className="doc-back-icon" aria-hidden="true" />
+        </button>
+        <span className="doc-back-tooltip" role="tooltip">Go back</span>
+      </div>
+
       <main className="documentary-main-flow">
         {/* 2-6. ATMOSPHERIC HERO VIEWPORT WITH CENTRAL GAUGE & DATA BAR */}
         <DocumentaryHero
@@ -432,13 +479,6 @@ export default function PollutantDocumentary({
           currentStation={currentStation}
           weatherVariables={weatherVariables}
           onSelectPollutant={handleSelectAnotherPollutant}
-        />
-
-        {/* FORGE-INSPIRED PINNED AIRSHED STORY SEQUENCE (SOURCE -> MOVEMENT -> EXPOSURE -> IMPACT) */}
-        <DocumentaryPinnedStory
-          pollutantData={pollutantData}
-          cinematicTheme={cinematicTheme}
-          environmentData={environmentData}
         />
 
         {/* 7. SPACIOUS EDITORIAL SECTIONS (WHERE IT COMES FROM, WHAT IT DOES, WHY IT MATTERS, 14-DAY ARCHIVE) */}
@@ -471,7 +511,7 @@ export default function PollutantDocumentary({
         <DocumentaryFooter
           activePollutantId={pollutantData.id}
           onSelectPollutant={handleSelectAnotherPollutant}
-          onBack={onBack}
+          onBack={handleGoBack}
         />
       </main>
     </div>

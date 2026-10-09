@@ -19,7 +19,6 @@ describe('Cinematic GSAP and Three.js Upgrades for All Seven Pollutant Documenta
   let PollutantDocumentary;
   let HeroAtmosphericCanvas;
   let DocumentaryHero;
-  let DocumentaryPinnedStory;
   let DocumentaryDataSection;
   let DocumentaryLocationMap;
 
@@ -45,11 +44,6 @@ describe('Cinematic GSAP and Three.js Upgrades for All Seven Pollutant Documenta
       './src/components/PollutantDocumentary/DocumentaryHero.jsx'
     );
     DocumentaryHero = heroMod.default;
-
-    const pinnedMod = await viteServer.ssrLoadModule(
-      './src/components/PollutantDocumentary/DocumentaryPinnedStory.jsx'
-    );
-    DocumentaryPinnedStory = pinnedMod.default;
 
     const dataMod = await viteServer.ssrLoadModule(
       './src/components/PollutantDocumentary/DocumentaryDataSection.jsx'
@@ -170,61 +164,36 @@ describe('Cinematic GSAP and Three.js Upgrades for All Seven Pollutant Documenta
   });
 
   // ==========================================================================
-  // 4. ANIMATION 3 — SOURCE-TO-EXPOSURE STORY: SVG vector line and schematics
+  // 4. INTERMEDIATE FIELD DOSSIER: Completely removed from all routes
   // ==========================================================================
-  it('4. DocumentaryPinnedStory renders continuous SVG vector progress line and stage schematics for all 4 beats', () => {
+  it('4. Intermediate Field Dossier and pinned story section are completely removed from all 7 pollutants', () => {
     ALL_POLLUTANTS.forEach((pollutantId) => {
-      const pData = POLLUTANT_DOCUMENTARIES[pollutantId];
       const html = renderToString(
-        React.createElement(DocumentaryPinnedStory, {
-          pollutantData: pData,
-          cinematicTheme: {
-            heroImage: '/assets/documentary/vehicles/indian_pm25_truck.webp',
-            accent: '#ef4444',
-            ambientColor: 'rgba(239, 68, 68, 0.12)',
-            scaleSymbol: '≤ 2.5 µm',
-          },
-          environmentData: {
-            sourceContext: 'Primary combustion origin',
-            environmentContext: 'Delhi NCR airshed',
-          },
+        React.createElement(PollutantDocumentary, {
+          pollutantId,
         })
       );
 
-      // Pinned viewport & ribbon
-      assert.ok(
+      // Verify that no pinned story section, viewport, or dossier ribbon exists
+      assert.strictEqual(
+        html.includes('documentary-pinned-story-section'),
+        false,
+        `Intermediate pinned story section must NOT exist for ${pollutantId}`
+      );
+      assert.strictEqual(
         html.includes('documentary-pinned-viewport'),
-        `Pinned viewport must exist for ${pollutantId}`
+        false,
+        `Intermediate pinned viewport must NOT exist for ${pollutantId}`
       );
-      assert.ok(
+      assert.strictEqual(
         html.includes('documentary-pinned-top-ribbon'),
-        `Top progress ribbon must exist for ${pollutantId}`
+        false,
+        `Field Dossier top ribbon must NOT exist for ${pollutantId}`
       );
-
-      // Continuous connecting SVG vector track and scrub line
-      assert.ok(
-        html.includes('doc-ribbon-track-svg'),
-        `Connecting SVG track must exist for ${pollutantId}`
-      );
-      assert.ok(
-        html.includes('id="doc-ribbon-progress-line"'),
-        `Progress line for GSAP scrub must exist for ${pollutantId}`
-      );
-
-      // 4 investigation beats: SOURCE, MOVEMENT, EXPOSURE, IMPACT
-      assert.ok(html.includes('SOURCE'), `Beat 1 (SOURCE) must be present for ${pollutantId}`);
-      assert.ok(html.includes('MOVEMENT'), `Beat 2 (MOVEMENT) must be present for ${pollutantId}`);
-      assert.ok(html.includes('EXPOSURE'), `Beat 3 (EXPOSURE) must be present for ${pollutantId}`);
-      assert.ok(html.includes('IMPACT'), `Beat 4 (IMPACT) must be present for ${pollutantId}`);
-
-      // Stage vector schematics
-      assert.ok(
-        html.includes('doc-card-schematic-wrap'),
-        `Scientific stage schematics must exist for ${pollutantId}`
-      );
-      assert.ok(
-        html.includes('doc-card-schematic-svg'),
-        `SVG schematics must exist for ${pollutantId}`
+      assert.strictEqual(
+        html.includes('doc-ribbon-stepper'),
+        false,
+        `Field Dossier ribbon stepper must NOT exist for ${pollutantId}`
       );
     });
   });
@@ -286,13 +255,24 @@ describe('Cinematic GSAP and Three.js Upgrades for All Seven Pollutant Documenta
         html.includes(`id="pollutant-documentary-${pollutantId}"`),
         `Page must mount container id for ${pollutantId}`
       );
+
+      // Reusable back button with accessibility and tooltip
+      assert.ok(
+        html.includes(`id="doc-back-btn-${pollutantId}"`),
+        `Top-left back button must exist for ${pollutantId}`
+      );
+      assert.ok(
+        html.includes('aria-label="Go back"'),
+        `Back button must have aria-label="Go back" for ${pollutantId}`
+      );
+      assert.ok(
+        html.includes('doc-back-tooltip'),
+        `Back button tooltip must exist for ${pollutantId}`
+      );
+
       assert.ok(
         html.includes('documentary-hero'),
         `Hero viewport must exist for ${pollutantId}`
-      );
-      assert.ok(
-        html.includes('documentary-pinned-story-section'),
-        `Pinned story section must exist for ${pollutantId}`
       );
       assert.ok(
         html.includes('documentary-section'),

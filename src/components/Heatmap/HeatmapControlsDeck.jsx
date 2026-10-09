@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Crosshair,
   Layers,
-  Sparkles,
   Map as MapIcon,
   MapPin,
   Building2,
@@ -95,8 +94,8 @@ export default function HeatmapControlsDeck({
           className={`glass-cuboid-btn ${isAdaptiveMode ? 'glass-cuboid-btn-success' : ''} ${getBtnFlickerClass()}`}
           style={getBtnFlickerStyle(880)}
         >
-          <Sparkles size={14} color={isAdaptiveMode ? '#34d399' : '#94a3b8'} />
-          <span>Adaptive</span>
+          <Sliders size={13} color={isAdaptiveMode ? '#34d399' : '#94a3b8'} />
+          <span>Adaptive Contrast</span>
           {isAdaptiveMode && activeRange.isZoomed && (
             <span
               style={{

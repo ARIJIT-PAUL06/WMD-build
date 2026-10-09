@@ -56,13 +56,12 @@ export default function ConnectedProcessFlow({
       <div className="flow-header-row">
         <div>
           <span className="flow-kicker">
-            <Layers size={13} style={{ color: accentColor }} />
             <span>{title}</span>
           </span>
           <p className="flow-subtitle">{subtitle}</p>
         </div>
         <div className="flow-step-counter">
-          STAGE <strong>{flowStages[activeStageIdx]?.step || '01'}</strong> / {String(flowStages.length).padStart(2, '0')}
+          Stage {flowStages[activeStageIdx]?.step || '01'} of {String(flowStages.length).padStart(2, '0')}
         </div>
       </div>
 

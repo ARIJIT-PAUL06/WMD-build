@@ -75,7 +75,6 @@ export default function DocumentaryDataPanel({
       <div className="documentary-data-col documentary-data-col-pollutants">
         <div className="doc-col-title-row">
           <span className="doc-col-heading">ATMOSPHERIC PARAMETERS</span>
-          <span className="doc-col-badge">AIRSHED TELEMETRY</span>
         </div>
 
         <div className="doc-pollutants-grid">
