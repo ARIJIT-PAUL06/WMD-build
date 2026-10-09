@@ -56,8 +56,8 @@ print("   Code updated successfully.")
 
 print("3. Updating environment variables and timeouts...")
 updated_env = {
-    'ENABLE_AUTONOMOUS_EMAIL_DISPATCH': os.getenv('ENABLE_AUTONOMOUS_EMAIL_DISPATCH', 'false'),
-    'DISABLE_AUTOMATIC_MAILING': os.getenv('DISABLE_AUTOMATIC_MAILING', 'true'),
+    'ENABLE_AUTONOMOUS_EMAIL_DISPATCH': os.getenv('ENABLE_AUTONOMOUS_EMAIL_DISPATCH', 'true'),
+    'DISABLE_AUTOMATIC_MAILING': os.getenv('DISABLE_AUTOMATIC_MAILING', 'false'),
     'COMMAND_CENTRE_EMAIL': os.getenv('COMMAND_CENTRE_EMAIL', 'psubai2006@gmail.com'),
     'MONITOR_ALERT_RECIPIENT': os.getenv('MONITOR_ALERT_RECIPIENT', 'psubai2006@gmail.com'),
     'AWS_SES_VERIFIED_SENDER': os.getenv('AWS_SES_VERIFIED_SENDER', 'vayuvitals@gmail.com'),

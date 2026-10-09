@@ -203,6 +203,33 @@ export async function runPredictiveAdvisoryEvaluation({
   const now = Date.now();
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
+  // TIME-OF-DAY MORNING WINDOW ENFORCEMENT (06:00 to 09:30 IST):
+  // Predictive morning bulletins must only trigger in the actual morning, never in the middle of the night.
+  // Manual interactive tests (facilityId !== null or ignoreDebounce === true) can bypass this guard.
+  if (!ignoreDebounce && facilityId === null) {
+    const istFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false
+    });
+    const parts = istFormatter.formatToParts(new Date(now));
+    const hourIst = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
+    const minuteIst = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
+    const currentDecimalHourIst = hourIst + (minuteIst / 60);
+
+    const isMorningWindow = currentDecimalHourIst >= 6.0 && currentDecimalHourIst <= 9.5;
+    if (!isMorningWindow) {
+      console.log(`[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is ${String(hourIst).padStart(2, '0')}:${String(minuteIst).padStart(2, '0')} (Active window: 06:00 - 09:30 IST).`);
+      return allFacilities.map(f => ({
+        facilityId: f.id,
+        name: f.name,
+        dispatched: false,
+        reason: `Deferred (Outside morning dispatch window: ${String(hourIst).padStart(2, '0')}:${String(minuteIst).padStart(2, '0')} IST. Active window: 06:00 - 09:30 IST)`
+      }));
+    }
+  }
+
   for (const facility of allFacilities) {
     const lastSent = monitorState.lastPredictiveAdvisoryByFacility[facility.id] || 0;
     const isSameDayInIst = lastSent > 0 &&
@@ -266,26 +293,34 @@ export async function runPredictiveAdvisoryEvaluation({
         }
       }
 
-      monitorState.lastPredictiveAdvisoryByFacility[facility.id] = now;
-      monitorState.totalPredictiveAdvisoriesDispatched++;
-      await persistState();
+      // ONLY mark as successfully dispatched if SES succeeded (has messageId), OR if automated mailing was intentionally suppressed by safety gate (dry-run).
+      // If SES threw an error or failed (sesResult.success === false), DO NOT debounce so it can retry cleanly on the next cycle!
+      const isSuccessfulDispatch = shouldDispatchViaSes ? Boolean(sesResult && sesResult.success && sesResult.messageId) : true;
+      if (isSuccessfulDispatch) {
+        monitorState.lastPredictiveAdvisoryByFacility[facility.id] = now;
+        monitorState.totalPredictiveAdvisoriesDispatched++;
+        await persistState();
+      } else {
+        console.warn(`[AutonomousMonitor] ⚠️ Predictive advisory for ${facility.name} failed dispatch (${sesResult?.error || 'SES error'}). Debounce not set; will retry on next cycle.`);
+      }
 
       recordAudit('PREDICTIVE_ADVISORY_DISPATCHED', {
         facilityId: facility.id,
         facilityName: facility.name,
         predictedPeak: peakArrival,
         recipient: actualRecipient,
-        messageId: sesResult?.messageId || (shouldDispatchViaSes ? 'SES_DISPATCHED' : 'SUPPRESSED_BY_SAFETY_GATE')
+        messageId: sesResult?.messageId || (shouldDispatchViaSes ? 'SES_DISPATCH_FAILED' : 'SUPPRESSED_BY_SAFETY_GATE')
       });
 
       results.push({
         facilityId: facility.id,
         name: facility.name,
-        dispatched: shouldDispatchViaSes,
+        dispatched: Boolean(sesResult && sesResult.success),
         predictedPeak: peakArrival,
         recipient: actualRecipient,
         messageId: sesResult?.messageId,
-        note: shouldDispatchViaSes ? 'Dispatched' : 'Suppressed (Automated mailing disabled)'
+        error: sesResult?.error,
+        note: shouldDispatchViaSes ? (sesResult?.success ? 'Dispatched' : `Failed: ${sesResult?.error}`) : 'Suppressed (Automated mailing disabled)'
       });
 
       // Polite spacing between SES dispatches

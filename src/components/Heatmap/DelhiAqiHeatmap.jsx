@@ -3233,38 +3233,10 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
             <p style={{ fontSize: '0.78rem', color: '#64748b', margin: 0 }}>
               All other modules are active. Scroll down to explore the{' '}
-              <span style={{ color: '#34d399', fontWeight: 600 }}>Atmospheric Cargo Truck</span> and{' '}
-              <span style={{ color: '#38bdf8', fontWeight: 600 }}>School Safety intelligence</span> below.
+              <span style={{ color: '#34d399', fontWeight: 600 }}>Atmospheric Cargo Truck</span> below.
             </p>
 
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
-              {/* Direct Petition & Action Generator Launcher */}
-              <button
-                id="token-fallback-petition-btn"
-                type="button"
-                onClick={() => {
-                  setPetitionStation(displayStation?.name || 'DTU (Delhi Technological University)');
-                  setPetitionLocality(displayStation?.zone ? `${displayStation.name}, ${displayStation.zone}` : 'Rohini Sector 16, North Delhi');
-                  setPetitionPm25(displayStation?.pm25 || displayStation?.aqi || 142);
-                  setIsPetitionModalOpen(true);
-                }}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 16px',
-                  borderRadius: '9999px',
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(6, 182, 212, 0.25) 100%)',
-                  border: '1px solid rgba(52, 211, 153, 0.5)',
-                  color: '#34d399',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                <FileText size={14} color="#34d399" />
-                <span>Petition &amp; Action</span>
-              </button>
 
               <button
                 type="button"
@@ -3592,68 +3564,6 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                     <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
                   </button>
                 )}
-
-                {/* Section 10: Civic Action & Formal Petition Generator */}
-                <button
-                  onClick={() => {
-                    setPetitionStation(displayStation?.name || 'DTU (Delhi Technological University)');
-                    setPetitionLocality(displayStation?.zone ? `${displayStation.name}, ${displayStation.zone}` : 'Rohini Sector 16, North Delhi');
-                    setPetitionPm25(displayStation?.pm25 || displayStation?.aqi || 142);
-                    setIsPetitionModalOpen(true);
-                  }}
-                  id="petition-action-deck-btn"
-                  title="Transform air quality telemetry into a formal civic complaint or school petition"
-                  className="glass-cuboid-btn"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    color: '#34d399',
-                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(6, 182, 212, 0.22) 100%)',
-                    border: '1px solid rgba(52, 211, 153, 0.45)',
-                    padding: '6px 13px',
-                    borderRadius: '9px',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  <FileText size={13} color="#34d399" />
-                  <span>Petition & Action</span>
-                </button>
-
-                {/* SafeRecess™ School Safety Launcher Button */}
-                <button
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      const url = new URL(window.location);
-                      url.searchParams.set('view', 'school');
-                      window.history.pushState({}, '', url);
-                      window.dispatchEvent(new PopStateEvent('popstate'));
-                    }
-                  }}
-                  id="school-safety-deck-btn"
-                  title="SafeRecess™ School Safety Dashboard & Activity Guidance"
-                  className="glass-cuboid-btn"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    color: '#38bdf8',
-                    background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.22) 0%, rgba(99, 102, 241, 0.22) 100%)',
-                    border: '1px solid rgba(56, 189, 248, 0.45)',
-                    padding: '6px 13px',
-                    borderRadius: '9px',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  <ShieldCheck size={13} color="#38bdf8" />
-                  <span>School Safety</span>
-                </button>
               </div>
 
             </div>
