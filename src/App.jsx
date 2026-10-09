@@ -11,6 +11,7 @@ const AtmosphericCargoTruck = React.lazy(() => import('./components/CargoTruck/A
 const PollutantDetailPage = React.lazy(() => import('./components/PollutantDetail/PollutantDetailPage'));
 const SchoolSafetyContainer = React.lazy(() => import('./components/SchoolSafety/SchoolSafetyContainer'));
 const PollutantDocumentary = React.lazy(() => import('./components/PollutantDocumentary/PollutantDocumentary'));
+import AuthHeaderBadge from './components/Auth/AuthHeaderBadge';
 
 const PageFallback = () => <div style={{ minHeight: '100vh', background: '#070a12' }} />;
 
@@ -261,6 +262,9 @@ export default function App() {
   if (isSchoolView) {
     return (
       <React.Suspense fallback={<PageFallback />}>
+        <div style={{ position: 'fixed', top: '20px', right: '24px', zIndex: 9999 }}>
+          <AuthHeaderBadge />
+        </div>
         <SchoolSafetyContainer
           onBackToMap={() => {
             if (typeof window !== 'undefined') {
@@ -287,7 +291,10 @@ export default function App() {
 
   if (isMapOnly) {
     return (
-      <div style={{ width: '100vw', height: '100vh', background: '#070a12', overflow: 'hidden' }}>
+      <div style={{ width: '100vw', height: '100vh', background: '#070a12', overflow: 'hidden', position: 'relative' }}>
+        <div style={{ position: 'fixed', top: '20px', right: '24px', zIndex: 9999 }}>
+          <AuthHeaderBadge />
+        </div>
         <MapErrorBoundary>
           <React.Suspense fallback={<PageFallback />}>
             <DelhiAqiHeatmap />
@@ -416,7 +423,12 @@ export default function App() {
 
   // Desktop Experience: Continuous 3-Section Vertical Long-Scroll (100% untouched)
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#070a12' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#070a12', position: 'relative' }}>
+      {/* Floating Citizen Authentication Status Bar */}
+      <div style={{ position: 'fixed', top: '20px', right: '24px', zIndex: 9999 }}>
+        <AuthHeaderBadge />
+      </div>
+
       {/* 1. MOTION HERO: Horizontal Scroll-Scrub Experience */}
       <PanoramicScrollHero onExploreTwin={scrollToHeatmap} />
 

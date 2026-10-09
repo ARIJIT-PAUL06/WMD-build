@@ -15,6 +15,7 @@ import MonitorPillar1Tab from './MonitorPillar1Tab';
 import MonitorPillar2Tab from './MonitorPillar2Tab';
 import MonitorPillar3Tab from './MonitorPillar3Tab';
 import MonitorAuditTab from './MonitorAuditTab';
+import { apiFetch } from '../../utils/apiFetch';
 
 export default function AutonomousMonitorModal({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState('status'); // 'status' | 'pillar1' | 'pillar2' | 'pillar3' | 'audit'
@@ -36,6 +37,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
   // Daemon status state
   const [statusLoading, setStatusLoading] = useState(false);
   const [daemonStatus, setDaemonStatus] = useState(null);
+  const [httpDispatchEnabled, setHttpDispatchEnabled] = useState(false);
   
   // Directory & Grid data
   const [facilities, setFacilities] = useState([]);
@@ -79,10 +81,11 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
   const fetchStatus = async () => {
     try {
       setStatusLoading(true);
-      const res = await fetch('/api/monitor/status');
+      const res = await apiFetch('/api/monitor/status');
       if (res.ok) {
         const data = await res.json();
         setDaemonStatus(data);
+        setHttpDispatchEnabled(Boolean(data.httpDispatchEnabled));
         if (data.recentAudit) {
           setAuditList(data.recentAudit);
         }
@@ -99,8 +102,8 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
     try {
       setDataLoading(true);
       const [facRes, gridRes] = await Promise.all([
-        fetch('/api/spatial-grids/facilities'),
-        fetch('/api/spatial-grids/directory')
+        apiFetch('/api/spatial-grids/facilities'),
+        apiFetch('/api/spatial-grids/directory')
       ]);
 
       if (facRes.ok) {
@@ -121,7 +124,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
   // Load 14-day compliance for Pillar 3
   const fetchP3Compliance = async (gId) => {
     try {
-      const res = await fetch(`/api/spatial-grids/${gId}/compliance`);
+      const res = await apiFetch(`/api/spatial-grids/${gId}/compliance`);
       if (res.ok) {
         const data = await res.json();
         setP3Compliance(data.compliance || null);
@@ -176,7 +179,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
     try {
       setCycleLoading(true);
       setActionMessage(null);
-      const res = await fetch('/api/monitor/run-cycle', {
+      const res = await apiFetch('/api/monitor/run-cycle', {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ dispatchViaSes: false, isSandbox: true })
@@ -199,7 +202,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
   // Clear Debounce Cooldowns
   const handleClearDebounces = async () => {
     try {
-      const res = await fetch('/api/monitor/clear-debounces', {
+      const res = await apiFetch('/api/monitor/clear-debounces', {
         method: 'POST',
         headers: getAuthHeaders()
       });
@@ -222,7 +225,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
       setP1Result(null);
       const simulatedValue = p1Scenario === 'clean' ? 65 : p1SimulatedPm25;
       
-      const res = await fetch('/api/monitor/predictive-advisories', {
+      const res = await apiFetch('/api/monitor/predictive-advisories', {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -253,7 +256,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
     try {
       setP2Loading(true);
       setP2Result(null);
-      const res = await fetch('/api/monitor/block-emergency', {
+      const res = await apiFetch('/api/monitor/block-emergency', {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -284,7 +287,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
     try {
       setP3Loading(true);
       setP3Result(null);
-      const res = await fetch('/api/monitor/chronic-petitions', {
+      const res = await apiFetch('/api/monitor/chronic-petitions', {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -584,6 +587,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
               cycleLoading={cycleLoading}
               handleClearDebounces={handleClearDebounces}
               cycleReport={cycleReport}
+              httpDispatchEnabled={httpDispatchEnabled}
             />
           )}
 
@@ -602,6 +606,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
               handleTestPillar1={handleTestPillar1}
               p1Loading={p1Loading}
               p1Result={p1Result}
+              httpDispatchEnabled={httpDispatchEnabled}
             />
           )}
 
@@ -618,6 +623,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
               handleTestPillar2={handleTestPillar2}
               p2Loading={p2Loading}
               p2Result={p2Result}
+              httpDispatchEnabled={httpDispatchEnabled}
             />
           )}
 
@@ -632,6 +638,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
               handleTestPillar3={handleTestPillar3}
               p3Loading={p3Loading}
               p3Result={p3Result}
+              httpDispatchEnabled={httpDispatchEnabled}
             />
           )}
 

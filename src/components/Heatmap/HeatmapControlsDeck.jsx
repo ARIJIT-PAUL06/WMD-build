@@ -6,7 +6,9 @@ import {
   Map as MapIcon,
   MapPin,
   Building2,
-  Sliders
+  Sliders,
+  FileText,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function HeatmapControlsDeck({
@@ -29,6 +31,11 @@ export default function HeatmapControlsDeck({
   mapInstanceRef,
   heatIntensity,
   setHeatIntensity,
+  setIsPetitionModalOpen,
+  displayStation,
+  setPetitionStation,
+  setPetitionLocality,
+  setPetitionPm25
 }) {
   if (isMobile) return null;
 
@@ -153,6 +160,70 @@ export default function HeatmapControlsDeck({
         >
           <Building2 size={13} color={is3DBuildings ? '#38bdf8' : '#94a3b8'} />
           <span>3D City</span>
+        </button>
+
+        {/* Section 10: Civic Action & Formal Petition Generator */}
+        <button
+          onClick={() => {
+            if (setPetitionStation && displayStation) {
+              setPetitionStation(displayStation?.name || 'DTU (Delhi Technological University)');
+              setPetitionLocality(displayStation?.zone ? `${displayStation.name}, ${displayStation.zone}` : 'Rohini Sector 16, North Delhi');
+              setPetitionPm25(displayStation?.pm25 || displayStation?.aqi || 142);
+            }
+            if (setIsPetitionModalOpen) setIsPetitionModalOpen(true);
+          }}
+          id="petition-action-deck-btn"
+          title="Transform air quality telemetry into a formal civic complaint or school petition"
+          className="glass-cuboid-btn"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            color: '#34d399',
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(6, 182, 212, 0.22) 100%)',
+            border: '1px solid rgba(52, 211, 153, 0.45)',
+            padding: '6px 13px',
+            borderRadius: '9px',
+            fontSize: '0.78rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <FileText size={13} color="#34d399" />
+          <span>Petition & Action</span>
+        </button>
+
+        {/* SafeRecess™ School Safety Launcher Button */}
+        <button
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              const url = new URL(window.location);
+              url.searchParams.set('view', 'school');
+              window.history.pushState({}, '', url);
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }
+          }}
+          id="school-safety-deck-btn"
+          title="SafeRecess™ School Safety Dashboard & Activity Guidance"
+          className="glass-cuboid-btn"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            color: '#38bdf8',
+            background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.22) 0%, rgba(99, 102, 241, 0.22) 100%)',
+            border: '1px solid rgba(56, 189, 248, 0.45)',
+            padding: '6px 13px',
+            borderRadius: '9px',
+            fontSize: '0.78rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <ShieldCheck size={13} color="#38bdf8" />
+          <span>School Safety</span>
         </button>
       </div>
 

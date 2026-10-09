@@ -15,7 +15,8 @@ export default function MonitorPillar2Tab({
   setP2IgnoreDebounce,
   handleTestPillar2,
   p2Loading,
-  p2Result
+  p2Result,
+  httpDispatchEnabled = false
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -119,36 +120,44 @@ export default function MonitorPillar2Tab({
         </div>
 
         <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px' }}>
-          <label style={{ fontSize: '0.74rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={p2IgnoreDebounce}
-              onChange={(e) => setP2IgnoreDebounce(e.target.checked)}
-            />
-            <span>Bypass 3-hour cooldown for testing</span>
-          </label>
+          {httpDispatchEnabled ? (
+            <>
+              <label style={{ fontSize: '0.74rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={p2IgnoreDebounce}
+                  onChange={(e) => setP2IgnoreDebounce(e.target.checked)}
+                />
+                <span>Bypass 3-hour cooldown for testing</span>
+              </label>
 
-          <button
-            onClick={handleTestPillar2}
-            disabled={p2Loading}
-            style={{
-              background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-              color: '#ffffff',
-              border: 'none',
-              padding: '10px 24px',
-              borderRadius: '10px',
-              fontWeight: 700,
-              fontSize: '0.82rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 14px rgba(220, 38, 38, 0.4)'
-            }}
-          >
-            <AlertTriangle size={15} />
-            <span>{p2Loading ? 'Alerting Facilities...' : '🚨 Trigger Block Emergency Surge'}</span>
-          </button>
+              <button
+                onClick={handleTestPillar2}
+                disabled={p2Loading}
+                style={{
+                  background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '10px 24px',
+                  borderRadius: '10px',
+                  fontWeight: 700,
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 14px rgba(220, 38, 38, 0.4)'
+                }}
+              >
+                <AlertTriangle size={15} />
+                <span>{p2Loading ? 'Alerting Facilities...' : '🚨 Trigger Block Emergency Surge'}</span>
+              </button>
+            </>
+          ) : (
+            <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic' }}>
+              Monitoring runs automatically every 30 minutes (Amazon EventBridge). Manual dispatch is disabled in production.
+            </div>
+          )}
         </div>
       </div>
 

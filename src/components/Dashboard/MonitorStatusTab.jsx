@@ -12,7 +12,8 @@ export default function MonitorStatusTab({
   handleRunFullCycle,
   cycleLoading,
   handleClearDebounces,
-  cycleReport
+  cycleReport,
+  httpDispatchEnabled = false
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -130,7 +131,7 @@ export default function MonitorStatusTab({
         </div>
       </div>
 
-      {/* QUICK DAEMON CONTROLS */}
+      {/* READ-ONLY DAEMON STATUS & EVENTBRIDGE SCHEDULE */}
       <div
         style={{
           background: 'rgba(255, 255, 255, 0.02)',
@@ -145,56 +146,64 @@ export default function MonitorStatusTab({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 700, color: '#ffffff' }}>
-              Interactive Daemon Controls
+              Autonomous Monitoring Schedule
             </h3>
             <p style={{ margin: '4px 0 0 0', fontSize: '0.78rem', color: '#94a3b8' }}>
-              Force an immediate continuous cycle or reset anti-spam debouncing cooldowns to test repeatedly.
+              Continuous atmospheric telemetry and grievance threshold cycles run every 30 minutes via AWS EventBridge.
             </p>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button
-              onClick={handleRunFullCycle}
-              disabled={cycleLoading}
-              style={{
-                background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                color: '#ffffff',
-                border: 'none',
-                padding: '10px 18px',
-                borderRadius: '10px',
-                fontWeight: 700,
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)'
-              }}
-            >
-              <RefreshCw size={14} className={cycleLoading ? 'animate-spin' : ''} />
-              <span>{cycleLoading ? 'Executing Cycle...' : 'Run Full Autonomous Cycle Now'}</span>
-            </button>
+            {httpDispatchEnabled ? (
+              <>
+                <button
+                  onClick={handleRunFullCycle}
+                  disabled={cycleLoading}
+                  style={{
+                    background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '10px 18px',
+                    borderRadius: '10px',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)'
+                  }}
+                >
+                  <RefreshCw size={14} className={cycleLoading ? 'animate-spin' : ''} />
+                  <span>{cycleLoading ? 'Executing Cycle...' : 'Run Full Autonomous Cycle Now'}</span>
+                </button>
 
-            <button
-              onClick={handleClearDebounces}
-              title="Clear 3h block and 24h facility cooldowns"
-              style={{
-                background: 'rgba(239, 68, 68, 0.15)',
-                color: '#f87171',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                padding: '10px 16px',
-                borderRadius: '10px',
-                fontWeight: 600,
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              <Trash2 size={14} />
-              <span>Clear Cooldowns</span>
-            </button>
+                <button
+                  onClick={handleClearDebounces}
+                  title="Clear 3h block and 24h facility cooldowns"
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    color: '#f87171',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    padding: '10px 16px',
+                    borderRadius: '10px',
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Trash2 size={14} />
+                  <span>Clear Cooldowns</span>
+                </button>
+              </>
+            ) : (
+              <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                Monitoring runs automatically every 30 minutes (Amazon EventBridge). Manual dispatch is disabled in production.
+              </span>
+            )}
           </div>
         </div>
 

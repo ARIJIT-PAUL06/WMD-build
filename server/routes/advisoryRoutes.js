@@ -7,14 +7,15 @@ import {
   evaluateMorningAdvisories,
   craftAndDispatchMidDayEmergency
 } from '../advisoryDispatchService.js';
-import { computeLlmLimiter, requireAdminKey } from '../middleware/authAndRateLimit.js';
+import { computeLlmLimiter, requireAdminKey, disallowHttpDispatchInProd } from '../middleware/authAndRateLimit.js';
+import { requireAuth } from '../authMiddleware.js';
 
 const router = express.Router();
 
 /**
- * Token-Optimized Google Gemini AI Health & Commute Advisory
+ * Token-Optimized Google Gemini AI Health & Commute Advisory (Citizen login required)
  */
-router.post('/api/gemini-advisory', computeLlmLimiter, async (req, res) => {
+router.post('/api/gemini-advisory', requireAuth(), computeLlmLimiter, async (req, res) => {
   try {
     const metrics = req.body;
     if (!metrics || metrics.aqi === undefined) {
@@ -29,9 +30,9 @@ router.post('/api/gemini-advisory', computeLlmLimiter, async (req, res) => {
 });
 
 /**
- * Standalone Amazon Bedrock Advisory Generator
+ * Standalone Amazon Bedrock Advisory Generator (Citizen login required)
  */
-router.post('/api/bedrock-advisory', computeLlmLimiter, async (req, res) => {
+router.post('/api/bedrock-advisory', requireAuth(), computeLlmLimiter, async (req, res) => {
   try {
     const metrics = req.body;
     if (!metrics || !metrics.city) {
@@ -66,7 +67,7 @@ router.get('/api/advisory/preview-630', async (req, res) => {
 /**
  * Test or simulate dispatching the 6:30 AM bulletin
  */
-router.post('/api/advisory/test-dispatch', requireAdminKey, async (req, res) => {
+router.post('/api/advisory/test-dispatch', disallowHttpDispatchInProd, requireAdminKey, async (req, res) => {
   try {
     const { facilityId = 'dps_rk_puram', testEmail = null, isSandbox = true, dispatchViaSes = false } = req.body;
     const result = await testDispatch630Advisory({
@@ -85,7 +86,7 @@ router.post('/api/advisory/test-dispatch', requireAdminKey, async (req, res) => 
 /**
  * Threshold-gated 6:30 AM Advisory check (suppressed on clean summer/monsoon days)
  */
-router.post('/api/advisory/evaluate-morning', requireAdminKey, async (req, res) => {
+router.post('/api/advisory/evaluate-morning', disallowHttpDispatchInProd, requireAdminKey, async (req, res) => {
   try {
     const { facilityId = 'dps_rk_puram', thresholdPm25 = parseInt(process.env.ADVISORY_THRESHOLD_PM25, 10) || 75, basePm25, testEmail, isSandbox = true } = req.body;
     const result = await evaluateMorningAdvisories({
@@ -105,7 +106,7 @@ router.post('/api/advisory/evaluate-morning', requireAdminKey, async (req, res) 
 /**
  * Gemini-Crafted 12:00 PM Mid-Day Emergency Flash Alert (for sudden unexpected spikes)
  */
-router.post('/api/advisory/emergency-midday', requireAdminKey, computeLlmLimiter, async (req, res) => {
+router.post('/api/advisory/emergency-midday', disallowHttpDispatchInProd, requireAdminKey, computeLlmLimiter, async (req, res) => {
   try {
     const { facilityId = 'dps_rk_puram', currentPm25 = 295, anomalyType, testEmail, isSandbox = true, dispatchViaSes = false } = req.body;
     const result = await craftAndDispatchMidDayEmergency({

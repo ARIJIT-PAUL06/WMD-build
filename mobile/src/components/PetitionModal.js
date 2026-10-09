@@ -25,6 +25,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import * as Crypto from 'expo-crypto';
 
 import {
   getAuthorities,
@@ -41,6 +42,11 @@ import {
   saveSenderProfile,
   DOCKET_STATUS
 } from '../services/petitionService';
+import {
+  isAuthenticated,
+  signIn,
+  getCurrentUser
+} from '../services/authService';
 
 export default function PetitionModal({
   visible,
@@ -98,7 +104,17 @@ export default function PetitionModal({
 
   // Docket tracking
   const [savedDocket, setSavedDocket] = useState(null);
+  const [clientRequestId, setClientRequestId] = useState(() => Crypto.randomUUID());
   const [actionSuccessNotice, setActionSuccessNotice] = useState(null);
+
+  // Authentication state for step 4 gate
+  const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    isAuthenticated().then(setIsUserAuthenticated);
+    getCurrentUser().then(setCurrentUser);
+  }, [step]);
 
   // Pre-fill target station if provided
   useEffect(() => {
@@ -278,6 +294,7 @@ export default function PetitionModal({
     setPolishNote(null);
     setPolishedTemplate({ en: null, hi: null });
     setCustomDraftText(null);
+    setClientRequestId(Crypto.randomUUID());
 
     try {
       // P3: Send strictly placeholders across the network to preserve sender privacy (DPDP Act)
@@ -395,29 +412,38 @@ export default function PetitionModal({
       return updated;
     }
 
-    const newDocket = await saveDocket({
-      status: initialStatus,
-      targetType,
-      targetName: targetTitle,
-      locality: targetLoc,
-      authority: selectedAuthority,
-      evidence,
-      subject: currentSubject,
-      letterTextEn: draftResult?.englishText || '',
-      letterTextHi: draftResult?.hindiText || '',
-      activeDraftText,
-      sentDraftText: activeDraftText,
-      selectedLanguage,
-      tone: urgency,
-      polishMode,
-      senderName,
-      senderRole,
-      senderContact
-    });
+    try {
+      const newDocket = await saveDocket({
+        status: initialStatus,
+        targetType,
+        targetName: targetTitle,
+        schoolId: targetType === 'school' ? selectedSchool?.id : undefined,
+        stationName: targetType === 'school' ? undefined : selectedStation?.name,
+        clientRequestId,
+        locality: targetLoc,
+        authority: selectedAuthority,
+        evidence,
+        subject: currentSubject,
+        letterTextEn: draftResult?.englishText || '',
+        letterTextHi: draftResult?.hindiText || '',
+        activeDraftText,
+        sentDraftText: activeDraftText,
+        selectedLanguage,
+        tone: urgency,
+        polishMode,
+        senderName,
+        senderRole,
+        senderContact
+      });
 
-    setSavedDocket(newDocket);
-    if (onDocketSaved) onDocketSaved(newDocket);
-    return newDocket;
+      setClientRequestId(Crypto.randomUUID());
+      setSavedDocket(newDocket);
+      if (onDocketSaved) onDocketSaved(newDocket);
+      return newDocket;
+    } catch (err) {
+      Alert.alert('Could not save', err.message);
+      return null;
+    }
   };
 
   // Dispatch Action 1: Share Plain Text
@@ -433,10 +459,10 @@ export default function PetitionModal({
 
       if (result && result.action === Share.sharedAction) {
         const docket = await persistDocket(DOCKET_STATUS.SHARED);
-        setActionSuccessNotice(`Shared successfully! Saved to on-device docket [${docket.referenceId}].`);
+        if (docket) setActionSuccessNotice(`Shared successfully! Saved to on-device docket [${docket.referenceId}].`);
       } else {
         const docket = await persistDocket(DOCKET_STATUS.DRAFT);
-        setActionSuccessNotice(`Share cancelled. Saved to on-device docket [${docket.referenceId}] as Draft.`);
+        if (docket) setActionSuccessNotice(`Share cancelled. Saved to on-device docket [${docket.referenceId}] as Draft.`);
       }
     } catch (err) {
       console.warn('Share error:', err);
@@ -457,11 +483,13 @@ export default function PetitionModal({
       }
 
       const docket = await persistDocket(DOCKET_STATUS.DRAFT);
-      setActionSuccessNotice(
-        copied
-          ? `Text copied to clipboard! Saved to docket [${docket.referenceId}] as Draft. Ready for CPGRAMS / DPCC portal.`
-          : `Saved to docket [${docket.referenceId}] as Draft.`
-      );
+      if (docket) {
+        setActionSuccessNotice(
+          copied
+            ? `Text copied to clipboard! Saved to docket [${docket.referenceId}] as Draft. Ready for CPGRAMS / DPCC portal.`
+            : `Saved to docket [${docket.referenceId}] as Draft.`
+        );
+      }
     } catch (_err) {
       Alert.alert('Copy Error', 'Failed to copy text to clipboard.');
     }
@@ -510,7 +538,7 @@ export default function PetitionModal({
 
       await Linking.openURL(mailtoUrl);
       const docket = await persistDocket(DOCKET_STATUS.OPENED_IN_MAIL);
-      setActionSuccessNotice(`Mail client opened. Docket status updated to "Opened in mail" [${docket.referenceId}].`);
+      if (docket) setActionSuccessNotice(`Mail client opened. Docket status updated to "Opened in mail" [${docket.referenceId}].`);
     } catch (_err) {
       Alert.alert('Could Not Open Mail', 'Unable to launch default mail app. Please use "Share" or "Copy".');
     }
@@ -527,7 +555,7 @@ export default function PetitionModal({
           text: 'Yes, Mark as Sent',
           onPress: async () => {
             const docket = await persistDocket(DOCKET_STATUS.MARKED_AS_SENT);
-            setActionSuccessNotice(`Marked as sent on this device [${docket.referenceId}].`);
+            if (docket) setActionSuccessNotice(`Marked as sent on this device [${docket.referenceId}].`);
           }
         }
       ]
@@ -1189,11 +1217,42 @@ export default function PetitionModal({
                 )}
               </View>
 
-              {/* Legal & Privacy Disclaimer (Zero False Promises) */}
+              {/* Step 4 Sign-In Requirement Gate */}
+              {!isUserAuthenticated && (
+                <View style={styles.authRequiredCard}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <Ionicons name="lock-closed" size={18} color="#00f0ff" />
+                    <Text style={styles.authRequiredTitle}>SIGN-IN REQUIRED TO SAVE & DISPATCH</Text>
+                  </View>
+                  <Text style={styles.authRequiredSub}>
+                    Please sign in with your Cognito account to save this grievance dossier, track its status, and sync it with the cloud.
+                  </Text>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={async () => {
+                      try {
+                        const res = await signIn();
+                        if (res.success) {
+                          setIsUserAuthenticated(true);
+                          setCurrentUser(res.user);
+                        }
+                      } catch (err) {
+                        Alert.alert('Sign In Error', err.message);
+                      }
+                    }}
+                    style={styles.authRequiredBtn}
+                  >
+                    <Ionicons name="log-in-outline" size={16} color="#040711" />
+                    <Text style={styles.authRequiredBtnText}>SIGN IN WITH COGNITO</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Legal & Privacy Disclaimer */}
               <View style={styles.disclaimerBox}>
-                <Ionicons name="shield" size={14} color="#64748b" />
+                <Ionicons name="shield-checkmark" size={14} color="#38bdf8" />
                 <Text style={styles.disclaimerText}>
-                  ⚖️ Empirical Representation Notice: This is an empirical evidence compilation for administrative grievance submission, not formal judicial advocacy. The letter text, without personal details, is processed by AWS Bedrock / Google Gemini when AI Polish is requested. Personal identity details and grievance logs remain stored strictly on this device (DPDP Act 2023).
+                  When you save, your letter, including your name and contact, is stored on our server in Mumbai (ap-south-1), visible only to you, and you can delete it. Your school only sees the date, authority, subject and air-quality summary.
                 </Text>
               </View>
 
@@ -2120,5 +2179,41 @@ const styles = StyleSheet.create({
     color: '#eab308',
     marginTop: 2,
     textTransform: 'uppercase',
+  },
+  authRequiredCard: {
+    marginVertical: 14,
+    padding: 14,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0, 240, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 240, 255, 0.35)',
+  },
+  authRequiredTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#00f0ff',
+    letterSpacing: 0.5,
+  },
+  authRequiredSub: {
+    fontSize: 11,
+    lineHeight: 16,
+    color: '#94a3b8',
+    marginBottom: 10,
+  },
+  authRequiredBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#00f0ff',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  authRequiredBtnText: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#040711',
+    letterSpacing: 0.5,
   },
 });

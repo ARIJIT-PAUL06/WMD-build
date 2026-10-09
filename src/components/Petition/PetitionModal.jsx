@@ -13,6 +13,10 @@ import PetitionEmpiricalSummaryCard from './PetitionEmpiricalSummaryCard';
 import PetitionForecastCard from './PetitionForecastCard';
 import PetitionParametersForm from './PetitionParametersForm';
 import PetitionLetterPreviewPane from './PetitionLetterPreviewPane';
+import PetitionsManagerModal from './PetitionsManagerModal';
+import { apiFetch } from '../../utils/apiFetch';
+import { useAuth } from '../../context/AuthContext';
+import { buildSavePayload } from './petitionHelpers';
 
 export default function PetitionModal({
   isOpen,
@@ -27,6 +31,8 @@ export default function PetitionModal({
 }) {
   const activeSchool = schoolContext || school;
   const activeEvidencePackage = evidencePackage || schoolEvidencePackage;
+
+  const { isAuthenticated, openAuthModal } = useAuth();
 
   // --------------------------------------------------------------------------
   // Step State & Configuration
@@ -78,6 +84,14 @@ export default function PetitionModal({
   const [senderEmail, setSenderEmail] = useState('principal@dpsrohini.edu.in');
   const [senderPhone, setSenderPhone] = useState('+91 98110 54321');
   const [dpdpaConsent, setDpdpaConsent] = useState(true);
+
+  // Cloud Petition Persistence & Manager State
+  const [savedPetitionId, setSavedPetitionId] = useState(null);
+  const [savedPetitionStatus, setSavedPetitionStatus] = useState(null);
+  const [isSavingPetition, setIsSavingPetition] = useState(false);
+  const [isManagerOpen, setIsManagerOpen] = useState(false);
+  const [saveRequestId, setSaveRequestId] = useState(() => crypto.randomUUID());
+  const [saveError, setSaveError] = useState(null);
 
   // Evidence Data State
   const [evidence, setEvidence] = useState(() => {
@@ -192,7 +206,7 @@ export default function PetitionModal({
         basePm25: initialPm25.toString()
       });
 
-      const res = await fetch(`/api/petition/evidence?${query.toString()}`);
+      const res = await apiFetch(`/api/petition/evidence?${query.toString()}`);
       if (res.ok) {
         const data = await res.json();
         if (data && data.success) {
@@ -226,7 +240,7 @@ export default function PetitionModal({
         basePm25: initialPm25.toString(),
         threshold: threshold.toString()
       });
-      const res = await fetch(`/api/petition/forecast?${query.toString()}`);
+      const res = await apiFetch(`/api/petition/forecast?${query.toString()}`);
       if (res.ok) {
         const data = await res.json();
         if (data && data.success) {
@@ -299,7 +313,7 @@ export default function PetitionModal({
     setDraftError(null);
     const activeForecast = includeForecastInDossier ? forecast : null;
     try {
-      const res = await fetch('/api/petition/generate-draft', {
+      const res = await apiFetch('/api/petition/generate-draft', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -352,7 +366,7 @@ export default function PetitionModal({
 
     setIsPolishing(true);
     try {
-      const res = await fetch('/api/petition/polish-draft', {
+      const res = await apiFetch('/api/petition/polish-draft', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -389,6 +403,14 @@ export default function PetitionModal({
   // --------------------------------------------------------------------------
   const activeLetterText = language === 'hi' ? editableLetterHi : editableLetterEn;
 
+  // A changed letter or target is a new petition: new idempotency key, nothing saved yet.
+  // Re-clicking Save on unchanged content reuses the key, so the server returns the existing record.
+  useEffect(() => {
+    setSaveRequestId(crypto.randomUUID());
+    setSavedPetitionId(null);
+    setSavedPetitionStatus(null);
+  }, [activeLetterText, selectedAuthorityId, selectedSchoolId, stationName]);
+
   const handleDownloadPdf = () => {
     if (!evidence) return;
     setIsGeneratingPdf(true);
@@ -411,18 +433,147 @@ export default function PetitionModal({
     }
   };
 
+  const letterSubject = `Grievance on Morning Air Quality & Child Health - ${schoolName}`;
+
   const handleCopyCpgrams = () => {
     const plainText = activeLetterText.replace(/\r\n/g, '\n');
     navigator.clipboard.writeText(plainText);
     setCopyFeedback(true);
     setTimeout(() => setCopyFeedback(false), 2500);
+
+    if (savedPetitionId && savedPetitionStatus === 'DRAFT_SAVED') {
+      apiFetch(`/api/petitions/${savedPetitionId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'SHARED' })
+      }).then(res => {
+        if (res.ok) setSavedPetitionStatus('SHARED');
+      }).catch(err => console.warn('[PetitionModal] Status update error:', err));
+    }
   };
 
   const handleOpenEmailDraft = () => {
     const recipient = currentAuthority.email;
-    const subject = encodeURIComponent(currentSubject || `Grievance on Morning Air Quality - ${schoolName}`);
+    const subject = encodeURIComponent(letterSubject);
     const body = encodeURIComponent(activeLetterText);
     window.open(`mailto:${recipient}?subject=${subject}&body=${body}`, '_blank');
+
+    if (savedPetitionId) {
+      apiFetch(`/api/petitions/${savedPetitionId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'OPENED_IN_MAIL' })
+      }).then(res => {
+        if (res.ok) setSavedPetitionStatus('OPENED_IN_MAIL');
+      }).catch(err => console.warn('[PetitionModal] Status update error:', err));
+    }
+  };
+
+  const getSavePayload = (status) => {
+    return buildSavePayload({
+      selectedSchoolId,
+      stationName,
+      locality,
+      currentAuthority,
+      letterSubject,
+      activeLetterText,
+      selectedDemands,
+      language,
+      tone,
+      senderName,
+      senderRole,
+      senderEmail,
+      senderPhone,
+      saveRequestId,
+      status
+    });
+  };
+
+  const handleSaveToMyPetitions = async () => {
+    if (!isAuthenticated) {
+      openAuthModal();
+      return;
+    }
+    setIsSavingPetition(true);
+    setSaveError(null);
+    try {
+      const payload = getSavePayload(savedPetitionStatus || 'DRAFT_SAVED');
+
+      const res = await apiFetch('/api/petitions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.petition?.petitionId) {
+          setSavedPetitionId(data.petition.petitionId);
+          setSavedPetitionStatus(data.petition.status);
+          setSaveError(null);
+        }
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setSaveError(errData.error || 'Could not save. Please try again.');
+      }
+    } catch (err) {
+      setSaveError(err.message || 'Could not save. Please try again.');
+    } finally {
+      setIsSavingPetition(false);
+    }
+  };
+
+  const handleMarkAsSent = async () => {
+    if (!isAuthenticated) {
+      openAuthModal();
+      return;
+    }
+    setSaveError(null);
+    if (savedPetitionId) {
+      try {
+        const res = await apiFetch(`/api/petitions/${savedPetitionId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'MARKED_AS_SENT' })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSavedPetitionStatus(data.petition?.status || data.status || 'MARKED_AS_SENT');
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          setSaveError(errData.error || 'Could not update status. Please try again.');
+        }
+      } catch (err) {
+        setSaveError(err.message || 'Could not update status. Please try again.');
+      }
+    } else {
+      setIsSavingPetition(true);
+      try {
+        const payload = getSavePayload('MARKED_AS_SENT');
+
+        const res = await apiFetch('/api/petitions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.petition?.petitionId) {
+            setSavedPetitionId(data.petition.petitionId);
+            setSavedPetitionStatus(data.petition.status || 'MARKED_AS_SENT');
+            setSaveError(null);
+          }
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          setSaveError(errData.error || 'Could not save. Please try again.');
+        }
+      } catch (err) {
+        setSaveError(err.message || 'Could not save. Please try again.');
+      } finally {
+        setIsSavingPetition(false);
+      }
+    }
   };
 
   const handleOpenOfficialPortal = () => {
@@ -496,6 +647,44 @@ export default function PetitionModal({
             background: 'rgba(15, 23, 42, 0.6)'
           }}
         >
+          {/* Unauthenticated Citizen Banner */}
+          {!isAuthenticated && (
+            <div
+              style={{
+                background: 'linear-gradient(90deg, rgba(2, 132, 199, 0.25) 0%, rgba(14, 165, 233, 0.12) 100%)',
+                borderBottom: '1px solid rgba(56, 189, 248, 0.35)',
+                padding: '10px 24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '0.82rem',
+                color: '#38bdf8'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShieldAlert size={16} />
+                <span>Citizen authentication required to submit grievances and file official petitions.</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => openAuthModal('signIn')}
+                style={{
+                  background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '6px 14px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.4)'
+                }}
+              >
+                Sign In / Register
+              </button>
+            </div>
+          )}
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div
               style={{
@@ -558,9 +747,37 @@ export default function PetitionModal({
             </div>
 
             <button
+              onClick={() => setIsManagerOpen(true)}
+              style={{
+                marginLeft: '12px',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                background: 'rgba(56, 189, 248, 0.1)',
+                color: '#38bdf8',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(56, 189, 248, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(56, 189, 248, 0.1)';
+              }}
+            >
+              <FileText size={14} />
+              <span>Saved Petitions</span>
+            </button>
+
+            <button
               onClick={onClose}
               style={{
-                marginLeft: '16px',
+                marginLeft: '8px',
                 width: '34px',
                 height: '34px',
                 borderRadius: '8px',
@@ -716,9 +933,24 @@ export default function PetitionModal({
             handleOpenOfficialPortal={handleOpenOfficialPortal}
             handleDownloadPdf={handleDownloadPdf}
             isGeneratingPdf={isGeneratingPdf}
+            handleSaveToMyPetitions={handleSaveToMyPetitions}
+            isSavingPetition={isSavingPetition}
+            savedPetitionId={savedPetitionId}
+            savedPetitionStatus={savedPetitionStatus}
+            saveError={saveError}
+            handleMarkAsSent={handleMarkAsSent}
+            onOpenMyPetitions={() => setIsManagerOpen(true)}
           />
 
         </div>
+
+        {/* Petitions Manager Modal */}
+        {isManagerOpen && (
+          <PetitionsManagerModal
+            isOpen={isManagerOpen}
+            onClose={() => setIsManagerOpen(false)}
+          />
+        )}
 
       </div>
     </div>

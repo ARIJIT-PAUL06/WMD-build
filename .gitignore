@@ -35,3 +35,4 @@ FRONTEND_AUDIT.md
 ml/data/autonomous_monitor_audit.json
 monitor_state.json
 STATE_CONTEXT.md
+aws/packaged*.yaml

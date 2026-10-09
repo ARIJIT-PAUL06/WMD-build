@@ -1,23 +1,52 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
 Description: >
-  Bharat Builds Environmental Hacks - 3D Interactive Air Quality System
-  Architecture: S3 + CloudFront (Frontend), API Gateway + Lambda (API), DynamoDB (Storage), Bedrock (AI).
+  Bharat Builds Environmental Hacks - VayuVitals Air Quality & Civic Grievance System.
+  Architecture: Plain CloudFormation without SAM Transform.
+  Imports existing AirQualityReadings table and wmd-backend Lambda.
+  Provisions DynamoDB Petitions, Cognito User Pool with Auth Code + PKCE,
+  separate small PostConfirmation function, and least-privilege IAM roles.
 
-Globals:
-  Function:
-    Timeout: 15
-    MemorySize: 256
-    Runtime: nodejs20.x
-    Architectures:
-      - arm64
+Parameters:
+  GeminiApiKey:
+    Type: String
+    NoEcho: true
+    Description: Google Gemini API Key for AI atmospheric advisory and grievance drafting
+    Default: ''
+
+  AdminApiKey:
+    Type: String
+    NoEcho: true
+    Description: Secret API key for administrative endpoints (x-admin-key)
+    Default: ''
+
+  UseSesEmail:
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+    Description: Set to true once AWS SES production access is enabled. When false, uses Cognito built-in email.
+
+  SesSenderEmail:
+    Type: String
+    Default: vayuvitals@gmail.com
+    Description: Verified SES email identity for sending advisories and grievance notices
+
+  MobileDevCallbackUrl:
+    Type: String
+    Default: 'exp://127.0.0.1:8081/--/auth/callback'
+    Description: Local Expo / React Native development callback URL
+
+Conditions:
+  UseSesCondition: !Equals [!Ref UseSesEmail, 'true']
 
 Resources:
   # =================================================================
-  # 1. Amazon DynamoDB: Historical Readings Store
+  # 1. Amazon DynamoDB: Air Quality Historical Readings Table (Imported)
   # =================================================================
   AirQualityDynamoDBTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
     Properties:
       TableName: AirQualityReadings
       BillingMode: PAY_PER_REQUEST
@@ -25,7 +54,7 @@ Resources:
         - AttributeName: city
           AttributeType: S
         - AttributeName: timestamp
-          AttributeType: N
+          AttributeType: S
       KeySchema:
         - AttributeName: city
           KeyType: HASH
@@ -35,11 +64,61 @@ Resources:
         PointInTimeRecoveryEnabled: true
 
   # =================================================================
-  # 2. Amazon Bedrock & DynamoDB IAM Policy for Lambda
+  # 2. Amazon DynamoDB: Civic Petitions & Grievances Store (New)
   # =================================================================
-  AirQualityBackendRole:
+  PetitionsDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: Petitions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userSub
+          AttributeType: S
+        - AttributeName: petitionId
+          AttributeType: S
+        - AttributeName: schoolId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userSub
+          KeyType: HASH
+        - AttributeName: petitionId
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: schoolId-createdAt-index
+          KeySchema:
+            - AttributeName: schoolId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - authorityName
+              - letterSubject
+              - status
+              - evidenceSummary
+      LocalSecondaryIndexes:
+        - IndexName: userSub-createdAt-index
+          KeySchema:
+            - AttributeName: userSub
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # =================================================================
+  # 3. Dedicated Cognito PostConfirmation Lambda & Role
+  # =================================================================
+  CognitoPostConfirmationRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Sub "wmd-cognito-post-confirm-role-${AWS::Region}"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -50,117 +129,322 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: DynamoDBReadWriteAccess
+        - PolicyName: CognitoAddUserToCitizenGroupPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
-                  - dynamodb:PutItem
-                  - dynamodb:GetItem
-                  - dynamodb:Query
-                  - dynamodb:Scan
-                Resource: !GetAtt AirQualityDynamoDBTable.Arn
-        - PolicyName: BedrockInvokeModelAccess
+                  - cognito-idp:AdminAddUserToGroup
+                Resource: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/*"
+
+  CognitoPostConfirmationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: wmd-cognito-post-confirm
+      Code: ./functions/postConfirmation/
+      Handler: index.handler
+      Runtime: nodejs22.x
+      Timeout: 15
+      MemorySize: 128
+      Role: !GetAtt CognitoPostConfirmationRole.Arn
+
+  CognitoPostConfirmationPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt CognitoPostConfirmationFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !GetAtt CognitoUserPool.Arn
+
+  # =================================================================
+  # 4. Amazon Cognito: User Pool & Authentication
+  # =================================================================
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: wmd-user-pool
+      DeletionProtection: ACTIVE
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Required: true
+          Mutable: true
+        - Name: school_id
+          AttributeDataType: String
+          Required: false
+          Mutable: true
+      LambdaConfig:
+        PostConfirmation: !GetAtt CognitoPostConfirmationFunction.Arn
+      EmailConfiguration: !If
+        - UseSesCondition
+        - EmailSendingAccount: DEVELOPER
+          SourceArn: !Sub "arn:aws:ses:us-east-1:${AWS::AccountId}:identity/${SesSenderEmail}"
+          From: !Sub "VayuVitals <${SesSenderEmail}>"
+        - EmailSendingAccount: COGNITO_DEFAULT
+
+  CognitoUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub "wmd-auth-${AWS::AccountId}"
+      UserPoolId: !Ref CognitoUserPool
+
+  CognitoGroupCitizen:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: citizen
+      Description: Default citizen role with grievance filing permissions
+      UserPoolId: !Ref CognitoUserPool
+      Precedence: 10
+
+  CognitoGroupSchoolAdmin:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: school_admin
+      Description: Institutional administrators bound to a validated school_id
+      UserPoolId: !Ref CognitoUserPool
+      Precedence: 5
+
+  CognitoResourceServer:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties:
+      Identifier: ingest
+      Name: IoT Ingest & Telemetry Resource Server
+      UserPoolId: !Ref CognitoUserPool
+      Scopes:
+        - ScopeName: write
+          ScopeDescription: Physical sensor telemetry ingestion and grid synchronization
+
+  CognitoUserPoolWebClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: wmd-web-client
+      UserPoolId: !Ref CognitoUserPool
+      GenerateSecret: false
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - openid
+        - email
+        - profile
+      CallbackURLs:
+        - https://wmd-build.vercel.app/
+        - http://localhost:5173/
+      LogoutURLs:
+        - https://wmd-build.vercel.app/
+        - http://localhost:5173/
+      SupportedIdentityProviders:
+        - COGNITO
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      WriteAttributes:
+        - email
+      ReadAttributes:
+        - email
+        - custom:school_id
+      AccessTokenValidity: 1
+      IdTokenValidity: 1
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: hours
+        IdToken: hours
+        RefreshToken: days
+
+  CognitoUserPoolMobileClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: wmd-mobile-client
+      UserPoolId: !Ref CognitoUserPool
+      GenerateSecret: false
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - openid
+        - email
+        - profile
+      CallbackURLs:
+        - vayuvitals://auth/callback
+        - !Ref MobileDevCallbackUrl
+      LogoutURLs:
+        - vayuvitals://auth/logout
+      SupportedIdentityProviders:
+        - COGNITO
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      WriteAttributes:
+        - email
+      ReadAttributes:
+        - email
+        - custom:school_id
+      AccessTokenValidity: 1
+      IdTokenValidity: 1
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: hours
+        IdToken: hours
+        RefreshToken: days
+
+  CognitoUserPoolIngestClient:
+    Type: AWS::Cognito::UserPoolClient
+    DependsOn: CognitoResourceServer
+    Properties:
+      ClientName: wmd-iot-ingest-client
+      UserPoolId: !Ref CognitoUserPool
+      GenerateSecret: true
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - client_credentials
+      AllowedOAuthScopes:
+        - ingest/write
+      SupportedIdentityProviders:
+        - COGNITO
+      AccessTokenValidity: 1
+      TokenValidityUnits:
+        AccessToken: hours
+
+  # =================================================================
+  # 5. AWS Lambda: Environmental Backend API & Event Handler (Imported)
+  # =================================================================
+  WmdBackendRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "wmd-backend-role-${AWS::Region}"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: WmdBackendLeastPrivilegePolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchGetItem
+                  - dynamodb:BatchWriteItem
+                Resource:
+                  - !GetAtt AirQualityDynamoDBTable.Arn
+                  - !GetAtt PetitionsDynamoDBTable.Arn
+                  - !Sub "${PetitionsDynamoDBTable.Arn}/index/*"
               - Effect: Allow
                 Action:
                   - bedrock:InvokeModel
-                  - bedrock:InvokeModelWithResponseStream
                 Resource: '*'
+              - Effect: Allow
+                Action:
+                  - sagemaker:InvokeEndpoint
+                Resource: !Sub "arn:aws:sagemaker:${AWS::Region}:${AWS::AccountId}:endpoint/wmd-delhi-48h-forecast-endpoint"
+              - Effect: Allow
+                Action:
+                  - ses:SendEmail
+                  - ses:SendRawEmail
+                Resource: !Sub "arn:aws:ses:us-east-1:${AWS::AccountId}:identity/${SesSenderEmail}"
+              - Effect: Allow
+                Action:
+                  - cognito-idp:AdminGetUser
+                Resource: !GetAtt CognitoUserPool.Arn
 
-  # =================================================================
-  # 3. AWS Lambda & API Gateway: Environmental API Handler
-  # =================================================================
-  AirQualityLambdaFunction:
-    Type: AWS::Serverless::Function
+  WmdBackendFunction:
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Retain
     Properties:
-      FunctionName: BharatBuildsAirQualityFunction
-      CodeUri: ./lambda/
-      Handler: airQualityHandler.handler
-      Role: !GetAtt AirQualityBackendRole.Arn
+      FunctionName: wmd-backend
+      Code: ../lambda-dist/
+      Handler: index.handler
+      Runtime: nodejs22.x
+      Timeout: 180
+      MemorySize: 512
+      Role: !GetAtt WmdBackendRole.Arn
       Environment:
         Variables:
+          FRONTEND_URL: https://wmd-build.vercel.app
           DYNAMODB_TABLE_NAME: !Ref AirQualityDynamoDBTable
-          BEDROCK_MODEL_ID: 'anthropic.claude-3-haiku-20240307-v1:0'
-      Events:
-        GetAirQuality:
-          Type: HttpApi
-          Properties:
-            Path: /api/air-quality
-            Method: GET
-        GetHistory:
-          Type: HttpApi
-          Properties:
-            Path: /api/history
-            Method: GET
+          PETITIONS_TABLE_NAME: !Ref PetitionsDynamoDBTable
+          COGNITO_USER_POOL_ID: !Ref CognitoUserPool
+          COGNITO_WEB_CLIENT_ID: !Ref CognitoUserPoolWebClient
+          COGNITO_MOBILE_CLIENT_ID: !Ref CognitoUserPoolMobileClient
+          COGNITO_INGEST_CLIENT_ID: !Ref CognitoUserPoolIngestClient
+          ADVISORY_THRESHOLD_PM25: '75'
+          BLOCK_EMERGENCY_THRESHOLD_PM25: '105'
+          AWS_SES_REGION: us-east-1
+          SES_SENDER_EMAIL: !Ref SesSenderEmail
+          AWS_SES_VERIFIED_SENDER: !Ref SesSenderEmail
+          SAGEMAKER_REGION: ap-south-1
+          SAGEMAKER_ENDPOINT_NAME: wmd-delhi-48h-forecast-endpoint
+          NODE_ENV: production
+          ADMIN_API_KEY: !Ref AdminApiKey
+          GEMINI_API_KEY: !Ref GeminiApiKey
 
   # =================================================================
-  # 4. Amazon S3 & CloudFront: Static Frontend Hosting
+  # 6. Amazon EventBridge: Autonomous Atmospheric Monitor Cron
   # =================================================================
-  FrontendBucket:
-    Type: AWS::S3::Bucket
+  AutonomousMonitorCronRule:
+    Type: AWS::Events::Rule
     Properties:
-      BucketName: !Sub "bharatbuilds-air-3d-${AWS::AccountId}-${AWS::Region}"
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
+      Name: wmd-autonomous-monitor-cron
+      Description: Executes continuous atmospheric telemetry monitoring and safety evaluation every 30 minutes
+      ScheduleExpression: rate(30 minutes)
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt WmdBackendFunction.Arn
+          Id: AutonomousMonitorCronTarget
 
-  CloudFrontOriginAccessControl:
-    Type: AWS::CloudFront::OriginAccessControl
+  EventBridgeLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
     Properties:
-      OriginAccessControlConfig:
-        Name: "FrontendOAC"
-        OriginAccessControlOriginType: s3
-        SigningBehavior: always
-        SigningProtocol: sigv4
-
-  FrontendCloudFrontDistribution:
-    Type: AWS::CloudFront::Distribution
-    Properties:
-      DistributionConfig:
-        Enabled: true
-        DefaultRootObject: index.html
-        Comment: "Bharat Builds Environmental Hacks 3D Frontend"
-        Origins:
-          - Id: S3Origin
-            DomainName: !GetAtt FrontendBucket.RegionalDomainName
-            OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
-            S3OriginConfig:
-              OriginAccessIdentity: ""
-        DefaultCacheBehavior:
-          TargetOriginId: S3Origin
-          ViewerProtocolPolicy: redirect-to-https
-          AllowedMethods:
-            - GET
-            - HEAD
-            - OPTIONS
-          CachedMethods:
-            - GET
-            - HEAD
-          ForwardedValues:
-            QueryString: false
-            Cookies:
-              Forward: none
-        CustomErrorResponses:
-          - ErrorCode: 404
-            ResponseCode: 200
-            ResponsePagePath: /index.html
+      FunctionName: !GetAtt WmdBackendFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt AutonomousMonitorCronRule.Arn
 
 Outputs:
-  HttpApiUrl:
-    Description: "API Gateway Base URL"
-    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
-  DynamoDBTableName:
-    Description: "DynamoDB Historical Table"
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref CognitoUserPool
+  UserPoolDomain:
+    Description: Cognito Managed Login Domain
+    Value: !Sub "https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
+  WebClientId:
+    Description: Cognito Web App Client ID (Public PKCE)
+    Value: !Ref CognitoUserPoolWebClient
+  MobileClientId:
+    Description: Cognito Mobile App Client ID (Public PKCE)
+    Value: !Ref CognitoUserPoolMobileClient
+  IngestClientId:
+    Description: Cognito Machine Ingest Client ID (Confidential client_credentials)
+    Value: !Ref CognitoUserPoolIngestClient
+  PetitionsTableName:
+    Description: DynamoDB Petitions Table
+    Value: !Ref PetitionsDynamoDBTable
+  AirQualityTableName:
+    Description: DynamoDB Air Quality Readings Table
     Value: !Ref AirQualityDynamoDBTable
-  CloudFrontUrl:
-    Description: "CloudFront CDN URL"
-    Value: !Sub "https://${FrontendCloudFrontDistribution.DomainName}"
-  S3BucketName:
-    Description: "S3 Website Bucket Name"
-    Value: !Ref FrontendBucket
+  BackendFunctionArn:
+    Description: wmd-backend Lambda ARN
+    Value: !GetAtt WmdBackendFunction.Arn

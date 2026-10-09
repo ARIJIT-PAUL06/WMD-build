@@ -23,6 +23,7 @@ import {
   POLLUTANT_DOCUMENTARIES,
   POLLUTANT_DOCUMENTARY_LIST,
 } from '../../data/pollutantDocumentaries.js';
+import { apiFetch } from '../../utils/apiFetch';
 import schoolsDirectory from '../../data/schoolsDirectory.json';
 import {
   getNearbyStationsForSchool,
@@ -314,7 +315,7 @@ export default function PollutantDocumentary({
     let isMounted = true;
     const fetchDelhiTelemetry = async () => {
       try {
-        const res = await fetch('/api/delhi-heatmap');
+        const res = await apiFetch('/api/delhi-heatmap');
         if (!res.ok) throw new Error('HTTP status ' + res.status);
         const data = await res.json();
         if (

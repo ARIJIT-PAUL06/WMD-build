@@ -60,6 +60,21 @@ export const requireAdminKey = (req, res, next) => {
 };
 
 /**
+ * Gate to prevent autonomous monitoring cycle and emergency dispatch over HTTP in production.
+ * Scheduled cycles execute via AWS EventBridge or authorized CLI.
+ */
+export const disallowHttpDispatchInProd = (req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({
+      success: false,
+      error: 'http_dispatch_disabled',
+      message: 'Autonomous monitoring cycle and emergency dispatch over HTTP are disabled in production. Scheduled cycles execute via AWS EventBridge or authorized CLI.'
+    });
+  }
+  next();
+};
+
+/**
  * Bounded sliding window rate limiter for petition endpoints
  */
 const petitionRateLimits = new Map();
@@ -95,6 +110,45 @@ export function rateLimitPetition(maxReqs = 60, windowMs = 60000) {
     }
     valid.push(now);
     petitionRateLimits.set(ip, valid);
+    next();
+  };
+}
+
+/**
+ * User-keyed sliding window rate limiter for authenticated endpoints (keyed on req.user.sub)
+ */
+const userRateLimits = new Map();
+const MAX_USER_RATE_LIMIT_ENTRIES = 5000;
+
+export function rateLimitPerUser(maxReqs = 30, windowMs = 60000) {
+  return (req, res, next) => {
+    const key = req.user?.sub ? `usr:${req.user.sub}` : `ip:${req.ip || req.headers['x-forwarded-for'] || 'client'}`;
+    const now = Date.now();
+
+    if (userRateLimits.size > MAX_USER_RATE_LIMIT_ENTRIES) {
+      for (const [k, times] of userRateLimits.entries()) {
+        const fresh = times.filter(t => now - t < windowMs);
+        if (fresh.length === 0) {
+          userRateLimits.delete(k);
+        } else {
+          userRateLimits.set(k, fresh);
+        }
+      }
+      if (userRateLimits.size > MAX_USER_RATE_LIMIT_ENTRIES) {
+        userRateLimits.clear();
+      }
+    }
+
+    const records = userRateLimits.get(key) || [];
+    const valid = records.filter(t => now - t < windowMs);
+    if (valid.length >= maxReqs) {
+      return res.status(429).json({
+        success: false,
+        error: 'Too many requests for this account. Please slow down.'
+      });
+    }
+    valid.push(now);
+    userRateLimits.set(key, valid);
     next();
   };
 }

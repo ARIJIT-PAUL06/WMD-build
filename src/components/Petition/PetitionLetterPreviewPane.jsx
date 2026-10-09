@@ -6,12 +6,14 @@ import {
   Check,
   Mail,
   ExternalLink,
-  Download
+  Download,
+  Bookmark,
+  SendHorizontal
 } from 'lucide-react';
 
 /**
  * Renders the Right Column Live Letter Preview, Language & AI Tone Polish Controls,
- * and the Bottom Action Dock (Copy, Email, Portal, PDF Dossier).
+ * and the Bottom Action Dock (Save, Copy, Email, Portal, PDF Dossier).
  */
 export default function PetitionLetterPreviewPane({
   language,
@@ -39,7 +41,14 @@ export default function PetitionLetterPreviewPane({
   currentAuthority,
   handleOpenOfficialPortal,
   handleDownloadPdf,
-  isGeneratingPdf
+  isGeneratingPdf,
+  handleSaveToMyPetitions,
+  isSavingPetition,
+  savedPetitionId,
+  savedPetitionStatus,
+  saveError = null,
+  handleMarkAsSent,
+  onOpenMyPetitions
 }) {
   return (
     <div
@@ -98,169 +107,207 @@ export default function PetitionLetterPreviewPane({
         </div>
 
         {/* Tone Switcher & AI Polish Button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <select
             value={tone}
             onChange={(e) => setTone(e.target.value)}
             style={{
-              padding: '4px 8px',
-              borderRadius: '6px',
-              background: 'rgba(15, 23, 42, 0.9)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: 'rgba(0, 0, 0, 0.3)',
               color: '#e2e8f0',
-              fontSize: '0.72rem'
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '6px',
+              padding: '4px 8px',
+              fontSize: '0.75rem',
+              outline: 'none'
             }}
           >
-            <option value="formal">Tone: Formal & Administrative</option>
-            <option value="urgent">Tone: Urgent Health Alert</option>
-            <option value="collaborative">Tone: Collaborative Civic</option>
+            <option value="formal">Formal Administrative (Standard)</option>
+            <option value="urgent">Urgent Public Health Alert</option>
+            <option value="collaborative">Collaborative Partnership</option>
           </select>
 
           <button
             onClick={handlePolishWithAi}
-            disabled={isPolishing}
+            disabled={isPolishing || !activeLetterText}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '5px',
+              gap: '6px',
               padding: '5px 12px',
               borderRadius: '6px',
               fontSize: '0.75rem',
               fontWeight: 600,
-              background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(56, 189, 248, 0.3))',
-              border: '1px solid rgba(168, 85, 247, 0.5)',
-              color: '#e9d5ff',
+              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+              color: '#fff',
+              border: 'none',
               cursor: isPolishing ? 'not-allowed' : 'pointer',
-              transition: 'all 0.15s ease'
+              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)'
             }}
           >
             <Sparkles size={13} className={isPolishing ? 'animate-spin' : ''} />
-            {isPolishing ? 'Polishing...' : 'Polish Tone with AI'}
+            {isPolishing ? 'Refining...' : 'Polish with AI'}
           </button>
         </div>
       </div>
 
-      {/* AI Telemetry Badge (if polished) */}
+      {/* Polish Verification Telemetry Tag */}
       {aiTelemetry && (
-        <div style={{ padding: '4px 20px', background: 'rgba(168, 85, 247, 0.1)', fontSize: '0.7rem', color: '#c084fc', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <CheckCircle size={12} />
-          <span>Refined with <strong>{aiTelemetry.mode}</strong> ({aiTelemetry.model}) · Tone: <em>{aiTelemetry.tone}</em> · Numbers strictly preserved</span>
+        <div
+          style={{
+            padding: '6px 20px',
+            background: 'rgba(99, 102, 241, 0.1)',
+            borderBottom: '1px solid rgba(99, 102, 241, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '0.72rem',
+            color: '#a5b4fc'
+          }}
+        >
+          <CheckCircle size={12} color="#818cf8" />
+          <span>
+            Refined via {aiTelemetry.mode === 'AWS_BEDROCK_LIVE' ? 'AWS Bedrock (Claude 3 Haiku)' : 'Google Gemini AI'} • Empirical evidence strictly preserved
+          </span>
         </div>
       )}
 
-      {/* Editable Letter Canvas */}
-      <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
+      {/* Editor & Preview Area */}
+      <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {draftError && (
+          <div style={{ padding: '10px 14px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', color: '#f87171', fontSize: '0.78rem' }}>
+            {draftError}
+          </div>
+        )}
+
+        <textarea
+          value={language === 'hi' ? editableLetterHi : editableLetterEn}
+          onChange={(e) => {
+            if (language === 'hi') {
+              setEditableLetterHi(e.target.value);
+            } else {
+              setEditableLetterEn(e.target.value);
+            }
+          }}
+          placeholder="Draft will generate automatically from verified numbers..."
+          style={{
+            flex: 1,
+            minHeight: '340px',
+            background: 'rgba(0, 0, 0, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '10px',
+            padding: '16px',
+            color: '#e2e8f0',
+            fontSize: '0.82rem',
+            lineHeight: '1.6',
+            fontFamily: 'var(--font-mono, monospace)',
+            resize: 'none',
+            outline: 'none'
+          }}
+        />
+
+        {/* Privacy Notice Wording */}
         <div
           style={{
-            background: '#ffffff',
-            color: '#1e293b',
+            padding: '10px 14px',
+            background: 'rgba(56, 189, 248, 0.06)',
+            border: '1px solid rgba(56, 189, 248, 0.18)',
             borderRadius: '8px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
-            padding: '28px 32px',
-            minHeight: '100%',
-            fontFamily: 'Georgia, Cambria, "Times New Roman", serif',
-            fontSize: '0.88rem',
-            lineHeight: '1.6',
-            position: 'relative'
+            fontSize: '0.73rem',
+            color: '#94a3b8',
+            lineHeight: '1.45'
           }}
         >
-          {/* Official Letterhead Strip */}
-          <div style={{ borderBottom: '2px solid #0f172a', paddingBottom: '12px', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 'bold', color: '#0f172a', letterSpacing: '0.02em' }}>
-                  OFFICIAL CIVIC GRIEVANCE & PETITION DRAFT
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                  Prepared by {schoolName} · Verified with Sensor Telemetry
-                </div>
-              </div>
-              <div style={{ textAlign: 'right', fontSize: '0.75rem', color: '#64748b' }}>
-                <div>Date: {todayFormatted}</div>
-                <div style={{ color: '#dc2626', fontWeight: 'bold', fontSize: '0.7rem' }}>[DRAFT FOR CITIZEN SUBMISSION]</div>
-              </div>
-            </div>
-          </div>
-
-          {draftError ? (
-            <div style={{ padding: '40px 20px', textAlign: 'center', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '8px', border: '1px dashed #fca5a5' }}>
-              <div style={{ color: '#dc2626', fontWeight: 'bold', fontSize: '0.9rem', marginBottom: '8px' }}>
-                Draft Generation Error
-              </div>
-              <div style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '16px' }}>
-                {draftError}
-              </div>
-              <button
-                type="button"
-                onClick={generateDraft}
-                disabled={isGeneratingDraft}
-                style={{
-                  padding: '6px 14px',
-                  background: '#0284c7',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '0.75rem',
-                  fontWeight: 600
-                }}
-              >
-                {isGeneratingDraft ? 'Retrying...' : 'Retry Generating Draft'}
-              </button>
-            </div>
-          ) : (
-            <textarea
-              value={language === 'hi' ? editableLetterHi : editableLetterEn}
-              onChange={(e) => {
-                if (language === 'hi') {
-                  setEditableLetterHi(e.target.value);
-                } else {
-                  setEditableLetterEn(e.target.value);
-                }
-              }}
-              style={{
-                width: '100%',
-                minHeight: '440px',
-                border: 'none',
-                outline: 'none',
-                resize: 'none',
-                fontFamily: 'inherit',
-                fontSize: 'inherit',
-                lineHeight: 'inherit',
-                color: '#1e293b',
-                background: 'transparent',
-                whiteSpace: 'pre-wrap'
-              }}
-              placeholder={isGeneratingDraft ? 'Drafting formal grievance from verified telemetry...' : 'Drafting formal grievance...'}
-            />
-          )}
-
-          {/* Empirical Watermark Note */}
-          <div style={{ marginTop: '20px', paddingTop: '12px', borderTop: '1px solid #e2e8f0', fontSize: '0.75rem', color: '#64748b' }}>
-            <strong>Annexure Attached:</strong> Verified continuous {days}-day morning exposure log ({evidence?.stationName || 'CAAQMS Station'}) compiled via VayuVitals SafeRecess Protocol.
-          </div>
+          <strong style={{ color: '#38bdf8' }}>Privacy Notice:</strong> When you save, your letter, including your name and contact, is stored on our server in Mumbai (ap-south-1), visible only to you, and you can delete it. Your school only sees the date, authority, subject and air-quality summary.
         </div>
       </div>
 
-      {/* ============================================================= */}
-      {/* STEP 4: OUTPUT ACTIONS BAR */}
-      {/* ============================================================= */}
+      {/* Bottom Action Dock */}
       <div
         style={{
-          padding: '16px 20px',
+          padding: '14px 20px',
           borderTop: '1px solid rgba(255, 255, 255, 0.08)',
           background: 'rgba(15, 23, 42, 0.95)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '12px'
+          flexWrap: 'wrap',
+          gap: '10px'
         }}
       >
-        <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-          CPGRAMS Character count: <strong style={{ color: activeLetterText.length > 4000 ? '#ef4444' : '#38bdf8' }}>{activeLetterText.length}</strong> / 4,000 max
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
+            Count: <strong style={{ color: activeLetterText.length > 4000 ? '#ef4444' : '#38bdf8' }}>{activeLetterText.length}</strong> / 4,000 max
+          </div>
+          {savedPetitionStatus && (
+            <span
+              style={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                padding: '2px 8px',
+                borderRadius: '6px',
+                background: 'rgba(16, 185, 129, 0.15)',
+                color: '#34d399'
+              }}
+            >
+              Status: {savedPetitionStatus}
+            </span>
+          )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Save to My Petitions Button */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <button
+              onClick={handleSaveToMyPetitions}
+              disabled={isSavingPetition || !activeLetterText}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 14px',
+                borderRadius: '8px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                background: savedPetitionId ? 'rgba(16, 185, 129, 0.15)' : 'rgba(56, 189, 248, 0.15)',
+                border: `1px solid ${savedPetitionId ? 'rgba(16, 185, 129, 0.4)' : 'rgba(56, 189, 248, 0.35)'}`,
+                color: savedPetitionId ? '#34d399' : '#38bdf8',
+                cursor: isSavingPetition ? 'wait' : 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Bookmark size={14} />
+              {isSavingPetition ? 'Saving...' : savedPetitionId ? 'Saved to My Petitions' : 'Save to My petitions'}
+            </button>
+            {saveError && (
+              <span style={{ color: '#ef4444', fontSize: '0.72rem', fontWeight: 600, paddingLeft: '4px' }}>
+                {saveError}
+              </span>
+            )}
+          </div>
+
+          {/* Mark as sent (when petition is saved) */}
+          {savedPetitionId && savedPetitionStatus !== 'MARKED_AS_SENT' && (
+            <button
+              onClick={handleMarkAsSent}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                background: 'rgba(245, 158, 11, 0.15)',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                color: '#fbbf24',
+                cursor: 'pointer'
+              }}
+            >
+              <SendHorizontal size={13} />
+              Mark as sent
+            </button>
+          )}
+
           {/* 1. Copy CPGRAMS Text */}
           <button
             onClick={handleCopyCpgrams}
@@ -268,19 +315,18 @@ export default function PetitionLetterPreviewPane({
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 14px',
+              padding: '8px 12px',
               borderRadius: '8px',
               fontSize: '0.78rem',
               fontWeight: 600,
               background: copyFeedback ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.08)',
               border: `1px solid ${copyFeedback ? 'rgba(52, 211, 153, 0.4)' : 'rgba(255, 255, 255, 0.15)'}`,
               color: copyFeedback ? '#34d399' : '#e2e8f0',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
+              cursor: 'pointer'
             }}
           >
             {copyFeedback ? <Check size={14} /> : <Copy size={14} />}
-            {copyFeedback ? 'Copied to Clipboard!' : 'Copy to Clipboard'}
+            {copyFeedback ? 'Copied!' : 'Copy to Clipboard'}
           </button>
 
           {/* 2. Open Official Mailto */}
@@ -290,19 +336,19 @@ export default function PetitionLetterPreviewPane({
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 14px',
+              padding: '8px 12px',
               borderRadius: '8px',
               fontSize: '0.78rem',
               fontWeight: 600,
-              background: 'rgba(56, 189, 248, 0.15)',
-              border: '1px solid rgba(56, 189, 248, 0.35)',
-              color: '#38bdf8',
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: '#e2e8f0',
               cursor: 'pointer'
             }}
             title={`Open draft addressed to ${currentAuthority?.email}`}
           >
             <Mail size={14} />
-            Email Authority Draft
+            Email Draft
           </button>
 
           {/* 3. Open Official Grievance Portal */}
@@ -312,7 +358,7 @@ export default function PetitionLetterPreviewPane({
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 14px',
+              padding: '8px 12px',
               borderRadius: '8px',
               fontSize: '0.78rem',
               fontWeight: 600,
@@ -324,7 +370,7 @@ export default function PetitionLetterPreviewPane({
             title="Open official government grievance submission portal"
           >
             <ExternalLink size={14} />
-            Open {currentAuthority?.portalName?.split(' ')[0] || 'Portal'} Portal
+            Portal
           </button>
 
           {/* 4. Download Formal PDF Dossier */}
@@ -335,20 +381,19 @@ export default function PetitionLetterPreviewPane({
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 18px',
+              padding: '8px 16px',
               borderRadius: '8px',
-              fontSize: '0.8rem',
+              fontSize: '0.78rem',
               fontWeight: 700,
               background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
               border: 'none',
               color: '#ffffff',
               cursor: isGeneratingPdf ? 'not-allowed' : 'pointer',
-              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
-              transition: 'all 0.15s ease'
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)'
             }}
           >
-            <Download size={15} />
-            {isGeneratingPdf ? 'Compiling Dossier...' : 'Download PDF Dossier'}
+            <Download size={14} />
+            {isGeneratingPdf ? 'Compiling PDF...' : 'Download PDF Dossier'}
           </button>
         </div>
       </div>

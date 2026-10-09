@@ -30,8 +30,16 @@ import {
   deleteDocket,
   deleteAllDockets,
   updateDocketStatus,
+  onAuthRequired,
   DOCKET_STATUS
 } from './src/services/petitionService';
+import {
+  signIn,
+  signOut,
+  getCurrentUser,
+  onAuthStateChange,
+  getAuthConfig
+} from './src/services/authService';
 
 const initialStations = indiaStations.map(s => ({
   ...s,
@@ -48,6 +56,7 @@ export default function App() {
   const [isPetitionModalVisible, setIsPetitionModalVisible] = useState(false);
   const [petitionTargetStation, setPetitionTargetStation] = useState(null);
   const [localDockets, setLocalDockets] = useState([]);
+  const [authUser, setAuthUser] = useState(null);
 
   const refreshDockets = useCallback(async () => {
     try {
@@ -63,8 +72,58 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    getCurrentUser().then(user => setAuthUser(user));
+    const unsubscribeAuth = onAuthStateChange((event, data) => {
+      if (event === 'SIGNED_IN') {
+        setAuthUser(data?.user || null);
+        refreshDockets();
+      } else if (event === 'SIGNED_OUT') {
+        setAuthUser(null);
+        refreshDockets();
+      }
+    });
+
+    const unsubscribeRequired = onAuthRequired(() => {
+      Alert.alert(
+        'Authentication Required',
+        'Your session has expired or requires authentication. Please sign in to sync with the server.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: () => handleSignIn() }
+        ]
+      );
+    });
+
     refreshDockets();
+
+    return () => {
+      unsubscribeAuth();
+      unsubscribeRequired();
+    };
   }, [refreshDockets]);
+
+  const handleSignIn = async () => {
+    try {
+      const res = await signIn();
+      if (res.success && res.user) {
+        setAuthUser(res.user);
+        refreshDockets();
+      }
+    } catch (err) {
+      console.warn('Sign in failed:', err);
+      Alert.alert('Sign In Failed', err.message || 'Unable to authenticate with Cognito.');
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      setAuthUser(null);
+      refreshDockets();
+    } catch (err) {
+      console.warn('Sign out error:', err);
+    }
+  };
 
   const handleShareDocket = async (docket) => {
     try {
@@ -510,13 +569,67 @@ export default function App() {
               </View>
             </View>
 
-            {/* Profile Card */}
+            {/* Profile & Cognito Auth Card */}
             <View style={styles.profileCard}>
               <View style={styles.profileIconCircle}>
-                <Ionicons name="business" size={24} color="#00f0ff" />
+                <Ionicons name={authUser ? (authUser.isSchoolAdmin ? "school" : "person") : "person-outline"} size={24} color="#00f0ff" />
               </View>
-              <Text style={styles.profileName}>DELHI RESISTANCE GRID</Text>
-              <Text style={styles.profileSub}>CIVIL DEFENSE · PROTOCOL 2026</Text>
+              <Text style={styles.profileName}>
+                {authUser ? (authUser.email || 'AUTHENTICATED CITIZEN') : 'GUEST CITIZEN'}
+              </Text>
+              <Text style={styles.profileSub}>
+                {authUser ? (authUser.isSchoolAdmin ? `SCHOOL ADMIN (${authUser.schoolId || 'UNASSIGNED'})` : 'VERIFIED CITIZEN ROLE') : 'NOT SIGNED IN · SAVING LOCAL ONLY'}
+              </Text>
+
+              <View style={{ marginTop: 12, marginBottom: 8, width: '100%' }}>
+                {authUser ? (
+                  <TouchableOpacity
+                    onPress={handleSignOut}
+                    style={{
+                      paddingVertical: 8,
+                      paddingHorizontal: 16,
+                      borderRadius: 8,
+                      backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                      borderWidth: 1,
+                      borderColor: 'rgba(239, 68, 68, 0.35)',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '700' }}>SIGN OUT</Text>
+                  </TouchableOpacity>
+                ) : !getAuthConfig().configured ? (
+                  <View
+                    style={{
+                      paddingVertical: 10,
+                      paddingHorizontal: 16,
+                      borderRadius: 8,
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      borderWidth: 1,
+                      borderColor: 'rgba(239, 68, 68, 0.35)',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '600', textAlign: 'center' }}>
+                      Login is not configured in this build (missing cognitoDomain / cognitoClientId in app.json).
+                    </Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={handleSignIn}
+                    style={{
+                      paddingVertical: 10,
+                      paddingHorizontal: 16,
+                      borderRadius: 8,
+                      backgroundColor: 'rgba(0, 240, 255, 0.15)',
+                      borderWidth: 1,
+                      borderColor: '#00f0ff',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <Text style={{ color: '#00f0ff', fontSize: 13, fontWeight: '800' }}>SIGN IN WITH COGNITO</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
 
               <View style={styles.profileStatusGrid}>
                 <View style={styles.profileStatusItem}>
@@ -529,9 +642,9 @@ export default function App() {
 
                 <View style={styles.profileStatusItem}>
                   <Ionicons name="document-text-outline" size={18} color="#38bdf8" />
-                  <Text style={styles.profileStatusLabel}>CIVIC DOCKETS</Text>
+                  <Text style={styles.profileStatusLabel}>CIVIC PETITIONS</Text>
                   <Text style={[styles.profileStatusValue, { color: '#38bdf8' }]}>
-                    {localDockets.length} SAVED
+                    {localDockets.length} {authUser ? 'SYNCED' : 'LOCAL'}
                   </Text>
                 </View>
 
@@ -664,11 +777,11 @@ export default function App() {
               })
             )}
 
-            {/* DPDP Act 2023 Local Storage Disclosure */}
+            {/* DPDP Act 2023 Disclosure */}
             <View style={styles.dpdpNoticeCard}>
               <Ionicons name="shield-checkmark" size={15} color="#38bdf8" />
               <Text style={styles.dpdpNoticeText}>
-                🔒 DPDP Act 2023 Compliance: All petition drafts, sender contact details, and evidence dockets are stored strictly in local device memory. Zero personal identifiers or grievances are synced to remote analytics servers.
+                When you save, your letter, including your name and contact, is stored on our server in Mumbai (ap-south-1), visible only to you, and you can delete it. Your school only sees the date, authority, subject and air-quality summary.
               </Text>
             </View>
 

@@ -3,108 +3,68 @@ import os
 import dotenv
 import zipfile
 import io
-import json
+import subprocess
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 dotenv.load_dotenv(os.path.join(project_root, '.env'))
 
 region = os.getenv('AWS_REGION', 'ap-south-1')
-aws_key = os.getenv('AWS_ACCESS_KEY_ID')
-aws_secret = os.getenv('AWS_SECRET_ACCESS_KEY')
+aws_key = os.getenv('APP_AWS_ACCESS_KEY_ID') or os.getenv('AWS_ACCESS_KEY_ID')
+aws_secret = os.getenv('APP_AWS_SECRET_ACCESS_KEY') or os.getenv('AWS_SECRET_ACCESS_KEY')
+aws_session = os.getenv('AWS_SESSION_TOKEN')
 
-session = boto3.Session(
-    aws_access_key_id=aws_key,
-    aws_secret_access_key=aws_secret,
-    region_name=region
-)
+session_kwargs = {'region_name': region}
+if aws_key and aws_secret:
+    session_kwargs['aws_access_key_id'] = aws_key
+    session_kwargs['aws_secret_access_key'] = aws_secret
+    if aws_session:
+        session_kwargs['aws_session_token'] = aws_session
+
+session = boto3.Session(**session_kwargs)
 lam = session.client('lambda')
 
-import subprocess
+print("0. Building Lambda bundle via scripts/build_lambda.mjs...")
+subprocess.run('node scripts/build_lambda.mjs', shell=True, check=True, cwd=project_root)
 
-print("0. Building lambda-dist/index.mjs via esbuild...")
 dist_dir = os.path.join(project_root, 'lambda-dist')
-os.makedirs(dist_dir, exist_ok=True)
-subprocess.run(
-    'npx esbuild server/lambda.js --bundle --platform=node --target=node20 --format=esm --outfile=lambda-dist/index.mjs --external:@aws-sdk/* --banner:js="import { createRequire } from \'module\'; const require = createRequire(import.meta.url);"',
-    shell=True,
-    check=True,
-    cwd=project_root
-)
-
-print("1. Packaging Lambda bundle from lambda-dist/index.mjs and model/data files...")
+print("1. Packaging Lambda bundle from lambda-dist/ recursively...")
 buf = io.BytesIO()
 with zipfile.ZipFile(buf, 'w', compression=zipfile.ZIP_DEFLATED) as z:
-    z.write(os.path.join(project_root, 'lambda-dist', 'index.mjs'), arcname='index.mjs')
-    z.write(os.path.join(project_root, 'ml', 'data', 'spatial_grids.json'), arcname='ml/data/spatial_grids.json')
-    z.write(os.path.join(project_root, 'src', 'data', 'schoolsDirectory.json'), arcname='src/data/schoolsDirectory.json')
-    z.write(os.path.join(project_root, 'src', 'data', 'authoritiesConfig.json'), arcname='src/data/authoritiesConfig.json')
-    z.write(os.path.join(project_root, 'ml', 'model', 'sagemaker_forecast_metadata.json'), arcname='ml/model/sagemaker_forecast_metadata.json')
-    z.write(os.path.join(project_root, 'ml', 'model', 'xgboost_forecast_model.json'), arcname='ml/model/xgboost_forecast_model.json')
-    buf_path = os.path.join(project_root, 'ml', 'data', 'grid_14day_buffer.json')
-    if os.path.exists(buf_path):
-        z.write(buf_path, arcname='ml/data/grid_14day_buffer.json')
+    for root, _, files in os.walk(dist_dir):
+        for f in files:
+            full_path = os.path.join(root, f)
+            arcname = os.path.relpath(full_path, dist_dir).replace('\\', '/')
+            z.write(full_path, arcname=arcname)
 
 buf.seek(0)
 zip_bytes = buf.read()
 print(f"   Bundle size: {len(zip_bytes) / 1024 / 1024:.2f} MB")
 
-print("2. Uploading code to Lambda function 'wmd-backend'...")
-lam.update_function_code(FunctionName='wmd-backend', ZipFile=zip_bytes)
+print("2. Checking guard: verifying COGNITO_USER_POOL_ID in wmd-backend environment...")
+cfg = lam.get_function_configuration(FunctionName='wmd-backend')
+env = (cfg.get('Environment') or {}).get('Variables') or {}
+if not env.get('COGNITO_USER_POOL_ID'):
+    raise SystemExit('ABORT: wmd-backend has no COGNITO_USER_POOL_ID. This code requires login and would make drafting return 503. Deploy the CloudFormation stack first (docs/COGNITO_FIX_PLAN_V2.md, Phase C).')
+
+print("3. Code-only deployment to Lambda function 'wmd-backend' (Publishing new version)...")
+update_res = lam.update_function_code(
+    FunctionName='wmd-backend',
+    ZipFile=zip_bytes,
+    Publish=True
+)
+
 waiter = lam.get_waiter('function_updated_v2')
 waiter.wait(FunctionName='wmd-backend')
-print("   Code updated successfully.")
 
-print("3. Updating environment variables and timeouts...")
-updated_env = {
-    'ENABLE_AUTONOMOUS_EMAIL_DISPATCH': os.getenv('ENABLE_AUTONOMOUS_EMAIL_DISPATCH', 'false'),
-    'DISABLE_AUTOMATIC_MAILING': os.getenv('DISABLE_AUTOMATIC_MAILING', 'false'),
-    'COMMAND_CENTRE_EMAIL': os.getenv('COMMAND_CENTRE_EMAIL', ''),
-    'MONITOR_ALERT_RECIPIENT': os.getenv('MONITOR_ALERT_RECIPIENT', ''),
-    'AWS_SES_VERIFIED_SENDER': os.getenv('AWS_SES_VERIFIED_SENDER', 'vayuvitals@gmail.com'),
-    'SES_SENDER_EMAIL': os.getenv('SES_SENDER_EMAIL', 'vayuvitals@gmail.com'),
-    'AWS_SES_REGION': os.getenv('AWS_SES_REGION', 'us-east-1'),
-    'SAGEMAKER_REGION': os.getenv('SAGEMAKER_REGION', 'ap-south-1'),
-    'SAGEMAKER_ENDPOINT_NAME': os.getenv('SAGEMAKER_ENDPOINT_NAME', 'wmd-delhi-48h-forecast-endpoint'),
-    'ADVISORY_THRESHOLD_PM25': os.getenv('ADVISORY_THRESHOLD_PM25', '75'),
-    'BLOCK_EMERGENCY_THRESHOLD_PM25': os.getenv('BLOCK_EMERGENCY_THRESHOLD_PM25', '105'),
-    'DYNAMODB_TABLE_NAME': os.getenv('DYNAMODB_TABLE_NAME', 'AirQualityReadings'),
-    'NODE_ENV': 'production',
-    'ADMIN_API_KEY': os.getenv('ADMIN_API_KEY', ''),
-    'GEMINI_API_KEY': os.getenv('GEMINI_API_KEY', '')
-}
+new_version = update_res.get('Version', 'LATEST')
+function_arn = update_res.get('FunctionArn', '')
+code_sha256 = update_res.get('CodeSha256', '')
 
-lam.update_function_configuration(
-    FunctionName='wmd-backend',
-    Timeout=180,
-    MemorySize=512,
-    Environment={'Variables': updated_env}
-)
-waiter.wait(FunctionName='wmd-backend')
-print("   Configuration updated successfully.")
-
-print("4. Ensuring EventBridge invoke permissions...")
-try:
-    lam.remove_permission(
-        FunctionName='wmd-backend',
-        StatementId='EventBridgeInvokePermission'
-    )
-    print("   Removed legacy EventBridge permission.")
-except Exception:
-    pass
-
-try:
-    sts = session.client('sts')
-    account_id = sts.get_caller_identity()['Account']
-    lam.add_permission(
-        FunctionName='wmd-backend',
-        StatementId='EventBridgeInvokePermission',
-        Action='lambda:InvokeFunction',
-        Principal='events.amazonaws.com',
-        SourceArn=f"arn:aws:events:{region}:{account_id}:rule/*",
-        SourceAccount=account_id
-    )
-    print(f"   Scoped permission added for events.amazonaws.com (Account: {account_id}).")
-except Exception as e:
-    print(f"   Note on EventBridge permission: {e}")
-
-print("=== Deployment to AWS Lambda Complete ===")
+print(f"\n✅ Lambda code deployed successfully!")
+print(f"   Published Version: {new_version}")
+print(f"   Function ARN:      {function_arn}")
+print(f"   Code SHA256:       {code_sha256}")
+print("\nℹ️ Environment variables and configuration are managed solely by CloudFormation (aws/template.yaml).")
+print(f"🔄 Rollback: If you need to roll back, use AWS CLI:")
+print(f"   aws lambda update-function-code --function-name wmd-backend ...")
+print(f"   or update an alias pointing to the previous stable version.\n")

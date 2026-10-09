@@ -17,16 +17,17 @@ import {
   getMonitorStatus,
   clearMonitorDebounces
 } from '../autonomousAtmosphericMonitor.js';
-import { requireAdminKey } from '../middleware/authAndRateLimit.js';
+import { requireAdminKey, disallowHttpDispatchInProd } from '../middleware/authAndRateLimit.js';
+import { requireAuth } from '../authMiddleware.js';
 
 const router = express.Router();
 
 /**
  * AWS IoT Core Ingestion Endpoint:
- * Simulates physical air-quality sensors pushing via MQTT/IoT Core:
- * Sensor -> IoT Core -> Lambda -> DynamoDB
+ * Requires machine token with 'ingest/write' OAuth scope.
+ * Sensor -> IoT Core / Gateway -> Lambda -> DynamoDB
  */
-router.post('/api/sensor-ingest', requireAdminKey, async (req, res) => {
+router.post('/api/sensor-ingest', requireAuth({ scope: 'ingest/write' }), async (req, res) => {
   try {
     const { deviceId, city, aqi, pm25, pm10, temp, humidity } = req.body;
 
@@ -75,8 +76,9 @@ router.post('/api/sensor-ingest', requireAdminKey, async (req, res) => {
 
 /**
  * Synchronize 14-Day Empirical Multi-Gas Telemetry across Delhi-NCR Grids from Open-Meteo
+ * Requires machine token with 'ingest/write' OAuth scope.
  */
-router.post('/api/telemetry/sync-grids', requireAdminKey, async (req, res) => {
+router.post('/api/telemetry/sync-grids', requireAuth({ scope: 'ingest/write' }), async (req, res) => {
   try {
     const daysPast = parseInt(req.body?.daysPast, 10) || 14;
     const synced = await syncAllPopulatedGrids(daysPast);
@@ -162,13 +164,17 @@ router.get('/api/spatial-grids/:gridId/compliance', (req, res) => {
 router.get('/api/monitor/status', (req, res) => {
   try {
     const status = getMonitorStatus();
-    res.json({ success: true, ...status });
+    res.json({
+      success: true,
+      ...status,
+      httpDispatchEnabled: process.env.NODE_ENV !== 'production'
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-router.post('/api/monitor/run-cycle', requireAdminKey, async (req, res) => {
+router.post('/api/monitor/run-cycle', disallowHttpDispatchInProd, requireAdminKey, async (req, res) => {
   try {
     const { dispatchViaSes = true, isSandbox = true } = req.body || {};
     const report = await runAutonomousMonitoringCycle({ dispatchViaSes, isSandbox });
@@ -178,7 +184,7 @@ router.post('/api/monitor/run-cycle', requireAdminKey, async (req, res) => {
   }
 });
 
-router.post('/api/monitor/clear-debounces', requireAdminKey, (req, res) => {
+router.post('/api/monitor/clear-debounces', disallowHttpDispatchInProd, requireAdminKey, (req, res) => {
   try {
     const result = clearMonitorDebounces();
     res.json(result);
@@ -187,7 +193,7 @@ router.post('/api/monitor/clear-debounces', requireAdminKey, (req, res) => {
   }
 });
 
-router.post('/api/monitor/block-emergency', requireAdminKey, async (req, res) => {
+router.post('/api/monitor/block-emergency', disallowHttpDispatchInProd, requireAdminKey, async (req, res) => {
   try {
     const { gridId, currentPm25 = 245, anomalyType, dispatchViaSes = true, isSandbox = true, ignoreDebounce = false } = req.body;
     if (!gridId) {
@@ -207,7 +213,7 @@ router.post('/api/monitor/block-emergency', requireAdminKey, async (req, res) =>
   }
 });
 
-router.post('/api/monitor/predictive-advisories', requireAdminKey, async (req, res) => {
+router.post('/api/monitor/predictive-advisories', disallowHttpDispatchInProd, requireAdminKey, async (req, res) => {
   try {
     const {
       facilityId,
@@ -233,7 +239,7 @@ router.post('/api/monitor/predictive-advisories', requireAdminKey, async (req, r
   }
 });
 
-router.post('/api/monitor/chronic-petitions', requireAdminKey, async (req, res) => {
+router.post('/api/monitor/chronic-petitions', disallowHttpDispatchInProd, requireAdminKey, async (req, res) => {
   try {
     const { gridId, dispatchViaSes = true, isSandbox = true, ignoreDebounce = false, forcePetition = false } = req.body || {};
     const results = await evaluate14DayChronicBlockPetitions({
