@@ -72,9 +72,6 @@ export default function BedrockAdvisoryCard({
               <span style={{ fontSize: '0.9rem', fontWeight: 700 }}>
                 Amazon Bedrock Health Synthesis
               </span>
-              <span className="badge badge-aws" style={{ fontSize: '0.65rem' }}>
-                AI Layer
-              </span>
             </div>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
               {modelId}
@@ -90,7 +87,7 @@ export default function BedrockAdvisoryCard({
           title="Invoke Bedrock to re-synthesize environmental explanation"
         >
           <RefreshCw size={12} className={isRegenerating ? 'animate-spin' : ''} />
-          {isRegenerating ? 'Synthesizing...' : 'Refresh AI'}
+          {isRegenerating ? 'Synthesizing...' : 'Refresh'}
         </button>
       </div>
 
@@ -113,7 +110,7 @@ export default function BedrockAdvisoryCard({
             <span>Generating tailored pulmonary risk explanation via Amazon Bedrock...</span>
           </div>
         ) : (
-          advisory || 'No Bedrock AI advisory available. (Live AWS Bedrock model unconfigured or unauthorized)'
+          advisory || 'No Bedrock advisory available. (Live AWS Bedrock model unconfigured or unauthorized)'
         )}
       </div>
 

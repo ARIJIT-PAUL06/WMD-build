@@ -20,11 +20,13 @@ export default function DocumentaryDataSection({
   currentValue,
   currentStation,
   stationsList = [],
+  cinematicTheme,
 }) {
   const { sections = {}, visualMetadata = {} } = pollutantData;
   const unit = pollutantData.unit || 'µg/m³';
   const comparisonItems = sections.section02?.comparisonItems || [];
   const diurnalPoints = sections.section06?.diurnalPoints || [];
+  const accentColor = cinematicTheme?.accent || '#10b981';
 
   // Comparison metrics against national standard and WHO guideline
   const naaqsRatio = useMemo(() => {
@@ -197,8 +199,8 @@ export default function DocumentaryDataSection({
               >
                 <defs>
                   <linearGradient id="docDiurnalGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                    <stop offset="0%" stopColor={accentColor} stopOpacity="0.3" />
+                    <stop offset="100%" stopColor={accentColor} stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
                 {(() => {
@@ -220,7 +222,7 @@ export default function DocumentaryDataSection({
                       <path
                         d={pathD}
                         fill="none"
-                        stroke="#10b981"
+                        stroke={accentColor}
                         strokeWidth="2.5"
                       />
                       {coords.map((c, i) => (
@@ -230,7 +232,7 @@ export default function DocumentaryDataSection({
                             cy={c.y}
                             r="4"
                             fill="#ffffff"
-                            stroke="#10b981"
+                            stroke={accentColor}
                             strokeWidth="2"
                           />
                           <text

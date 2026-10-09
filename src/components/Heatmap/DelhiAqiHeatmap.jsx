@@ -30,13 +30,10 @@ import {
   ChevronLeft,
   ChevronDown,
   Activity,
-  FileText,
-  ShieldCheck,
   Menu,
   X,
   Building2
 } from 'lucide-react';
-const PetitionModal = React.lazy(() => import('../Petition/PetitionModal'));
 const AutonomousMonitorModal = React.lazy(() => import('../Dashboard/AutonomousMonitorModal'));
 import AnimatedCounter from '../common/AnimatedCounter';
 
@@ -273,12 +270,6 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
   const [activePollutant, setActivePollutant] = useState('aqi'); // 'aqi' | 'pm25' | 'pm10'
   const [selectedStation, setSelectedStation] = useState(null);
-
-  // Section 10: Petition and Action Module State
-  const [isPetitionModalOpen, setIsPetitionModalOpen] = useState(false);
-  const [petitionStation, setPetitionStation] = useState('DTU (Delhi Technological University)');
-  const [petitionLocality, setPetitionLocality] = useState('Rohini Sector 16, North Delhi');
-  const [petitionPm25, setPetitionPm25] = useState(142);
 
   // Autonomous Atmospheric Shield & Emergency Monitor Test Bench State
   const [isMonitorModalOpen, setIsMonitorModalOpen] = useState(false);
@@ -893,7 +884,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
   const fetchGeminiAdvisory = useCallback(async (station) => {
     if (!station) return;
     if (!isAuthenticated) {
-      setGeminiAdvisory('Sign in for AI advice.');
+      setGeminiAdvisory('Sign in for health recommendations.');
       setIsLoadingAdvisory(false);
       return;
     }
@@ -921,19 +912,19 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       const fallbackAdvisory = station.aqi > 250
         ? 'Severe regional pollution index. High respiratory risk; wear an N95 mask outdoors and run indoor HEPA filtration.'
         : station.aqi > 150
-        ? 'Unhealthy atmospheric haze. Reduce prolonged outdoor exertion and keep vehicle air recirculation enabled during commutes.'
-        : station.aqi > 90
-        ? 'Moderate particulate index. Sensitive individuals should pace outdoor morning exertion; commute conditions are fair.'
-        : 'Favorable air quality index. Outdoor recreation and morning commutes are safe across the zone.';
+          ? 'Unhealthy atmospheric haze. Reduce prolonged outdoor exertion and keep vehicle air recirculation enabled during commutes.'
+          : station.aqi > 90
+            ? 'Moderate particulate index. Sensitive individuals should pace outdoor morning exertion; commute conditions are fair.'
+            : 'Favorable air quality index. Outdoor recreation and morning commutes are safe across the zone.';
       setGeminiAdvisory(fallbackAdvisory);
     } catch {
       const fallbackAdvisory = station.aqi > 250
         ? 'Severe regional pollution index. High respiratory risk; wear an N95 mask outdoors and run indoor HEPA filtration.'
         : station.aqi > 150
-        ? 'Unhealthy atmospheric haze. Reduce prolonged outdoor exertion and keep vehicle air recirculation enabled during commutes.'
-        : station.aqi > 90
-        ? 'Moderate particulate index. Sensitive individuals should pace outdoor morning exertion; commute conditions are fair.'
-        : 'Favorable air quality index. Outdoor recreation and morning commutes are safe across the zone.';
+          ? 'Unhealthy atmospheric haze. Reduce prolonged outdoor exertion and keep vehicle air recirculation enabled during commutes.'
+          : station.aqi > 90
+            ? 'Moderate particulate index. Sensitive individuals should pace outdoor morning exertion; commute conditions are fair.'
+            : 'Favorable air quality index. Outdoor recreation and morning commutes are safe across the zone.';
       setGeminiAdvisory(fallbackAdvisory);
     } finally {
       setIsLoadingAdvisory(false);
@@ -1446,8 +1437,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       const roadLayerId = layers.find((l) => (l.id.startsWith('road') || l.id.startsWith('highway_')) && l.type === 'line')?.id;
       const adminLayerId = layers.find((l) => l.id === 'admin-1-boundary-bg' || l.id === 'admin-1-boundary' || l.id === 'boundary_state')?.id;
       const firstSymbolLayerId = layers.find((l) => l.type === 'symbol')?.id;
-      const symbolLayerId = layers.find((l) => l.type === 'symbol' && (l.layout?.['text-field'] || l.id.startsWith('place') || l.id.startsWith('highway_name') || l.id.startsWith('water_name')) )?.id;
-      const labelLayerId = layers.find((l) => l.type === 'symbol' && (l.id.startsWith('place') || l.id.startsWith('poi') || l.id.includes('settlement')) )?.id;
+      const symbolLayerId = layers.find((l) => l.type === 'symbol' && (l.layout?.['text-field'] || l.id.startsWith('place') || l.id.startsWith('highway_name') || l.id.startsWith('water_name')))?.id;
+      const labelLayerId = layers.find((l) => l.type === 'symbol' && (l.id.startsWith('place') || l.id.startsWith('poi') || l.id.includes('settlement')))?.id;
       // The heatmap is placed beneath buildings and roads so it stays strictly on the ground terrain without tinting buildings
       const beforeLayerId = buildingLayerId || roadLayerId || adminLayerId || firstSymbolLayerId || symbolLayerId;
 
@@ -1602,7 +1593,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
               try {
                 map.setLayoutProperty(l.id, 'symbol-z-elevate', true);
                 map.setLayoutProperty(l.id, 'symbol-z-order', 'auto');
-              } catch {}
+              } catch { }
             }
           });
         } catch (err) {
@@ -1620,7 +1611,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             position: [1.3, 215, 42]
           });
         }
-      } catch {}
+      } catch { }
 
       // 6. Official India National Perimeter Border Line
       map.addSource('india-boundary-source', {
@@ -1947,7 +1938,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       if (mapInstanceRef.current) {
         try {
           mapInstanceRef.current.remove();
-        } catch {}
+        } catch { }
         mapInstanceRef.current = null;
         mapLoadedRef.current = false;
       }
@@ -2957,8 +2948,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                     {isLocating
                       ? 'Acquiring...'
                       : userLocation.isLiveGps
-                      ? `GPS Lock${userLocation.accuracy ? ` (±${userLocation.accuracy}m)` : ''}`
-                      : 'Track My Location'}
+                        ? `GPS Lock${userLocation.accuracy ? ` (±${userLocation.accuracy}m)` : ''}`
+                        : 'Track My Location'}
                   </span>
                 </button>
 
@@ -2986,77 +2977,77 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
         {/* Tier 2: Animated Dropdown - Capital City Shortcuts + Autocomplete Search Bar */}
         {!isMobile && (
-        <div
-          style={{
-            pointerEvents: isGlideDropdownOpen ? 'auto' : 'none',
-            opacity: isGlideDropdownOpen ? 1 : 0,
-            transform: isGlideDropdownOpen ? 'translateY(0) scaleY(1)' : 'translateY(-10px) scaleY(0.96)',
-            transformOrigin: 'top center',
-            maxHeight: isGlideDropdownOpen ? '260px' : '0px',
-            overflow: isGlideDropdownOpen ? 'visible' : 'hidden',
-            transition: 'opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
-          }}
-        >
           <div
-            className="glass-panel-master"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '10px',
-              flexWrap: 'wrap',
-              padding: '8px 14px',
-              borderRadius: '12px',
-              boxShadow: '0 12px 30px rgba(0, 0, 0, 0.55)',
-              border: '1px solid rgba(56, 189, 248, 0.25)',
+              pointerEvents: isGlideDropdownOpen ? 'auto' : 'none',
+              opacity: isGlideDropdownOpen ? 1 : 0,
+              transform: isGlideDropdownOpen ? 'translateY(0) scaleY(1)' : 'translateY(-10px) scaleY(0.96)',
+              transformOrigin: 'top center',
+              maxHeight: isGlideDropdownOpen ? '260px' : '0px',
+              overflow: isGlideDropdownOpen ? 'visible' : 'hidden',
+              transition: 'opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
-            {/* Quick Glide Capital City Shortcuts */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.67rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '3px' }}>
-                GLIDE:
-              </span>
-              {INDIA_REGION_PRESETS.map((preset) => {
-                const isActive = activePreset.id === preset.id;
-                return (
-                  <button
-                    key={preset.id}
-                    onClick={() => handleGlideToRegion(preset)}
-                    className={`glass-pill ${isActive ? 'glass-pill-active' : ''}`}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      padding: '3px 9px',
-                      borderRadius: '9999px',
-                      fontSize: '0.67rem',
-                      fontWeight: isActive ? 700 : 600,
-                      letterSpacing: '0.04em',
-                      textTransform: 'uppercase',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    <span>{preset.name}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <div
+              className="glass-panel-master"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '10px',
+                flexWrap: 'wrap',
+                padding: '8px 14px',
+                borderRadius: '12px',
+                boxShadow: '0 12px 30px rgba(0, 0, 0, 0.55)',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+              }}
+            >
+              {/* Quick Glide Capital City Shortcuts */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.67rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '3px' }}>
+                  GLIDE:
+                </span>
+                {INDIA_REGION_PRESETS.map((preset) => {
+                  const isActive = activePreset.id === preset.id;
+                  return (
+                    <button
+                      key={preset.id}
+                      onClick={() => handleGlideToRegion(preset)}
+                      className={`glass-pill ${isActive ? 'glass-pill-active' : ''}`}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        padding: '3px 9px',
+                        borderRadius: '9999px',
+                        fontSize: '0.67rem',
+                        fontWeight: isActive ? 700 : 600,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <span>{preset.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
 
-            {/* Place Search Bar with Autocomplete across India */}
-            <HeatmapSearchBar
-              searchContainerRef={searchContainerRef}
-              searchQuery={searchQuery}
-              handleSearchInput={handleSearchInput}
-              setShowSearchDropdown={setShowSearchDropdown}
-              showSearchDropdown={showSearchDropdown}
-              searchResults={searchResults}
-              isSearching={isSearching}
-              setSearchQuery={setSearchQuery}
-              setSearchResults={setSearchResults}
-              handleSelectSearchResult={handleSelectSearchResult}
-            />
+              {/* Place Search Bar with Autocomplete across India */}
+              <HeatmapSearchBar
+                searchContainerRef={searchContainerRef}
+                searchQuery={searchQuery}
+                handleSearchInput={handleSearchInput}
+                setShowSearchDropdown={setShowSearchDropdown}
+                showSearchDropdown={showSearchDropdown}
+                searchResults={searchResults}
+                isSearching={isSearching}
+                setSearchQuery={setSearchQuery}
+                setSearchResults={setSearchResults}
+                handleSelectSearchResult={handleSelectSearchResult}
+              />
+            </div>
           </div>
-        </div>
         )}
       </div>
 
@@ -3214,11 +3205,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         heatIntensity={heatIntensity}
         setHeatIntensity={setHeatIntensity}
         setIsMonitorModalOpen={setIsMonitorModalOpen}
-        setIsPetitionModalOpen={setIsPetitionModalOpen}
         displayStation={displayStation}
-        setPetitionStation={setPetitionStation}
-        setPetitionLocality={setPetitionLocality}
-        setPetitionPm25={setPetitionPm25}
       />
 
       {/* Mobile backdrop overlay to tap-to-close drawer */}
@@ -3298,19 +3285,6 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         getPollutantValue={getPollutantValue}
         getPollutantMeta={getPollutantMeta}
       />
-
-      {/* Section 10: Civic Petition & Action Modal */}
-      {isPetitionModalOpen && (
-        <React.Suspense fallback={null}>
-          <PetitionModal
-            isOpen={isPetitionModalOpen}
-            onClose={() => setIsPetitionModalOpen(false)}
-            initialStation={petitionStation}
-            initialLocality={petitionLocality}
-            initialPm25={petitionPm25}
-          />
-        </React.Suspense>
-      )}
 
       {/* Autonomous Atmospheric Shield & Emergency Monitor Test Bench */}
       {isMonitorModalOpen && (

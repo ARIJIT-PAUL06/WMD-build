@@ -35,7 +35,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
  */
 export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
   if (typeof window === 'undefined' || typeof document === 'undefined' || !containerEl) {
-    return () => {};
+    return () => { };
   }
 
   // 1. Enforce scroll reset to top (scrollY = 0) and clear ScrollTrigger memory
@@ -63,7 +63,7 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
         el.style.display = 'block';
       }
     });
-    return () => {};
+    return () => { };
   }
 
   // 3. Create scoped GSAP context for complete React lifecycle safety
@@ -136,9 +136,10 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     if (pollutantNameEl) {
       if (!pollutantNameEl.querySelector('.doc-hero-char')) {
         const rawChars = Array.from(pollutantNameEl.textContent.trim());
-        pollutantNameEl.innerHTML = rawChars
+        const mappedHtml = rawChars
           .map((c) => `<span class="doc-char-mask"><span class="doc-hero-char">${c === ' ' ? '&nbsp;' : c}</span></span>`)
           .join('');
+        pollutantNameEl.innerHTML = `<span class="doc-pollutant-name-nowrap">${mappedHtml}</span>`;
       }
       const heroChars = pollutantNameEl.querySelectorAll('.doc-hero-char');
       if (heroChars.length > 0) {
@@ -307,38 +308,16 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
       }
     }
 
-    // Step 8: Large number resolution effect (blur -> rapid visual count-up -> sharp real value)
+    // Step 8: Large number resolution effect (blur-to-sharp optical resolving while preserving authentic measurement)
     const numEl = containerEl.querySelector('#doc-central-numeric-readout');
     const unitEl = containerEl.querySelector('.documentary-value-unit-row');
     if (numEl) {
-      const rawText = numEl.innerText.trim();
-      const targetVal = parseFloat(rawText);
       heroTl.fromTo(
         numEl,
-        { opacity: 0, scale: 0.92, filter: 'blur(12px)' },
-        { opacity: 1, scale: 1.0, filter: 'blur(0px)', duration: 0.7, ease: 'power3.out' },
-        0.38
+        { opacity: 0, scale: 0.93, filter: 'blur(16px)' },
+        { opacity: 1, scale: 1.0, filter: 'blur(0px)', duration: 0.85, ease: 'power2.out' },
+        0.36
       );
-      if (!isNaN(targetVal) && targetVal > 0) {
-        const counter = { val: 0 };
-        heroTl.to(
-          counter,
-          {
-            val: targetVal,
-            duration: 0.95,
-            ease: 'power2.out',
-            onUpdate: () => {
-              if (numEl) {
-                numEl.innerText =
-                  targetVal >= 10
-                    ? Math.round(counter.val)
-                    : counter.val.toFixed(1);
-              }
-            },
-          },
-          0.38
-        );
-      }
     }
     // Unit appears subtly underneath the resolved number
     if (unitEl) {
@@ -421,7 +400,6 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     if (heroSection) {
       const heroPhoto = heroSection.querySelector('.documentary-hero-photo-layer');
       const heroHaze = heroSection.querySelector('.documentary-hero-haze-layer');
-      const flowCanvas = heroSection.querySelector('.hero-atmospheric-canvas');
       const heroGlyph = heroSection.querySelector('.documentary-hero-sculptural-glyph');
       const pollutantTitleRow = heroSection.querySelector('.documentary-pollutant-title-row');
       const editorialCol = heroSection.querySelector('.documentary-hero-editorial-col');
@@ -443,9 +421,6 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
       }
       if (heroHaze) {
         heroScrollTl.to(heroHaze, { opacity: 0.35, yPercent: -10, ease: 'none' }, 0);
-      }
-      if (flowCanvas) {
-        heroScrollTl.to(flowCanvas, { opacity: 0.15, yPercent: -12, ease: 'none' }, 0);
       }
       if (heroGlyph) {
         heroScrollTl.to(heroGlyph, { yPercent: -22, scale: 1.15, opacity: 0.01, ease: 'none' }, 0);
@@ -521,6 +496,17 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
           },
         });
 
+        // Continuous SVG vector progress line scrubs along entire sequence
+        const ribbonProgressLine = pinnedSection.querySelector('#doc-ribbon-progress-line');
+        if (ribbonProgressLine) {
+          pinnedTl.fromTo(
+            ribbonProgressLine,
+            { strokeDashoffset: 280 },
+            { strokeDashoffset: 0, ease: 'none' },
+            0
+          );
+        }
+
         // Background image slow cinematic camera scale
         if (pinnedBgImg) {
           pinnedTl.fromTo(
@@ -541,7 +527,7 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
           );
         }
 
-        // Crossfade through the 4 narrative cards
+        // Crossfade through the 4 narrative cards with coordinated schematic reveal
         for (let i = 0; i < beatCards.length - 1; i++) {
           const curr = beatCards[i];
           const next = beatCards[i + 1];
@@ -559,6 +545,16 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
             { opacity: 1, y: 0, duration: 0.4 },
             `beat-${i}+=0.15`
           );
+
+          const nextSchematic = next.querySelector('.doc-card-schematic-wrap');
+          if (nextSchematic) {
+            pinnedTl.fromTo(
+              nextSchematic,
+              { opacity: 0.3, y: 12 },
+              { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' },
+              `beat-${i}+=0.22`
+            );
+          }
         }
       }
     }
@@ -821,21 +817,49 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     const diurnalSvg = containerEl.querySelector('.doc-diurnal-svg');
     if (diurnalSvg) {
       const chartPath = diurnalSvg.querySelector('path[fill="none"]');
+      const areaPath = diurnalSvg.querySelector('path[fill^="url"]');
+      const points = diurnalSvg.querySelectorAll('circle');
+      const labels = diurnalSvg.querySelectorAll('text');
+
+      const diurnalTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: diurnalSvg,
+          start: 'top 82%',
+          toggleActions: 'play none none none',
+        },
+      });
+
       if (chartPath) {
         const pathLength = 800;
-        gsap.fromTo(
+        diurnalTl.fromTo(
           chartPath,
           { strokeDasharray: pathLength, strokeDashoffset: pathLength },
-          {
-            strokeDashoffset: 0,
-            duration: 1.5,
-            ease: 'power2.inOut',
-            scrollTrigger: {
-              trigger: diurnalSvg,
-              start: 'top 82%',
-              toggleActions: 'play none none none',
-            },
-          }
+          { strokeDashoffset: 0, duration: 1.2, ease: 'power2.out' },
+          0
+        );
+      }
+      if (areaPath) {
+        diurnalTl.fromTo(
+          areaPath,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.8, ease: 'power1.out' },
+          0.35
+        );
+      }
+      if (points.length > 0) {
+        diurnalTl.fromTo(
+          points,
+          { scale: 0, opacity: 0, transformOrigin: 'center center' },
+          { scale: 1, opacity: 1, duration: 0.4, stagger: 0.06, ease: 'back.out(1.5)' },
+          0.45
+        );
+      }
+      if (labels.length > 0) {
+        diurnalTl.fromTo(
+          labels,
+          { opacity: 0, y: 6 },
+          { opacity: 1, y: 0, duration: 0.35, stagger: 0.06, ease: 'power2.out' },
+          0.55
         );
       }
     }
