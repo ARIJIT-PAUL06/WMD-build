@@ -63,19 +63,19 @@ function loadSpatialGrids() {
  */
 export const FACILITY_TEST_MAPPINGS = {
   'dps_rk_puram': {
-    email: 'psubai2006@gmail.com',
+    email: 'dps-rkp@example.invalid',
     institutionName: 'Delhi Public School, R.K. Puram',
     zone: 'South West Delhi (Sector 12, R.K. Puram)',
     gridId: 'GRID_R03_C05'
   },
   'modern_barakhamba': {
-    email: 'lalsiddharth924@gmail.com',
+    email: 'modern@example.invalid',
     institutionName: 'Modern School, Barakhamba Road',
     zone: 'Central Delhi (Connaught Place)',
     gridId: 'GRID_R04_C05'
   },
   'dps_rohini': {
-    email: 'deepsharma9128@gmail.com',
+    email: 'dps-rohini@example.invalid',
     institutionName: 'Delhi Public School, Rohini',
     zone: 'North West Delhi (Sector 24, Rohini)',
     gridId: 'GRID_R05_C03'
@@ -83,17 +83,16 @@ export const FACILITY_TEST_MAPPINGS = {
 };
 
 /**
- * Resolves the live recipient email for any facility
+ * Resolves the live recipient email for any facility.
+ * Refuses to send to unverified/hardcoded addresses.
  */
 export function resolveRecipientForFacility(facilityId, overrideEmail = null) {
   // Disallow arbitrary recipient overrides in production to prevent open relay
-  if (process.env.NODE_ENV !== 'production' && overrideEmail && overrideEmail.endsWith('@wmd-civic.in')) {
+  if (process.env.NODE_ENV !== 'production' && overrideEmail && (overrideEmail.endsWith('@wmd-civic.in') || overrideEmail.endsWith('@example.invalid'))) {
     return overrideEmail;
   }
-  if (FACILITY_TEST_MAPPINGS[facilityId]) {
-    return FACILITY_TEST_MAPPINGS[facilityId].email;
-  }
-  return process.env.COMMAND_CENTRE_EMAIL || 'psubai2006@gmail.com';
+  // Delivery must be explicitly targeted to an operator address configured in environment
+  return process.env.MONITOR_ALERT_RECIPIENT || process.env.COMMAND_CENTRE_EMAIL || null;
 }
 
 /**
@@ -607,12 +606,25 @@ export async function testDispatch630Advisory({ facilityId, testEmail = null, is
 
   const actualRecipient = resolveRecipientForFacility(facilityId, testEmail);
   
-  const commandCenterEmail = process.env.COMMAND_CENTRE_EMAIL || 'psubai2006@gmail.com';
+  const commandCenterEmail = process.env.MONITOR_ALERT_RECIPIENT || process.env.COMMAND_CENTRE_EMAIL;
   let sesResponse = null;
 
   if (!isSandbox || dispatchViaSes) {
+    if (!commandCenterEmail) {
+      return {
+        dispatched: false,
+        error: 'Live SES dispatch refused: MONITOR_ALERT_RECIPIENT is not configured in server environment.',
+        isSandbox: true,
+        dispatchRecord: {
+          facilityId: advisory.facility.id,
+          facilityName: advisory.facility.name,
+          status: 'REFUSED_UNCONFIGURED_RECIPIENT',
+          timestamp: new Date().toISOString()
+        },
+        advisory
+      };
+    }
     try {
-      // 1. PRIMARY MONITORING REQUIREMENT: Always deliver every single school advisory to psubai2006@gmail.com
       const commandRes = await sendEmailViaSES({
         to: commandCenterEmail,
         subject: `[VayuVitals Forecast • ${advisory.facility.name}] ${advisory.emailPayload.subject}`,
@@ -620,8 +632,7 @@ export async function testDispatch630Advisory({ facilityId, testEmail = null, is
       });
       sesResponse = commandRes;
 
-      // 2. If the facility is assigned to another address (e.g. Siddharth or Deep), ALSO dispatch to them
-      if (actualRecipient && actualRecipient !== commandCenterEmail) {
+      if (actualRecipient && actualRecipient !== commandCenterEmail && !actualRecipient.endsWith('.invalid')) {
         try {
           const directRes = await sendEmailViaSES({
             to: actualRecipient,
@@ -901,12 +912,24 @@ Keep it strictly under 150 words. Do not include introductory pleasantries or ma
 
   const actualRecipient = resolveRecipientForFacility(facility.id, testEmail);
 
-  const commandCenterEmail = process.env.COMMAND_CENTRE_EMAIL || 'psubai2006@gmail.com';
+  const commandCenterEmail = process.env.MONITOR_ALERT_RECIPIENT || process.env.COMMAND_CENTRE_EMAIL;
   let sesResponse = null;
 
   if (!isSandbox || dispatchViaSes) {
+    if (!commandCenterEmail) {
+      return {
+        success: false,
+        error: 'Live SES dispatch refused: MONITOR_ALERT_RECIPIENT is not configured in server environment.',
+        isSandbox: true,
+        dispatchRecord: {
+          facilityId: facility.id,
+          facilityName: facility.name,
+          status: 'REFUSED_UNCONFIGURED_RECIPIENT',
+          timestamp: new Date().toISOString()
+        }
+      };
+    }
     try {
-      // 1. PRIMARY MONITORING REQUIREMENT: Always deliver every single school alert to psubai2006@gmail.com
       const commandRes = await sendEmailViaSES({
         to: commandCenterEmail,
         subject: `[VayuVitals Alert • ${facility.name}] ${subject}`,
@@ -914,8 +937,7 @@ Keep it strictly under 150 words. Do not include introductory pleasantries or ma
       });
       sesResponse = commandRes;
 
-      // 2. If the facility is assigned to another address (e.g. Siddharth or Deep), ALSO dispatch to them
-      if (actualRecipient && actualRecipient !== commandCenterEmail) {
+      if (actualRecipient && actualRecipient !== commandCenterEmail && !actualRecipient.endsWith('.invalid')) {
         try {
           const directRes = await sendEmailViaSES({
             to: actualRecipient,

@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 
 /**
@@ -23,20 +24,38 @@ export const computeLlmLimiter = rateLimit({
 });
 
 /**
- * Admin authorization gate for sensitive mutations, monitoring, and dispatch routes
+ * Admin authorization gate for sensitive mutations, monitoring, and dispatch routes.
+ * Enforces fail-closed semantics, header-only transmission, and SHA-256 timing-safe comparison.
  */
 export const requireAdminKey = (req, res, next) => {
   const adminKey = process.env.ADMIN_API_KEY || process.env.ADMIN_SECRET_KEY;
   if (!adminKey) {
-    if (process.env.NODE_ENV !== 'production') {
-      return next();
-    }
-    return res.status(500).json({ success: false, error: 'ADMIN_API_KEY is not configured on the server.' });
+    return res.status(503).json({
+      success: false,
+      error: 'ADMIN_API_KEY is not configured on server. Administrative mutations are disabled.'
+    });
   }
-  const clientKey = req.headers['x-admin-key'] || req.headers['x-api-key'] || req.query.adminKey;
-  if (!clientKey || clientKey !== adminKey) {
-    return res.status(401).json({ success: false, error: 'Unauthorized: Valid x-admin-key required for administrative operations.' });
+
+  // Header-only transmission prevents credential leakage in CloudWatch/access logs
+  const clientKey = req.headers['x-admin-key'] || req.headers['x-api-key'];
+  if (!clientKey || typeof clientKey !== 'string') {
+    return res.status(401).json({
+      success: false,
+      error: 'Unauthorized: Valid x-admin-key header required for administrative operations.'
+    });
   }
+
+  // Pre-hash to 256 bits so buffers always match length, defeating length-oracle timing leaks
+  const adminHash = crypto.createHash('sha256').update(adminKey).digest();
+  const clientHash = crypto.createHash('sha256').update(clientKey).digest();
+
+  if (!crypto.timingSafeEqual(adminHash, clientHash)) {
+    return res.status(401).json({
+      success: false,
+      error: 'Unauthorized: Invalid administrative credentials.'
+    });
+  }
+
   next();
 };
 

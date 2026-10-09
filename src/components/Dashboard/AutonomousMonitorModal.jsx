@@ -7,7 +7,8 @@ import {
   FileText,
   X,
   Zap,
-  Clock
+  Clock,
+  Key
 } from 'lucide-react';
 import MonitorStatusTab from './MonitorStatusTab';
 import MonitorPillar1Tab from './MonitorPillar1Tab';
@@ -17,6 +18,20 @@ import MonitorAuditTab from './MonitorAuditTab';
 
 export default function AutonomousMonitorModal({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState('status'); // 'status' | 'pillar1' | 'pillar2' | 'pillar3' | 'audit'
+  
+  // Ephemeral demo session admin key (sessionStorage only, no persistent localStorage)
+  const [sessionAdminKey, setSessionAdminKey] = useState(() => {
+    return (typeof window !== 'undefined' && sessionStorage.getItem('wmd_admin_key')) || '';
+  });
+  const [showKeyInput, setShowKeyInput] = useState(false);
+
+  const handleKeySave = (val) => {
+    setSessionAdminKey(val);
+    if (typeof window !== 'undefined') {
+      if (val) sessionStorage.setItem('wmd_admin_key', val);
+      else sessionStorage.removeItem('wmd_admin_key');
+    }
+  };
   
   // Daemon status state
   const [statusLoading, setStatusLoading] = useState(false);
@@ -151,7 +166,7 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
 
   // Trigger Immediate Full Autonomous Monitoring Cycle
   const getAuthHeaders = () => {
-    const adminKey = (typeof window !== 'undefined' && (localStorage.getItem('wmd_admin_key') || sessionStorage.getItem('wmd_admin_key'))) || '';
+    const adminKey = sessionAdminKey || (typeof window !== 'undefined' && sessionStorage.getItem('wmd_admin_key')) || '';
     const headers = { 'Content-Type': 'application/json' };
     if (adminKey) headers['x-admin-key'] = adminKey;
     return headers;
@@ -386,6 +401,63 @@ export default function AutonomousMonitorModal({ isOpen, onClose }) {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {showKeyInput ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <input
+                  type="password"
+                  placeholder="x-admin-key"
+                  value={sessionAdminKey}
+                  onChange={(e) => handleKeySave(e.target.value)}
+                  style={{
+                    background: 'rgba(0, 0, 0, 0.4)',
+                    border: '1px solid rgba(56, 189, 248, 0.4)',
+                    color: '#38bdf8',
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    fontSize: '0.74rem',
+                    width: '120px',
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  onClick={() => setShowKeyInput(false)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: 'none',
+                    color: '#94a3b8',
+                    padding: '6px 8px',
+                    borderRadius: '8px',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowKeyInput(true)}
+                title={sessionAdminKey ? 'Admin session active' : 'Enter admin key for demo testing'}
+                style={{
+                  background: sessionAdminKey ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                  border: `1px solid ${sessionAdminKey ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.12)'}`,
+                  color: sessionAdminKey ? '#34d399' : '#94a3b8',
+                  padding: '8px 12px',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '0.76rem',
+                  fontWeight: 600,
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Key size={14} />
+                <span>{sessionAdminKey ? 'Authorized' : 'Admin Key'}</span>
+              </button>
+            )}
+
             <button
               onClick={fetchStatus}
               disabled={statusLoading}

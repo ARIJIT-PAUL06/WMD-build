@@ -104,9 +104,21 @@ router.get('/api/telemetry/compliance/:gridId', (req, res) => {
   }
 });
 
+const PUBLIC_FACILITY_FIELDS = [
+  'id', 'name', 'facilityClass', 'type', 'category', 'city', 'district', 'locality', 'lat', 'lon', 'gridId', 'studentCount', 'bedCount'
+];
+
+function projectPublicFacility(fac) {
+  const projected = {};
+  for (const field of PUBLIC_FACILITY_FIELDS) {
+    if (fac[field] !== undefined) projected[field] = fac[field];
+  }
+  return projected;
+}
+
 router.get('/api/spatial-grids/facilities', (req, res) => {
   try {
-    const facilities = getAllDirectoryFacilities().facilities;
+    const facilities = (getAllDirectoryFacilities().facilities || []).map(projectPublicFacility);
     res.json({ success: true, facilitiesCount: facilities.length, facilities });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -116,13 +128,21 @@ router.get('/api/spatial-grids/facilities', (req, res) => {
 router.get('/api/spatial-grids/directory', (req, res) => {
   try {
     const directory = getAllDirectoryFacilities();
-    res.json({ success: true, ...directory, testMappings: FACILITY_TEST_MAPPINGS });
+    const sanitizedFacilities = (directory.facilities || []).map(projectPublicFacility);
+    res.json({
+      success: true,
+      totalFacilities: directory.totalFacilities,
+      educationalCount: directory.educationalCount,
+      healthcareCount: directory.healthcareCount,
+      nodalAuthorities: directory.nodalAuthorities,
+      facilities: sanitizedFacilities
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-router.get('/api/spatial-grids/mappings', (req, res) => {
+router.get('/api/spatial-grids/mappings', requireAdminKey, (req, res) => {
   res.json({ success: true, mappings: FACILITY_TEST_MAPPINGS });
 });
 

@@ -4,8 +4,20 @@ import { getSchoolAqiForecast } from '../sagemakerService.js';
 
 const router = express.Router();
 
+const PUBLIC_FACILITY_FIELDS = [
+  'id', 'name', 'facilityClass', 'type', 'category', 'city', 'district', 'locality', 'lat', 'lon', 'gridId', 'studentCount', 'bedCount'
+];
+
+function projectPublicFacility(fac) {
+  const projected = {};
+  for (const field of PUBLIC_FACILITY_FIELDS) {
+    if (fac[field] !== undefined) projected[field] = fac[field];
+  }
+  return projected;
+}
+
 /**
- * Get all Delhi schools, universities, and hospitals with verified emails & grid blocks
+ * Get all Delhi schools, universities, and hospitals with verified coordinates & grid blocks
  */
 router.get('/api/directory/facilities', (req, res) => {
   try {
@@ -27,7 +39,7 @@ router.get('/api/directory/facilities', (req, res) => {
       success: true,
       totalCount: facilities.length,
       nodalAuthorities: data.nodalAuthorities,
-      facilities
+      facilities: facilities.map(projectPublicFacility)
     });
   } catch (err) {
     console.error('[API /api/directory/facilities Error]:', err);

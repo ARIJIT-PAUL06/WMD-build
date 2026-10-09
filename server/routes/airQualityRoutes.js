@@ -1,5 +1,5 @@
 import express from 'express';
-import { environmentalProvider } from '../environmentalService.js';
+import { environmentalProvider, CITIES_CONFIG } from '../environmentalService.js';
 import {
   saveReadingToDynamoDB,
   getHistoricalReadings,
@@ -17,21 +17,40 @@ const router = express.Router();
 router.get('/api/air-quality', computeLlmLimiter, async (req, res) => {
   try {
     const city = req.query.city || 'Delhi (DTU / Bawana)';
-    const simulateAqi = req.query.simulateAqi !== undefined ? Number(req.query.simulateAqi) : null;
-    const skipBedrock = req.query.skipBedrock === 'true';
+    if (!CITIES_CONFIG[city]) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid city '${city}'. Supported cities: ${Object.keys(CITIES_CONFIG).join(', ')}`
+      });
+    }
+
+    const simulateAqi = req.query.simulateAqi !== undefined && req.query.simulateAqi !== ''
+      ? Number(req.query.simulateAqi)
+      : null;
+    const skipBedrock = req.query.skipBedrock === 'true' || simulateAqi !== null;
 
     // 1. Fetch live or calibrated environmental metrics
     const metrics = await environmentalProvider.getMetrics(city, simulateAqi);
 
-    // 2. Generate Bedrock AI explanation & health recommendations
+    // 2. Generate Bedrock AI explanation & health recommendations (Skip on simulation to conserve LLM tokens)
     let bedrockResult = { advisory: '', modelId: 'none', latencyMs: 0 };
     if (!skipBedrock) {
       bedrockResult = await generateBedrockAdvisory(metrics);
     }
     metrics.advisory = bedrockResult.advisory;
 
-    // 3. Persist to AWS DynamoDB
-    const ddbResult = await saveReadingToDynamoDB(metrics);
+    // 3. Persist to AWS DynamoDB (ONLY for authentic live sensor/network telemetry; NEVER for simulated or offline fallbacks)
+    let ddbResult = {
+      mode: simulateAqi !== null ? 'SKIPPED_SIMULATION' : 'SKIPPED_FALLBACK',
+      tableName: 'AirQualityReadings',
+      latencyMs: 0,
+      success: true
+    };
+
+    const isAuthenticLive = metrics.source === 'Live Open-Meteo & CPCB Sensor Network';
+    if (simulateAqi === null && isAuthenticLive) {
+      ddbResult = await saveReadingToDynamoDB(metrics);
+    }
 
     // 4. Return normalized response with authentic backend telemetry
     res.json({
@@ -68,6 +87,12 @@ router.get('/api/air-quality', computeLlmLimiter, async (req, res) => {
 router.get('/api/history', async (req, res) => {
   try {
     const city = req.query.city || 'Delhi (DTU / Bawana)';
+    if (!CITIES_CONFIG[city]) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid city '${city}'. Supported cities: ${Object.keys(CITIES_CONFIG).join(', ')}`
+      });
+    }
     const limit = Math.min(Number(req.query.limit) || 24, 48);
 
     const historyResult = await getHistoricalReadings(city, limit);

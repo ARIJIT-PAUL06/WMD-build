@@ -32,3 +32,6 @@ __pycache__/
 *.pdf
 lambda-dist/
 FRONTEND_AUDIT.md
+ml/data/autonomous_monitor_audit.json
+monitor_state.json
+STATE_CONTEXT.md

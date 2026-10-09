@@ -531,10 +531,12 @@ export async function evaluate14DayChronicBlockPetitions({
 </html>
       `.trim();
 
-      const targetEmails = [...new Set(facilitiesInGrid.map(f => resolveRecipientForFacility(f.id)))];
-      const targetEmail = targetEmails.length ? targetEmails[0] : (process.env.COMMAND_CENTRE_EMAIL || 'psubai2006@gmail.com');
+      const validTargetEmails = facilitiesInGrid
+        .map(f => resolveRecipientForFacility(f.id))
+        .filter(email => email && !email.endsWith('.invalid'));
+      const targetEmail = validTargetEmails.length ? validTargetEmails[0] : (process.env.MONITOR_ALERT_RECIPIENT || process.env.COMMAND_CENTRE_EMAIL || null);
       let sesMsgId = null;
-      if (shouldDispatchViaSes) {
+      if (shouldDispatchViaSes && targetEmail) {
         const sesRes = await sendEmailViaSES({
           to: targetEmail,
           subject: sanitizeHeader(`[VayuVitals Legal Action] ⚖️ STATUTORY SECTION 10 NOTICE: 14-Day Severe Air Violation in Block ${gId}`),
@@ -691,7 +693,7 @@ export function startAutonomousDaemon(intervalMinutes = 30) {
     clearInterval(intervalTimer);
   }
 
-  const targetInbox = process.env.COMMAND_CENTRE_EMAIL || 'psubai2006@gmail.com';
+  const targetInbox = process.env.MONITOR_ALERT_RECIPIENT || process.env.COMMAND_CENTRE_EMAIL || 'Unconfigured (SES Dispatch Suppressed)';
   console.log(`[AutonomousMonitor] 🚀 Autonomous Atmospheric Monitoring Daemon Started (Interval: ${intervalMinutes} mins)`);
   console.log(`[AutonomousMonitor] 📬 Live Alerts Command Inbox: ${targetInbox}`);
   

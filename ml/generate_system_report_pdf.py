@@ -486,20 +486,20 @@ def generate_pdf():
         [
             Paragraph("<b>Delhi Public School, R.K. Puram</b>", tb_style),
             Paragraph("South West Delhi (Sector 12)<br/>Grid Block: <code>GRID_R03_C05</code>", tb_style),
-            Paragraph("<code>psubai2006@gmail.com</code>", tb_bold),
-            Paragraph("<b>Verified & Live 🟢</b><br/>Direct Instant Delivery", tb_green)
+            Paragraph("<code>dps-rkp@example.invalid</code>", tb_bold),
+            Paragraph("<b>Test Fixture (Protected)</b><br/>Sandbox Routing", tb_green)
         ],
         [
             Paragraph("<b>Modern School, Barakhamba Road</b>", tb_style),
             Paragraph("Central Delhi (Connaught Place)<br/>Grid Block: <code>GRID_R04_C05</code>", tb_style),
-            Paragraph("<code>lalsiddharth924@gmail.com</code>", tb_bold),
-            Paragraph("Pending One-Click Confirmation<br/>(Verification Request Dispatched)", tb_style)
+            Paragraph("<code>modern@example.invalid</code>", tb_bold),
+            Paragraph("Test Fixture (Protected)<br/>Sandbox Routing", tb_style)
         ],
         [
             Paragraph("<b>Delhi Public School, Rohini</b>", tb_style),
             Paragraph("North West Delhi (Sector 24)<br/>Grid Block: <code>GRID_R05_C03</code>", tb_style),
-            Paragraph("<code>deepsharma9128@gmail.com</code>", tb_bold),
-            Paragraph("Pending One-Click Confirmation<br/>(Verification Request Dispatched)", tb_style)
+            Paragraph("<code>dps-rohini@example.invalid</code>", tb_bold),
+            Paragraph("Test Fixture (Protected)<br/>Sandbox Routing", tb_style)
         ]
     ]
     route_table = Table(route_data, colWidths=[130, 134, 130, 110])
@@ -522,9 +522,9 @@ def generate_pdf():
             Paragraph("<b>🛡️ The Universal Command Center Mirror & Zero-Loss Delivery Guard:</b><br/>"
                       "To provide absolute monitoring transparency and ensure that <b>zero alerts are ever dropped</b>, "
                       "the system enforces dual-dispatch mirroring. Every email generated across all 453 institutions "
-                      "is automatically dispatched to <b><code>psubai2006@gmail.com</code></b> while simultaneously attempting "
-                      "delivery to the assigned recipient. If an external inbox is temporarily pending SES link verification, "
-                      "the system guarantees that the project lead has immediate visual oversight in their personal inbox.", callout_style)
+                      "is automatically dispatched to the verified operator inbox (<b><code>MONITOR_ALERT_RECIPIENT</code></b>) while simultaneously attempting "
+                      "delivery to the assigned recipient. If an external inbox is unverified or simulated, "
+                      "the system guarantees that the authorized operator maintains immediate visual oversight.", callout_style)
         ]
     ]
     guard_table = Table(guard_data, colWidths=[504])

@@ -1,4 +1,5 @@
 import express from 'express';
+import crypto from 'crypto';
 import { CITIES_CONFIG } from '../environmentalService.js';
 import { getSesHealth } from '../sesService.js';
 
@@ -33,9 +34,20 @@ router.get('/api/health', (req, res) => {
   });
 });
 
+function isAdminRequest(req) {
+  const adminKey = process.env.ADMIN_API_KEY || process.env.ADMIN_SECRET_KEY;
+  if (!adminKey) return false;
+  const clientKey = req.headers['x-admin-key'] || req.headers['x-api-key'];
+  if (!clientKey || typeof clientKey !== 'string') return false;
+  const adminHash = crypto.createHash('sha256').update(adminKey).digest();
+  const clientHash = crypto.createHash('sha256').update(clientKey).digest();
+  return crypto.timingSafeEqual(adminHash, clientHash);
+}
+
 /**
  * Health check & AWS Configuration Status
  * Transparently checks and reports live AWS status without masking errors.
+ * Resource names are withheld unless authenticated as admin.
  */
 router.get('/api/aws-status', async (req, res) => {
   const accessKey = process.env.APP_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
@@ -44,6 +56,7 @@ router.get('/api/aws-status', async (req, res) => {
   const dynamoDbTable = process.env.DYNAMODB_TABLE_NAME || 'AirQualityReadings';
   const sagemakerEndpoint = process.env.SAGEMAKER_ENDPOINT_NAME || 'wmd-delhi-48h-forecast-endpoint';
   const bedrockModel = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-haiku-20240307-v1:0';
+  const isAdmin = isAdminRequest(req);
 
   let dynamoStatus = 'NOT_CHECKED';
   let sagemakerStatus = 'OFFLINE_NO_ENDPOINT';
@@ -84,16 +97,16 @@ router.get('/api/aws-status', async (req, res) => {
     awsConnected: isAwsOnline || Boolean(accessKey && secretKey),
     region,
     dynamoDb: {
-      tableName: dynamoDbTable,
       status: dynamoStatus,
+      ...(isAdmin ? { tableName: dynamoDbTable } : {})
     },
     sagemaker: {
-      endpointName: sagemakerEndpoint,
       status: sagemakerStatus,
+      ...(isAdmin ? { endpointName: sagemakerEndpoint } : {})
     },
     bedrock: {
-      modelId: bedrockModel,
       status: bedrockStatus,
+      ...(isAdmin ? { modelId: bedrockModel } : {})
     },
     iotCore: {
       status: 'NOT_DEPLOYED (Direct HTTP REST Ingest Active)',
@@ -105,9 +118,21 @@ router.get('/api/aws-status', async (req, res) => {
 
 /**
  * Amazon SES (Simple Email Service) Status
+ * Leaks zero internal send quotas to unauthenticated clients.
  */
 router.get('/api/ses/health', async (req, res) => {
   const health = await getSesHealth();
+  const isAdmin = isAdminRequest(req);
+
+  if (!isAdmin) {
+    return res.json({
+      connected: Boolean(health.connected),
+      service: 'Amazon Simple Email Service (SES)',
+      region: health.region || 'us-east-1',
+      status: health.connected ? 'ONLINE' : 'UNAVAILABLE'
+    });
+  }
+
   res.json(health);
 });
 

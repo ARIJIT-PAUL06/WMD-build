@@ -155,8 +155,8 @@ export default function MonitorPillar1Tab({
               <span style={{ fontWeight: 700, color: '#ffffff' }}>{selectedFacility.name}</span>
               <span style={{ color: '#94a3b8', marginLeft: '8px' }}>• Grid Block: {selectedFacility.gridId}</span>
             </div>
-            <div style={{ color: '#38bdf8' }}>
-              Primary Email: {selectedFacility.primaryEmail || 'vayuvitals@gmail.com'}
+            <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
+              Institutional Contact: Registered Nodal Registry (Protected)
             </div>
           </div>
         )}
