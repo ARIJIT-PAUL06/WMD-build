@@ -1,7 +1,7 @@
 /**
  * Multi-Gas Chemical Source Attribution & Forensic Fingerprinting Engine
  * Analyzes multi-pollutant telemetry (PM2.5, PM10, NO2, SO2, O3, CO)
- * combined with meteorological physics to mathematically prove the proximate cause of pollution spikes.
+ * combined with meteorological physics to estimate probable emission sources based on chemical transport ratios.
  */
 
 export function analyzeChemicalFingerprint({
@@ -190,7 +190,7 @@ export async function fetchLiveSourceAttribution({ lat = 28.6139, lon = 77.2090,
     success: true,
     latitude,
     longitude,
-    telemetrySource: 'Open-Meteo Multi-Gas CAAQMS Continuous Ingestion',
+    telemetrySource: 'Open-Meteo CAMS Multi-Gas Reanalysis Ingestion',
     fingerprint
   };
 }
