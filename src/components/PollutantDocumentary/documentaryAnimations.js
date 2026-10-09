@@ -54,14 +54,11 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
   if (prefersReducedMotion) {
     // Reveal all elements statically with zero transitions
     const elements = containerEl.querySelectorAll(
-      '.documentary-nav, .documentary-hero-editorial-col, .documentary-value-container, .documentary-data-panel, .documentary-section, .documentary-image-frame, .documentary-data-section, .documentary-pinned-card, .doc-scale-fill'
+      '.doc-back-button-root, .documentary-hero-editorial-col, .documentary-value-container, .documentary-data-panel, .documentary-section, .documentary-image-frame, .documentary-data-section, .doc-scale-fill'
     );
     elements.forEach((el) => {
       el.style.opacity = '1';
       el.style.transform = 'none';
-      if (el.classList.contains('documentary-pinned-card')) {
-        el.style.display = 'block';
-      }
     });
     return () => { };
   }
@@ -80,19 +77,33 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     // 8. Current value resolves into view (subtle scale, blur-to-sharp, opacity)
     // 9. Status appears
     // 10. Location visualization activates
-    // 11. Bottom telemetry appears
+    // =======================================================================
+    // TIER 3A: HERO ENTRANCE CHOREOGRAPHY (ROKU-Faithful Motion Hierarchy)
+    // - Hero background media counter-scales: scale 1.15 -> 1.0 (1.6s, ease: power3.out)
+    // - Header drops in with yPercent: -100 -> 0 (0.8s, ease: power3.out)
+    // - Split-line typography / character reveals using smooth power3.out
+    // - Gauge and empirical telemetry settle smoothly
     // =======================================================================
     const heroTl = gsap.timeline({
       defaults: { ease: 'power3.out' },
     });
 
-    // Step 1: Background atmospheric layer establishes itself
+    // Step 1: Background atmospheric layer establishes itself (ROKU hero media scale: 1.15 -> 1.0)
     const bgBackdrop = containerEl.querySelector('.documentary-hero-ambient-backdrop');
+    const heroPhoto = containerEl.querySelector('.documentary-hero-photo-layer');
     if (bgBackdrop) {
       heroTl.fromTo(
         bgBackdrop,
-        { opacity: 0.3, scale: 1.04 },
-        { opacity: 1, scale: 1.0, duration: 0.9, ease: 'power2.out' },
+        { opacity: 0.25 },
+        { opacity: 1, duration: 1.2, ease: 'power2.out' },
+        0
+      );
+    }
+    if (heroPhoto) {
+      heroTl.fromTo(
+        heroPhoto,
+        { scale: 1.15 },
+        { scale: 1.0, duration: 1.6, ease: 'power3.out' },
         0
       );
     }
@@ -102,20 +113,20 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     if (heroGlyph) {
       heroTl.fromTo(
         heroGlyph,
-        { opacity: 0, scale: 0.94 },
-        { opacity: 0.045, scale: 1.0, duration: 1.2, ease: 'power2.out' },
+        { opacity: 0, scale: 0.92 },
+        { opacity: 0.045, scale: 1.0, duration: 1.4, ease: 'power2.out' },
         0.04
       );
     }
 
-    // Step 2: Floating navigation bar drops down smoothly
-    const nav = containerEl.querySelector('.documentary-nav');
-    if (nav) {
+    // Step 2: Top-left back navigation button reveals smoothly (yPercent: -60 -> 0, opacity: 0 -> 1)
+    const backBtn = containerEl.querySelector('.doc-back-button-root');
+    if (backBtn) {
       heroTl.fromTo(
-        nav,
-        { y: -16, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' },
-        0.08
+        backBtn,
+        { yPercent: -60, opacity: 0 },
+        { yPercent: 0, opacity: 1, duration: 0.7, ease: 'power3.out' },
+        0.1
       );
     }
 
@@ -455,198 +466,70 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     }
 
     // =======================================================================
-    // TIER 3B: FORGE & TRIONN-INSPIRED PINNED STORY SEQUENCE
-    // Background image stays pinned while 4 narrative investigation beats
-    // crossfade as the user scrolls through the airshed journey.
-    // =======================================================================
-    const pinnedSection = containerEl.querySelector('.documentary-pinned-story-section');
-    if (pinnedSection) {
-      const pinnedBgImg = pinnedSection.querySelector('.documentary-pinned-bg-img');
-      const pinnedWatermark = pinnedSection.querySelector('.documentary-pinned-sculptural-watermark');
-      const beatCards = pinnedSection.querySelectorAll('.documentary-pinned-card');
-      const stepItems = pinnedSection.querySelectorAll('.doc-ribbon-step-item');
-
-      if (beatCards.length > 0) {
-        // Initial state: first card visible, others hidden
-        gsap.set(beatCards, { opacity: 0, y: 40, display: 'none' });
-        gsap.set(beatCards[0], { opacity: 1, y: 0, display: 'block' });
-
-        const pinnedTl = gsap.timeline({
-          scrollTrigger: {
-            trigger: pinnedSection,
-            start: 'top top',
-            end: '+=250%',
-            pin: true,
-            scrub: 0.8,
-            anticipatePin: 1,
-            onUpdate: (self) => {
-              const progress = self.progress; // 0 to 1
-              const activeIndex = Math.min(
-                beatCards.length - 1,
-                Math.floor(progress * beatCards.length)
-              );
-              stepItems.forEach((item, idx) => {
-                if (idx <= activeIndex) {
-                  item.classList.add('active');
-                } else {
-                  item.classList.remove('active');
-                }
-              });
-            },
-          },
-        });
-
-        // Continuous SVG vector progress line scrubs along entire sequence
-        const ribbonProgressLine = pinnedSection.querySelector('#doc-ribbon-progress-line');
-        if (ribbonProgressLine) {
-          pinnedTl.fromTo(
-            ribbonProgressLine,
-            { strokeDashoffset: 280 },
-            { strokeDashoffset: 0, ease: 'none' },
-            0
-          );
-        }
-
-        // Background image slow cinematic camera scale
-        if (pinnedBgImg) {
-          pinnedTl.fromTo(
-            pinnedBgImg,
-            { scale: 1.08, y: 0 },
-            { scale: 1.0, y: -15, ease: 'none' },
-            0
-          );
-        }
-
-        // Pinned background sculptural watermark drift
-        if (pinnedWatermark) {
-          pinnedTl.fromTo(
-            pinnedWatermark,
-            { yPercent: 10, scale: 0.95, opacity: 0.03 },
-            { yPercent: -15, scale: 1.08, opacity: 0.07, ease: 'none' },
-            0
-          );
-        }
-
-        // Crossfade through the 4 narrative cards with coordinated schematic reveal
-        for (let i = 0; i < beatCards.length - 1; i++) {
-          const curr = beatCards[i];
-          const next = beatCards[i + 1];
-
-          pinnedTl.to(
-            curr,
-            { opacity: 0, y: -30, duration: 0.4, onComplete: () => { curr.style.display = 'none'; } },
-            `beat-${i}`
-          );
-
-          pinnedTl.set(next, { display: 'block', y: 30, opacity: 0 });
-
-          pinnedTl.to(
-            next,
-            { opacity: 1, y: 0, duration: 0.4 },
-            `beat-${i}+=0.15`
-          );
-
-          const nextSchematic = next.querySelector('.doc-card-schematic-wrap');
-          if (nextSchematic) {
-            pinnedTl.fromTo(
-              nextSchematic,
-              { opacity: 0.3, y: 12 },
-              { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' },
-              `beat-${i}+=0.22`
-            );
-          }
-        }
-      }
-    }
-
-    // =======================================================================
-    // TIER 3C: CINEMATIC IMAGE CLIP-PATH & PARALLAX TRANSFORMATION
-    // Image transitions from framed inset to cinematic bleed with parallax
+    // TIER 3C: ROKU-INSPIRED IMAGE CLIP-PATH & SCALE REVEAL TRANSFORMATION
+    // Faithfully reproduces ROKU projects-module reveal:
+    // - clipPath: inset(0% 0% 0% 100%) -> inset(0% 0% 0% 0%), ease: 'power2.inOut'
+    // - Inner image counter-scales from 1.15 -> 1.0, ease: 'power2.out'
+    // - Eyebrow, caption title, and metadata tag reveal with yPercent: 60 -> 0, autoAlpha: 0 -> 1
     // =======================================================================
     const imageSection = containerEl.querySelector('.documentary-image-section');
     if (imageSection) {
       const imgFrame = imageSection.querySelector('.documentary-image-frame');
       const imgEl = imageSection.querySelector('.documentary-image-element');
       const captionTitle = imageSection.querySelector('.doc-caption-title');
-      const captionOverlay = imageSection.querySelector('.documentary-image-caption-overlay');
+      const captionKicker = imageSection.querySelector('.doc-caption-kicker');
+      const captionDetail = imageSection.querySelector('.doc-caption-detail');
+      const captionTags = imageSection.querySelectorAll('.doc-c-tag');
 
       if (imgFrame && imgEl) {
-        // Trionn-style clip-path expansion as section enters viewport
-        gsap.fromTo(
+        // ROKU curtain clip-path reveal with scrub synchronization
+        const imgTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: imageSection,
+            start: 'top 85%',
+            end: 'top 20%',
+            scrub: 0.6, // ROKU scrub damping
+          },
+        });
+
+        imgTl.fromTo(
           imgFrame,
-          { clipPath: 'inset(6% 4% 6% 4% round 20px)' },
-          {
-            clipPath: 'inset(0% 0% 0% 0% round 0px)',
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: imageSection,
-              start: 'top 80%',
-              end: 'bottom 80%',
-              scrub: 1.0,
-            },
-          }
+          { clipPath: 'inset(0% 0% 0% 100%)' },
+          { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.0, ease: 'power2.inOut' },
+          0
         );
 
-        gsap.fromTo(
+        imgTl.fromTo(
           imgEl,
-          { scale: 1.12, xPercent: -2 },
-          {
-            scale: 1.0,
-            xPercent: 2,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: imageSection,
-              start: 'top bottom',
-              end: 'bottom top',
-              scrub: 1.2,
-            },
-          }
+          { scale: 1.15 },
+          { scale: 1.0, duration: 1.0, ease: 'power2.out' },
+          0
         );
-      }
 
-      if (captionTitle) {
-        gsap.fromTo(
-          captionTitle,
-          { yPercent: 100, opacity: 0 },
-          {
-            yPercent: 0,
-            opacity: 1,
-            duration: 0.8,
-            ease: 'expo.out',
-            scrollTrigger: {
-              trigger: captionTitle,
-              start: 'top 88%',
-              toggleActions: 'play none none none',
-            },
-          }
-        );
-      } else if (captionOverlay) {
-        gsap.fromTo(
-          captionOverlay,
-          { opacity: 0, y: 30 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.8,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: captionOverlay,
-              start: 'top 85%',
-              toggleActions: 'play none none none',
-            },
-          }
-        );
+        const captionItems = [captionKicker, captionTitle, captionDetail, ...captionTags].filter(Boolean);
+        if (captionItems.length > 0) {
+          imgTl.fromTo(
+            captionItems,
+            { yPercent: 60, autoAlpha: 0 },
+            { yPercent: 0, autoAlpha: 1, duration: 0.5, stagger: 0.08, ease: 'power2.out' },
+            0.4
+          );
+        }
       }
     }
 
     // =======================================================================
-    // TIER 2: EDITORIAL SECTION REVEALS & MASKED TYPOGRAPHY
+    // TIER 2: EDITORIAL SECTION REVEALS & MASKED TYPOGRAPHY (ROKU Motion Grammar)
+    // - Section titles reveal via clip-masked overflow with yPercent: 100 -> 0, ease: 'power3.out'
+    // - Ghost watermarks parallax gently behind content
+    // - Staggered cards reveal with yPercent: 30 -> 0, autoAlpha: 0 -> 1, ease: 'power2.out'
     // =======================================================================
     const sections = containerEl.querySelectorAll('.documentary-section');
     sections.forEach((section) => {
       const header = section.querySelector('.documentary-section-header');
-      const kickerEl = section.querySelector('.documentary-section-kicker');
+      const kickerEl = section.querySelector('.doc-sec-category, .documentary-section-kicker');
       const titleEl = section.querySelector('.documentary-section-title');
+      const leadEl = section.querySelector('.documentary-section-lead');
       const ghostWatermark = section.querySelector('.doc-section-ghost-watermark');
 
       // Giant Ghost Pollutant Typography subtle parallax drift behind section content
@@ -663,7 +546,7 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
               trigger: section,
               start: 'top bottom',
               end: 'bottom top',
-              scrub: 1.2,
+              scrub: 1.0,
             },
           }
         );
@@ -692,12 +575,12 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
       if (titleEl) {
         gsap.fromTo(
           titleEl,
-          { yPercent: 105, opacity: 0 },
+          { yPercent: 100, opacity: 0 },
           {
             yPercent: 0,
             opacity: 1,
             duration: 0.85,
-            ease: 'expo.out',
+            ease: 'power3.out',
             scrollTrigger: {
               trigger: section,
               start: 'top 82%',
@@ -723,17 +606,35 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
         );
       }
 
-      // Animate cards inside this section with stagger
+      if (leadEl) {
+        gsap.fromTo(
+          leadEl,
+          { opacity: 0, y: 15 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.65,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: section,
+              start: 'top 80%',
+              toggleActions: 'play none none none',
+            },
+          }
+        );
+      }
+
+      // Animate cards inside this section with ROKU-style stagger
       const cards = section.querySelectorAll(
-        '.documentary-source-card, .documentary-flow-card, .documentary-impact-card, .doc-standard-card, .doc-chem-metric-card'
+        '.documentary-source-card, .documentary-flow-card, .documentary-impact-card, .doc-standard-card, .doc-chem-metric-card, .doc-source-secondary-card'
       );
       if (cards.length > 0) {
         gsap.fromTo(
           cards,
-          { opacity: 0, y: 25 },
+          { opacity: 0, yPercent: 30 },
           {
             opacity: 1,
-            y: 0,
+            yPercent: 0,
             duration: 0.7,
             stagger: 0.08,
             ease: 'power2.out',

@@ -72,14 +72,10 @@ export default function DocumentarySection({
         </div>
         <div className="documentary-section-inner">
           <header className="documentary-section-header">
-            <div className="documentary-section-kicker">
-              <span className="doc-sec-num">01</span>
-              <span className="doc-sec-divider">/</span>
-              <span className="doc-sec-category">CHEMICAL COMPOSITION</span>
-            </div>
+            <span className="doc-sec-category">Chemical Composition</span>
             <div className="doc-mask-reveal-wrap">
               <h2 className="documentary-section-title">
-                {sections.section01?.title || 'WHAT ARE THEY?'}
+                {sections.section01?.title || 'What Are They?'}
               </h2>
             </div>
             <p className="documentary-section-lead">
@@ -161,14 +157,10 @@ export default function DocumentarySection({
       <section className="documentary-section" id="section-02-how-small">
         <div className="documentary-section-inner">
           <header className="documentary-section-header">
-            <div className="documentary-section-kicker">
-              <span className="doc-sec-num">02</span>
-              <span className="doc-sec-divider">/</span>
-              <span className="doc-sec-category">PHYSICAL SCALE</span>
-            </div>
+            <span className="doc-sec-category">Physical Scale</span>
             <div className="doc-mask-reveal-wrap">
               <h2 className="documentary-section-title">
-                {sections.section02?.title || 'HOW SMALL ARE THEY?'}
+                {sections.section02?.title || 'How Small Are They?'}
               </h2>
             </div>
             <p className="documentary-section-lead">
@@ -224,14 +216,10 @@ export default function DocumentarySection({
         </div>
         <div className="documentary-section-inner">
           <header className="documentary-section-header">
-            <div className="documentary-section-kicker">
-              <span className="doc-sec-num">03</span>
-              <span className="doc-sec-divider">/</span>
-              <span className="doc-sec-category">EMISSION ORIGINS</span>
-            </div>
+            <span className="doc-sec-category">Emission Origins</span>
             <div className="doc-mask-reveal-wrap">
               <h2 className="documentary-section-title">
-                {sections.section03?.title || 'WHERE IT COMES FROM'}
+                {sections.section03?.title || 'Where It Comes From'}
               </h2>
             </div>
             <p className="documentary-section-lead">
@@ -246,21 +234,11 @@ export default function DocumentarySection({
                 {/* Primary Leading Origin Feature */}
                 {sources[0] && (
                   <article className="doc-source-feature-banner">
-                    <div className="doc-feature-top-meta">
-                      <span className="doc-card-idx">01</span>
-                      <span className="doc-source-type-pill primary">
-                        <Flame size={12} />
-                        <span>PRIMARY BASIN VECTOR</span>
-                      </span>
-                    </div>
                     <div className="doc-feature-content">
                       <h3 className="doc-feature-category">{sources[0].category}</h3>
                       <p className="doc-feature-body">
                         {sources[0].description}
                       </p>
-                    </div>
-                    <div className="doc-feature-footer">
-                      <span className="doc-card-tag">HIGH INTENSITY EMISSION</span>
                     </div>
                   </article>
                 )}
@@ -268,19 +246,8 @@ export default function DocumentarySection({
                 {/* Secondary 3 Sources Asymmetrical Deck */}
                 <div className="doc-secondary-sources-deck">
                   {sources.slice(1, 4).map((src, idx) => {
-                    const stepNum = idx + 2;
-                    const isIndustrial = src.isIndustrial || src.category?.toLowerCase().includes('power') || src.category?.toLowerCase().includes('industry');
-                    const isAtmospheric = src.isAtmospheric || src.category?.toLowerCase().includes('secondary');
-                    
                     return (
                       <article key={idx} className={`doc-source-secondary-card item-type-${idx}`}>
-                        <div className="doc-sec-card-header">
-                          <span className="doc-card-idx">0{stepNum}</span>
-                          <span className="doc-source-type-pill">
-                            {isIndustrial ? <Factory size={11} /> : isAtmospheric ? <Wind size={11} /> : <Layers size={11} />}
-                            <span>{isAtmospheric ? 'PHOTOCHEMICAL' : isIndustrial ? 'INDUSTRIAL' : 'FUGITIVE / REGIONAL'}</span>
-                          </span>
-                        </div>
                         <h4 className="doc-sec-category">{src.category}</h4>
                         <p className="doc-sec-body">
                           {src.description}
@@ -294,65 +261,20 @@ export default function DocumentarySection({
               {/* Atmospheric Boundary Layer Behavior Strip */}
               <div className="exposure-behavior-box">
                 <div className="doc-behavior-kicker">
-                  <Wind size={14} />
-                  <span>ATMOSPHERIC DISPERSION & METEOROLOGY IN DELHI BASIN</span>
+                  <span>Atmospheric Dispersion & Basin Meteorology</span>
                 </div>
                 <p className="doc-behavior-text">
                   {pollutantData.atmosphericBehavior}
                 </p>
-                <div className="doc-behavior-chips">
-                  <span className="doc-behavior-chip">INVERSION: &lt; 150m</span>
-                  <span className="doc-behavior-chip">WINDS: &lt; 2 m/s CALM</span>
-                  <span className="doc-behavior-chip">CORRIDOR: INDO-GANGETIC</span>
-                </div>
               </div>
             </div>
 
-            {/* Right Column: Clean Telemetry & Standard Calibration */}
+            {/* Right Column: Clean Standards Reference */}
             <div className="exposure-telemetry-col">
-              <div className="doc-standard-card">
-                <span className="doc-card-kicker">CONTINUOUS RECEPTOR OBSERVATION</span>
-                <div className="doc-card-value-row">
-                  <span className="doc-card-big-num">
-                    {currentValue != null ? Math.round(currentValue) : '—'}
-                  </span>
-                  <span className="doc-card-unit">{unit}</span>
-                </div>
-                <p className="doc-card-note">
-                  {currentStation?.name || 'Delhi CAAQMS Ground Telemetry'}
-                </p>
-              </div>
-
               <div className="doc-standard-box highlight">
                 <span className="doc-std-org">CPCB 24-HR NAAQS STANDARD</span>
                 <span className="doc-std-val">{pollutantData.naaqsLimit} {unit}</span>
-                <span className="doc-std-scope">WHO Guideline: {pollutantData.whoLimit} {unit}</span>
-              </div>
-
-              {/* Visual Variance & Ratio Metric Card */}
-              <div className="doc-data-diff-card">
-                <div className="doc-diff-header">
-                  <span className="doc-diff-title">STATUTORY THRESHOLD VARIANCE</span>
-                  <span className={`doc-diff-badge ${delta != null && delta > 0 ? 'exceeded' : 'compliant'}`}>
-                    {delta != null ? `${delta > 0 ? '+' : ''}${delta} ${unit}` : 'NORMAL'}
-                  </span>
-                </div>
-                <div className="doc-diff-metrics">
-                  <div className="doc-diff-col">
-                    <span className="doc-diff-lbl">CURRENT</span>
-                    <span className="doc-diff-val">
-                      {currentValue != null ? Math.round(currentValue) : '—'}
-                    </span>
-                  </div>
-                  <div className="doc-diff-col">
-                    <span className="doc-diff-lbl">REFERENCE</span>
-                    <span className="doc-diff-val">{pollutantData.naaqsLimit}</span>
-                  </div>
-                  <div className="doc-diff-col">
-                    <span className="doc-diff-lbl">RATIO</span>
-                    <span className="doc-diff-val">{ratio ? `${ratio}x` : '1.0x'}</span>
-                  </div>
-                </div>
+                <span className="doc-std-scope">WHO 24-Hour Guideline: {pollutantData.whoLimit} {unit}</span>
               </div>
             </div>
           </div>
@@ -375,14 +297,10 @@ export default function DocumentarySection({
       <section className="documentary-section" id="section-what-it-does">
         <div className="documentary-section-inner">
           <header className="documentary-section-header">
-            <div className="documentary-section-kicker">
-              <span className="doc-sec-num">04</span>
-              <span className="doc-sec-divider">/</span>
-              <span className="doc-sec-category">TRANSPORT MECHANICS</span>
-            </div>
+            <span className="doc-sec-category">Transport Mechanics</span>
             <div className="doc-mask-reveal-wrap">
               <h2 className="documentary-section-title">
-                {sections.section04?.title || 'WHAT IT DOES'}
+                {sections.section04?.title || 'What It Does'}
               </h2>
             </div>
             <p className="documentary-section-lead">
@@ -409,18 +327,14 @@ export default function DocumentarySection({
         </div>
         <div className="documentary-section-inner">
           <header className="documentary-section-header">
-            <div className="documentary-section-kicker">
-              <span className="doc-sec-num">07</span>
-              <span className="doc-sec-divider">/</span>
-              <span className="doc-sec-category">PHYSIOLOGICAL VULNERABILITY</span>
-            </div>
+            <span className="doc-sec-category">Physiological Vulnerability</span>
             <div className="doc-mask-reveal-wrap">
               <h2 className="documentary-section-title">
-                WHY IT MATTERS
+                Why It Matters
               </h2>
             </div>
             <p className="documentary-section-lead">
-              BIOLOGICAL UPTAKE, RESPIRATORY PENETRATION & SYSTEMIC BURDEN
+              Biological uptake, respiratory penetration, and systemic burden
             </p>
           </header>
 
@@ -442,10 +356,6 @@ export default function DocumentarySection({
           <div className="documentary-impact-points-grid">
             {impactPoints.map((pt, idx) => (
               <div key={idx} className="documentary-impact-card">
-                <div className="doc-impact-card-top">
-                  <span className="doc-impact-idx">0{idx + 1}</span>
-                  <span className="doc-impact-card-tag">CLINICAL OBSERVATION</span>
-                </div>
                 <p className="doc-impact-text">{pt}</p>
               </div>
             ))}
@@ -459,18 +369,14 @@ export default function DocumentarySection({
       <section className="documentary-section" id="section-08-the-takeaway">
         <div className="documentary-section-inner">
           <header className="documentary-section-header">
-            <div className="documentary-section-kicker">
-              <span className="doc-sec-num">08</span>
-              <span className="doc-sec-divider">/</span>
-              <span className="doc-sec-category">14-DAY ARCHIVE</span>
-            </div>
+            <span className="doc-sec-category">Observational Record</span>
             <div className="doc-mask-reveal-wrap">
               <h2 className="documentary-section-title">
-                14 DAYS OF EVIDENCE
+                14 Days of Evidence
               </h2>
             </div>
             <p className="documentary-section-lead">
-              Continuous field telemetry evidence window across 14 consecutive calendar days. Verified observations are recorded; missing days remain strictly unpopulated without fabrication.
+              Field telemetry records across 14 consecutive calendar days. Verified observations are recorded; missing days remain strictly unpopulated.
             </p>
           </header>
 

@@ -148,8 +148,6 @@ export default function PollutantValue({
         <div className="documentary-value-content">
           <div className="documentary-value-kicker-symbol">
             <span className="doc-symbol-txt">{symbol}</span>
-            <span className="doc-symbol-dot">•</span>
-            <span className="doc-symbol-ctx">CURRENT LEVEL</span>
           </div>
 
           <div className="documentary-value-number-row">

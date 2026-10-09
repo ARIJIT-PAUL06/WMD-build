@@ -29,12 +29,11 @@ export default function ComparisonSplitPanel({
     <div className="comparison-split-panel-root" id="comparison-split-panel">
       <div className="comp-panel-header">
         <div className="comp-header-left">
-          <Activity size={14} className="comp-header-icon" />
-          <span className="comp-header-title">STATUTORY & EPIDEMIOLOGICAL THRESHOLD COMPARISON</span>
+          <span className="comp-header-title">Air Quality Benchmarks</span>
         </div>
         <div className="comp-header-badge">
           <span className={`comp-status-chip ${isExceeded ? 'exceeded' : 'safe'}`}>
-            {isExceeded ? `${naaqsRatio}x NAAQS LIMIT` : 'WITHIN LEGAL THRESHOLD'}
+            {isExceeded ? `${naaqsRatio}x NAAQS Limit` : 'Within Legal Threshold'}
           </span>
         </div>
       </div>

@@ -35,9 +35,9 @@ export default function DocumentaryHero({
     return (
       POLLUTANT_EDITORIAL_HEADLINES[pollutantData.id] || {
         statement: 'Small particles. Large consequences.',
-        kicker: 'AIR POLLUTANT // ATMOSPHERIC INTELLIGENCE',
+        kicker: 'Fine Particulate Matter (≤ 2.5 µm)',
         subtext: pollutantData.shortDescription,
-        region: 'Delhi NCR // Indo-Gangetic Airshed',
+        region: 'Indo-Gangetic Airshed, Delhi NCR',
       }
     );
   }, [pollutantData.id, pollutantData.shortDescription]);
