@@ -174,15 +174,37 @@ export async function getSchoolAqiForecast({
 
   const { meteo: hourlyMeteo } = await fetchMeteoAndAqiForecast(latitude, longitude);
   const now = new Date();
+  let weatherDegraded = !(hourlyMeteo && Array.isArray(hourlyMeteo.time) && hourlyMeteo.time.length > 0);
+
+  // Helper to extract Asia/Kolkata date parts cleanly on both Node local and AWS Lambda (UTC)
+  function getIstParts(dateObj) {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      hour12: false
+    }).formatToParts(dateObj);
+
+    const getVal = (type) => parseInt(parts.find(p => p.type === type)?.value, 10);
+    const hour = getVal('hour') % 24;
+    const month = getVal('month');
+    const day = getVal('day');
+    const year = getVal('year');
+
+    const istDayDate = new Date(Date.UTC(year, month - 1, day));
+    const istYearStart = new Date(Date.UTC(year, 0, 1));
+    const dayOfYear = Math.floor((istDayDate - istYearStart) / (1000 * 60 * 60 * 24)) + 1;
+
+    return { hour, month, day, year, dayOfYear };
+  }
 
   // Construct 14 features for each of the 48 forward hours
   const featureRows = [];
   for (let step = 1; step <= 48; step++) {
     const forecastTime = new Date(now.getTime() + step * 3600 * 1000);
-    const hour = forecastTime.getHours();
-    const dayOfYear = Math.floor((forecastTime - new Date(forecastTime.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-    const month = forecastTime.getMonth() + 1;
-    const day = forecastTime.getDate();
+    const { hour, month, day, year, dayOfYear } = getIstParts(forecastTime);
 
     const isWinterSeason = (month === 11 || month === 12 || month === 1 || (month === 10 && day >= 15)) ? 1 : 0;
     const isStubbleWindow = ((month === 10 && day >= 20) || (month === 11 && day <= 20)) ? 1 : 0;
@@ -191,10 +213,22 @@ export async function getSchoolAqiForecast({
     let temp = 26.0;
     let humidity = 60.0;
     let windSpeed = 2.2;
-    if (hourlyMeteo && hourlyMeteo.time && hourlyMeteo.time[step]) {
-      temp = hourlyMeteo.temperature_2m?.[step] ?? 26.0;
-      humidity = hourlyMeteo.relative_humidity_2m?.[step] ?? 60.0;
-      windSpeed = hourlyMeteo.wind_speed_10m?.[step] ?? 2.2;
+
+    // Match Open-Meteo hourly weather by target hour string in Asia/Kolkata ("YYYY-MM-DDTHH:00")
+    if (hourlyMeteo && Array.isArray(hourlyMeteo.time)) {
+      const targetTimeStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:00`;
+      let meteoIdx = hourlyMeteo.time.indexOf(targetTimeStr);
+      if (meteoIdx === -1) {
+        meteoIdx = hourlyMeteo.time.findIndex(t => t.startsWith(targetTimeStr.slice(0, 13)));
+      }
+
+      if (meteoIdx !== -1) {
+        temp = hourlyMeteo.temperature_2m?.[meteoIdx] ?? 26.0;
+        humidity = hourlyMeteo.relative_humidity_2m?.[meteoIdx] ?? 60.0;
+        windSpeed = hourlyMeteo.wind_speed_10m?.[meteoIdx] ?? 2.2;
+      } else {
+        weatherDegraded = true;
+      }
     }
 
     const hourSin = Math.sin((2 * Math.PI * hour) / 24);
@@ -440,6 +474,7 @@ export async function getSchoolAqiForecast({
       sagemakerStatus,
       sagemakerError,
       inferenceLatencyMs,
+      weatherMode: weatherDegraded ? 'DEGRADED_DEFAULT_PHYSICS' : 'LIVE_OPEN_METEO_METEOROLOGY',
       framework: modelMetadata?.model_framework || 'xgboost',
       featuresCount: modelMetadata?.features?.length || 14,
       testMae: modelMetadata?.test_mae_ug_m3 || null,

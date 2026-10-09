@@ -162,11 +162,31 @@ export class EnvironmentalDataProvider {
   }
 
   generateDefaultReading(cityName) {
-    const isDelhi = cityName.toLowerCase().includes('delhi');
-    const aqi = isDelhi ? 245 : 88;
-    const reading = this.generateSimulatedReading(cityName, aqi);
-    reading.source = 'Baseline Calibration (Live Network Offline)';
-    return reading;
+    return {
+      city: cityName,
+      timestamp: Date.now(),
+      aqi: null,
+      status: 'Offline / Awaiting Telemetry',
+      categoryColor: '#64748b',
+      healthLevel: 'unverified',
+      dominantPollutant: 'N/A',
+      pollutants: {
+        pm25: null,
+        pm10: null,
+        no2: null,
+        so2: null,
+        o3: null,
+        co: null,
+        dust: null,
+      },
+      weather: {
+        temp: null,
+        humidity: null,
+        uvIndex: null,
+      },
+      source: 'Telemetry Offline (Live Upstream Data Unavailable)',
+      dataUnavailable: true
+    };
   }
 }
 
