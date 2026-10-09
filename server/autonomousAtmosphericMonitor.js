@@ -609,12 +609,32 @@ export async function runAutonomousMonitoringCycle({ dispatchViaSes = false, isS
 
     // 2. Scan for Sudden Block-Level Spikes (Pillar 2)
     const blockThreshold = parseInt(process.env.BLOCK_EMERGENCY_THRESHOLD_PM25, 10) || 105;
+    const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
+    const nowMs = Date.now();
+
     for (const gridSync of syncedGrids) {
-      if (gridSync.avgPm25 >= blockThreshold) {
+      if (gridSync.recent3hAvgPm25 === null || gridSync.recent3hAvgPm25 === undefined) {
+        continue;
+      }
+
+      // If the latest observed hour is more than about 3 hours old, skip that grid and log it as stale data, not as a surge.
+      if (!gridSync.latestTimestamp) {
+        console.log(`[AutonomousMonitor] ⚠️ Skipping grid ${gridSync.gridId}: missing latest timestamp.`);
+        continue;
+      }
+
+      const latestAgeMs = nowMs - new Date(gridSync.latestTimestamp).getTime();
+      if (latestAgeMs > THREE_HOURS_MS) {
+        const ageHours = (latestAgeMs / (3600 * 1000)).toFixed(1);
+        console.log(`[AutonomousMonitor] ⚠️ Skipping grid ${gridSync.gridId}: latest observed reading is stale (${ageHours}h old), logging as stale data, not as a surge.`);
+        continue;
+      }
+
+      if (gridSync.recent3hAvgPm25 >= blockThreshold) {
         const emergencyResult = await dispatchBlockEmergencySurge({
           gridId: gridSync.gridId,
-          currentPm25: gridSync.avgPm25,
-          anomalyType: 'Live Planetary Boundary Layer Compression & Severe Inversion Trap',
+          currentPm25: gridSync.recent3hAvgPm25,
+          anomalyType: 'Live Planetary Boundary Layer Compression & Severe Inversion Trap (3h Observed Mean)',
           dispatchViaSes: safeDispatch,
           isSandbox
         });

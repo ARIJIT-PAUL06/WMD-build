@@ -1,7 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { findGridForCoordinates } from './gridTelemetryService.js';
+import {
+  findGridForCoordinates,
+  cleanBufferFutureRows,
+  getBufferProvenance
+} from './gridTelemetryService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,6 +37,7 @@ export function getGrid14DayBuffer() {
     for (const p of pCandidates) {
       if (fs.existsSync(p)) {
         cachedGridBuffer = JSON.parse(fs.readFileSync(p, 'utf8'));
+        cleanBufferFutureRows(cachedGridBuffer);
         return cachedGridBuffer;
       }
     }
@@ -385,9 +390,12 @@ export function aggregateSchoolEvidence({
   const startDate = dailyLogs[0]?.displayDate || '';
   const endDate = dailyLogs[dailyLogs.length - 1]?.displayDate || '';
 
+  const provenance = getBufferProvenance();
   return {
     success: true,
     gridId: resolvedGridId,
+    mode: provenance.mode || 'BUNDLED_SNAPSHOT',
+    snapshotAsOf: provenance.snapshotAsOf || null,
     schoolName: resolvedSchoolName,
     locality: resolvedLocality,
     stationName: resolvedStation,
@@ -544,11 +552,11 @@ Verified 14-Day School Environmental Monitoring Summary:
   const centroidStr = centroid ? `, centroid ${centroid.lat}, ${centroid.lon}` : '';
   const centroidStrHi = centroid ? `, केंद्र बिंदु ${centroid.lat}, ${centroid.lon}` : '';
   const primarySourceEn = effectiveGridId
-    ? `Open-Meteo modelled PM2.5, grid cell ${effectiveGridId} (~5.5 km${centroidStr})`
-    : 'Open-Meteo modelled hourly PM2.5';
+    ? `Open-Meteo modelled PM2.5, grid cell ${effectiveGridId} (~5.5 km${centroidStr}) (CAMS atmospheric reanalysis, model analysis)`
+    : 'Open-Meteo modelled hourly PM2.5 (CAMS atmospheric reanalysis, model analysis)';
   const primarySourceHi = effectiveGridId
-    ? `ओपन-मेटियो मॉडल्ड PM2.5, ग्रिड सेल ${effectiveGridId} (~5.5 किमी${centroidStrHi})`
-    : 'ओपन-मेटियो मॉडल्ड प्रति घंटा PM2.5';
+    ? `ओपन-मेटियो मॉडल्ड PM2.5, ग्रिड सेल ${effectiveGridId} (~5.5 किमी${centroidStrHi}) (CAMS वायुमंडलीय रीएनालिसिस, मॉडल विश्लेषण)`
+    : 'ओपन-मेटियो मॉडल्ड प्रति घंटा PM2.5 (CAMS वायुमंडलीय रीएनालिसिस, मॉडल विश्लेषण)';
 
   const cleanStation = stationName ? stationName.replace(/\s*CAAQMS/gi, '').trim() : '';
   const refStationLineEn = cleanStation
@@ -582,7 +590,7 @@ I write as a resident regarding morning air quality near ${gridLabel}. Using mod
 
 Data Provenance & Scientific Basis:
 - Primary Monitoring Source: ${primarySourceEn}${refStationLineEn}
-- Telemetry Network: Open-Meteo modelled hourly PM2.5 dataset
+- Telemetry Network: Open-Meteo modelled hourly PM2.5 dataset (CAMS atmospheric reanalysis, model analysis)
 - Compilation Engine: ${compiledBy || 'VayuVitals Continuous Monitoring Engine'} on ${compilationDate || new Date().toLocaleDateString('en-IN')}
 - Observation Window: ${startDate} to ${endDate}${observationSummaryEn}
 - Time Window Examined: 07:00 AM to 01:00 PM IST (Morning Operating Hours)${schoolEvidenceBlockEn}${forecastBlockEn}
@@ -611,7 +619,7 @@ ${authority.address || ''}
 
 आंकड़ों की प्रामाणिकता एवं स्रोत:
 - प्राथमिक निगरानी स्रोत: ${primarySourceHi}${refStationLineHi}
-- निगरानी नेटवर्क: ओपन-मेटियो मॉडल्ड प्रति घंटा PM2.5 डेटासेट
+- निगरानी नेटवर्क: ओपन-मेटियो मॉडल्ड प्रति घंटा PM2.5 डेटासेट (CAMS वायुमंडलीय रीएनालिसिस, मॉडल विश्लेषण)
 - डेटा संकलन: ${compiledBy || 'VayuVitals Continuous Monitoring Engine'} (संकलन तिथि: ${compilationDate || new Date().toLocaleDateString('en-IN')})
 - निगरानी अवधि: ${startDate} से ${endDate}${observationSummaryHi}${schoolEvidenceBlockHi}${forecastBlockHi}
 अतः आपसे सविनय अनुरोध है कि नागरिकों के स्वास्थ्य एवं स्वच्छ परिवेश के अधिकार को ध्यान में रखते हुए निम्नलिखित त्वरित कदम उठाने की कृपा करें:
@@ -645,7 +653,7 @@ I write on behalf of ${schoolName}${locationStr}. Using modelled hourly PM2.5 da
 
 Data Provenance & Scientific Basis:
 - Primary Monitoring Source: ${primarySourceEn}${refStationLineEn}
-- Telemetry Network: Open-Meteo modelled hourly PM2.5 dataset
+- Telemetry Network: Open-Meteo modelled hourly PM2.5 dataset (CAMS atmospheric reanalysis, model analysis)
 - Compilation Engine: ${compiledBy || 'VayuVitals Continuous Monitoring Engine'} on ${compilationDate || new Date().toLocaleDateString('en-IN')}
 - Observation Window: ${startDate} to ${endDate}${observationSummaryEn}
 - Time Window Examined: 07:00 AM to 01:00 PM IST (Daily School Operating Hours)${schoolEvidenceBlockEn}${forecastBlockEn}
@@ -674,7 +682,7 @@ ${authority.address || ''}
 
 आंकड़ों की प्रामाणिकता एवं स्रोत:
 - प्राथमिक निगरानी स्रोत: ${primarySourceHi}${refStationLineHi}
-- निगरानी नेटवर्क: ओपन-मेटियो मॉडल्ड प्रति घंटा PM2.5 डेटासेट
+- निगरानी नेटवर्क: ओपन-मेटियो मॉडल्ड प्रति घंटा PM2.5 डेटासेट (CAMS वायुमंडलीय रीएनालिसिस, मॉडल विश्लेषण)
 - डेटा संकलन: ${compiledBy || 'VayuVitals Continuous Monitoring Engine'} (संकलन तिथि: ${compilationDate || new Date().toLocaleDateString('en-IN')})
 - निगरानी अवधि: ${startDate} से ${endDate}${observationSummaryHi}${schoolEvidenceBlockHi}${forecastBlockHi}
 अतः आपसे सविनय अनुरोध है कि बच्चों के स्वास्थ्य एवं स्वच्छ परिवेश के अधिकार को ध्यान में रखते हुए निम्नलिखित त्वरित कदम उठाने की कृपा करें:

@@ -32,6 +32,68 @@ const THREE_YEAR_DAILY_CSV = resolveDataPath('ml/data/grid_3year_daily_train.csv
 let spatialGrids = {};
 let grid14DayBuffer = {};
 
+/**
+ * Ensures a reading timestamp is not in the future relative to observation reference time.
+ */
+export function isObservedHour(ts, now = new Date()) {
+  if (!ts) return false;
+  const tsTime = new Date(ts).getTime();
+  const nowTime = now instanceof Date ? now.getTime() : new Date(now).getTime();
+  if (isNaN(tsTime) || isNaN(nowTime)) return false;
+  return tsTime <= nowTime;
+}
+
+/**
+ * Filters out future forecast rows from a buffer object and ensures honest source attribution.
+ */
+export function cleanBufferFutureRows(bufferObj, now = new Date()) {
+  if (!bufferObj || typeof bufferObj !== 'object') return {};
+  for (const gridId of Object.keys(bufferObj)) {
+    const gridData = bufferObj[gridId];
+    if (gridData && Array.isArray(gridData.hourlyBuffer)) {
+      gridData.hourlyBuffer = gridData.hourlyBuffer.filter(r => isObservedHour(r.timestamp, now));
+      for (const r of gridData.hourlyBuffer) {
+        if (r.source === 'OPEN_METEO_EMPIRICAL_API' || !r.source) {
+          r.source = 'OPEN_METEO_CAMS';
+        }
+        if (!r.dataKind) {
+          r.dataKind = 'model_analysis';
+        }
+      }
+    }
+  }
+  return bufferObj;
+}
+
+export function computeBufferNewestTimestamp(buf) {
+  let newestTs = null;
+  if (buf && typeof buf === 'object') {
+    for (const g of Object.values(buf)) {
+      if (Array.isArray(g?.hourlyBuffer)) {
+        for (const r of g.hourlyBuffer) {
+          if (r.timestamp && (!newestTs || r.timestamp > newestTs)) {
+            newestTs = r.timestamp;
+          }
+        }
+      }
+    }
+  }
+  return newestTs;
+}
+
+let bufferProvenance = {
+  mode: 'BUNDLED_SNAPSHOT',
+  snapshotAsOf: null
+};
+
+export function getBufferProvenance() {
+  return { ...bufferProvenance };
+}
+
+export function setBufferProvenance(prov) {
+  bufferProvenance = { ...bufferProvenance, ...prov };
+}
+
 // Load Spatial Grids
 try {
   if (fs.existsSync(GRIDS_PATH)) {
@@ -63,8 +125,19 @@ try {
       grid14DayBuffer = JSON.parse(fs.readFileSync(fallbackPath, 'utf8'));
     }
   }
+
+  // Filter future rows already sitting in the JSON file
+  cleanBufferFutureRows(grid14DayBuffer);
+  bufferProvenance = {
+    mode: 'BUNDLED_SNAPSHOT',
+    snapshotAsOf: computeBufferNewestTimestamp(grid14DayBuffer)
+  };
 } catch (err) {
   grid14DayBuffer = {};
+  bufferProvenance = {
+    mode: 'UNAVAILABLE',
+    snapshotAsOf: null
+  };
 }
 
 /**
@@ -99,6 +172,11 @@ export function findGridForCoordinates(lat, lon) {
  * (Max 336 hourly entries = 14 days x 24 hours)
  */
 export function recordHourlyTelemetry(gridId, timestamp, pm25, metadata = {}) {
+  const ts = timestamp || new Date().toISOString();
+  if (!isObservedHour(ts)) {
+    return grid14DayBuffer[gridId] || null;
+  }
+
   if (!grid14DayBuffer[gridId]) {
     grid14DayBuffer[gridId] = {
       gridId,
@@ -109,8 +187,10 @@ export function recordHourlyTelemetry(gridId, timestamp, pm25, metadata = {}) {
 
   const gridData = grid14DayBuffer[gridId];
   gridData.hourlyBuffer.push({
-    timestamp: timestamp || new Date().toISOString(),
+    timestamp: ts,
     pm25: parseFloat(pm25),
+    source: metadata.source || 'OPEN_METEO_CAMS',
+    dataKind: metadata.dataKind || 'model_analysis',
     ...metadata
   });
 
@@ -186,16 +266,18 @@ export function get14DayCompliance(gridId) {
     severeHours,
     avgPm25: Math.round(avg),
     totalDaysRecorded: totalDays,
-    petitionEligible
+    petitionEligible,
+    mode: bufferProvenance.mode || 'BUNDLED_SNAPSHOT',
+    snapshotAsOf: bufferProvenance.snapshotAsOf || null
   };
 }
 
 /**
  * Fetch and synchronize 14-day empirical telemetry from Open-Meteo for any grid or coordinate
  */
-export async function fetchLiveTelemetryForGrid(gridId, lat, lon, daysPast = 14) {
+export async function fetchLiveTelemetryForGrid(gridId, lat, lon, daysPast = 14, now = new Date()) {
   try {
-    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm2_5,pm10,nitrogen_dioxide,carbon_monoxide&past_days=${daysPast}&timezone=GMT`;
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm2_5,pm10,nitrogen_dioxide,carbon_monoxide&past_days=${daysPast}&forecast_days=1&timezone=GMT`;
     const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
     if (!res.ok) return null;
 
@@ -218,12 +300,16 @@ export async function fetchLiveTelemetryForGrid(gridId, lat, lon, daysPast = 14)
       if (pm25s[i] !== null && pm25s[i] !== undefined) {
         const rawTime = times[i];
         const formattedTimestamp = rawTime.endsWith('Z') ? rawTime : `${rawTime}Z`;
+        if (!isObservedHour(formattedTimestamp, now)) {
+          continue;
+        }
         buffer.push({
           timestamp: formattedTimestamp,
           pm25: Math.round(pm25s[i] * 10) / 10,
           pm10: pm10s[i] !== null ? Math.round(pm10s[i] * 10) / 10 : null,
           no2: no2s[i] !== null ? Math.round(no2s[i] * 10) / 10 : null,
-          source: 'OPEN_METEO_EMPIRICAL_API'
+          source: 'OPEN_METEO_CAMS',
+          dataKind: 'model_analysis'
         });
       }
     }
@@ -237,10 +323,22 @@ export async function fetchLiveTelemetryForGrid(gridId, lat, lon, daysPast = 14)
       // Non-fatal
     }
 
+    const latestRecord = buffer.length ? buffer[buffer.length - 1] : null;
+    const last3 = buffer.slice(-3);
+    const recent3hAvgPm25 = last3.length
+      ? Math.round((last3.reduce((acc, r) => acc + r.pm25, 0) / last3.length) * 10) / 10
+      : null;
+    const window14dAvgPm25 = buffer.length
+      ? Math.round((buffer.reduce((acc, r) => acc + r.pm25, 0) / buffer.length) * 10) / 10
+      : null;
+
     return {
       gridId,
       recordsSynced: buffer.length,
-      avgPm25: buffer.length ? Math.round(buffer.reduce((acc, r) => acc + r.pm25, 0) / buffer.length) : null
+      latestPm25: latestRecord ? latestRecord.pm25 : null,
+      recent3hAvgPm25,
+      window14dAvgPm25,
+      latestTimestamp: latestRecord ? latestRecord.timestamp : null
     };
   } catch (err) {
     console.warn(`[GridTelemetryService] Live sync failed for ${gridId}:`, err.message);
@@ -252,12 +350,12 @@ export async function fetchLiveTelemetryForGrid(gridId, lat, lon, daysPast = 14)
  * Fetch and synchronize live empirical telemetry in multi-location batches from Open-Meteo
  * Open-Meteo supports comma-separated coordinates, allowing 30+ blocks in a single HTTP request!
  */
-export async function fetchLiveTelemetryBatch(gridsChunk, daysPast = 14) {
+export async function fetchLiveTelemetryBatch(gridsChunk, daysPast = 14, now = new Date()) {
   if (!gridsChunk || gridsChunk.length === 0) return [];
   try {
     const lats = gridsChunk.map(g => g.centroid.lat).join(',');
     const lons = gridsChunk.map(g => g.centroid.lon).join(',');
-    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lons}&hourly=pm2_5,pm10,nitrogen_dioxide,carbon_monoxide&past_days=${daysPast}&timezone=GMT`;
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lons}&hourly=pm2_5,pm10,nitrogen_dioxide,carbon_monoxide&past_days=${daysPast}&forecast_days=1&timezone=GMT`;
 
     const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
     if (!res.ok) return [];
@@ -289,22 +387,38 @@ export async function fetchLiveTelemetryBatch(gridsChunk, daysPast = 14) {
         if (pm25s[j] !== null && pm25s[j] !== undefined) {
           const rawTime = times[j];
           const formattedTimestamp = rawTime.endsWith('Z') ? rawTime : `${rawTime}Z`;
+          if (!isObservedHour(formattedTimestamp, now)) {
+            continue;
+          }
           buffer.push({
             timestamp: formattedTimestamp,
             pm25: Math.round(pm25s[j] * 10) / 10,
             pm10: pm10s[j] !== null ? Math.round(pm10s[j] * 10) / 10 : null,
             no2: no2s[j] !== null ? Math.round(no2s[j] * 10) / 10 : null,
-            source: 'OPEN_METEO_EMPIRICAL_API'
+            source: 'OPEN_METEO_CAMS',
+            dataKind: 'model_analysis'
           });
         }
       }
 
       grid14DayBuffer[gridId].hourlyBuffer = buffer;
 
+      const latestRecord = buffer.length ? buffer[buffer.length - 1] : null;
+      const last3 = buffer.slice(-3);
+      const recent3hAvgPm25 = last3.length
+        ? Math.round((last3.reduce((acc, r) => acc + r.pm25, 0) / last3.length) * 10) / 10
+        : null;
+      const window14dAvgPm25 = buffer.length
+        ? Math.round((buffer.reduce((acc, r) => acc + r.pm25, 0) / buffer.length) * 10) / 10
+        : null;
+
       results.push({
         gridId,
         recordsSynced: buffer.length,
-        avgPm25: buffer.length ? Math.round(buffer.reduce((acc, r) => acc + r.pm25, 0) / buffer.length) : null
+        latestPm25: latestRecord ? latestRecord.pm25 : null,
+        recent3hAvgPm25,
+        window14dAvgPm25,
+        latestTimestamp: latestRecord ? latestRecord.timestamp : null
       });
     }
 
@@ -340,6 +454,11 @@ export async function syncAllPopulatedGrids(daysPast = 14) {
     // Non-fatal (e.g. read-only Lambda /tmp or in-memory)
   }
 
+  setBufferProvenance({
+    mode: 'LIVE_SYNC',
+    snapshotAsOf: new Date().toISOString()
+  });
+
   // Update in-memory evidenceService cache and persist to DynamoDB per Fix 16
   try {
     const { setCachedGridBuffer } = await import('./evidenceService.js');
@@ -360,6 +479,31 @@ export async function syncAllPopulatedGrids(daysPast = 14) {
   }
 
   return results;
+}
+
+/**
+ * Hydrates a grid block's 14-day buffer on demand from DynamoDB if available.
+ */
+export async function hydrateGridFromDynamoDB(gridId) {
+  if (grid14DayBuffer[gridId] && grid14DayBuffer[gridId].hourlyBuffer?.length > 0) {
+    return grid14DayBuffer[gridId];
+  }
+  try {
+    const { getGridBufferFromDynamoDB } = await import('./awsServices.js');
+    const data = await getGridBufferFromDynamoDB(gridId);
+    if (data && Array.isArray(data.hourlyBuffer)) {
+      data.hourlyBuffer = data.hourlyBuffer.filter(r => isObservedHour(r.timestamp));
+      grid14DayBuffer[gridId] = data;
+      setBufferProvenance({
+        mode: 'LIVE_DYNAMODB',
+        snapshotAsOf: computeBufferNewestTimestamp(grid14DayBuffer)
+      });
+      return data;
+    }
+  } catch (err) {
+    // Non-fatal if AWS DynamoDB not configured
+  }
+  return null;
 }
 
 /**

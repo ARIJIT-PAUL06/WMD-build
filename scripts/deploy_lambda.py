@@ -42,7 +42,21 @@ with zipfile.ZipFile(buf, 'w', compression=zipfile.ZIP_DEFLATED) as z:
     z.write(os.path.join(project_root, 'ml', 'model', 'xgboost_forecast_model.json'), arcname='ml/model/xgboost_forecast_model.json')
     buf_path = os.path.join(project_root, 'ml', 'data', 'grid_14day_buffer.json')
     if os.path.exists(buf_path):
+        newest_ts = None
+        try:
+            with open(buf_path, 'r', encoding='utf-8') as bf:
+                bdata = json.load(bf)
+                for gdata in bdata.values():
+                    for r in gdata.get('hourlyBuffer', []):
+                        ts = r.get('timestamp')
+                        if ts and (newest_ts is None or ts > newest_ts):
+                            newest_ts = ts
+        except Exception as e:
+            print(f"   [Notice] Could not parse buffer timestamps: {e}")
+        print(f"   Bundling local buffer snapshot (newest timestamp: {newest_ts or 'unknown'})...")
         z.write(buf_path, arcname='ml/data/grid_14day_buffer.json')
+    else:
+        print("   [Notice] No local grid_14day_buffer.json found; skipping bundle. Runtime will hydrate from DynamoDB.")
 
 buf.seek(0)
 zip_bytes = buf.read()

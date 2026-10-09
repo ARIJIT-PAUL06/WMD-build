@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "test": "node --test --test-concurrency=1 tests/*.test.js",
     "test:monitor": "node scripts/test_autonomous_monitor.js",
+    "sync:buffer": "node scripts/sync_buffer.js",
     "build:lambda": "npx esbuild server/lambda.js --bundle --platform=node --target=node20 --format=esm --outfile=lambda-dist/index.mjs --external:@aws-sdk/*",
     "export:android": "npm --prefix mobile run export:android"
   },
