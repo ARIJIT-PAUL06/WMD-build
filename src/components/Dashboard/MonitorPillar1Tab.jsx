@@ -68,7 +68,7 @@ export default function MonitorPillar1Tab({
             >
               {filteredFacilities.map(f => (
                 <option key={f.id} value={f.id}>
-                  {f.facilityClass === 'healthcare' ? '🏥' : '🎓'} {f.name} ({f.district || f.locality})
+                  [{f.facilityClass === 'healthcare' ? 'Health' : 'School'}] {f.name} ({f.district || f.locality})
                 </option>
               ))}
             </select>
@@ -94,7 +94,7 @@ export default function MonitorPillar1Tab({
                   cursor: 'pointer'
                 }}
               >
-                🌱 Clean Day (Suppression Test)
+                Clean Day (Suppression Test)
               </button>
               <button
                 onClick={() => setP1Scenario('hazardous')}
@@ -110,7 +110,7 @@ export default function MonitorPillar1Tab({
                   cursor: 'pointer'
                 }}
               >
-                🚨 Severe Inversion (Alert Test)
+                Severe Inversion (Alert Test)
               </button>
             </div>
 

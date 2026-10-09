@@ -1,5 +1,10 @@
 /* AtmosphericCargoTruck.css */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --cargo-font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --cargo-font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, Menlo, monospace;
+}
 
 .cargo-section {
   position: relative;
@@ -63,7 +68,7 @@
   background: rgba(239, 68, 68, 0.12);
   border: 1px solid rgba(239, 68, 68, 0.3);
   color: #f87171;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--cargo-font-mono, 'IBM Plex Mono', monospace);
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -96,7 +101,7 @@
 }
 
 .cargo-title {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--cargo-font-display, 'Space Grotesk', sans-serif);
   font-size: clamp(2rem, 3.8vw, 2.85rem);
   font-weight: 800;
   color: #f8fafc;
@@ -152,7 +157,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(30, 41, 59, 0.55);
   color: #cbd5e1;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--cargo-font-display, 'Space Grotesk', sans-serif);
   font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
@@ -227,12 +232,26 @@
 .weighbridge-stage {
   position: relative;
   width: 100%;
-  border-radius: 20px;
+  border-radius: 24px;
   /* Soft organic gradient matching the page background */
   background: radial-gradient(ellipse at 50% 60%, rgba(15, 23, 42, 0.6) 0%, rgba(10, 15, 26, 0.3) 60%, transparent 95%);
   padding: 2.75rem 0.5rem 2rem;
   margin-top: 1rem;
   overflow: visible;
+  perspective: 1600px;
+  perspective-origin: 50% 45%;
+  transform-style: preserve-3d;
+}
+
+/* Volumetric Three.js Atmospheric Spatial Particle Canvas */
+.atmospheric-cargo-three-viewport {
+  position: absolute;
+  inset: -15% -8%;
+  width: calc(100% + 16%);
+  height: calc(100% + 30%);
+  pointer-events: none;
+  z-index: 2;
+  transform: translateZ(0);
 }
 
 /* Cybernetic Overhead Volumetric Spotlight */
@@ -323,25 +342,15 @@
   aspect-ratio: 2095 / 751;
   user-select: none;
   overflow: visible;
+  transform: none !important;
 }
 
-/* Suspension Compression & Engine Idle Vibration */
+/* Static, Locked Truck Chassis (Hero Anchor Object) */
 .truck-chassis {
   position: relative;
   width: 100%;
   height: 100%;
-  transition: transform 0.65s cubic-bezier(0.34, 1.4, 0.64, 1);
-  animation: engine-idle-rumble 0.24s infinite ease-in-out alternate;
-}
-
-@keyframes engine-idle-rumble {
-  0% {
-    transform: translateY(0px);
-  }
-
-  100% {
-    transform: translateY(-0.7px);
-  }
+  transform: none !important;
 }
 
 /* Base Truck High-Res Transparent PNG */
@@ -423,9 +432,10 @@
   gap: 0.65%;
   z-index: 18;
   pointer-events: auto;
+  transform-style: preserve-3d;
 }
 
-/* Individual Container Unit */
+/* Individual Container Unit - Strictly Stationary in Physical Deck Position */
 .pollutant-container-unit {
   position: relative;
   flex: 1;
@@ -434,17 +444,43 @@
   justify-content: flex-end;
   align-items: center;
   cursor: pointer;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.25s ease;
+  transform: none !important;
+  transition: filter 0.25s ease, opacity 0.25s ease;
 }
 
-.pollutant-container-unit:hover {
-  transform: translateY(-5px) scale(1.025);
-  z-index: 40;
+.pollutant-container-unit:hover,
+.pollutant-container-unit.hovered {
+  transform: none !important;
+  z-index: 50;
+  filter: brightness(1.22);
+}
+
+.pollutant-container-unit:hover .container-box,
+.pollutant-container-unit.hovered .container-box {
+  border-color: #ffffff !important;
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.95),
+    0 0 20px var(--cont-glow, rgba(56, 189, 248, 0.55)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+
+.pollutant-container-unit.dimmed {
+  opacity: 0.72;
+  filter: saturate(0.85);
+  transform: none !important;
 }
 
 .pollutant-container-unit.selected {
-  transform: translateY(-7px) scale(1.035);
-  z-index: 45;
+  transform: none !important;
+  z-index: 42;
+  filter: brightness(1.15);
+}
+
+.pollutant-container-unit.selected .container-box {
+  border-color: #ffffff;
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.95),
+    0 0 16px var(--cont-glow, rgba(56, 189, 248, 0.45));
 }
 
 /* Dynamic Physical Container Box (ISO Shipping Container Aesthetic) */
@@ -556,7 +592,7 @@
 }
 
 .container-chemical-code {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--cargo-font-display, 'Space Grotesk', sans-serif);
   font-weight: 800;
   font-size: clamp(0.82rem, 1.35vw, 1.12rem);
   color: #ffffff;
@@ -567,7 +603,7 @@
 }
 
 .container-value-text {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--cargo-font-mono, 'IBM Plex Mono', monospace);
   font-weight: 800;
   font-size: clamp(0.78rem, 1.25vw, 1.05rem);
   color: var(--cont-text-color, #f87171);
@@ -577,7 +613,7 @@
 }
 
 .container-unit-text {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--cargo-font-mono, 'IBM Plex Mono', monospace);
   font-size: clamp(0.50rem, 0.8vw, 0.68rem);
   color: #cbd5e1;
   font-weight: 600;
@@ -647,7 +683,7 @@
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--cargo-font-mono, 'IBM Plex Mono', monospace);
   font-size: 0.72rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -663,7 +699,7 @@
 }
 
 .telemetry-big-number {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--cargo-font-display, 'Space Grotesk', sans-serif);
   font-size: 1.65rem;
   font-weight: 800;
   color: #f8fafc;
@@ -671,7 +707,7 @@
 }
 
 .telemetry-unit {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--cargo-font-mono, 'IBM Plex Mono', monospace);
   font-size: 0.78rem;
   color: #64748b;
   font-weight: 500;
@@ -734,7 +770,7 @@
 }
 
 .inspector-formula {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--cargo-font-display, 'Space Grotesk', sans-serif);
   font-size: 2.4rem;
   font-weight: 900;
   color: #ffffff;
@@ -752,7 +788,7 @@
   margin-top: 0.75rem;
   padding: 0.25rem 0.7rem;
   border-radius: 999px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--cargo-font-mono, 'IBM Plex Mono', monospace);
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -784,12 +820,12 @@
 .inspector-stat-lbl {
   font-size: 0.72rem;
   color: #64748b;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--cargo-font-mono, 'IBM Plex Mono', monospace);
   text-transform: uppercase;
 }
 
 .inspector-stat-val {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--cargo-font-display, 'Space Grotesk', sans-serif);
   font-size: 1.15rem;
   font-weight: 700;
   color: #f1f5f9;
@@ -826,7 +862,7 @@
 }
 
 .sliders-title {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--cargo-font-display, 'Space Grotesk', sans-serif);
   font-size: 1rem;
   font-weight: 700;
   color: #f8fafc;
@@ -856,7 +892,7 @@
 }
 
 .slider-current-val {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--cargo-font-mono, 'IBM Plex Mono', monospace);
   color: #f59e0b;
 }
 
@@ -940,14 +976,14 @@
 }
 
 .cargo-mobile-pill-btn .pill-code {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--cargo-font-display, 'Space Grotesk', sans-serif);
   font-weight: 800;
   font-size: 0.8rem;
   color: #ffffff;
 }
 
 .cargo-mobile-pill-btn .pill-reading {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--cargo-font-mono, 'IBM Plex Mono', monospace);
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--p-color, #f87171);
@@ -1054,7 +1090,7 @@
 }
 
 .inspector-code {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--cargo-font-display, 'Space Grotesk', sans-serif);
   font-size: 1.35rem;
   font-weight: 900;
   letter-spacing: 0.05em;
@@ -1108,7 +1144,7 @@
 }
 
 .inspector-metric-lbl {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--cargo-font-mono, 'IBM Plex Mono', monospace);
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -1123,7 +1159,7 @@
 }
 
 .inspector-big-val {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--cargo-font-display, 'Space Grotesk', sans-serif);
   font-size: 2.2rem;
   font-weight: 900;
   color: #ffffff;
@@ -1166,31 +1202,26 @@
   gap: 8px;
 }
 
-.inspector-organ-chips {
+.inspector-target-systems {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-}
-
-.inspector-chip {
-  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 0.74rem;
-  color: #cbd5e1;
+  gap: 6px 12px;
+  margin-top: 2px;
 }
 
-.chip-alert {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.62rem;
-  color: #f87171;
-  background: rgba(239, 68, 68, 0.15);
-  padding: 1px 5px;
-  border-radius: 4px;
+.inspector-system-item {
+  font-family: var(--cargo-font-display, 'Space Grotesk', sans-serif);
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: #e2e8f0;
+  letter-spacing: -0.01em;
+}
+
+.inspector-system-sep {
+  color: rgba(148, 163, 184, 0.45);
+  font-size: 0.75rem;
+  user-select: none;
 }
 
 .inspector-source-line {
@@ -1202,4 +1233,19 @@
 
 .inspector-source-line strong {
   color: #e2e8f0;
+}
+
+/* ==========================================================
+   PREFERS REDUCED MOTION (A11Y)
+   ========================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .weighbridge-stage,
+  .truck-viewport,
+  .pollutant-container-unit,
+  .truck-chassis,
+  .weighbridge-scanner-beam {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
 }

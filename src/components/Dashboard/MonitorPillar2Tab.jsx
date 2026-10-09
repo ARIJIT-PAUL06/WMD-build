@@ -147,7 +147,7 @@ export default function MonitorPillar2Tab({
             }}
           >
             <AlertTriangle size={15} />
-            <span>{p2Loading ? 'Alerting Facilities...' : '🚨 Trigger Block Emergency Surge'}</span>
+            <span>{p2Loading ? 'Alerting Facilities...' : 'Trigger Block Emergency Surge'}</span>
           </button>
         </div>
       </div>

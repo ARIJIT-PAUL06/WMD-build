@@ -161,18 +161,18 @@ export default function PetitionForecastCard({
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.68rem', color: '#cbd5e1' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ color: '#ef4444', fontWeight: 700 }}>⛔ AVOID OUTDOORS:</span>
+                  <span style={{ color: '#ef4444', fontWeight: 700 }}>AVOID OUTDOORS:</span>
                   <span><strong>{forecast.outdoorActivityGuidance.morningArrivalRisk?.window}</strong> (Arrival Inversion Trap)</span>
                 </div>
                 {forecast.outdoorActivityGuidance.noonRecessRisk?.alertRequired && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ color: '#f59e0b', fontWeight: 700 }}>⚠️ AVOID FIELD SPORTS:</span>
+                    <span style={{ color: '#f59e0b', fontWeight: 700 }}>AVOID FIELD SPORTS:</span>
                     <span><strong>{forecast.outdoorActivityGuidance.noonRecessRisk?.window}</strong> (Recess Accumulation)</span>
                   </div>
                 )}
                 {forecast.outdoorActivityGuidance.safeWindows?.length > 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ color: '#10b981', fontWeight: 700 }}>✅ SAFEST VENTILATION:</span>
+                    <span style={{ color: '#10b981', fontWeight: 700 }}>SAFEST VENTILATION:</span>
                     <span><strong>{forecast.outdoorActivityGuidance.safeWindows[0]?.start} - {forecast.outdoorActivityGuidance.safeWindows[0]?.end}</strong> (Solar Dispersion)</span>
                   </div>
                 )}

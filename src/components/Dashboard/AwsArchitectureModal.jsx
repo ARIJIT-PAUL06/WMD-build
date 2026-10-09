@@ -254,7 +254,7 @@ export default function AwsArchitectureModal({ isOpen, onClose, awsTelemetry, on
                 color: '#34d399',
               }}
             >
-              ✅ Ingestion Success: {JSON.stringify(iotResult)}
+              Ingestion Success: {JSON.stringify(iotResult)}
             </div>
           )}
         </div>
