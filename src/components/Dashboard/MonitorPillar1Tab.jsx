@@ -17,7 +17,8 @@ export default function MonitorPillar1Tab({
   selectedFacility,
   handleTestPillar1,
   p1Loading,
-  p1Result
+  p1Result,
+  httpDispatchEnabled = false
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -162,27 +163,33 @@ export default function MonitorPillar1Tab({
         )}
 
         <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
-          <button
-            onClick={handleTestPillar1}
-            disabled={p1Loading}
-            style={{
-              background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-              color: '#ffffff',
-              border: 'none',
-              padding: '10px 24px',
-              borderRadius: '10px',
-              fontWeight: 700,
-              fontSize: '0.82rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 14px rgba(2, 132, 199, 0.4)'
-            }}
-          >
-            <Send size={15} />
-            <span>{p1Loading ? 'Evaluating Forecast...' : 'Evaluate & Test Morning Advisory'}</span>
-          </button>
+          {httpDispatchEnabled ? (
+            <button
+              onClick={handleTestPillar1}
+              disabled={p1Loading}
+              style={{
+                background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                color: '#ffffff',
+                border: 'none',
+                padding: '10px 24px',
+                borderRadius: '10px',
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 14px rgba(2, 132, 199, 0.4)'
+              }}
+            >
+              <Send size={15} />
+              <span>{p1Loading ? 'Evaluating Forecast...' : 'Evaluate & Test Morning Advisory'}</span>
+            </button>
+          ) : (
+            <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic' }}>
+              Monitoring runs automatically every 30 minutes (Amazon EventBridge). Manual dispatch is disabled in production.
+            </div>
+          )}
         </div>
       </div>
 

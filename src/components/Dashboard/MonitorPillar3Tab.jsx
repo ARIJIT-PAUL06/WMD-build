@@ -13,7 +13,8 @@ export default function MonitorPillar3Tab({
   setP3ForcePetition,
   handleTestPillar3,
   p3Loading,
-  p3Result
+  p3Result,
+  httpDispatchEnabled = false
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -80,36 +81,44 @@ export default function MonitorPillar3Tab({
         </div>
 
         <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px' }}>
-          <label style={{ fontSize: '0.74rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={p3ForcePetition}
-              onChange={(e) => setP3ForcePetition(e.target.checked)}
-            />
-            <span>Force petition dispatch for demonstration</span>
-          </label>
+          {httpDispatchEnabled ? (
+            <>
+              <label style={{ fontSize: '0.74rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={p3ForcePetition}
+                  onChange={(e) => setP3ForcePetition(e.target.checked)}
+                />
+                <span>Force petition dispatch for demonstration</span>
+              </label>
 
-          <button
-            onClick={handleTestPillar3}
-            disabled={p3Loading}
-            style={{
-              background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-              color: '#ffffff',
-              border: 'none',
-              padding: '10px 24px',
-              borderRadius: '10px',
-              fontWeight: 700,
-              fontSize: '0.82rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 14px rgba(124, 58, 237, 0.4)'
-            }}
-          >
-            <FileText size={15} />
-            <span>{p3Loading ? 'Dispatching Dossier...' : 'Dispatch Section 10 Legal Notice'}</span>
-          </button>
+              <button
+                onClick={handleTestPillar3}
+                disabled={p3Loading}
+                style={{
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '10px 24px',
+                  borderRadius: '10px',
+                  fontWeight: 700,
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 14px rgba(124, 58, 237, 0.4)'
+                }}
+              >
+                <FileText size={15} />
+                <span>{p3Loading ? 'Dispatching Dossier...' : '⚖️ Dispatch Section 10 Legal Notice'}</span>
+              </button>
+            </>
+          ) : (
+            <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic' }}>
+              Monitoring runs automatically every 30 minutes (Amazon EventBridge). Manual dispatch is disabled in production.
+            </div>
+          )}
         </div>
       </div>
 

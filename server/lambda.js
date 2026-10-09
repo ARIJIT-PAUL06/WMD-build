@@ -43,6 +43,22 @@ export const handler = async (event, context) => {
     }
   }
 
-  // Standard HTTP API request (routed through Express)
-  return httpHandler(event, context);
+  // Check if standard HTTP API request (API Gateway or Lambda Function URL)
+  const isHttpRequest = Boolean(
+    event.requestContext ||
+    event.rawPath ||
+    event.httpMethod ||
+    (event.version && event.version.startsWith('2.'))
+  );
+
+  if (isHttpRequest) {
+    return httpHandler(event, context);
+  }
+
+  // Unknown non-HTTP, non-cron event: log error cleanly without crashing
+  console.error('[Lambda] Received unrecognized invocation event format:', JSON.stringify(event));
+  return {
+    statusCode: 400,
+    body: JSON.stringify({ error: 'unrecognized_event_type', message: 'Event did not match HTTP or EventBridge formats.' })
+  };
 };

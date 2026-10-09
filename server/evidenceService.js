@@ -51,7 +51,7 @@ export function setCachedGridBuffer(buffer) {
   cachedGridBuffer = buffer;
 }
 
-function getSchoolsDirectory() {
+export function getSchoolsDirectory() {
   try {
     const p = resolveFilePath('src/data/schoolsDirectory.json');
     if (fs.existsSync(p)) {
@@ -64,7 +64,7 @@ function getSchoolsDirectory() {
   return [];
 }
 
-function getSpatialGrids() {
+export function getSpatialGrids() {
   try {
     const p = resolveFilePath('ml/data/spatial_grids.json');
     if (fs.existsSync(p)) {
@@ -77,7 +77,7 @@ function getSpatialGrids() {
   return {};
 }
 
-function getKnownStations() {
+export function getKnownStations() {
   const stations = new Set();
   const schools = getSchoolsDirectory();
   for (const s of schools) {

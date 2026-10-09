@@ -6,6 +6,7 @@
 
 import AsyncStorage from './storageAdapter.js';
 import { getApiBaseUrl } from './apiConfig.js';
+import { getAccessToken } from './authService.js';
 import fallbackAuthorities from '../data/authoritiesConfig.json' with { type: 'json' };
 import fallbackSchools from '../data/schoolsDirectory.json' with { type: 'json' };
 
@@ -21,9 +22,19 @@ export const SENDER_PROFILE_KEY = '@vayuvitals_sender_profile_v1';
 
 const FETCH_TIMEOUT_MS = 15000;
 
+const authPromptListeners = new Set();
+export function onAuthRequired(listener) {
+  authPromptListeners.add(listener);
+  return () => authPromptListeners.delete(listener);
+}
+function notifyAuthRequired() {
+  for (const fn of authPromptListeners) {
+    try { fn(); } catch (e) { console.warn('[PetitionService] Auth listener error:', e); }
+  }
+}
+
 /**
- * Helper to execute fetch with timeout without relying on timeout signals
- * React Native polyfill abort-controller@3 does not implement timeout signals.
+ * Helper to execute fetch with timeout and attach Bearer token
  */
 async function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
   const controller = new AbortController();
@@ -32,10 +43,22 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS)
   }, timeoutMs);
 
   try {
+    const token = await getAccessToken();
+    const headers = { ...options.headers };
+    if (token && !headers['Authorization'] && !headers['authorization']) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const res = await fetch(url, {
       ...options,
+      headers,
       signal: controller.signal
     });
+
+    if (res.status === 401) {
+      notifyAuthRequired();
+    }
+
     return res;
   } catch (err) {
     if (err.name === 'AbortError' || controller.signal.aborted) {
@@ -80,7 +103,7 @@ export async function getAuthorities() {
 }
 
 /**
- * Search educational institutions across Delhi NCR
+ * Search educational institutions in the schools directory
  */
 export async function searchSchools(query = '') {
   const q = query.trim().toLowerCase();
@@ -248,9 +271,14 @@ export async function generateDraft({
   targetType = undefined
 }) {
   const baseUrl = getApiBaseUrl();
+  const token = await getAccessToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
   const res = await fetchWithTimeout(`${baseUrl}/api/petition/generate-draft`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({
       evidence,
       authority,
@@ -320,10 +348,57 @@ export async function polishDraft({
 // ============================================================================
 
 /**
- * Retrieve all local dockets sorted newest first.
- * If JSON parsing fails due to corruption, preserves raw data and throws error per P4.7.
+ * Retrieve all dockets (loaded from server when authenticated, cached in AsyncStorage).
  */
 export async function getAllDockets() {
+  const baseUrl = getApiBaseUrl();
+  try {
+    const token = await getAccessToken();
+    if (token) {
+      const res = await fetchWithTimeout(`${baseUrl}/api/petitions`, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.petitions)) {
+          const mapped = data.petitions.map(p => ({
+            id: p.petitionId,
+            referenceId: `VV-${p.petitionId.substring(0, 8).toUpperCase()}`,
+            createdAt: new Date(p.createdAt).getTime(),
+            updatedAt: new Date(p.updatedAt || p.createdAt).getTime(),
+            status: p.status === 'DRAFT_SAVED' ? DOCKET_STATUS.DRAFT
+                  : p.status === 'OPENED_IN_MAIL' ? DOCKET_STATUS.OPENED_IN_MAIL
+                  : p.status === 'SHARED' ? DOCKET_STATUS.SHARED
+                  : p.status === 'MARKED_AS_SENT' ? DOCKET_STATUS.MARKED_AS_SENT
+                  : p.status || DOCKET_STATUS.DRAFT,
+            targetType: p.targetType,
+            targetName: p.targetName,
+            schoolId: p.schoolId,
+            stationName: p.stationName,
+            authorityId: p.authorityId,
+            authorityName: p.authorityName,
+            authorityEmail: p.authorityEmail,
+            subject: p.letterSubject,
+            activeDraftText: p.letterText || '',
+            sentDraftText: p.letterText || '',
+            senderName: p.senderName || '',
+            senderRole: p.senderRole || '',
+            senderContact: p.senderContact || '',
+            demands: p.demands || [],
+            source: 'cloud'
+          }));
+          await AsyncStorage.setItem(DOCKET_STORAGE_KEY, JSON.stringify(mapped));
+          return mapped;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[PetitionService] Remote docket fetch error, using cache:', err.message);
+  }
+
   const raw = await AsyncStorage.getItem(DOCKET_STORAGE_KEY);
   if (!raw) return [];
   try {
@@ -337,40 +412,139 @@ export async function getAllDockets() {
 
 /**
  * Save new docket with immutable snapshot of evidence and letter
+ * Posts to cloud /api/petitions when authenticated.
  */
 export async function saveDocket(docketData) {
-  const dockets = await getAllDockets();
-  const referenceId = `VV-2026-${Date.now().toString(36).toUpperCase()}`;
-  const now = Date.now();
+  const token = await getAccessToken();
+  if (!token) {
+    throw new Error('Please sign in to save petitions.');
+  }
 
+  // 1. Validate caller required fields
+  const targetType = docketData.targetType;
+  if (!targetType) {
+    throw new Error('targetType is missing');
+  }
+
+  const schoolId = targetType === 'school' ? (docketData.schoolId || docketData.targetId) : undefined;
+  const stationName = targetType === 'station' ? (docketData.stationName || docketData.targetName) : undefined;
+  const gridId = targetType === 'grid' ? (docketData.gridId || docketData.targetId) : undefined;
+
+  if (targetType === 'school' && !schoolId) {
+    throw new Error('schoolId is missing');
+  }
+  if (targetType === 'station' && !stationName) {
+    throw new Error('stationName is missing');
+  }
+  if (targetType === 'grid' && !gridId) {
+    throw new Error('gridId is missing');
+  }
+
+  const authority = docketData.authority;
+  const authorityName = authority?.fullName || authority?.name || docketData.authorityName;
+  if (!authorityName) {
+    throw new Error('authority is missing');
+  }
+  const authorityEmail = authority?.email || docketData.authorityEmail || '';
+
+  const subject = docketData.subject;
+  if (!subject) {
+    throw new Error('subject is missing');
+  }
+
+  const activeDraftText = docketData.activeDraftText || docketData.sentDraftText;
+  if (!activeDraftText) {
+    throw new Error('activeDraftText is missing');
+  }
+
+  if (!docketData.clientRequestId) {
+    throw new Error('clientRequestId is missing');
+  }
+
+  const statusMap = {
+    'Opened in mail': 'OPENED_IN_MAIL',
+    'Marked as sent': 'MARKED_AS_SENT',
+    'Shared': 'SHARED',
+    'Draft': 'DRAFT_SAVED'
+  };
+
+  const payload = {
+    clientRequestId: docketData.clientRequestId,
+    targetType,
+    ...(schoolId ? { schoolId } : {}),
+    ...(stationName ? { stationName } : {}),
+    ...(gridId ? { gridId } : {}),
+    locality: docketData.locality || '',
+    authorityName,
+    authorityRole: authority?.designation || docketData.authorityRole || '',
+    authorityEmail,
+    authorityNodalAgency: authority?.department || docketData.authorityNodalAgency || '',
+    letterSubject: subject,
+    letterText: activeDraftText,
+    demands: docketData.selectedDemands || docketData.demands || [],
+    language: docketData.selectedLanguage || 'en',
+    tone: docketData.tone || 'formal',
+    senderName: docketData.senderName || '',
+    senderRole: docketData.senderRole || '',
+    senderContact: docketData.senderContact || '',
+    status: statusMap[docketData.status] || docketData.status || 'DRAFT_SAVED'
+  };
+
+  const baseUrl = getApiBaseUrl();
+  const res = await fetchWithTimeout(`${baseUrl}/api/petitions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const resData = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(resData.error || `Server save failed with status ${res.status}`);
+  }
+
+  const savedCloudPetition = resData.petition;
+  if (!savedCloudPetition || !savedCloudPetition.petitionId) {
+    throw new Error('Invalid server response: petitionId not returned');
+  }
+
+  // Only cache locally after successful server save
+  const dockets = await getAllDockets();
+  const now = Date.now();
+  const petitionId = savedCloudPetition.petitionId;
   const newDocket = {
-    id: `docket_${now}_${Math.random().toString(36).substring(2, 7)}`,
-    referenceId, // Local tracking label only
-    createdAt: now,
-    updatedAt: now,
+    id: petitionId,
+    referenceId: `VV-${petitionId.substring(0, 8).toUpperCase()}`,
+    createdAt: savedCloudPetition.createdAt ? new Date(savedCloudPetition.createdAt).getTime() : now,
+    updatedAt: savedCloudPetition.updatedAt ? new Date(savedCloudPetition.updatedAt).getTime() : now,
     status: docketData.status || DOCKET_STATUS.DRAFT,
-    targetType: docketData.targetType || 'school', // 'school' | 'station'
-    targetName: docketData.targetName || 'Community Zone',
-    locality: docketData.locality || 'Delhi NCR',
-    authorityId: docketData.authority?.id || docketData.authorityId || '',
-    authorityName: docketData.authority?.fullName || docketData.authorityName || '',
-    authorityEmail: docketData.authority?.email || docketData.authorityEmail || '',
+    targetType,
+    targetName: savedCloudPetition.targetName || docketData.targetName || (schoolId || stationName || gridId),
+    locality: savedCloudPetition.locality || docketData.locality || '',
+    schoolId: savedCloudPetition.schoolId || schoolId,
+    stationName: savedCloudPetition.stationName || stationName,
+    authorityId: authority?.id || docketData.authorityId || '',
+    authorityName,
+    authorityEmail,
     evidenceSnapshot: docketData.evidence || null,
-    subject: docketData.subject || '',
-    letterTextEn: docketData.letterTextEn || '',
-    letterTextHi: docketData.letterTextHi || '',
-    activeDraftText: docketData.activeDraftText || docketData.sentDraftText || '',
-    sentDraftText: docketData.sentDraftText || docketData.activeDraftText || '',
+    subject,
+    letterTextEn: docketData.letterTextEn || (docketData.selectedLanguage === 'en' ? activeDraftText : ''),
+    letterTextHi: docketData.letterTextHi || (docketData.selectedLanguage === 'hi' ? activeDraftText : ''),
+    activeDraftText,
+    sentDraftText: activeDraftText,
     selectedLanguage: docketData.selectedLanguage || 'en',
     tone: docketData.tone || 'formal',
     polishMode: docketData.polishMode || 'ORIGINAL_VERIFIED',
     senderName: docketData.senderName || '',
     senderRole: docketData.senderRole || '',
     senderContact: docketData.senderContact || '',
-    notes: docketData.notes || ''
+    notes: docketData.notes || '',
+    cloudSynced: true
   };
 
-  const updated = [newDocket, ...dockets];
+  const updated = [newDocket, ...dockets.filter(d => d.id !== newDocket.id)];
   await AsyncStorage.setItem(DOCKET_STORAGE_KEY, JSON.stringify(updated));
   return newDocket;
 }
@@ -379,6 +553,25 @@ export async function saveDocket(docketData) {
  * Update docket status truthfully (e.g. Draft -> Opened in mail -> Marked as sent)
  */
 export async function updateDocketStatus(docketId, newStatus) {
+  const baseUrl = getApiBaseUrl();
+  const token = await getAccessToken();
+  if (token) {
+    try {
+      const statusMap = {
+        'Draft': 'DRAFT_SAVED',
+        'Opened in mail': 'OPENED_IN_MAIL',
+        'Shared': 'SHARED',
+        'Marked as sent': 'MARKED_AS_SENT'
+      };
+      await fetchWithTimeout(`${baseUrl}/api/petitions/${docketId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: statusMap[newStatus] || newStatus })
+      });
+    } catch (err) {
+      console.warn('[PetitionService] Remote status update failed:', err.message);
+    }
+  }
   return updateDocket(docketId, { status: newStatus });
 }
 
@@ -404,6 +597,17 @@ export async function updateDocket(docketId, updates = {}) {
  * Delete a specific docket (Right to Erasure)
  */
 export async function deleteDocket(docketId) {
+  const baseUrl = getApiBaseUrl();
+  const token = await getAccessToken();
+  if (token) {
+    try {
+      await fetchWithTimeout(`${baseUrl}/api/petitions/${docketId}`, {
+        method: 'DELETE'
+      });
+    } catch (err) {
+      console.warn('[PetitionService] Remote delete failed:', err.message);
+    }
+  }
   const dockets = await getAllDockets();
   const filtered = dockets.filter(d => d.id !== docketId);
   await AsyncStorage.setItem(DOCKET_STORAGE_KEY, JSON.stringify(filtered));
@@ -414,6 +618,17 @@ export async function deleteDocket(docketId) {
  * Delete all dockets on device (Complete Erasure per DPDP Act)
  */
 export async function deleteAllDockets() {
+  const baseUrl = getApiBaseUrl();
+  const token = await getAccessToken();
+  if (token) {
+    try {
+      await fetchWithTimeout(`${baseUrl}/api/petitions`, {
+        method: 'DELETE'
+      });
+    } catch (err) {
+      console.warn('[PetitionService] Remote delete all failed:', err.message);
+    }
+  }
   await AsyncStorage.removeItem(DOCKET_STORAGE_KEY);
   return true;
 }
@@ -429,7 +644,7 @@ export async function checkRecentDuplicate(targetName, authorityId) {
 
   const match = dockets.find(d =>
     d.targetName?.toLowerCase() === targetName.toLowerCase() &&
-    d.authorityId === authorityId &&
+    (d.authorityId === authorityId || d.authorityName?.toLowerCase() === authorityId.toLowerCase()) &&
     (now - d.createdAt) < SEVEN_DAYS_MS
   );
 

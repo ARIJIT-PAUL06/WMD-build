@@ -24,6 +24,7 @@ import {
   saveSenderProfile,
   DOCKET_STATUS
 } from '../mobile/src/services/petitionService.js';
+import { setTestSession } from '../mobile/src/services/authService.js';
 
 describe('Petition Mobile Integration & E2E Verification against Live Backend', () => {
 
@@ -103,7 +104,10 @@ describe('Petition Mobile Integration & E2E Verification against Live Backend', 
     }
   });
 
-  it('5. generateDraft produces verifiable bilingual legal draft with provenance and on-device placeholders', async () => {
+  it('5. generateDraft produces verifiable bilingual legal draft with provenance and on-device placeholders', {
+    skip: !process.env.E2E_ACCESS_TOKEN ? 'E2E_ACCESS_TOKEN not set; drafting requires authentication' : false
+  }, async () => {
+    if (!process.env.E2E_ACCESS_TOKEN) return;
     const evidenceRes = await fetchEvidence({
       schoolName: 'Delhi Public School, Rohini',
       locality: 'Rohini Sector 24',
@@ -143,7 +147,11 @@ describe('Petition Mobile Integration & E2E Verification against Live Backend', 
     assert.ok(draftRes.hindiText.includes('[YOUR NAME]'), 'Hindi draft preserves [YOUR NAME] placeholder');
   });
 
-  it('6. Full mobile docket lifecycle: save, update, duplicate prevention, and DPDP erasure', async () => {
+  it('6. Full mobile docket lifecycle: save, update, duplicate prevention, and DPDP erasure', {
+    skip: !process.env.E2E_ACCESS_TOKEN ? 'E2E_ACCESS_TOKEN not set; saving petitions requires authentication' : false
+  }, async () => {
+    if (!process.env.E2E_ACCESS_TOKEN) return;
+    await setTestSession({ accessToken: process.env.E2E_ACCESS_TOKEN });
     await deleteAllDockets();
 
     // 1. Create Docket

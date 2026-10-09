@@ -1,0 +1,16 @@
+[
+  {
+    "ResourceType": "AWS::DynamoDB::Table",
+    "LogicalResourceId": "AirQualityDynamoDBTable",
+    "ResourceIdentifier": {
+      "TableName": "AirQualityReadings"
+    }
+  },
+  {
+    "ResourceType": "AWS::Lambda::Function",
+    "LogicalResourceId": "WmdBackendFunction",
+    "ResourceIdentifier": {
+      "FunctionName": "wmd-backend"
+    }
+  }
+]

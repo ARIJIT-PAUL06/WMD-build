@@ -2,10 +2,20 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { aggregateSchoolEvidence, generateDraftPetition } from '../evidenceService.js';
+import { aggregateSchoolEvidence, generateDraftPetition, getSchoolsDirectory } from '../evidenceService.js';
 import { getSchoolAqiForecast } from '../sagemakerService.js';
 import { findGridForCoordinates } from '../gridTelemetryService.js';
-import { rateLimitPetition } from '../middleware/authAndRateLimit.js';
+import { rateLimitPetition, rateLimitPerUser } from '../middleware/authAndRateLimit.js';
+import { requireUser, requireSchoolAdmin } from '../authMiddleware.js';
+import {
+  createPetition,
+  listPetitionsByUser,
+  listPetitionsBySchool,
+  updatePetitionStatus,
+  deletePetition,
+  deleteAllPetitionsForUser,
+  VALID_PETITION_STATUSES
+} from '../petitionsService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -93,20 +103,7 @@ router.get('/api/petition/authorities', rateLimitPetition(60, 60000), (req, res)
 router.get('/api/petition/schools', rateLimitPetition(60, 60000), (req, res) => {
   try {
     const q = (req.query.q || '').trim().toLowerCase();
-    const pCandidates = [
-      path.join(__dirname, '../../src/data/schoolsDirectory.json'),
-      path.join(__dirname, '../src/data/schoolsDirectory.json'),
-      path.join(process.cwd(), 'src/data/schoolsDirectory.json'),
-      path.join('/tmp', 'schoolsDirectory.json')
-    ];
-    let schools = [];
-    for (const p of pCandidates) {
-      if (fs.existsSync(p)) {
-        const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
-        schools = raw.educationalInstitutions || [];
-        break;
-      }
-    }
+    const schools = getSchoolsDirectory();
 
     // Whitelist fields per Fix 11: id, name, locality, district, lat, lon, gridId
     // Strictly removes emails, primaryEmail, phone, and nodalOfficerEmail
@@ -183,20 +180,7 @@ router.get('/api/petition/forecast', rateLimitPetition(60, 60000), async (req, r
 
     // If coordinates omitted, resolve schoolId or schoolName against institutional directory
     if ((!targetLat || !targetLon) && (schoolId || schoolName)) {
-      const pCandidates = [
-        path.join(__dirname, '../../src/data/schoolsDirectory.json'),
-        path.join(__dirname, '../src/data/schoolsDirectory.json'),
-        path.join(process.cwd(), 'src/data/schoolsDirectory.json'),
-        path.join('/tmp', 'schoolsDirectory.json')
-      ];
-      let schools = [];
-      for (const p of pCandidates) {
-        if (fs.existsSync(p)) {
-          const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
-          schools = raw.educationalInstitutions || [];
-          break;
-        }
-      }
+      const schools = getSchoolsDirectory();
       const qId = (schoolId || '').toLowerCase();
       const qName = (schoolName || '').toLowerCase();
       const matched = schools.find(s =>
@@ -226,15 +210,15 @@ router.get('/api/petition/forecast', rateLimitPetition(60, 60000), async (req, r
     });
     res.json(forecast);
   } catch (err) {
-    console.error('[API /api/petition/forecast Error]:', err);
+    console.error('[API /api/petition/forecast Error]:', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
 /**
- * Step 2: Generate bilingual draft complaint from verified numbers
+ * Step 2: Generate bilingual draft complaint from verified numbers (Requires citizen login)
  */
-router.post('/api/petition/generate-draft', rateLimitPetition(60, 60000), (req, res) => {
+router.post('/api/petition/generate-draft', requireUser(), rateLimitPerUser(60, 60000), (req, res) => {
   try {
     const {
       evidence,
@@ -266,19 +250,19 @@ router.post('/api/petition/generate-draft', rateLimitPetition(60, 60000), (req, 
     });
     res.json({ success: true, ...result });
   } catch (err) {
-    console.error('[API /api/petition/generate-draft Error]:', err);
+    console.error('[API /api/petition/generate-draft Error for sub %s]: %s', req.user?.sub, err.message);
     const status = err.statusCode || 500;
     res.status(status).json({ success: false, error: err.message });
   }
 });
 
 /**
- * Step 2 (Optional): Tone adjustment via Bedrock (Claude 3 Haiku) or Gemini
+ * Step 2 (Optional): Tone adjustment via Bedrock (Claude 3 Haiku) or Gemini (Requires citizen login)
  * Returns 503 if no AI provider is configured; preserves all empirical data.
  */
-router.post('/api/petition/polish-draft', rateLimitPetition(15, 60000), async (req, res) => {
+router.post('/api/petition/polish-draft', requireUser(), rateLimitPerUser(15, 60000), async (req, res) => {
   try {
-    const { draftText, tone = 'formal', language = 'en', schoolName = 'School' } = req.body;
+    const { draftText, tone = 'formal', language = 'en' } = req.body || {};
     if (!draftText) {
       return res.status(400).json({ success: false, error: 'draftText is required' });
     }
@@ -424,8 +408,178 @@ Strict Guardrails (DO NOT VIOLATE):
       mode: 'AI_PROVIDER_UNAVAILABLE'
     });
   } catch (err) {
-    console.error('[API /api/petition/polish-draft Error]:', err);
+    console.error('[API /api/petition/polish-draft Error for sub %s]: %s', req.user?.sub, err.message);
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Step 3: Create & Persist Petition in DynamoDB Petitions Table (Citizen login required)
+ * Enforces honest statuses, target validation, server evidence computation, and size limits.
+ */
+router.post('/api/petitions', requireUser(), rateLimitPerUser(30, 60000), async (req, res) => {
+  try {
+    const payload = req.body?.petitionData || req.body || {};
+    const clientRequestId = req.body?.clientRequestId || payload.clientRequestId || null;
+
+    const savedRecord = await createPetition({
+      userSub: req.user.sub,
+      petitionData: payload,
+      clientRequestId
+    });
+
+    const isDuplicate = !!savedRecord.isDuplicate;
+    const statusCode = isDuplicate ? 200 : 201;
+
+    res.status(statusCode).json({
+      success: true,
+      message: isDuplicate
+        ? 'Existing petition returned (idempotent request).'
+        : 'Petition draft saved in Petitions database.',
+      petition: savedRecord,
+      ...(isDuplicate ? { isDuplicate: true } : {})
+    });
+  } catch (err) {
+    console.error('[API POST /api/petitions Error for sub %s]: %s', req.user?.sub, err.message);
+    const status = err.statusCode || (err.message?.includes('credentials not configured') ? 503 : 500);
+    res.status(status).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Step 4: List Petitions Filed by Authenticated Citizen (Citizen login required)
+ * Supports pagination with limit and nextToken.
+ */
+router.get('/api/petitions', requireUser(), rateLimitPerUser(60, 60000), async (req, res) => {
+  try {
+    const { limit, nextToken } = req.query;
+    const { items, nextToken: newNextToken } = await listPetitionsByUser(req.user.sub, {
+      limit,
+      nextToken
+    });
+
+    res.json({
+      success: true,
+      count: items.length,
+      petitions: items,
+      nextToken: newNextToken
+    });
+  } catch (err) {
+    console.error('[API GET /api/petitions Error for sub %s]: %s', req.user?.sub, err.message);
+    const status = err.statusCode || (err.message?.includes('credentials not configured') ? 503 : 500);
+    res.status(status).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Step 5: Update Petition Status (Owner only)
+ * Allowed statuses: DRAFT_SAVED, OPENED_IN_MAIL, SHARED, MARKED_AS_SENT
+ */
+router.patch('/api/petitions/:id/status', requireUser(), rateLimitPerUser(60, 60000), async (req, res) => {
+  try {
+    const petitionId = req.params.id;
+    const { status } = req.body || {};
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        error: 'status is required.'
+      });
+    }
+
+    const updated = await updatePetitionStatus({
+      userSub: req.user.sub,
+      petitionId,
+      status
+    });
+
+    res.json({
+      success: true,
+      message: 'Petition status updated.',
+      petition: updated
+    });
+  } catch (err) {
+    console.error('[API PATCH /api/petitions/:id/status Error for sub %s]: %s', req.user?.sub, err.message);
+    const status = err.statusCode || 500;
+    res.status(status).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Step 6: Delete a Specific Petition (Owner only)
+ */
+router.delete('/api/petitions/:id', requireUser(), rateLimitPerUser(60, 60000), async (req, res) => {
+  try {
+    const petitionId = req.params.id;
+    await deletePetition({
+      userSub: req.user.sub,
+      petitionId
+    });
+
+    res.json({
+      success: true,
+      message: 'Petition deleted successfully.',
+      petitionId
+    });
+  } catch (err) {
+    console.error('[API DELETE /api/petitions/:id Error for sub %s]: %s', req.user?.sub, err.message);
+    const status = err.statusCode || 500;
+    res.status(status).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Step 7: Delete All Petitions for User (Right to Erasure, Owner only)
+ */
+router.delete('/api/petitions', requireUser(), rateLimitPerUser(60, 60000), async (req, res) => {
+  try {
+    const result = await deleteAllPetitionsForUser(req.user.sub);
+    res.json({
+      success: true,
+      deletedCount: result.deletedCount,
+      message: 'All petitions for your account have been deleted.'
+    });
+  } catch (err) {
+    console.error('[API DELETE /api/petitions Error for sub %s]: %s', req.user?.sub, err.message);
+    const status = err.statusCode || 500;
+    res.status(status).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Step 8: Query Petitions for Assigned School (School Admin only)
+ * SchoolId is derived strictly from verified custom:school_id claim on server.
+ * Returns only safe fields (date, authority, subject, evidenceSummary, status).
+ * Omits letterText, userSub, and personal sender information.
+ */
+router.get('/api/petition/school', requireSchoolAdmin(), rateLimitPerUser(60, 60000), async (req, res) => {
+  try {
+    const schoolId = req.user.schoolId;
+    if (!schoolId) {
+      return res.status(403).json({
+        success: false,
+        error: 'no_school_assigned',
+        message: 'No school is assigned to this school admin account (missing custom:school_id).'
+      });
+    }
+
+    const { limit, nextToken } = req.query;
+    const { items, nextToken: newNextToken } = await listPetitionsBySchool(schoolId, {
+      limit,
+      nextToken
+    });
+
+    res.json({
+      success: true,
+      schoolId,
+      count: items.length,
+      petitions: items,
+      nextToken: newNextToken
+    });
+  } catch (err) {
+    console.error('[API GET /api/petition/school Error for sub %s]: %s', req.user?.sub, err.message);
+    const status = err.statusCode || 500;
+    res.status(status).json({ success: false, error: err.message });
   }
 });
 

@@ -207,10 +207,11 @@ export default function AwsArchitectureModal({ isOpen, onClose, awsTelemetry, on
         </div>
 
         {/* Real-time Telemetry & IoT Testing */}
+        {/* Sensor Ingestion Pipeline Architecture (OAuth 2.0 M2M) */}
         <div
           style={{
             background: 'rgba(35, 47, 62, 0.4)',
-            border: '1px solid rgba(255, 153, 0, 0.25)',
+            border: '1px solid rgba(56, 189, 248, 0.25)',
             borderRadius: 'var(--radius-sm)',
             padding: '18px',
             marginBottom: '20px',
@@ -220,43 +221,42 @@ export default function AwsArchitectureModal({ isOpen, onClose, awsTelemetry, on
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Radio size={16} color="#38bdf8" />
               <span style={{ fontSize: '0.88rem', fontWeight: 700 }}>
-                Sensor Ingestion Pipeline Testbench
+                Machine-to-Machine Sensor Ingestion Architecture
               </span>
             </div>
-            <button
-              onClick={handleIotTest}
-              disabled={isIngestingIot}
-              className="btn-primary"
+            <span
               style={{
-                fontSize: '0.75rem',
-                padding: '6px 14px',
-                background: 'linear-gradient(135deg, #ff9900 0%, #d97706 100%)',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                padding: '4px 8px',
+                borderRadius: '6px',
+                background: 'rgba(56, 189, 248, 0.15)',
+                color: '#38bdf8',
+                border: '1px solid rgba(56, 189, 248, 0.3)'
               }}
             >
-              <RefreshCw size={13} className={isIngestingIot ? 'animate-spin' : ''} />
-              {isIngestingIot ? 'Sending Test Ingest...' : 'Test /api/sensor-ingest Endpoint'}
-            </button>
+              OAuth 2.0 (ingest/write)
+            </span>
           </div>
 
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '10px' }}>
-            Dispatches a sample sensor payload to the backend <code>/api/sensor-ingest</code> endpoint to verify payload normalization, schema validation, and DynamoDB persistence.
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '10px', lineHeight: 1.5 }}>
+            Direct unauthenticated sensor pushes over HTTP are blocked. Physical edge sensor nodes authenticate via Amazon Cognito Client Credentials to obtain a machine token with the <code>ingest/write</code> scope before pushing telemetry to <code>/api/sensor-ingest</code>.
           </p>
 
-          {iotResult && (
-            <div
-              style={{
-                background: 'rgba(0, 0, 0, 0.4)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                borderRadius: '6px',
-                padding: '10px',
-                fontSize: '0.75rem',
-                fontFamily: 'var(--font-mono)',
-                color: '#34d399',
-              }}
-            >
-              Ingestion Success: {JSON.stringify(iotResult)}
-            </div>
-          )}
+          <div
+            style={{
+              background: 'rgba(0, 0, 0, 0.5)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '6px',
+              padding: '10px 12px',
+              fontSize: '0.72rem',
+              fontFamily: 'monospace',
+              color: '#38bdf8',
+              overflowX: 'auto'
+            }}
+          >
+            <code>POST /api/sensor-ingest &nbsp;[Authorization: Bearer &lt;M2M ingest/write Token&gt;]</code>
+          </div>
         </div>
 
         {/* AWS SAM / Deployment Info */}

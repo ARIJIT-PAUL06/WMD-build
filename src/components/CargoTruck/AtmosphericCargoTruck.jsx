@@ -316,7 +316,7 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
   const handleFetchLiveTelemetry = async () => {
     setIsLiveLoading(true);
     try {
-      const res = await fetch('/api/india-heatmap');
+      const res = await apiFetch('/api/india-heatmap');
       if (!res.ok) throw new Error('Network error');
       const data = await res.json();
       if (data && data.stations && data.stations.length > 0) {

@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Import template for pre-existing VayuVitals resources:
+  AirQualityReadings DynamoDB Table and wmd-backend Lambda Function.
+  Contains only imported resources with DeletionPolicy: Retain per CloudFormation import rules.
+
+Parameters:
+  ExistingLambdaRoleArn:
+    Type: String
+    Description: ARN of the existing IAM execution role attached to wmd-backend
+    Default: ''
+
+Conditions:
+  HasRoleArn: !Not [!Equals [!Ref ExistingLambdaRoleArn, '']]
+
+Resources:
+  AirQualityDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: AirQualityReadings
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: city
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: city
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  WmdBackendFunction:
+    Type: AWS::Lambda::Function
+    DeletionPolicy: Retain
+    Properties:
+      FunctionName: wmd-backend
+      Code: ../lambda-dist/
+      Handler: index.handler
+      Runtime: nodejs22.x
+      Timeout: 180
+      MemorySize: 512
+      Role: !If
+        - HasRoleArn
+        - !Ref ExistingLambdaRoleArn
+        - !Sub "arn:aws:iam::${AWS::AccountId}:role/wmd-backend-role-${AWS::Region}"
+
+Outputs:
+  AirQualityTableName:
+    Value: !Ref AirQualityDynamoDBTable
+  BackendFunctionArn:
+    Value: !GetAtt WmdBackendFunction.Arn

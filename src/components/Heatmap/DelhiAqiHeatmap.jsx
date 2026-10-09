@@ -75,8 +75,11 @@ import HeatmapSearchBar from './HeatmapSearchBar.jsx';
 import HeatmapControlsDeck from './HeatmapControlsDeck.jsx';
 import HeatmapMobileDrawer from './HeatmapMobileDrawer.jsx';
 import HeatmapTelemetryHud from './HeatmapTelemetryHud.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { apiFetch } from '../../utils/apiFetch.js';
 
 export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
+  const { user, isAuthenticated, openAuthModal } = useAuth();
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const syncStationPinsRef = useRef(null);
@@ -889,9 +892,14 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
   // Fetch token-optimized Gemini advisory
   const fetchGeminiAdvisory = useCallback(async (station) => {
     if (!station) return;
+    if (!isAuthenticated) {
+      setGeminiAdvisory('Sign in for AI advice.');
+      setIsLoadingAdvisory(false);
+      return;
+    }
     setIsLoadingAdvisory(true);
     try {
-      const res = await fetch('/api/gemini-advisory', {
+      const res = await apiFetch('/api/gemini-advisory', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -3206,6 +3214,11 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         heatIntensity={heatIntensity}
         setHeatIntensity={setHeatIntensity}
         setIsMonitorModalOpen={setIsMonitorModalOpen}
+        setIsPetitionModalOpen={setIsPetitionModalOpen}
+        displayStation={displayStation}
+        setPetitionStation={setPetitionStation}
+        setPetitionLocality={setPetitionLocality}
+        setPetitionPm25={setPetitionPm25}
       />
 
       {/* Mobile backdrop overlay to tap-to-close drawer */}
