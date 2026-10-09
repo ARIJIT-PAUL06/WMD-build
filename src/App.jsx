@@ -9,7 +9,6 @@ const DelhiAqiHeatmap = React.lazy(() => import('./components/Heatmap/DelhiAqiHe
 const AutonomousMonitorModal = React.lazy(() => import('./components/Dashboard/AutonomousMonitorModal'));
 const AtmosphericCargoTruck = React.lazy(() => import('./components/CargoTruck/AtmosphericCargoTruck'));
 const PollutantDetailPage = React.lazy(() => import('./components/PollutantDetail/PollutantDetailPage'));
-const SchoolSafetyContainer = React.lazy(() => import('./components/SchoolSafety/SchoolSafetyContainer'));
 const PollutantDocumentary = React.lazy(() => import('./components/PollutantDocumentary/PollutantDocumentary'));
 import AuthHeaderBadge from './components/Auth/AuthHeaderBadge';
 
@@ -30,7 +29,7 @@ class MapErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div style={{ width: '100%', minHeight: '600px', background: '#070a12', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
-          <p>Map engine paused. Continue scrolling to view Atmospheric Cargo and School Safety modules.</p>
+          <p>Map engine paused. Continue scrolling to view Atmospheric Cargo and environmental modules.</p>
         </div>
       );
     }
@@ -240,10 +239,6 @@ export default function App() {
     setDocumentaryState({ isOpen: true, pollutantId: targetPollutant });
   };
 
-  const isSchoolView = typeof window !== 'undefined' && (
-    window.location.search.includes('view=school') ||
-    window.location.hash === '#school'
-  );
   const isMapOnly = typeof window !== 'undefined' && (
     window.location.search.includes('view=map') ||
     window.location.search.includes('map=true') ||
@@ -258,23 +253,6 @@ export default function App() {
       heatmapRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   };
-
-  if (isSchoolView) {
-    return (
-      <React.Suspense fallback={<PageFallback />}>
-        <div style={{ position: 'fixed', top: '20px', right: '24px', zIndex: 9999 }}>
-          <AuthHeaderBadge />
-        </div>
-        <SchoolSafetyContainer
-          onBackToMap={() => {
-            if (typeof window !== 'undefined') {
-              window.location.search = '?view=map';
-            }
-          }}
-        />
-      </React.Suspense>
-    );
-  }
 
   // Render Full-Screen Cinematic Pollutant Documentary Experience when active
   if (documentaryState.isOpen) {

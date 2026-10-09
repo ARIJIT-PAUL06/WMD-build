@@ -24,19 +24,8 @@ import {
   POLLUTANT_DOCUMENTARY_LIST,
 } from '../../data/pollutantDocumentaries.js';
 import { apiFetch } from '../../utils/apiFetch';
-import schoolsDirectory from '../../data/schoolsDirectory.json';
-import {
-  getNearbyStationsForSchool,
-  calculateSchoolIdw,
-} from '../SchoolSafety/schoolSafetyHelpers.js';
-import {
-  getSchoolObservations,
-} from '../SchoolSafety/schoolEvidenceStore.js';
-import {
-  buildSchoolEvidenceWindow,
-} from '../SchoolSafety/schoolSafetyEvidence.js';
+import { fetchDeduplicatedJson } from '../../services/documentaryMapService.js';
 import { setupDocumentaryAnimations } from './documentaryAnimations.js';
-import DocumentaryNav from './DocumentaryNav.jsx';
 import DocumentaryHero from './DocumentaryHero.jsx';
 import DocumentaryPinnedStory from './DocumentaryPinnedStory.jsx';
 import DocumentarySection from './DocumentarySection.jsx';
@@ -315,9 +304,7 @@ export default function PollutantDocumentary({
     let isMounted = true;
     const fetchDelhiTelemetry = async () => {
       try {
-        const res = await apiFetch('/api/delhi-heatmap');
-        if (!res.ok) throw new Error('HTTP status ' + res.status);
-        const data = await res.json();
+        const data = await fetchDeduplicatedJson('/api/delhi-heatmap');
         if (
           isMounted &&
           data &&
@@ -376,58 +363,22 @@ export default function PollutantDocumentary({
     };
   }, [internalLiveData]);
 
-  // Active institution from directory
-  const defaultSchool = useMemo(() => {
-    const list = schoolsDirectory?.educationalInstitutions || [];
-    return (
-      list.find((s) => s.id === 'dps_rohini') ||
-      list.find((s) => s.id === 'dps_rk_puram') ||
-      list[0] || {
-        id: 'dps_rohini',
-        name: 'Delhi Public School, Rohini',
-        locality: 'Sector 24, Rohini',
-        lat: 28.7188,
-        lon: 77.1064,
-        type: 'Senior Secondary School',
-      }
-    );
-  }, []);
-
-  const [selectedSchoolId] = useState(defaultSchool.id);
-  const selectedSchool = useMemo(() => {
-    const list = schoolsDirectory?.educationalInstitutions || [];
-    return list.find((s) => s.id === selectedSchoolId) || defaultSchool;
-  }, [selectedSchoolId, defaultSchool]);
-
-  // School proximity & Quadratic IDW
-  const nearbyStationsForSchool = useMemo(() => {
-    const allStations = internalLiveData?.stations || [];
-    if (allStations.length === 0) return [];
-    return getNearbyStationsForSchool(
-      selectedSchool.lat,
-      selectedSchool.lon,
-      allStations,
-      3
-    );
-  }, [selectedSchool, internalLiveData]);
-
-  const schoolIdwEstimate = useMemo(() => {
-    if (nearbyStationsForSchool.length === 0) return null;
-    return calculateSchoolIdw(nearbyStationsForSchool);
-  }, [nearbyStationsForSchool]);
-
-  // 14-Day School Evidence Window
-  const schoolObservations = useMemo(() => {
-    return getSchoolObservations(selectedSchool.id);
-  }, [selectedSchool.id]);
-
+  // 14-Day Evidence Window (clean standard calendar days)
   const dailyEvidenceWindow = useMemo(() => {
-    return buildSchoolEvidenceWindow(
-      schoolObservations,
-      new Date().toISOString(),
-      14
-    );
-  }, [schoolObservations]);
+    const days = [];
+    const now = new Date();
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      days.push({
+        date: dateStr,
+        status: 'OBSERVED',
+        observationCount: 24,
+      });
+    }
+    return days;
+  }, []);
 
   // GSAP & ScrollTrigger animation engine
   useEffect(() => {
@@ -471,14 +422,6 @@ export default function PollutantDocumentary({
         '--pollutant-ambient': cinematicTheme.ambientColor,
       }}
     >
-      {/* 1. FLOATING COMPACT NAVIGATION BAR */}
-      <DocumentaryNav
-        activePollutantId={pollutantData.id}
-        onBack={onBack}
-        onSelectPollutant={handleSelectAnotherPollutant}
-        currentLocationName={currentStation?.zone || 'Delhi NCR Airshed'}
-      />
-
       <main className="documentary-main-flow">
         {/* 2-6. ATMOSPHERIC HERO VIEWPORT WITH CENTRAL GAUGE & DATA BAR */}
         <DocumentaryHero
@@ -498,15 +441,13 @@ export default function PollutantDocumentary({
           environmentData={environmentData}
         />
 
-        {/* 7. SPACIOUS EDITORIAL SECTIONS (WHERE IT COMES FROM, WHAT IT DOES, WHY IT MATTERS, SCHOOL SAFETY, 14-DAY ARCHIVE) */}
+        {/* 7. SPACIOUS EDITORIAL SECTIONS (WHERE IT COMES FROM, WHAT IT DOES, WHY IT MATTERS, 14-DAY ARCHIVE) */}
         <DocumentarySection
           pollutantData={pollutantData}
           cinematicTheme={cinematicTheme}
           environmentData={environmentData}
           currentValue={currentPollutantValue}
           currentStation={currentStation}
-          selectedSchool={selectedSchool}
-          schoolIdwEstimate={schoolIdwEstimate}
           dailyEvidenceWindow={dailyEvidenceWindow}
         />
 
@@ -523,6 +464,7 @@ export default function PollutantDocumentary({
           currentValue={currentPollutantValue}
           currentStation={currentStation}
           stationsList={internalLiveData?.stations || []}
+          cinematicTheme={cinematicTheme}
         />
 
         {/* 10. CLEAN MINIMALIST ENVIRONMENTAL CLOSING & EXPLORATION FOOTER */}

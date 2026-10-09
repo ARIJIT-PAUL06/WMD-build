@@ -14,7 +14,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { Layers, Activity, AlertTriangle, Wind, Info, AlertCircle, ArrowRight, ShieldCheck, HeartPulse, CheckCircle2, Calendar } from 'lucide-react';
+import { Layers, Activity, AlertTriangle, Wind, Info, ArrowRight, ShieldCheck, HeartPulse, CheckCircle2, Calendar, Factory, Flame } from 'lucide-react';
 import { POLLUTANT_SYNTHESIS_FLOWS } from './documentaryHelpers.js';
 import PhysiologicalImpactMatrix from '../common/PhysiologicalImpactMatrix';
 import ConnectedProcessFlow from '../common/ConnectedProcessFlow';
@@ -28,8 +28,6 @@ export default function DocumentarySection({
   environmentData,
   currentValue,
   currentStation,
-  selectedSchool = { name: 'Delhi Public School, Rohini', locality: 'Sector 24, Rohini' },
-  schoolIdwEstimate = null,
   dailyEvidenceWindow = [],
 }) {
   const { sections = {} } = pollutantData;
@@ -196,10 +194,10 @@ export default function DocumentarySection({
                     {item.label === 'Human Hair'
                       ? '1x Baseline (70 µm)'
                       : item.label.includes('PM10')
-                      ? '1/7th Hair'
-                      : item.label.includes('PM2.5')
-                      ? '1/28th Hair'
-                      : `${item.sizeMicrons} µm`}
+                        ? '1/7th Hair'
+                        : item.label.includes('PM2.5')
+                          ? '1/28th Hair'
+                          : `${item.sizeMicrons} µm`}
                   </span>
                 </div>
               ))}
@@ -242,42 +240,75 @@ export default function DocumentarySection({
           </header>
 
           <div className="exposure-body-grid">
-            {/* Left Column: Atmospheric Behavior & Categories */}
+            {/* Left Column: Asymmetrical Editorial Emission Origins Composition */}
             <div className="exposure-statement-col">
-              <div className="documentary-sources-editorial-grid">
-                {sources.map((src, idx) => (
-                  <article key={idx} className="documentary-source-card">
-                    <div className="documentary-source-card-header">
-                      <span className="doc-card-idx">0{idx + 1}</span>
-                      <h3 className="doc-card-category">{src.category}</h3>
+              <div className="documentary-sources-editorial-composition">
+                {/* Primary Leading Origin Feature */}
+                {sources[0] && (
+                  <article className="doc-source-feature-banner">
+                    <div className="doc-feature-top-meta">
+                      <span className="doc-card-idx">01</span>
+                      <span className="doc-source-type-pill primary">
+                        <Flame size={12} />
+                        <span>PRIMARY BASIN VECTOR</span>
+                      </span>
                     </div>
-                    <p className="doc-card-body">
-                      {src.description.split('.')[0] + '.'}
-                    </p>
-                    <div className="documentary-source-card-footer">
-                      <span className="doc-card-tag">AIRSHED VECTOR</span>
+                    <div className="doc-feature-content">
+                      <h3 className="doc-feature-category">{sources[0].category}</h3>
+                      <p className="doc-feature-body">
+                        {sources[0].description}
+                      </p>
+                    </div>
+                    <div className="doc-feature-footer">
+                      <span className="doc-card-tag">HIGH INTENSITY EMISSION</span>
                     </div>
                   </article>
-                ))}
+                )}
+
+                {/* Secondary 3 Sources Asymmetrical Deck */}
+                <div className="doc-secondary-sources-deck">
+                  {sources.slice(1, 4).map((src, idx) => {
+                    const stepNum = idx + 2;
+                    const isIndustrial = src.isIndustrial || src.category?.toLowerCase().includes('power') || src.category?.toLowerCase().includes('industry');
+                    const isAtmospheric = src.isAtmospheric || src.category?.toLowerCase().includes('secondary');
+                    
+                    return (
+                      <article key={idx} className={`doc-source-secondary-card item-type-${idx}`}>
+                        <div className="doc-sec-card-header">
+                          <span className="doc-card-idx">0{stepNum}</span>
+                          <span className="doc-source-type-pill">
+                            {isIndustrial ? <Factory size={11} /> : isAtmospheric ? <Wind size={11} /> : <Layers size={11} />}
+                            <span>{isAtmospheric ? 'PHOTOCHEMICAL' : isIndustrial ? 'INDUSTRIAL' : 'FUGITIVE / REGIONAL'}</span>
+                          </span>
+                        </div>
+                        <h4 className="doc-sec-category">{src.category}</h4>
+                        <p className="doc-sec-body">
+                          {src.description}
+                        </p>
+                      </article>
+                    );
+                  })}
+                </div>
               </div>
 
+              {/* Atmospheric Boundary Layer Behavior Strip */}
               <div className="exposure-behavior-box">
                 <div className="doc-behavior-kicker">
-                  <Wind size={15} />
-                  <span>ATMOSPHERIC BEHAVIOR IN DELHI BASIN</span>
+                  <Wind size={14} />
+                  <span>ATMOSPHERIC DISPERSION & METEOROLOGY IN DELHI BASIN</span>
                 </div>
                 <p className="doc-behavior-text">
-                  {pollutantData.atmosphericBehavior.split('.')[0] + '.'}
+                  {pollutantData.atmosphericBehavior}
                 </p>
                 <div className="doc-behavior-chips">
                   <span className="doc-behavior-chip">INVERSION: &lt; 150m</span>
                   <span className="doc-behavior-chip">WINDS: &lt; 2 m/s CALM</span>
-                  <span className="doc-behavior-chip">SEASON: WINTER NIGHT PEAK</span>
+                  <span className="doc-behavior-chip">CORRIDOR: INDO-GANGETIC</span>
                 </div>
               </div>
             </div>
 
-            {/* Right Column: Continuous Telemetry & Standard Comparison */}
+            {/* Right Column: Clean Telemetry & Standard Calibration */}
             <div className="exposure-telemetry-col">
               <div className="doc-standard-card">
                 <span className="doc-card-kicker">CONTINUOUS RECEPTOR OBSERVATION</span>
@@ -288,11 +319,11 @@ export default function DocumentarySection({
                   <span className="doc-card-unit">{unit}</span>
                 </div>
                 <p className="doc-card-note">
-                  {currentStation?.name || 'Delhi CAAQMS Network Telemetry'}
+                  {currentStation?.name || 'Delhi CAAQMS Ground Telemetry'}
                 </p>
               </div>
 
-              <div className="doc-standard-box highlight" style={{ marginTop: '16px' }}>
+              <div className="doc-standard-box highlight">
                 <span className="doc-std-org">CPCB 24-HR NAAQS STANDARD</span>
                 <span className="doc-std-val">{pollutantData.naaqsLimit} {unit}</span>
                 <span className="doc-std-scope">WHO Guideline: {pollutantData.whoLimit} {unit}</span>
@@ -366,23 +397,11 @@ export default function DocumentarySection({
             subtitle="The physical journey from initial injection to human exposure"
             accentColor={cinematicTheme?.accentColor || '#10b981'}
           />
-
-          {stages.length > 0 && (
-            <div className="documentary-flow-sequence">
-              {stages.map((stg) => (
-                <div key={stg.step} className="documentary-flow-card">
-                  <div className="doc-flow-step-num">{stg.step}</div>
-                  <h3 className="doc-flow-stage-title">{stg.stage}</h3>
-                  <p className="doc-flow-detail">{stg.detail.split('.')[0] + '.'}</p>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </section>
 
       {/* ===================================================================
-          7. WHY IT MATTERS & SCHOOL SAFETY (SECTION 07)
+          7. WHY IT MATTERS & PHYSIOLOGICAL IMPACT (SECTION 07)
           =================================================================== */}
       <section className="documentary-section" id="section-07-why-it-matters">
         <div className="doc-section-ghost-watermark" aria-hidden="true">
@@ -393,44 +412,23 @@ export default function DocumentarySection({
             <div className="documentary-section-kicker">
               <span className="doc-sec-num">07</span>
               <span className="doc-sec-divider">/</span>
-              <span className="doc-sec-category">FROM CITY TO SCHOOL</span>
+              <span className="doc-sec-category">PHYSIOLOGICAL VULNERABILITY</span>
             </div>
             <div className="doc-mask-reveal-wrap">
               <h2 className="documentary-section-title">
-                FROM CITY TO SCHOOL
+                WHY IT MATTERS
               </h2>
             </div>
             <p className="documentary-section-lead">
-              THE CITY IS A MAP. BUT PEOPLE LIVE AT SPECIFIC LOCATIONS.
+              BIOLOGICAL UPTAKE, RESPIRATORY PENETRATION & SYSTEMIC BURDEN
             </p>
           </header>
 
-          {/* School Proximity Dossier Card */}
-          <div className="documentary-school-dossier-card">
-            <div className="school-dossier-grid">
-              <div className="school-info-mount">
-                <span className="school-badge-tag">CAMPUS MONITORING RECEPTOR</span>
-                <h3 className="school-name-title">{selectedSchool.name}</h3>
-                <span className="school-locality-tag">{selectedSchool.locality}</span>
-              </div>
-
-              <div className="school-telemetry-breakdown">
-                <div className="school-idw-readout-row">
-                  <span className="idw-large-value">
-                    {schoolIdwEstimate?.pm25 ?? (currentValue != null ? Math.round(currentValue) : '—')}
-                  </span>
-                  <span className="idw-unit">{unit}</span>
-                  <span className="idw-badge">ESTIMATED AROUND SCHOOL</span>
-                </div>
-
-                <div className="school-spatial-disclaimer-box">
-                  <AlertCircle size={15} className="disclaimer-icon" />
-                  <p className="disclaimer-text">
-                    School PM2.5 values are spatial estimates derived from nearby monitoring stations and are not direct measurements at the school.
-                  </p>
-                </div>
-              </div>
-            </div>
+          {/* Clean Editorial Prose on Biological Trajectory */}
+          <div className="documentary-impact-prose-block">
+            <p className="doc-impact-prose-hero">
+              {pollutantData.whyItMatters || 'Cumulative exposure imposes continuous physiological strain on developing pediatric lung tissue and cardiopulmonary function.'}
+            </p>
           </div>
 
           {/* Visual Anatomical & Demographic Vulnerability Matrix */}
@@ -444,16 +442,13 @@ export default function DocumentarySection({
           <div className="documentary-impact-points-grid">
             {impactPoints.map((pt, idx) => (
               <div key={idx} className="documentary-impact-card">
-                <span className="doc-impact-idx">0{idx + 1}</span>
-                <p className="doc-impact-text">{pt.split('.')[0] + '.'}</p>
+                <div className="doc-impact-card-top">
+                  <span className="doc-impact-idx">0{idx + 1}</span>
+                  <span className="doc-impact-card-tag">CLINICAL OBSERVATION</span>
+                </div>
+                <p className="doc-impact-text">{pt}</p>
               </div>
             ))}
-          </div>
-
-          <div className="documentary-impact-prose-block">
-            <p className="doc-impact-prose single-line">
-              {pollutantData.whyItMatters ? pollutantData.whyItMatters.split('.')[0] + '.' : 'Cumulative exposure imposes continuous physiological strain on developing pediatric lung tissue.'}
-            </p>
           </div>
         </div>
       </section>

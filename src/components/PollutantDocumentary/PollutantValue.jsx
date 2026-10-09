@@ -76,15 +76,6 @@ export default function PollutantValue({
           aria-hidden="true"
         >
           <defs>
-            {/* Multi-stop Risk Gradient matching the reference arc */}
-            <linearGradient id="docArcGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#10b981" />
-              <stop offset="25%" stopColor="#eab308" />
-              <stop offset="55%" stopColor="#f97316" />
-              <stop offset="80%" stopColor="#ef4444" />
-              <stop offset="100%" stopColor="#a855f7" />
-            </linearGradient>
-
             {/* Subtle glow filter */}
             <filter id="docGlowFilter" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="4" result="blur" />
@@ -126,12 +117,12 @@ export default function PollutantValue({
             );
           })}
 
-          {/* Active Colored Arc */}
+          {/* Active Colored Arc - Solid Red #FF4545 */}
           <path
             id="doc-active-gauge-arc"
             d="M 38.6 230 A 140 140 0 1 1 281.4 230"
             fill="none"
-            stroke="url(#docArcGradient)"
+            stroke="#FF4545"
             strokeWidth={strokeWidth + 1}
             strokeDasharray={`${arcLength} ${circumference}`}
             strokeDashoffset={strokeDashoffset}

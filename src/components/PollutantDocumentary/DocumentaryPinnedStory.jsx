@@ -9,12 +9,13 @@
  *   2. MOVEMENT: Atmospheric boundary layer inversion & plume advection
  *   3. EXPOSURE: Ground-level street canyon receptors & human proximity
  *   4. IMPACT: Deep alveolar penetration & cardiovascular inflammation
- * - Top progress stepper ribbon (01 to 04) tracking scroll progress
+ * - Interactive SVG vector progress timeline linking the 4 investigation phases
+ * - Scientific stage vector schematics illustrating each phase
  * - Zero automotive specs; pollutant is the central subject
  */
 
 import React, { useMemo } from 'react';
-import { Layers, Wind, Compass, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Layers, Wind, Compass, AlertTriangle } from 'lucide-react';
 
 export default function DocumentaryPinnedStory({
   pollutantData,
@@ -84,7 +85,12 @@ export default function DocumentaryPinnedStory({
           >
             {pollutantData.symbol}
           </div>
-          <div className="documentary-pinned-ambient-glow" style={{ background: `radial-gradient(ellipse at 50% 60%, ${cinematicTheme.ambientColor || 'rgba(16, 185, 129, 0.12)'} 0%, transparent 70%)` }} />
+          <div
+            className="documentary-pinned-ambient-glow"
+            style={{
+              background: `radial-gradient(ellipse at 50% 60%, ${cinematicTheme.ambientColor || 'rgba(16, 185, 129, 0.12)'} 0%, transparent 70%)`,
+            }}
+          />
         </div>
 
         {/* Top Progress Stepper Ribbon */}
@@ -95,10 +101,29 @@ export default function DocumentaryPinnedStory({
           </div>
 
           <div className="doc-ribbon-stepper" aria-label="Investigation Phases">
+            <svg
+              className="doc-ribbon-track-svg"
+              viewBox="0 0 280 6"
+              aria-hidden="true"
+              style={{ position: 'absolute', width: '280px', height: '6px', pointerEvents: 'none' }}
+            >
+              <line x1="10" y1="3" x2="270" y2="3" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="2" />
+              <line
+                id="doc-ribbon-progress-line"
+                x1="10"
+                y1="3"
+                x2="270"
+                y2="3"
+                stroke={cinematicTheme.accent}
+                strokeWidth="2.5"
+                strokeDasharray="260"
+                strokeDashoffset="260"
+              />
+            </svg>
             {storyBeats.map((beat, idx) => (
               <div
                 key={beat.step}
-                className={`doc-ribbon-step-item step-item-${idx}`}
+                className={`doc-ribbon-step-item step-item-${idx} ${idx === 0 ? 'active' : ''}`}
                 data-step-index={idx}
               >
                 <span className="doc-step-num">{beat.step}</span>
@@ -133,6 +158,50 @@ export default function DocumentaryPinnedStory({
 
                 <h3 className="doc-card-headline">{beat.headline}</h3>
                 <p className="doc-card-lead">{beat.lead}</p>
+
+                {/* Schematic Vector Pathway Visual for each scientific phase */}
+                <div className="doc-card-schematic-wrap" aria-hidden="true">
+                  {idx === 0 && (
+                    <svg className="doc-card-schematic-svg" viewBox="0 0 280 36" fill="none">
+                      <circle cx="20" cy="18" r="5" fill={cinematicTheme.accent} />
+                      <circle cx="20" cy="18" r="12" stroke={cinematicTheme.accent} strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
+                      <path d="M 36 18 L 250 18" stroke={cinematicTheme.accent} strokeWidth="1.5" strokeDasharray="4 4" opacity="0.4" />
+                      <path d="M 235 13 L 250 18 L 235 23" stroke={cinematicTheme.accent} strokeWidth="1.5" fill="none" opacity="0.8" />
+                      <circle cx="110" cy="18" r="3" fill="#cbd5e1" opacity="0.5" />
+                      <circle cx="170" cy="18" r="3.5" fill="#cbd5e1" opacity="0.7" />
+                      <text x="50" y="32" fill="#94a3b8" fontSize="8" fontFamily="monospace">EMISSION INJECTION VECTOR</text>
+                    </svg>
+                  )}
+                  {idx === 1 && (
+                    <svg className="doc-card-schematic-svg" viewBox="0 0 280 36" fill="none">
+                      <path d="M 10 10 Q 70 6, 140 10 T 270 10" stroke="#64748b" strokeWidth="1.5" strokeDasharray="4 2" />
+                      <text x="10" y="7" fill="#94a3b8" fontSize="7.5" fontFamily="monospace">INVERSION CEILING &lt; 200m</text>
+                      <path d="M 20 26 Q 80 18, 150 24 T 260 22" stroke={cinematicTheme.accent} strokeWidth="2" />
+                      <circle cx="150" cy="24" r="4" fill={cinematicTheme.accent} />
+                      <text x="165" y="32" fill="#94a3b8" fontSize="7.5" fontFamily="monospace">TRAPPED BASIN PLUME</text>
+                    </svg>
+                  )}
+                  {idx === 2 && (
+                    <svg className="doc-card-schematic-svg" viewBox="0 0 280 36" fill="none">
+                      <path d="M 15 28 L 265 28" stroke="#475569" strokeWidth="1.5" />
+                      <rect x="40" y="14" width="24" height="14" fill="none" stroke="#64748b" strokeWidth="1" />
+                      <rect x="85" y="8" width="30" height="20" fill="none" stroke="#64748b" strokeWidth="1" />
+                      <circle cx="190" cy="18" r="5" fill={cinematicTheme.accent} />
+                      <circle cx="190" cy="18" r="11" stroke={cinematicTheme.accent} strokeWidth="1" strokeDasharray="2 2" opacity="0.7" />
+                      <text x="145" y="32" fill="#94a3b8" fontSize="7.5" fontFamily="monospace">BREATHING ZONE RECEPTOR</text>
+                    </svg>
+                  )}
+                  {idx === 3 && (
+                    <svg className="doc-card-schematic-svg" viewBox="0 0 280 36" fill="none">
+                      <line x1="15" y1="18" x2="265" y2="18" stroke="#334155" strokeWidth="2" />
+                      <line x1="150" y1="6" x2="150" y2="30" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="2 2" />
+                      <text x="156" y="11" fill="#f87171" fontSize="7.5" fontFamily="monospace">NAAQS CEILING</text>
+                      <circle cx="90" cy="18" r="5" fill={cinematicTheme.accent} />
+                      <circle cx="210" cy="18" r="3.5" fill="#f97316" />
+                      <text x="20" y="31" fill="#94a3b8" fontSize="7.5" fontFamily="monospace">CELLULAR DEPOSITION</text>
+                    </svg>
+                  )}
+                </div>
 
                 <div className="doc-card-detail-box">
                   <div className="doc-detail-accent-bar" style={{ backgroundColor: cinematicTheme.accent }} />
