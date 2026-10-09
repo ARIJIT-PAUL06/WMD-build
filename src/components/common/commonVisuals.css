@@ -159,25 +159,22 @@
 .organ-icon.cogn { color: #a855f7; }
 
 .organ-severity-tag {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 4px;
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  font-size: 0.68rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  padding: 0;
+  background: transparent !important;
+  border: none !important;
 }
 
 .severity-high, .severity-very-high, .severity-extreme {
-  background: rgba(239, 68, 68, 0.2);
-  color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
 }
 
 .severity-moderate, .severity-low-mod {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fde68a;
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #f59e0b;
 }
 
 .organ-bar-track {
@@ -280,25 +277,19 @@
   letter-spacing: 0.05em;
 }
 
+.demo-risk-meta {
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #cbd5e1;
+  letter-spacing: 0.02em;
+}
+
 .demo-risk-pill {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 9999px;
-  letter-spacing: 0.04em;
-}
-
-.demo-risk-pill.high {
-  background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.35);
-}
-
-.demo-risk-pill.moderate {
-  background: rgba(16, 185, 129, 0.18);
-  color: #6ee7b7;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #cbd5e1;
 }
 
 .demo-bullet-list {
@@ -316,11 +307,13 @@
   line-height: 1.4;
 }
 
-.demo-bullet-icon {
-  font-size: 0.9rem;
-  line-height: 1;
+.demo-bullet-pip {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: rgba(148, 163, 184, 0.45);
   flex-shrink: 0;
   margin-top: 1px;
+  user-select: none;
 }
 
 /* 3. Connected Process Flow */

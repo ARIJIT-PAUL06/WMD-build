@@ -210,7 +210,7 @@ export default function MonitorStatusTab({
             }}
           >
             <div style={{ fontWeight: 700, color: '#38bdf8', marginBottom: '6px' }}>
-              ✅ Autonomous Cycle #{cycleReport.cycleId} Execution Summary ({new Date(cycleReport.timestamp).toLocaleTimeString()})
+              Autonomous Cycle #{cycleReport.cycleId} Execution Summary ({new Date(cycleReport.timestamp).toLocaleTimeString()})
             </div>
             <ul style={{ margin: 0, paddingLeft: '18px', color: '#cbd5e1', lineHeight: '1.6' }}>
               <li>Telemetry Sync: {cycleReport.telemetrySync?.syncedBlocksCount || 0} spatial grid blocks synchronized</li>

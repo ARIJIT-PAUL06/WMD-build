@@ -514,7 +514,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                     bbox: f.bbox,
                     place_type: f.place_type,
                     isPinpoint: isAddress,
-                    badge: isAddress ? '🏠 House / Address' : isPostcode ? '📮 PIN Code' : isLocality ? '🏘️ Locality' : '📍 Location',
+                    badge: isAddress ? 'House / Address' : isPostcode ? 'PIN Code' : isLocality ? 'Locality' : 'Location',
                   });
                 }
               });
@@ -547,7 +547,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                     place_name: subtitle || title,
                     center: f.geometry.coordinates,
                     isPinpoint: isHouse,
-                    badge: isHouse ? '🏠 House / Address' : '📍 Location',
+                    badge: isHouse ? 'House / Address' : 'Location',
                   });
                 }
               });
@@ -578,7 +578,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   center: [parseFloat(n.lon), parseFloat(n.lat)],
                   bbox: n.boundingbox ? [parseFloat(n.boundingbox[2]), parseFloat(n.boundingbox[0]), parseFloat(n.boundingbox[3]), parseFloat(n.boundingbox[1])] : null,
                   boundaryGeo: pGeo,
-                  badge: '📍 Landmark',
+                  badge: 'Landmark',
                 });
               }
             });

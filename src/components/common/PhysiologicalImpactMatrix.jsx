@@ -169,23 +169,23 @@ export default function PhysiologicalImpactMatrix({
                     <Baby size={13} />
                     <span>CHILDREN</span>
                   </div>
-                  <span className="demo-risk-pill high">2.5x Vulnerability</span>
+                  <span className="demo-risk-meta">2.5x Vulnerability</span>
                 </div>
                 <div className="demo-bullet-list">
                   <div className="demo-bullet-item">
-                    <span className="demo-bullet-icon">🫁</span>
+                    <span className="demo-bullet-pip" aria-hidden="true">•</span>
                     <div className="demo-bullet-text">
                       <strong>Higher Minute Ventilation:</strong> Inhales ~2.5x more air volume per kg body weight vs adults.
                     </div>
                   </div>
                   <div className="demo-bullet-item">
-                    <span className="demo-bullet-icon">⚠</span>
+                    <span className="demo-bullet-pip" aria-hidden="true">•</span>
                     <div className="demo-bullet-text">
                       <strong>Developing Pulmonary Tissues:</strong> 80% of alveolar air sacs form postnatally through adolescence.
                     </div>
                   </div>
                   <div className="demo-bullet-item">
-                    <span className="demo-bullet-icon">📚</span>
+                    <span className="demo-bullet-pip" aria-hidden="true">•</span>
                     <div className="demo-bullet-text">
                       <strong>Campus & Playground Risk:</strong> Peak outdoor PE & recess align with diurnal afternoon exposure.
                     </div>
@@ -201,23 +201,23 @@ export default function PhysiologicalImpactMatrix({
                     <Users size={13} />
                     <span>ADULTS</span>
                   </div>
-                  <span className="demo-risk-pill moderate">Baseline Exposure</span>
+                  <span className="demo-risk-meta">Baseline Exposure</span>
                 </div>
                 <div className="demo-bullet-list">
                   <div className="demo-bullet-item">
-                    <span className="demo-bullet-icon">🫁</span>
+                    <span className="demo-bullet-pip" aria-hidden="true">•</span>
                     <div className="demo-bullet-text">
                       <strong>Mature Pulmonary Reserve:</strong> Fully formed alveolar surface area provides physiological buffer.
                     </div>
                   </div>
                   <div className="demo-bullet-item">
-                    <span className="demo-bullet-icon">⚠</span>
+                    <span className="demo-bullet-pip" aria-hidden="true">•</span>
                     <div className="demo-bullet-text">
                       <strong>Cumulative Cardiopulmonary Burden:</strong> Chronic endothelial stress elevates long-term hypertension risk.
                     </div>
                   </div>
                   <div className="demo-bullet-item">
-                    <span className="demo-bullet-icon">💼</span>
+                    <span className="demo-bullet-pip" aria-hidden="true">•</span>
                     <div className="demo-bullet-text">
                       <strong>Commute & Workplace Transit:</strong> Exposure concentrated during morning and evening rush-hour corridors.
                     </div>
