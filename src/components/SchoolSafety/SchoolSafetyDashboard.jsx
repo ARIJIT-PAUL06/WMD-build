@@ -22,37 +22,19 @@ import {
   School,
   Wind,
   Clock,
-  ShieldAlert,
-  ShieldCheck,
-  AlertTriangle,
   Info,
   RefreshCw,
   Users,
   MapPin,
-  Activity,
   ChevronDown,
-  ChevronUp,
-  Sun,
-  Sparkles,
   FileText,
-  Calendar,
-  Lock,
-  CheckCircle2,
-  AlertCircle,
-  ArrowRight,
+  AlertTriangle,
 } from 'lucide-react';
-import RadialProgressMeter from '../common/RadialProgressMeter';
-import AnimatedCounter from '../common/AnimatedCounter';
 import schoolsDirectory from '../../data/schoolsDirectory.json';
 import {
-  calculateSchoolIdw,
-  evaluateSchoolActivityWindows,
-  calculateOverallSchoolVerdict,
-  findBestOutdoorWindow,
   generateWhyVerdictExplanation,
   ACTIVITY_VERDICTS,
   CONFIDENCE_LEVELS,
-  DEFAULT_SCHOOL_ACTIVITIES,
 } from './schoolSafetyHelpers.js';
 import {
   buildSchoolEvidenceWindow,
@@ -60,9 +42,12 @@ import {
   getMonitoringStatus,
   evaluateCivicActionEligibility,
   generateEvidenceSummary,
-  DAY_STATUS,
-  MONITORING_STATUS,
 } from './schoolSafetyEvidence.js';
+import SchoolSafetyTopGrid from './SchoolSafetyTopGrid';
+import SchoolActivityTimeline from './SchoolActivityTimeline';
+import SchoolWhyVerdictAccordion from './SchoolWhyVerdictAccordion';
+import SchoolEvidence14DaySection from './SchoolEvidence14DaySection';
+import SchoolCivicActionCard from './SchoolCivicActionCard';
 import './SchoolSafetyDashboard.css';
 
 /**
@@ -101,8 +86,6 @@ function getStatusCssClass(status) {
       return 'status-insufficient';
   }
 }
-
-
 
 export default function SchoolSafetyDashboard({
   schools = schoolsDirectory.educationalInstitutions,
@@ -267,7 +250,6 @@ export default function SchoolSafetyDashboard({
     if (dailyEvidence && Array.isArray(dailyEvidence) && dailyEvidence.length > 0) {
       return dailyEvidence;
     }
-    // Default 14-day window ending today if none provided (e.g. standalone test mode)
     return buildSchoolEvidenceWindow([], new Date().toISOString(), 14);
   }, [dailyEvidence]);
 
@@ -547,513 +529,44 @@ export default function SchoolSafetyDashboard({
       )}
 
       {/* 3. Top Metrics Grid: Status, Overview & Best Window */}
-      <div className="ssd-top-grid">
-        {/* Card 1: Overall School Status (Prominent Status Card) */}
-        <article className={`ssd-card ssd-status-card ${statusCssClass}`}>
-          <div className="ssd-card-header">
-            <span className="ssd-card-title">
-              <Activity size={14} aria-hidden="true" />
-              <span>Overall Campus Status</span>
-            </span>
-            <span className={`ssd-confidence-pill ${(effectiveEstimate?.confidence || 'high').toLowerCase()}`}>
-              {`${effectiveEstimate?.confidence || 'HIGH'} Confidence`}
-            </span>
-          </div>
-
-          <div className="ssd-verdict-display">
-            <div className="ssd-verdict-icon" aria-hidden="true">
-              {effectiveOverallVerdict?.verdict === ACTIVITY_VERDICTS.GO && <ShieldCheck size={28} />}
-              {(effectiveOverallVerdict?.verdict === ACTIVITY_VERDICTS.MODIFY ||
-                effectiveOverallVerdict?.verdict === ACTIVITY_VERDICTS.MODIFY_STRICT) && (
-                <AlertTriangle size={28} />
-              )}
-              {effectiveOverallVerdict?.verdict === ACTIVITY_VERDICTS.INDOORS && <ShieldAlert size={28} />}
-              {effectiveOverallVerdict?.verdict === ACTIVITY_VERDICTS.INSUFFICIENT_DATA && <Info size={28} />}
-            </div>
-
-            <div>
-              <div className="ssd-verdict-badge">{userFacingOverallStatus}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)' }}>
-                {effectiveOverallVerdict?.verdict === ACTIVITY_VERDICTS.MODIFY_STRICT
-                  ? 'Strict Operational Caution'
-                  : 'Environmental Decision Status'}
-              </div>
-            </div>
-          </div>
-
-          <p className="ssd-verdict-subtext">
-            {effectiveOverallVerdict?.summary ||
-              'Operational recommendation derived deterministically from scheduled activity windows.'}
-          </p>
-
-          <div className="ssd-stat-disclaimer">
-            Operational facilities guidance for campus schedule. Does not constitute medical advice.
-          </div>
-        </article>
-
-        {/* Card 2: School Air Overview (Prominent Overview Card) */}
-        <article className="ssd-card">
-          <div className="ssd-card-header">
-            <span className="ssd-card-title">
-              <Wind size={14} aria-hidden="true" />
-              <span>School Air Overview</span>
-            </span>
-            {effectiveEstimate?.stationCount !== undefined && (
-              <span className="ssd-profile-badge">
-                {`${effectiveEstimate.stationCount} Station${effectiveEstimate.stationCount === 1 ? '' : 's'} Used`}
-              </span>
-            )}
-          </div>
-
-          <div>
-            <div className="ssd-stat-highlight">
-              <span className="ssd-stat-num">
-                {effectiveEstimate?.pm25 !== null && effectiveEstimate?.pm25 !== undefined
-                  ? effectiveEstimate.pm25
-                  : '--'}
-              </span>
-              <span className="ssd-stat-unit">µg/m³ PM2.5</span>
-            </div>
-
-            {/* MANDATORY MODELING RULE: Explicitly labeled as estimated */}
-            <div className="ssd-stat-label-box">Estimated around school</div>
-
-            {effectiveEstimate?.stationsUsed?.length > 0 && (
-              <div className="ssd-nearest-station-info" style={{ marginTop: '0.45rem', fontSize: '0.78rem', color: '#94a3b8' }}>
-                <div>
-                  <span style={{ color: '#64748b' }}>Nearest Station: </span>
-                  <span style={{ color: '#e2e8f0', fontWeight: 500 }}>
-                    {`${effectiveEstimate.stationsUsed[0].name}${effectiveEstimate.stationsUsed[0].distanceKm !== null ? ` (${effectiveEstimate.stationsUsed[0].distanceKm} km away)` : ''}`}
-                  </span>
-                </div>
-                {effectiveEstimate.stationsUsed.length > 1 && (
-                  <div style={{ marginTop: '0.25rem', fontSize: '0.74rem', color: '#64748b' }}>
-                    <span>Also interpolated: </span>
-                    {effectiveEstimate.stationsUsed.slice(1).map((s, idx) => (
-                      <span key={s.id || idx} style={{ color: '#94a3b8' }}>
-                        {`${s.name}${s.distanceKm !== null ? ` (${s.distanceKm} km)` : ''}${idx < effectiveEstimate.stationsUsed.length - 2 ? ', ' : ''}`}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="ssd-stat-disclaimer">
-            Spatially interpolated from surrounding regulatory stations. Not a direct school-gate sensor measurement.
-          </div>
-        </article>
-
-        {/* Card 3: Best Outdoor Window (Dedicated Card) */}
-        <article className="ssd-card">
-          <div className="ssd-card-header">
-            <span className="ssd-card-title">
-              <Sun size={14} aria-hidden="true" />
-              <span>Best Outdoor Window</span>
-            </span>
-            {effectiveBestWindow?.found && (
-              <span className="ssd-confidence-pill high">Optimal</span>
-            )}
-          </div>
-
-          {effectiveBestWindow?.found ? (
-            <div>
-              <div className="ssd-window-time-box">
-                <Clock size={20} aria-hidden="true" />
-                <span>{effectiveBestWindow.window}</span>
-              </div>
-              <p className="ssd-window-desc">
-                {`Continuous window with lowest estimated particulate exposure (avg. ${effectiveBestWindow.averagePm25} µg/m³).`}
-              </p>
-              <div className="ssd-stat-disclaimer">
-                Optimal duration for physical education, assemblies, or recess during school hours.
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div className="ssd-window-time-box" style={{ color: '#94a3b8', fontSize: '1.15rem' }}>
-                <Info size={18} aria-hidden="true" />
-                <span>Best window unavailable</span>
-              </div>
-              <p className="ssd-window-desc ssd-window-unavailable">
-                {effectiveBestWindow?.reason ||
-                  'Insufficient continuous monitoring data available to determine an optimal window without fabricating forecasts.'}
-              </p>
-            </div>
-          )}
-        </article>
-      </div>
+      <SchoolSafetyTopGrid
+        effectiveOverallVerdict={effectiveOverallVerdict}
+        statusCssClass={statusCssClass}
+        effectiveEstimate={effectiveEstimate}
+        userFacingOverallStatus={userFacingOverallStatus}
+        effectiveBestWindow={effectiveBestWindow}
+      />
 
       {/* 4. Activity Timeline Section */}
-      <section className="ssd-section" aria-labelledby="activity-timeline-heading">
-        <div className="ssd-section-header">
-          <div>
-            <h2 id="activity-timeline-heading">
-              <Clock size={18} aria-hidden="true" />
-              <span>Scheduled Activity Windows & Operational Guidance</span>
-            </h2>
-            <p className="ssd-section-sub">
-              Deterministic operational guidance per scheduled activity window based on estimated particulate exposure.
-            </p>
-          </div>
-        </div>
-
-        <div className="ssd-activities-grid">
-          {effectiveActivityResults.map((act, index) => {
-            const userVerdict = mapUserFacingStatus(act.verdict);
-            const verdictLower = (act.verdict || 'insufficient').toLowerCase().replace('_strict', '');
-
-            return (
-              <article key={act.activityId || index} className="ssd-activity-card">
-                <div className="ssd-activity-top">
-                  <div>
-                    <h3 className="ssd-activity-title">{act.activity}</h3>
-                    <div className="ssd-activity-chips" style={{ marginTop: '0.35rem' }}>
-                      <span className="ssd-chip">
-                        <Clock size={11} aria-hidden="true" />
-                        <span>{act.timeWindow || 'Scheduled'}</span>
-                      </span>
-                      {act.evaluatedPm25 !== null && act.evaluatedPm25 !== undefined && (
-                        <span className="ssd-chip pm25">
-                          {`Estimated: ${act.evaluatedPm25} µg/m³`}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <span className={`ssd-badge-verdict ${verdictLower}`}>
-                    {userVerdict === 'GO' && <ShieldCheck size={12} aria-hidden="true" />}
-                    {userVerdict === 'MODIFY' && <AlertTriangle size={12} aria-hidden="true" />}
-                    {userVerdict === 'INDOORS' && <ShieldAlert size={12} aria-hidden="true" />}
-                    <span>{userVerdict}</span>
-                  </span>
-                </div>
-
-                <p className="ssd-activity-reason">
-                  {act.operationalGuidance || act.reason || 'Operational guidance pending data update.'}
-                </p>
-              </article>
-            );
-          })}
-        </div>
-      </section>
+      <SchoolActivityTimeline
+        effectiveActivityResults={effectiveActivityResults}
+        mapUserFacingStatus={mapUserFacingStatus}
+      />
 
       {/* 5. "Why This Verdict" Expandable Panel */}
-      <section className="ssd-accordion" aria-label="Why This Verdict Details">
-        <button
-          type="button"
-          className="ssd-accordion-trigger"
-          onClick={() => setIsWhyExpanded(!isWhyExpanded)}
-          aria-expanded={isWhyExpanded}
-          aria-controls="why-verdict-content"
-        >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Sparkles size={16} color="#38bdf8" aria-hidden="true" />
-            <span>Why This Verdict? (Empirical Evidence & Spatial Estimation)</span>
-          </span>
-          {isWhyExpanded ? (
-            <ChevronUp size={16} aria-hidden="true" />
-          ) : (
-            <ChevronDown size={16} aria-hidden="true" />
-          )}
-        </button>
-
-        {isWhyExpanded && (
-          <div id="why-verdict-content" className="ssd-accordion-content">
-            <p className="ssd-explanation-paragraph">{effectiveExplanation}</p>
-
-            {/* Visual Spatial Interpolation Pipeline Flow */}
-            <div className="ssd-spatial-flow-diagram" aria-label="Spatial Estimation Architecture">
-              <div className="ssd-flow-step-node">
-                <div className="flow-step-badge">REGULATORY SENSORS</div>
-                <div className="flow-step-name">{effectiveEstimate?.stationCount || 1} CAAQMS Monitors</div>
-                <div className="flow-step-sub">{selectedSchool.nearestStation || 'Continuous BAM-1020'}</div>
-              </div>
-              <div className="ssd-flow-arrow-connector">
-                <span className="flow-connector-line" />
-                <span className="flow-connector-label">IDW Quadratic Interpolation (p=2.0)</span>
-                <ArrowRight size={14} className="flow-connector-arrow" />
-              </div>
-              <div className="ssd-flow-step-node school">
-                <div className="flow-step-badge">CAMPUS RECEPTOR</div>
-                <div className="flow-step-name">{selectedSchool.name}</div>
-                <div className="flow-step-sub">
-                  Estimated around school: <strong>{effectiveEstimate?.pm25 !== null && effectiveEstimate?.pm25 !== undefined ? `${effectiveEstimate.pm25} µg/m³` : 'Pending'}</strong>
-                </div>
-              </div>
-              <div className="ssd-flow-arrow-connector">
-                <span className="flow-connector-line" />
-                <span className="flow-connector-label">Deterministic Activity Gates</span>
-                <ArrowRight size={14} className="flow-connector-arrow" />
-              </div>
-              <div className="ssd-flow-step-node verdict">
-                <div className="flow-step-badge">OPERATIONAL GUIDANCE</div>
-                <div className="flow-step-name">{userFacingOverallStatus}</div>
-                <div className="flow-step-sub">{effectiveEstimate?.confidence || 'HIGH'} Confidence</div>
-              </div>
-            </div>
-
-            <div className="ssd-evidence-grid">
-              <div className="ssd-evidence-item">
-                <div className="ssd-evidence-label">Estimation Methodology</div>
-                <div className="ssd-evidence-val">Quadratic IDW (p=2.0)</div>
-              </div>
-
-              <div className="ssd-evidence-item">
-                <div className="ssd-evidence-label">Monitoring Stations Used</div>
-                <div className="ssd-evidence-val">
-                  {effectiveEstimate?.stationCount || 1} Surrounding Regulatory Nodes
-                </div>
-              </div>
-
-              <div className="ssd-evidence-item">
-                <div className="ssd-evidence-label">Nearest Station Distance</div>
-                <div className="ssd-evidence-val">
-                  {selectedSchool.stationDistanceKm || 1.8} km from campus
-                </div>
-              </div>
-
-              <div className="ssd-evidence-item">
-                <div className="ssd-evidence-label">Data Confidence</div>
-                <div className="ssd-evidence-val">
-                  {effectiveEstimate?.confidence || 'HIGH'} (Continuous Telemetry)
-                </div>
-              </div>
-            </div>
-
-            <div className="ssd-accordion-disclaimer">
-              <strong>Spatial Estimation Notice:</strong> School-level air quality is an estimated
-              ambient value computed via distance-weighted interpolation from surrounding CPCB/DPCC
-              regulatory monitoring stations. It does not represent direct school-gate measurements.
-              All verdicts represent operational engineering baselines for facilities planning and
-              never medical diagnosis or personal health advice.
-            </div>
-          </div>
-        )}
-      </section>
+      <SchoolWhyVerdictAccordion
+        isWhyExpanded={isWhyExpanded}
+        setIsWhyExpanded={setIsWhyExpanded}
+        effectiveExplanation={effectiveExplanation}
+        effectiveEstimate={effectiveEstimate}
+        selectedSchool={selectedSchool}
+        userFacingOverallStatus={userFacingOverallStatus}
+      />
 
       {/* 6. 14-Day Monitoring Section */}
-      <section className="ssd-section ssd-monitoring-section" aria-labelledby="monitoring-14d-heading">
-        <div className="ssd-section-header">
-          <div>
-            <h2 id="monitoring-14d-heading">
-              <Calendar size={18} aria-hidden="true" />
-              <span>14-Day Monitoring & Evidence Continuity</span>
-            </h2>
-            <p className="ssd-section-sub">
-              Empirical observation tracking over a 14-calendar-day window. Missing days remain unpopulated without data fabrication.
-            </p>
-          </div>
-
-          <div className="ssd-monitoring-header-badges">
-            <span className="ssd-monitoring-progress-pill">
-              Progress: <strong>{effectiveCoverage.observedDays} / 14 days</strong>
-            </span>
-            <span className={`ssd-status-pill ${effectiveMonitoringStatus.toLowerCase().replace('_', '-')}`}>
-              {effectiveMonitoringStatus === 'COMPLETE' && <CheckCircle2 size={13} aria-hidden="true" />}
-              {effectiveMonitoringStatus === 'MONITORING' && <Clock size={13} aria-hidden="true" />}
-              {effectiveMonitoringStatus === 'INSUFFICIENT_DATA' && <AlertCircle size={13} aria-hidden="true" />}
-              <span>{effectiveMonitoringStatus === 'INSUFFICIENT_DATA' ? 'INSUFFICIENT DATA' : effectiveMonitoringStatus}</span>
-            </span>
-          </div>
-        </div>
-
-        {/* Metrics Overview Grid */}
-        <div className="ssd-monitoring-metrics-grid">
-          <div className="ssd-metric-card radial-metric-card">
-            <RadialProgressMeter
-              value={effectiveCoverage.coveragePercent}
-              max={100}
-              size={96}
-              strokeWidth={8}
-              unit="%"
-              label="EVIDENCE"
-              color={effectiveCoverage.sufficientForAction ? '#10b981' : '#38bdf8'}
-            />
-          </div>
-
-          <div className="ssd-metric-card">
-            <div className="ssd-metric-label">Observed Days</div>
-            <div className="ssd-metric-value text-green">
-              <AnimatedCounter value={effectiveCoverage.observedDays} /> <span className="ssd-metric-sub">/ 14</span>
-            </div>
-            <div className="ssd-metric-hint">Verified telemetry days</div>
-          </div>
-
-          <div className="ssd-metric-card">
-            <div className="ssd-metric-label">Partial Days</div>
-            <div className="ssd-metric-value text-yellow">
-              <AnimatedCounter value={effectiveCoverage.partialDays} />
-            </div>
-            <div className="ssd-metric-hint">Incomplete observations</div>
-          </div>
-
-          <div className="ssd-metric-card">
-            <div className="ssd-metric-label">Missing Days</div>
-            <div className="ssd-metric-value text-muted">
-              <AnimatedCounter value={effectiveCoverage.missingDays} />
-            </div>
-            <div className="ssd-metric-hint">No telemetry recorded</div>
-          </div>
-
-          <div className="ssd-metric-card">
-            <div className="ssd-metric-label">Evidence Coverage</div>
-            <div className="ssd-metric-value text-cyan">
-              <AnimatedCounter value={effectiveCoverage.coveragePercent} suffix="%" />
-            </div>
-            <div className="ssd-metric-hint">
-              {effectiveCoverage.sufficientForAction ? 'Sufficient for action' : 'Monitoring required'}
-            </div>
-          </div>
-        </div>
-
-        {/* 14-Day Timeline / Calendar Cards Grid */}
-        <div className="ssd-timeline-container" role="region" aria-label="14-Day Monitoring Timeline">
-          <div className="ssd-timeline-grid">
-            {effectiveDailyEvidence.map((day, idx) => {
-              const statusClass =
-                day.status === DAY_STATUS.OBSERVED
-                  ? 'ssd-day-observed'
-                  : day.status === DAY_STATUS.PARTIAL
-                  ? 'ssd-day-partial'
-                  : 'ssd-day-no-data';
-
-              return (
-                <div key={day.date || idx} className={`ssd-timeline-card ${statusClass}`}>
-                  <div className="ssd-day-header">
-                    <span className="ssd-day-date">{day.date}</span>
-                    <span className={`ssd-day-badge ${day.status.toLowerCase()}`}>
-                      {day.status === DAY_STATUS.NO_DATA ? 'NO DATA' : day.status}
-                    </span>
-                  </div>
-
-                  <div className="ssd-day-body">
-                    {day.status !== DAY_STATUS.NO_DATA && day.averagePm25 !== null ? (
-                      <>
-                        <div className="ssd-day-pm25">
-                          <span className="ssd-day-num">{day.averagePm25}</span>
-                          <span className="ssd-day-unit">µg/m³</span>
-                        </div>
-                        <div className="ssd-day-obs-count">
-                          {day.observationCount} observation{day.observationCount === 1 ? '' : 's'}
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="ssd-day-pm25 empty">
-                          <span className="ssd-day-num">—</span>
-                        </div>
-                        <div className="ssd-day-obs-count text-muted">No observations</div>
-                      </>
-                    )}
-                  </div>
-
-                  <div className="ssd-day-footer">
-                    <span className={`ssd-day-quality quality-${(day.dataQuality || 'no-data').toLowerCase()}`}>
-                      {day.dataQuality === 'NO_DATA' ? 'Unmonitored' : `${day.dataQuality} Quality`}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      <SchoolEvidence14DaySection
+        effectiveCoverage={effectiveCoverage}
+        effectiveMonitoringStatus={effectiveMonitoringStatus}
+        effectiveDailyEvidence={effectiveDailyEvidence}
+      />
 
       {/* 7. Civic Action Card */}
-      <section className="ssd-section ssd-civic-section" aria-labelledby="civic-action-heading">
-        <div className="ssd-section-header">
-          <div>
-            <h2 id="civic-action-heading">
-              <FileText size={18} aria-hidden="true" />
-              <span>Civic Action & Petition Readiness</span>
-            </h2>
-            <p className="ssd-section-sub">
-              Deterministic threshold gating: civic action workflows require 14 complete days of verified continuous evidence.
-            </p>
-          </div>
-        </div>
-
-        <article className={`ssd-card ssd-civic-card ${effectiveCivicEligibility.eligible ? 'eligible' : 'locked'}`}>
-          <div className="ssd-civic-top">
-            <div className="ssd-civic-icon-box" aria-hidden="true">
-              {effectiveCivicEligibility.eligible ? (
-                <CheckCircle2 size={32} color="#10b981" />
-              ) : (
-                <Lock size={32} color="#94a3b8" />
-              )}
-            </div>
-
-            <div className="ssd-civic-details">
-              <div className="ssd-civic-status-header">
-                <span className={`ssd-civic-status-pill ${effectiveCivicEligibility.eligible ? 'eligible' : 'locked'}`}>
-                  {effectiveCivicEligibility.status}
-                </span>
-                <span className="ssd-civic-days-pill">
-                  {effectiveCivicEligibility.observedDays} / {effectiveCivicEligibility.requiredDays} Observed Days
-                </span>
-              </div>
-
-              <h3 className="ssd-civic-title">
-                {effectiveCivicEligibility.eligible
-                  ? 'Evidence Period Complete - Action Workflow Available'
-                  : 'Continue Monitoring - Evidence Incomplete'}
-              </h3>
-
-              <p className="ssd-civic-explanation">
-                {effectiveCivicEligibility.eligible
-                  ? 'All 14 required calendar monitoring days have been empirically observed and verified via surrounding regulatory station telemetry. The verified evidence package is ready for administrative petitioning.'
-                  : '14 days of sufficient evidence are required before the civic action workflow becomes available. Automated petition drafting remains locked until empirical continuity criteria are satisfied.'}
-              </p>
-
-              {effectiveSummary && effectiveCivicEligibility.eligible && (
-                <div className="ssd-civic-summary-preview">
-                  <span>14-Day Average PM2.5: <strong>{effectiveSummary.averagePm25 ?? '--'} µg/m³</strong></span>
-                  <span>Highest Day: <strong>{effectiveSummary.highestDailyPm25 ?? '--'} µg/m³</strong></span>
-                  <span>Lowest Day: <strong>{effectiveSummary.lowestDailyPm25 ?? '--'} µg/m³</strong></span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="ssd-civic-footer">
-            {effectiveCivicEligibility.eligible ? (
-              <button
-                type="button"
-                id="review-civic-package-btn"
-                className="ssd-civic-btn eligible"
-                onClick={() => {
-                  if (onEvidenceComplete) {
-                    onEvidenceComplete(evidencePackage);
-                  }
-                }}
-                aria-label="Review verified civic action evidence package"
-              >
-                <CheckCircle2 size={16} aria-hidden="true" />
-                <span>Review Civic Action Package</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                id="civic-action-locked-btn"
-                className="ssd-civic-btn locked"
-                disabled
-                aria-disabled="true"
-                aria-label="Civic action locked - continue monitoring"
-              >
-                <Lock size={15} aria-hidden="true" />
-                <span>Civic Action Locked (Requires 14 Observed Days)</span>
-              </button>
-            )}
-            <span className="ssd-civic-note">
-              {effectiveCivicEligibility.eligible
-                ? 'Deterministic evidence verification complete. No fabricated data.'
-                : 'Monitored continuously via Delhi regulatory stations. Telemetry refreshed automatically.'}
-            </span>
-          </div>
-        </article>
-      </section>
+      <SchoolCivicActionCard
+        effectiveCivicEligibility={effectiveCivicEligibility}
+        effectiveSummary={effectiveSummary}
+        onEvidenceComplete={onEvidenceComplete}
+        evidencePackage={evidencePackage}
+      />
     </section>
   );
 }
