@@ -84,6 +84,9 @@ export function getAuthConfig() {
   const domain = rawDomain.replace(/^https?:\/\//i, '').replace(/\/$/, '');
   const clientId = (extra.cognitoClientId || '').trim();
 
+  // makeRedirectUri returns vayuvitals://auth/callback in a development/standalone build and
+  // exp://<LAN-IP>:8081/--/auth/callback in Expo Go. Whichever it returns must be listed
+  // as a callback URL on the Cognito mobile app client (shown on the Profile tab).
   const redirectUri = extra.cognitoRedirectUri || (AuthSession ? AuthSession.makeRedirectUri({ scheme: 'vayuvitals', path: 'auth/callback' }) : 'vayuvitals://auth/callback');
   const logoutUri = extra.cognitoLogoutUri || (AuthSession ? AuthSession.makeRedirectUri({ scheme: 'vayuvitals', path: 'auth/logout' }) : 'vayuvitals://auth/logout');
 
@@ -153,13 +156,23 @@ async function generatePkce() {
     return { verifier, challenge: digest };
   }
 
-  // Fallback string generator if Crypto native module unavailable
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-  let verifier = '';
-  for (let i = 0; i < 64; i++) {
-    verifier += chars.charAt(Math.floor(Math.random() * chars.length));
+  // A plain verifier sent as an S256 challenge would always be rejected by Cognito.
+  throw new Error('Secure login is unavailable: expo-crypto is not installed in this build.');
+}
+
+/**
+ * Read query parameters from a custom-scheme callback URL (vayuvitals://… or exp://…)
+ * without relying on the URL polyfill.
+ */
+function getCallbackParams(url) {
+  const query = (url.split('?')[1] || '').split('#')[0];
+  const params = {};
+  for (const pair of query.split('&')) {
+    if (!pair) continue;
+    const [k, v = ''] = pair.split('=');
+    params[decodeURIComponent(k)] = decodeURIComponent(v.replace(/\+/g, ' '));
   }
-  return { verifier, challenge: verifier };
+  return params;
 }
 
 /**
@@ -193,12 +206,12 @@ export async function signIn() {
   }
 
   // Parse authorization code from callback URL
-  const callbackUrl = new URL(result.url);
-  const code = callbackUrl.searchParams.get('code');
-  const error = callbackUrl.searchParams.get('error');
+  const callbackParams = getCallbackParams(result.url);
+  const code = callbackParams.code;
+  const error = callbackParams.error;
 
   if (error) {
-    throw new Error(`Cognito error: ${error} - ${callbackUrl.searchParams.get('error_description') || ''}`);
+    throw new Error(`Cognito error: ${error} - ${callbackParams.error_description || ''}`);
   }
   if (!code) {
     throw new Error('No authorization code returned from Cognito');
@@ -234,7 +247,7 @@ export async function signIn() {
   if (tokenData.refresh_token) await secureSet(STORAGE_KEYS.REFRESH_TOKEN, tokenData.refresh_token);
   await secureSet(STORAGE_KEYS.EXPIRES_AT, String(expiresAt));
 
-  const user = parseJwt(tokenData.id_token);
+  const user = await getCurrentUser();
   notify('SIGNED_IN', { user, token: tokenData.access_token });
 
   return { success: true, user };

@@ -629,6 +629,11 @@ export default function App() {
                     <Text style={{ color: '#00f0ff', fontSize: 13, fontWeight: '800' }}>SIGN IN WITH COGNITO</Text>
                   </TouchableOpacity>
                 )}
+                {!authUser && (__DEV__ || !getAuthConfig().configured) && (
+                  <Text selectable style={{ color: '#94a3b8', fontSize: 11, marginTop: 8, textAlign: 'center' }}>
+                    Callback URL to allow in Cognito: {getAuthConfig().redirectUri}
+                  </Text>
+                )}
               </View>
 
               <View style={styles.profileStatusGrid}>
