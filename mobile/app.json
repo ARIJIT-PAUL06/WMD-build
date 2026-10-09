@@ -11,6 +11,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "in.vayuvitals.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -23,7 +24,12 @@
     },
     "extra": {
       "apiUrl": "https://vtcmfkzdfyd5sy3ugjfwdhlqsy0lcxaj.lambda-url.ap-south-1.on.aws",
-      "cognitoRedirectUri": "vayuvitals://auth/callback"
-    }
+      "cognitoDomain": "ap-south-1qzcin9dyx.auth.ap-south-1.amazoncognito.com",
+      "cognitoClientId": "4tvdv2buva9p70i7q9e0r04jqu"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-web-browser"
+    ]
   }
 }
