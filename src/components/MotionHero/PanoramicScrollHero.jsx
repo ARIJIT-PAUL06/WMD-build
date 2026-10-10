@@ -45,7 +45,59 @@ function getBrandTheme(progress) {
  * - Interactive mouse luminescence flare
  * - Scroll-driven scrub transitioning from toxic smog crisis to pristine living canopy
  */
-export default function PanoramicScrollHero({ onExploreTwin }) {
+function getRouteFromUrl() {
+  if (typeof window === 'undefined') return 'home';
+  const params = new URLSearchParams(window.location.search);
+  const hash = (window.location.hash || '').toLowerCase();
+  const path = (window.location.pathname || '').toLowerCase();
+
+  if (
+    params.get('page') === 'stats' ||
+    params.get('view') === 'stats' ||
+    params.get('stats') === 'true' ||
+    hash === '#stats' ||
+    path === '/stats'
+  ) {
+    return 'statistics';
+  }
+
+  if (
+    params.get('page') === 'about' ||
+    params.get('view') === 'about' ||
+    params.get('about') === 'true' ||
+    hash === '#about' ||
+    path === '/about'
+  ) {
+    return 'about';
+  }
+
+  if (
+    hash === '#heatmap' ||
+    hash === '#map' ||
+    params.get('view') === 'map' ||
+    params.get('map') === 'true'
+  ) {
+    return 'map';
+  }
+
+  if (
+    hash === '#cargo' ||
+    hash === '#truck' ||
+    hash === '#pollutants' ||
+    params.get('view') === 'pollutants'
+  ) {
+    return 'pollutants';
+  }
+
+  return 'home';
+}
+
+export default function PanoramicScrollHero({
+  onExploreTwin,
+  onOpenAbout,
+  onOpenStats,
+  currentRoute,
+}) {
   const trackRef = useRef(null);
   const canvasRef = useRef(null);
   const spotlightRef = useRef(null);
@@ -62,25 +114,61 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
 
   // Low-frequency phase state: only re-renders when crossing the 0.68 threshold for the CTA button overlay
   const [isRightPhase, setIsRightPhase] = useState(false);
-  const [activeNav, setActiveNav] = useState('home');
+  const [activeNav, setActiveNav] = useState(() => currentRoute || getRouteFromUrl());
+
+  // Keep active sidebar navigation synchronized with current route and browser history
+  useEffect(() => {
+    if (currentRoute) {
+      setActiveNav(currentRoute);
+      return;
+    }
+
+    const handleLocationSync = () => {
+      setActiveNav(getRouteFromUrl());
+    };
+
+    window.addEventListener('popstate', handleLocationSync);
+    window.addEventListener('hashchange', handleLocationSync);
+    return () => {
+      window.removeEventListener('popstate', handleLocationSync);
+      window.removeEventListener('hashchange', handleLocationSync);
+    };
+  }, [currentRoute]);
 
   const handleNavClick = (id) => {
     setActiveNav(id);
     if (id === 'home') {
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location);
+        url.searchParams.delete('page');
+        url.searchParams.delete('view');
+        url.hash = '';
+        window.history.pushState({}, '', url);
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (id === 'map') {
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location);
+        url.hash = '#map';
+        window.history.pushState({}, '', url);
+      }
       if (onExploreTwin) onExploreTwin();
       else {
         const el = document.getElementById('heatmap') || document.querySelector('[data-section="heatmap"]');
         if (el) el.scrollIntoView({ behavior: 'smooth' });
       }
     } else if (id === 'pollutants') {
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location);
+        url.hash = '#pollutants';
+        window.history.pushState({}, '', url);
+      }
       const el = document.getElementById('atmospheric-cargo-section') || document.getElementById('atmospheric-cargo-placeholder');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     } else if (id === 'statistics') {
-      // route placeholder
+      if (onOpenStats) onOpenStats();
     } else if (id === 'about') {
-      // route placeholder
+      if (onOpenAbout) onOpenAbout();
     }
   };
 
@@ -115,6 +203,27 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
 
       const rightPhase = progress >= 0.68;
       setIsRightPhase(prev => (prev !== rightPhase ? rightPhase : prev));
+
+      // Dynamic section indicator when scrolling through desktop view
+      const activeUrlRoute = getRouteFromUrl();
+      if (activeUrlRoute === 'about' || activeUrlRoute === 'statistics') {
+        setActiveNav(activeUrlRoute);
+      } else {
+        const cargoEl =
+          document.getElementById('atmospheric-cargo-section') ||
+          document.getElementById('atmospheric-cargo-placeholder');
+        const heatmapEl =
+          document.getElementById('heatmap') ||
+          document.querySelector('[data-section="heatmap"]');
+
+        if (cargoEl && cargoEl.getBoundingClientRect().top <= window.innerHeight * 0.45) {
+          setActiveNav('pollutants');
+        } else if (heatmapEl && heatmapEl.getBoundingClientRect().top <= window.innerHeight * 0.45) {
+          setActiveNav('map');
+        } else {
+          setActiveNav('home');
+        }
+      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -328,6 +437,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             className={`hero-nav-item ${activeNav === 'home' ? 'active' : ''}`}
             onClick={() => handleNavClick('home')}
             aria-label="Home"
+            id="hero-sidebar-nav-home"
           >
             <Home size={19} className="hero-nav-icon" />
             <span className="hero-nav-tooltip" role="tooltip">Home</span>
@@ -338,6 +448,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             className={`hero-nav-item ${activeNav === 'map' ? 'active' : ''}`}
             onClick={() => handleNavClick('map')}
             aria-label="Live AQI Map"
+            id="hero-sidebar-nav-map"
           >
             <MapPin size={19} className="hero-nav-icon" />
             <span className="hero-nav-tooltip" role="tooltip">Live AQI Map</span>
@@ -348,6 +459,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             className={`hero-nav-item ${activeNav === 'pollutants' ? 'active' : ''}`}
             onClick={() => handleNavClick('pollutants')}
             aria-label="Pollutants"
+            id="hero-sidebar-nav-pollutants"
           >
             <Wind size={19} className="hero-nav-icon" />
             <span className="hero-nav-tooltip" role="tooltip">Pollutants</span>
@@ -358,6 +470,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             className={`hero-nav-item ${activeNav === 'statistics' ? 'active' : ''}`}
             onClick={() => handleNavClick('statistics')}
             aria-label="Statistics"
+            id="hero-sidebar-nav-stats"
           >
             <BarChart3 size={19} className="hero-nav-icon" />
             <span className="hero-nav-tooltip" role="tooltip">Statistics</span>
@@ -368,6 +481,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             className={`hero-nav-item ${activeNav === 'about' ? 'active' : ''}`}
             onClick={() => handleNavClick('about')}
             aria-label="About"
+            id="hero-sidebar-nav-about"
           >
             <Info size={19} className="hero-nav-icon" />
             <span className="hero-nav-tooltip" role="tooltip">About</span>
@@ -396,9 +510,6 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             </span>
           </div>
         </div>
-
-        {/* Luminous Curved CRT Screen Top Glare Tube */}
-        <div className="hero-crt-top-tube" aria-hidden="true" />
       </div>
     </div>
   );
