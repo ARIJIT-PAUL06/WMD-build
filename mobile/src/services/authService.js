@@ -1,8 +1,9 @@
 /**
  * Central Authentication Service for Mobile Client (Expo / React Native)
- * Implements AWS Cognito Hosted UI with Authorization Code Flow + PKCE.
+ * Implements Amazon Cognito direct authentication (Sign In, Sign Up, Verify, Reset Password)
+ * matching the VayuVitals web application.
  * Tokens stored securely in expo-secure-store with auto-refresh.
- * Adheres strictly to Zero-Faking Directive (AGENTS.md) and COGNITO_FIX_PLAN.md.
+ * Adheres strictly to Zero-Faking Directive (AGENTS.md).
  */
 
 // Safe dynamic imports for Expo native modules (with fallbacks for tests/SSR)
@@ -14,9 +15,7 @@ let Constants = null;
 
 try {
   SecureStore = require('expo-secure-store');
-} catch (_) {
-  // Mock / memory store fallback
-}
+} catch (_) {}
 
 try {
   WebBrowser = require('expo-web-browser');
@@ -82,28 +81,35 @@ export function getAuthConfig() {
   const extra = Constants?.expoConfig?.extra || Constants?.manifest?.extra || {};
   const rawDomain = (extra.cognitoDomain || '').trim();
   const domain = rawDomain.replace(/^https?:\/\//i, '').replace(/\/$/, '');
-  const clientId = (extra.cognitoClientId || '').trim();
+  const clientId = (
+    extra.cognitoClientId ||
+    (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_COGNITO_CLIENT_ID) ||
+    '4tvdv2buva9p70i7q9e0r04jqu'
+  ).trim();
 
-  // makeRedirectUri returns vayuvitals://auth/callback in a development/standalone build and
-  // exp://<LAN-IP>:8081/--/auth/callback in Expo Go. Whichever it returns must be listed
-  // as a callback URL on the Cognito mobile app client (shown on the Profile tab).
+  const userPoolId = (
+    extra.cognitoUserPoolId ||
+    (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_COGNITO_USER_POOL_ID) ||
+    'ap-south-1_QzcIN9DYx'
+  ).trim();
+
+  const region = (
+    extra.cognitoRegion ||
+    (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_AWS_REGION) ||
+    'ap-south-1'
+  ).trim();
+
   const redirectUri = extra.cognitoRedirectUri || (AuthSession ? AuthSession.makeRedirectUri({ scheme: 'vayuvitals', path: 'auth/callback' }) : 'vayuvitals://auth/callback');
   const logoutUri = extra.cognitoLogoutUri || (AuthSession ? AuthSession.makeRedirectUri({ scheme: 'vayuvitals', path: 'auth/logout' }) : 'vayuvitals://auth/logout');
 
-  if (!domain || !clientId) {
-    return {
-      configured: false,
-      domain,
-      clientId,
-      redirectUri,
-      logoutUri
-    };
-  }
+  const configured = Boolean(clientId && userPoolId);
 
   return {
-    configured: true,
+    configured,
     domain,
     clientId,
+    userPoolId,
+    region,
     redirectUri,
     logoutUri
   };
@@ -118,6 +124,22 @@ function notify(event, data) {
 }
 
 /**
+ * Decode base64 string safely across mobile/web engines
+ */
+function decodeBase64(str) {
+  if (typeof atob === 'function') {
+    return atob(str);
+  }
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+  let output = '';
+  str = String(str).replace(/=+$/, '');
+  for (let bc = 0, bs, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
+    buffer = chars.indexOf(buffer);
+  }
+  return output;
+}
+
+/**
  * Decode JWT payload safely without external dependencies
  */
 export function parseJwt(token) {
@@ -129,8 +151,9 @@ export function parseJwt(token) {
     while (base64.length % 4) {
       base64 += '=';
     }
+    const decoded = decodeBase64(base64);
     const jsonStr = decodeURIComponent(
-      atob(base64)
+      decoded
         .split('')
         .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
@@ -142,49 +165,209 @@ export function parseJwt(token) {
 }
 
 /**
- * Build PKCE Code Verifier & Challenge
+ * Helper to call AWS Cognito Identity Provider Service directly
  */
-async function generatePkce() {
-  if (Crypto?.digestStringAsync) {
-    const randomBytes = await Crypto.getRandomBytesAsync(32);
-    const verifier = Array.from(randomBytes).map(b => ('0' + b.toString(16)).slice(-2)).join('');
-    const digest = await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      verifier,
-      { encoding: Crypto.CryptoEncoding.BASE64URL }
-    );
-    return { verifier, challenge: digest };
+async function cognitoRequest(target, body) {
+  const config = getAuthConfig();
+  const region = config.region || 'ap-south-1';
+  const endpoint = `https://cognito-idp.${region}.amazonaws.com/`;
+
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-amz-json-1.1',
+      'X-Amz-Target': `AWSCognitoIdentityProviderService.${target}`
+    },
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const rawType = data.__type || '';
+    const errName = rawType.includes('#') ? rawType.split('#')[1] : rawType || 'CognitoError';
+    const err = new Error(data.message || errName || `Cognito error ${res.status}`);
+    err.name = errName;
+    err.code = errName;
+    err.raw = data;
+    throw err;
   }
 
-  // A plain verifier sent as an S256 challenge would always be rejected by Cognito.
-  throw new Error('Secure login is unavailable: expo-crypto is not installed in this build.');
+  return data;
 }
 
 /**
- * Read query parameters from a custom-scheme callback URL (vayuvitals://… or exp://…)
- * without relying on the URL polyfill.
+ * In-App Direct Email/Password Login (Matches Website Amplify Auth)
  */
-function getCallbackParams(url) {
-  const query = (url.split('?')[1] || '').split('#')[0];
-  const params = {};
-  for (const pair of query.split('&')) {
-    if (!pair) continue;
-    const [k, v = ''] = pair.split('=');
-    params[decodeURIComponent(k)] = decodeURIComponent(v.replace(/\+/g, ' '));
-  }
-  return params;
-}
-
-/**
- * Trigger Hosted UI sign-in with Auth Code + PKCE
- */
-export async function signIn() {
+export async function login({ email, password }) {
   const config = getAuthConfig();
   if (!config.configured) {
-    throw new Error('Login is not configured in this build (missing cognitoDomain / cognitoClientId in app.json).');
+    throw new Error('Authentication is not configured in this build.');
   }
 
-  const { verifier, challenge } = await generatePkce();
+  const cleanEmail = email.trim();
+  const data = await cognitoRequest('InitiateAuth', {
+    AuthFlow: 'USER_PASSWORD_AUTH',
+    ClientId: config.clientId,
+    AuthParameters: {
+      USERNAME: cleanEmail,
+      PASSWORD: password
+    }
+  });
+
+  if (data.AuthenticationResult) {
+    const { AccessToken, IdToken, RefreshToken, ExpiresIn } = data.AuthenticationResult;
+    const now = Date.now();
+    const expiresAt = now + (Number(ExpiresIn || 3600) - 60) * 1000;
+
+    await secureSet(STORAGE_KEYS.ACCESS_TOKEN, AccessToken);
+    if (IdToken) await secureSet(STORAGE_KEYS.ID_TOKEN, IdToken);
+    if (RefreshToken) await secureSet(STORAGE_KEYS.REFRESH_TOKEN, RefreshToken);
+    await secureSet(STORAGE_KEYS.EXPIRES_AT, String(expiresAt));
+
+    const user = await getCurrentUser();
+    notify('SIGNED_IN', { user, token: AccessToken });
+    return { success: true, isSignedIn: true, user };
+  }
+
+  if (data.ChallengeName === 'NEW_PASSWORD_REQUIRED') {
+    return {
+      success: false,
+      isSignedIn: false,
+      nextStep: { signInStep: 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD' },
+      session: data.Session
+    };
+  }
+
+  return { success: false, isSignedIn: false, data };
+}
+
+/**
+ * In-App Citizen Registration (Matches Website Amplify Auth)
+ */
+export async function register({ email, password }) {
+  const config = getAuthConfig();
+  if (!config.configured) {
+    throw new Error('Authentication is not configured in this build.');
+  }
+
+  const cleanEmail = email.trim();
+  const data = await cognitoRequest('SignUp', {
+    ClientId: config.clientId,
+    Username: cleanEmail,
+    Password: password,
+    UserAttributes: [
+      { Name: 'email', Value: cleanEmail }
+    ]
+  });
+
+  return {
+    success: true,
+    isSignUpComplete: Boolean(data.UserConfirmed),
+    userSub: data.UserSub,
+    codeDeliveryDetails: data.CodeDeliveryDetails
+  };
+}
+
+/**
+ * Confirm Citizen Registration with 6-digit Code (Matches Website Amplify Auth)
+ */
+export async function confirmRegistration({ email, code }) {
+  const config = getAuthConfig();
+  if (!config.configured) {
+    throw new Error('Authentication is not configured.');
+  }
+
+  const cleanEmail = email.trim();
+  await cognitoRequest('ConfirmSignUp', {
+    ClientId: config.clientId,
+    Username: cleanEmail,
+    ConfirmationCode: code.trim()
+  });
+
+  return { success: true };
+}
+
+/**
+ * Resend Email Verification Code
+ */
+export async function resendConfirmationCode({ email }) {
+  const config = getAuthConfig();
+  if (!config.configured) {
+    throw new Error('Authentication is not configured.');
+  }
+
+  const cleanEmail = email.trim();
+  const data = await cognitoRequest('ResendConfirmationCode', {
+    ClientId: config.clientId,
+    Username: cleanEmail
+  });
+
+  return { success: true, codeDeliveryDetails: data.CodeDeliveryDetails };
+}
+
+/**
+ * Request Password Reset Code (Matches Website Amplify Auth)
+ */
+export async function requestPasswordReset({ email }) {
+  const config = getAuthConfig();
+  if (!config.configured) {
+    throw new Error('Authentication is not configured.');
+  }
+
+  const cleanEmail = email.trim();
+  const data = await cognitoRequest('ForgotPassword', {
+    ClientId: config.clientId,
+    Username: cleanEmail
+  });
+
+  return { success: true, codeDeliveryDetails: data.CodeDeliveryDetails };
+}
+
+/**
+ * Confirm New Password with Verification Code (Matches Website Amplify Auth)
+ */
+export async function confirmNewPassword({ email, code, newPassword }) {
+  const config = getAuthConfig();
+  if (!config.configured) {
+    throw new Error('Authentication is not configured.');
+  }
+
+  const cleanEmail = email.trim();
+  await cognitoRequest('ConfirmForgotPassword', {
+    ClientId: config.clientId,
+    Username: cleanEmail,
+    ConfirmationCode: code.trim(),
+    Password: newPassword
+  });
+
+  return { success: true };
+}
+
+/**
+ * General signIn dispatcher (supports both in-app credentials and Hosted UI fallback)
+ */
+export async function signIn(credentials) {
+  if (credentials && credentials.email && credentials.password) {
+    return login(credentials);
+  }
+
+  // Fallback to Hosted UI if called without arguments
+  const config = getAuthConfig();
+  if (!config.domain || !config.clientId) {
+    throw new Error('Hosted login is not configured (missing cognitoDomain in app.json).');
+  }
+
+  if (!Crypto?.digestStringAsync || !WebBrowser?.openAuthSessionAsync) {
+    throw new Error('Please enter your email and password to sign in directly.');
+  }
+
+  const randomBytes = await Crypto.getRandomBytesAsync(32);
+  const verifier = Array.from(randomBytes).map(b => ('0' + b.toString(16)).slice(-2)).join('');
+  const challenge = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    verifier,
+    { encoding: Crypto.CryptoEncoding.BASE64URL }
+  );
 
   const authUrl = `https://${config.domain}/oauth2/authorize?` + new URLSearchParams({
     response_type: 'code',
@@ -195,35 +378,32 @@ export async function signIn() {
     code_challenge_method: 'S256'
   }).toString();
 
-  if (!WebBrowser?.openAuthSessionAsync) {
-    throw new Error('WebBrowser is not supported on this platform');
-  }
-
   const result = await WebBrowser.openAuthSessionAsync(authUrl, config.redirectUri);
-
   if (result.type !== 'success' || !result.url) {
     return { success: false, cancelled: true };
   }
 
-  // Parse authorization code from callback URL
-  const callbackParams = getCallbackParams(result.url);
-  const code = callbackParams.code;
-  const error = callbackParams.error;
-
-  if (error) {
-    throw new Error(`Cognito error: ${error} - ${callbackParams.error_description || ''}`);
+  const query = (result.url.split('?')[1] || '').split('#')[0];
+  const params = {};
+  for (const pair of query.split('&')) {
+    if (!pair) continue;
+    const [k, v = ''] = pair.split('=');
+    params[decodeURIComponent(k)] = decodeURIComponent(v.replace(/\+/g, ' '));
   }
-  if (!code) {
+
+  if (params.error) {
+    throw new Error(`Cognito error: ${params.error} - ${params.error_description || ''}`);
+  }
+  if (!params.code) {
     throw new Error('No authorization code returned from Cognito');
   }
 
-  // Exchange auth code for tokens
   const tokenUrl = `https://${config.domain}/oauth2/token`;
   const tokenBody = new URLSearchParams({
     grant_type: 'authorization_code',
     client_id: config.clientId,
     redirect_uri: config.redirectUri,
-    code,
+    code: params.code,
     code_verifier: verifier
   });
 
@@ -234,8 +414,7 @@ export async function signIn() {
   });
 
   if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Token exchange failed (HTTP ${res.status}): ${errText}`);
+    throw new Error(`Token exchange failed (HTTP ${res.status}): ${await res.text()}`);
   }
 
   const tokenData = await res.json();
@@ -249,7 +428,6 @@ export async function signIn() {
 
   const user = await getCurrentUser();
   notify('SIGNED_IN', { user, token: tokenData.access_token });
-
   return { success: true, user };
 }
 
@@ -257,29 +435,17 @@ export async function signIn() {
  * Sign out and clear stored tokens
  */
 export async function signOut() {
-  const config = getAuthConfig();
   await secureDelete(STORAGE_KEYS.ACCESS_TOKEN);
   await secureDelete(STORAGE_KEYS.ID_TOKEN);
   await secureDelete(STORAGE_KEYS.REFRESH_TOKEN);
   await secureDelete(STORAGE_KEYS.EXPIRES_AT);
-
-  const logoutUrl = `https://${config.domain}/logout?` + new URLSearchParams({
-    client_id: config.clientId,
-    logout_uri: config.logoutUri
-  }).toString();
-
-  try {
-    if (WebBrowser?.openAuthSessionAsync) {
-      await WebBrowser.openAuthSessionAsync(logoutUrl, config.logoutUri);
-    }
-  } catch (_) {}
 
   notify('SIGNED_OUT', null);
   return { success: true };
 }
 
 /**
- * Get valid Access Token (auto-refreshes if expired)
+ * Get valid Access Token (auto-refreshes via Cognito if expired)
  */
 export async function getAccessToken() {
   const expiresAtStr = await secureGet(STORAGE_KEYS.EXPIRES_AT);
@@ -287,13 +453,10 @@ export async function getAccessToken() {
   const now = Date.now();
 
   const accessToken = await secureGet(STORAGE_KEYS.ACCESS_TOKEN);
-
-  // If token is still valid, return it
   if (accessToken && expiresAt > now) {
     return accessToken;
   }
 
-  // Token is expired or missing; attempt refresh
   const refreshToken = await secureGet(STORAGE_KEYS.REFRESH_TOKEN);
   if (!refreshToken) {
     return null;
@@ -301,36 +464,31 @@ export async function getAccessToken() {
 
   try {
     const config = getAuthConfig();
-    const tokenUrl = `https://${config.domain}/oauth2/token`;
-    const tokenBody = new URLSearchParams({
-      grant_type: 'refresh_token',
-      client_id: config.clientId,
-      refresh_token: refreshToken
+    const data = await cognitoRequest('InitiateAuth', {
+      AuthFlow: 'REFRESH_TOKEN_AUTH',
+      ClientId: config.clientId,
+      AuthParameters: {
+        REFRESH_TOKEN: refreshToken
+      }
     });
 
-    const res = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: tokenBody.toString()
-    });
+    if (data.AuthenticationResult) {
+      const { AccessToken, IdToken, ExpiresIn } = data.AuthenticationResult;
+      const newExpiresAt = now + (Number(ExpiresIn || 3600) - 60) * 1000;
 
-    if (!res.ok) {
-      // Refresh token is revoked or invalid: sign out
-      await signOut();
-      return null;
+      await secureSet(STORAGE_KEYS.ACCESS_TOKEN, AccessToken);
+      if (IdToken) await secureSet(STORAGE_KEYS.ID_TOKEN, IdToken);
+      await secureSet(STORAGE_KEYS.EXPIRES_AT, String(newExpiresAt));
+
+      notify('TOKEN_REFRESHED', { token: AccessToken });
+      return AccessToken;
     }
 
-    const tokenData = await res.json();
-    const newExpiresAt = now + (Number(tokenData.expires_in || 3600) - 60) * 1000;
-
-    await secureSet(STORAGE_KEYS.ACCESS_TOKEN, tokenData.access_token);
-    if (tokenData.id_token) await secureSet(STORAGE_KEYS.ID_TOKEN, tokenData.id_token);
-    await secureSet(STORAGE_KEYS.EXPIRES_AT, String(newExpiresAt));
-
-    notify('TOKEN_REFRESHED', { token: tokenData.access_token });
-    return tokenData.access_token;
+    await signOut();
+    return null;
   } catch (err) {
-    console.warn('[AuthService] Auto-refresh failed:', err);
+    console.warn('[AuthService] Auto-refresh failed:', err.message);
+    await signOut();
     return null;
   }
 }
@@ -379,7 +537,7 @@ export function onAuthStateChange(listener) {
 }
 
 /**
- * Test helpers to inject session tokens in unit test environments
+ * Test helpers
  */
 export async function setTestSession({ accessToken = 'test-token', idToken = 'test-id-token', expiresIn = 3600 } = {}) {
   const expiresAt = Date.now() + expiresIn * 1000;

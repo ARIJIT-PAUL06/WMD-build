@@ -1,0 +1,23 @@
+{
+  "updatedAt": "2026-10-09T15:05:40.048Z",
+  "state": {
+    "lastCycleAt": "2026-10-09T15:05:34.622Z",
+    "lastPredictiveAdvisoryByFacility": {
+      "dps_rk_puram": 1791516560778,
+      "modern_barakhamba": 1791516560778,
+      "modern_vasant_vihar": 1791516560778,
+      "dps_mathura_road": 1791516560778,
+      "dps_rohini": 1791516560778
+    },
+    "lastEmergencySentByGrid": {
+      "GRID_R03_C05": 1791438690604
+    },
+    "lastPetitionSentByGrid": {
+      "GRID_R03_C05": 1791438690669
+    },
+    "totalCyclesExecuted": 200,
+    "totalEmergenciesDispatched": 8,
+    "totalPetitionsDispatched": 7,
+    "totalPredictiveAdvisoriesDispatched": 69
+  }
+}

@@ -121,10 +121,18 @@
   position: absolute;
   top: 24px;
   left: 28px;
-  z-index: 30;
+  z-index: 15;
   display: flex;
   align-items: center;
   gap: 14px;
+  pointer-events: auto;
+}
+
+.hero-top-auth-cluster {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  z-index: 15;
   pointer-events: auto;
 }
 
@@ -385,6 +393,11 @@
     top: 14px;
     left: 14px;
     gap: 8px;
+  }
+
+  .hero-top-auth-cluster {
+    top: 14px;
+    right: 14px;
   }
 
   .hero-hud-brand span {

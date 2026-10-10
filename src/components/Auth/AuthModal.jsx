@@ -10,7 +10,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  School
+  School,
+  Eye,
+  EyeOff,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -33,6 +36,7 @@ export default function AuthModal() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -128,6 +132,20 @@ export default function AuthModal() {
     }
   };
 
+  const inputStyle = {
+    width: '100%',
+    padding: '11px 14px 11px 40px',
+    background: 'rgba(3, 7, 18, 0.72)',
+    border: '1px solid rgba(255, 255, 255, 0.12)',
+    borderRadius: '10px',
+    color: '#ffffff',
+    fontFamily: "'Outfit', sans-serif",
+    fontSize: '0.88rem',
+    outline: 'none',
+    boxSizing: 'border-box',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+  };
+
   return (
     <div
       style={{
@@ -136,13 +154,15 @@ export default function AuthModal() {
         left: 0,
         width: '100vw',
         height: '100vh',
-        background: 'rgba(5, 8, 15, 0.85)',
-        backdropFilter: 'blur(12px)',
+        background: 'rgba(4, 7, 15, 0.88)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
         zIndex: 99999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px'
+        padding: '20px',
+        boxSizing: 'border-box'
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) closeAuthModal();
@@ -152,26 +172,26 @@ export default function AuthModal() {
         style={{
           width: '100%',
           maxWidth: '460px',
-          background: 'linear-gradient(180deg, rgba(17, 24, 39, 0.95) 0%, rgba(10, 15, 29, 0.98) 100%)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px rgba(14, 165, 233, 0.15)',
-          borderRadius: '24px',
-          padding: '32px',
+          background: 'linear-gradient(180deg, rgba(13, 20, 38, 0.98) 0%, rgba(7, 11, 24, 0.99) 100%)',
+          border: '1px solid rgba(56, 189, 248, 0.25)',
+          boxShadow: '0 25px 60px -10px rgba(0, 0, 0, 0.85), 0 0 35px rgba(14, 165, 233, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+          borderRadius: '20px',
+          padding: '28px 30px',
           color: '#ffffff',
           position: 'relative',
           overflow: 'hidden'
         }}
       >
-        {/* Glow accent */}
+        {/* Ambient Top Glow */}
         <div
           style={{
             position: 'absolute',
-            top: '-50px',
-            right: '-50px',
-            width: '140px',
-            height: '140px',
-            background: 'radial-gradient(circle, rgba(14, 165, 233, 0.3) 0%, rgba(14, 165, 233, 0) 70%)',
-            pointerEvents: 'none'
+            top: '-60px',
+            right: '-60px',
+            width: '180px',
+            height: '180px',
+            background: 'radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, transparent 70%)',
+            pointerEvents: 'none',
           }}
         />
 
@@ -180,73 +200,164 @@ export default function AuthModal() {
           onClick={closeAuthModal}
           style={{
             position: 'absolute',
-            top: '20px',
-            right: '20px',
+            top: '18px',
+            right: '18px',
             background: 'rgba(255, 255, 255, 0.06)',
-            border: 'none',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             borderRadius: '50%',
-            width: '36px',
-            height: '36px',
+            width: '32px',
+            height: '32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#94a3b8',
             cursor: 'pointer',
-            transition: 'all 0.2s'
+            transition: 'all 0.18s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#ffffff';
+            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '#94a3b8';
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
           }}
         >
-          <X size={18} />
+          <X size={16} />
         </button>
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+        {/* Header Block */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
           <div
             style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: authModalMode === 'signUp'
+                ? 'linear-gradient(135deg, rgba(5, 150, 105, 0.9) 0%, rgba(16, 185, 129, 1) 100%)'
+                : 'linear-gradient(135deg, rgba(2, 132, 199, 0.9) 0%, rgba(14, 165, 233, 1) 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
+              boxShadow: authModalMode === 'signUp'
+                ? '0 0 16px rgba(16, 185, 129, 0.4)'
+                : '0 0 16px rgba(14, 165, 233, 0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
             }}
           >
-            <Shield size={22} color="#ffffff" />
+            <Shield size={20} color="#ffffff" />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
+            <div
+              style={{
+                fontFamily: '"Share Tech Mono", "JetBrains Mono", monospace',
+                fontSize: '0.66rem',
+                letterSpacing: '0.12em',
+                color: '#38bdf8',
+                marginBottom: '2px',
+                textTransform: 'uppercase',
+              }}
+            >
+              AUTHENTICATION // CITIZEN GATE
+            </div>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: '1.22rem',
+                fontWeight: 800,
+                fontFamily: "'Outfit', sans-serif",
+                letterSpacing: '-0.01em',
+                color: '#ffffff',
+              }}
+            >
               {authModalMode === 'signIn' && 'Citizen Sign In'}
               {authModalMode === 'signUp' && 'Create Citizen Account'}
               {authModalMode === 'confirm' && 'Verify Email Address'}
               {authModalMode === 'forgot' && 'Reset Password'}
               {authModalMode === 'confirmReset' && 'Set New Password'}
             </h2>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>
+            <p style={{ margin: '2px 0 0 0', fontSize: '0.76rem', color: '#94a3b8' }}>
               Amazon Cognito Secure Identity Gate
             </p>
           </div>
         </div>
+
+        {/* Segmented Mode Selector Tabs (Sign In vs Sign Up) */}
+        {(authModalMode === 'signIn' || authModalMode === 'signUp') && (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '6px',
+              background: 'rgba(3, 7, 18, 0.6)',
+              padding: '4px',
+              borderRadius: '9px',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              marginBottom: '18px',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => { setAuthModalMode('signIn'); setError(null); }}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '7px',
+                border: authModalMode === 'signIn' ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent',
+                background: authModalMode === 'signIn' ? 'rgba(56, 189, 248, 0.16)' : 'transparent',
+                color: authModalMode === 'signIn' ? '#38bdf8' : '#94a3b8',
+                fontFamily: "'Outfit', sans-serif",
+                fontWeight: authModalMode === 'signIn' ? 700 : 500,
+                fontSize: '0.8rem',
+                letterSpacing: '0.04em',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              SIGN IN
+            </button>
+            <button
+              type="button"
+              onClick={() => { setAuthModalMode('signUp'); setError(null); }}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '7px',
+                border: authModalMode === 'signUp' ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid transparent',
+                background: authModalMode === 'signUp' ? 'rgba(16, 185, 129, 0.16)' : 'transparent',
+                color: authModalMode === 'signUp' ? '#34d399' : '#94a3b8',
+                fontFamily: "'Outfit', sans-serif",
+                fontWeight: authModalMode === 'signUp' ? 700 : 500,
+                fontSize: '0.8rem',
+                letterSpacing: '0.04em',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              REGISTER
+            </button>
+          </div>
+        )}
 
         {/* Unconfigured Notice */}
         {!isConfigured && (
           <div
             style={{
               background: 'rgba(245, 158, 11, 0.1)',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
-              borderRadius: '12px',
-              padding: '12px 16px',
-              marginBottom: '20px',
+              border: '1px solid rgba(245, 158, 11, 0.35)',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              marginBottom: '16px',
               display: 'flex',
               gap: '10px',
-              alignItems: 'flex-start'
+              alignItems: 'flex-start',
             }}
           >
-            <AlertCircle size={18} color="#f59e0b" style={{ flexShrink: 0, marginTop: '2px' }} />
-            <div style={{ fontSize: '0.78rem', color: '#fbbf24', lineHeight: 1.4 }}>
+            <AlertCircle size={16} color="#f59e0b" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <div style={{ fontSize: '0.76rem', color: '#fbbf24', lineHeight: 1.4 }}>
               <strong>Cognito Pending Live Deployment</strong>
               <br />
-              User Pool credentials are not configured in Vercel environment variables.
+              User Pool credentials are not configured in environment variables.
             </div>
           </div>
         )}
@@ -255,19 +366,19 @@ export default function AuthModal() {
         {successMessage && (
           <div
             style={{
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              borderRadius: '12px',
-              padding: '12px 16px',
-              marginBottom: '20px',
+              background: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid rgba(16, 185, 129, 0.4)',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              marginBottom: '16px',
               display: 'flex',
               gap: '10px',
               alignItems: 'center',
               color: '#34d399',
-              fontSize: '0.8rem'
+              fontSize: '0.78rem',
             }}
           >
-            <CheckCircle2 size={18} style={{ flexShrink: 0 }} />
+            <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
             <span>{successMessage}</span>
           </div>
         )}
@@ -276,48 +387,46 @@ export default function AuthModal() {
         {error && (
           <div
             style={{
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              borderRadius: '12px',
-              padding: '12px 16px',
-              marginBottom: '20px',
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              marginBottom: '16px',
               display: 'flex',
               gap: '10px',
               alignItems: 'center',
               color: '#f87171',
-              fontSize: '0.8rem'
+              fontSize: '0.78rem',
             }}
           >
-            <AlertCircle size={18} style={{ flexShrink: 0 }} />
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
             <span>{error}</span>
           </div>
         )}
 
         {/* SIGN IN FORM */}
         {authModalMode === 'signIn' && (
-          <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form onSubmit={handleSignIn} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '6px' }}>
                 Email Address
               </label>
               <div style={{ position: 'relative' }}>
-                <Mail size={16} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                <Mail size={15} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="citizen@delhi.gov.in"
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px 12px 42px',
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    borderRadius: '12px',
-                    color: '#ffffff',
-                    fontSize: '0.88rem',
-                    outline: 'none',
-                    boxSizing: 'border-box'
+                  style={inputStyle}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#38bdf8';
+                    e.currentTarget.style.boxShadow = '0 0 12px rgba(56, 189, 248, 0.25)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 />
               </div>
@@ -325,37 +434,54 @@ export default function AuthModal() {
 
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#cbd5e1' }}>
+                <label style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8' }}>
                   Password
                 </label>
                 <button
                   type="button"
                   onClick={() => setAuthModalMode('forgot')}
-                  style={{ background: 'none', border: 'none', color: '#38bdf8', fontSize: '0.75rem', cursor: 'pointer', padding: 0 }}
+                  style={{ background: 'none', border: 'none', color: '#38bdf8', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}
                 >
                   Forgot Password?
                 </button>
               </div>
               <div style={{ position: 'relative' }}>
-                <Lock size={16} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                <Lock size={15} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px 12px 42px',
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    borderRadius: '12px',
-                    color: '#ffffff',
-                    fontSize: '0.88rem',
-                    outline: 'none',
-                    boxSizing: 'border-box'
+                  style={{ ...inputStyle, paddingRight: '40px' }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#38bdf8';
+                    e.currentTarget.style.boxShadow = '0 0 12px rgba(56, 189, 248, 0.25)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#64748b',
+                    cursor: 'pointer',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
               </div>
             </div>
 
@@ -363,119 +489,124 @@ export default function AuthModal() {
               type="submit"
               disabled={loading || !isConfigured}
               style={{
-                marginTop: '8px',
-                padding: '14px',
+                marginTop: '6px',
+                padding: '13px',
                 background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
                 color: '#ffffff',
-                border: 'none',
-                borderRadius: '12px',
+                border: '1px solid rgba(56, 189, 248, 0.4)',
+                borderRadius: '10px',
+                fontFamily: "'Outfit', sans-serif",
                 fontWeight: 700,
-                fontSize: '0.88rem',
+                fontSize: '0.86rem',
+                letterSpacing: '0.04em',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
                 cursor: loading || !isConfigured ? 'not-allowed' : 'pointer',
                 opacity: loading || !isConfigured ? 0.6 : 1,
-                boxShadow: '0 4px 14px rgba(2, 132, 199, 0.4)'
+                boxShadow: '0 4px 16px rgba(2, 132, 199, 0.4)',
+                transition: 'all 0.18s ease',
               }}
             >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
-              {loading ? 'Authenticating...' : 'Sign In'}
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+              <span>{loading ? 'AUTHENTICATING...' : 'SIGN IN'}</span>
             </button>
-
-            <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#94a3b8', marginTop: '12px' }}>
-              Don't have an account?{' '}
-              <button
-                type="button"
-                onClick={() => setAuthModalMode('signUp')}
-                style={{ background: 'none', border: 'none', color: '#38bdf8', fontWeight: 700, cursor: 'pointer', padding: 0 }}
-              >
-                Sign Up as Citizen
-              </button>
-            </div>
           </form>
         )}
 
         {/* SIGN UP FORM */}
         {authModalMode === 'signUp' && (
-          <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '6px' }}>
                 Official / Citizen Email
               </label>
               <div style={{ position: 'relative' }}>
-                <Mail size={16} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                <Mail size={15} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="citizen@delhi.gov.in"
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px 12px 42px',
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    borderRadius: '12px',
-                    color: '#ffffff',
-                    fontSize: '0.88rem',
-                    outline: 'none',
-                    boxSizing: 'border-box'
+                  style={inputStyle}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#34d399';
+                    e.currentTarget.style.boxShadow = '0 0 12px rgba(52, 211, 153, 0.25)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 />
               </div>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '6px' }}>
                 Password (min 8 chars, uppercase, lowercase, number)
               </label>
               <div style={{ position: 'relative' }}>
-                <Lock size={16} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                <Lock size={15} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px 12px 42px',
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    borderRadius: '12px',
-                    color: '#ffffff',
-                    fontSize: '0.88rem',
-                    outline: 'none',
-                    boxSizing: 'border-box'
+                  style={{ ...inputStyle, paddingRight: '40px' }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#34d399';
+                    e.currentTarget.style.boxShadow = '0 0 12px rgba(52, 211, 153, 0.25)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#64748b',
+                    cursor: 'pointer',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
               </div>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '6px' }}>
                 Confirm Password
               </label>
               <div style={{ position: 'relative' }}>
-                <Lock size={16} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                <Lock size={15} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px 12px 42px',
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    borderRadius: '12px',
-                    color: '#ffffff',
-                    fontSize: '0.88rem',
-                    outline: 'none',
-                    boxSizing: 'border-box'
+                  style={inputStyle}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#34d399';
+                    e.currentTarget.style.boxShadow = '0 0 12px rgba(52, 211, 153, 0.25)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 />
               </div>
@@ -485,53 +616,45 @@ export default function AuthModal() {
               type="submit"
               disabled={loading || !isConfigured}
               style={{
-                marginTop: '8px',
-                padding: '14px',
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                marginTop: '6px',
+                padding: '13px',
+                background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
                 color: '#ffffff',
-                border: 'none',
-                borderRadius: '12px',
-                fontWeight: 700,
-                fontSize: '0.88rem',
+                border: '1px solid rgba(52, 211, 153, 0.5)',
+                borderRadius: '10px',
+                fontFamily: "'Outfit', sans-serif",
+                fontWeight: 800,
+                fontSize: '0.86rem',
+                letterSpacing: '0.04em',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
                 cursor: loading || !isConfigured ? 'not-allowed' : 'pointer',
                 opacity: loading || !isConfigured ? 0.6 : 1,
-                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
+                boxShadow: '0 4px 16px rgba(16, 185, 129, 0.4)',
+                transition: 'all 0.18s ease',
               }}
             >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
-              {loading ? 'Creating Account...' : 'Register as Citizen'}
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+              <span>{loading ? 'CREATING CITIZEN ACCOUNT...' : 'REGISTER ACCOUNT'}</span>
             </button>
-
-            <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#94a3b8', marginTop: '12px' }}>
-              Already registered?{' '}
-              <button
-                type="button"
-                onClick={() => setAuthModalMode('signIn')}
-                style={{ background: 'none', border: 'none', color: '#38bdf8', fontWeight: 700, cursor: 'pointer', padding: 0 }}
-              >
-                Sign In
-              </button>
-            </div>
           </form>
         )}
 
         {/* CONFIRM CODE FORM */}
         {authModalMode === 'confirm' && (
           <form onSubmit={handleConfirmCode} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <p style={{ margin: 0, fontSize: '0.84rem', color: '#cbd5e1', lineHeight: 1.5 }}>
-              We dispatched a 6-digit verification code to <strong>{email}</strong>. Please enter it below to confirm your account.
+            <p style={{ margin: 0, fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.5 }}>
+              Security verification dispatched to <strong>{email}</strong>. Enter the 6-digit confirmation code below:
             </p>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
-                Verification Code
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '6px' }}>
+                6-Digit Security Code
               </label>
               <div style={{ position: 'relative' }}>
-                <Key size={16} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                <Key size={15} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
                   type="text"
                   required
@@ -540,17 +663,20 @@ export default function AuthModal() {
                   onChange={(e) => setVerificationCode(e.target.value)}
                   placeholder="123456"
                   style={{
-                    width: '100%',
-                    padding: '12px 14px 12px 42px',
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    borderRadius: '12px',
-                    color: '#ffffff',
-                    fontSize: '1rem',
-                    letterSpacing: '0.2em',
-                    fontFamily: 'monospace',
-                    outline: 'none',
-                    boxSizing: 'border-box'
+                    ...inputStyle,
+                    fontSize: '1.2rem',
+                    letterSpacing: '0.35em',
+                    fontFamily: '"Share Tech Mono", monospace',
+                    textAlign: 'center',
+                    paddingLeft: '14px',
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#38bdf8';
+                    e.currentTarget.style.boxShadow = '0 0 16px rgba(56, 189, 248, 0.3)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 />
               </div>
@@ -560,56 +686,64 @@ export default function AuthModal() {
               type="submit"
               disabled={loading}
               style={{
-                marginTop: '8px',
-                padding: '14px',
+                marginTop: '6px',
+                padding: '13px',
                 background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
                 color: '#ffffff',
-                border: 'none',
-                borderRadius: '12px',
+                border: '1px solid rgba(56, 189, 248, 0.4)',
+                borderRadius: '10px',
+                fontFamily: "'Outfit', sans-serif",
                 fontWeight: 700,
-                fontSize: '0.88rem',
+                fontSize: '0.86rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                cursor: loading ? 'not-allowed' : 'pointer'
+                cursor: loading ? 'not-allowed' : 'pointer',
+                boxShadow: '0 4px 16px rgba(2, 132, 199, 0.4)',
               }}
             >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
-              {loading ? 'Verifying...' : 'Confirm Account'}
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+              <span>{loading ? 'VERIFYING CODE...' : 'CONFIRM REGISTRATION'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAuthModalMode('signIn')}
+              style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.78rem', cursor: 'pointer', textAlign: 'center' }}
+            >
+              Back to Sign In
             </button>
           </form>
         )}
 
         {/* FORGOT PASSWORD FORM */}
         {authModalMode === 'forgot' && (
-          <form onSubmit={handleRequestReset} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <p style={{ margin: 0, fontSize: '0.84rem', color: '#cbd5e1', lineHeight: 1.5 }}>
-              Enter the email address tied to your account to receive a secure password reset code.
+          <form onSubmit={handleRequestReset} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <p style={{ margin: 0, fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.5 }}>
+              Enter the verified email address linked to your account to dispatch a one-time password reset code:
             </p>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '6px' }}>
                 Email Address
               </label>
               <div style={{ position: 'relative' }}>
-                <Mail size={16} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                <Mail size={15} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="citizen@delhi.gov.in"
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px 12px 42px',
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    borderRadius: '12px',
-                    color: '#ffffff',
-                    fontSize: '0.88rem',
-                    outline: 'none',
-                    boxSizing: 'border-box'
+                  style={inputStyle}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#38bdf8';
+                    e.currentTarget.style.boxShadow = '0 0 12px rgba(56, 189, 248, 0.25)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 />
               </div>
@@ -619,29 +753,31 @@ export default function AuthModal() {
               type="submit"
               disabled={loading}
               style={{
-                marginTop: '8px',
-                padding: '14px',
+                marginTop: '6px',
+                padding: '13px',
                 background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
                 color: '#ffffff',
-                border: 'none',
-                borderRadius: '12px',
+                border: '1px solid rgba(56, 189, 248, 0.4)',
+                borderRadius: '10px',
+                fontFamily: "'Outfit', sans-serif",
                 fontWeight: 700,
-                fontSize: '0.88rem',
+                fontSize: '0.86rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                cursor: loading ? 'not-allowed' : 'pointer'
+                cursor: loading ? 'not-allowed' : 'pointer',
+                boxShadow: '0 4px 16px rgba(2, 132, 199, 0.4)',
               }}
             >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
-              {loading ? 'Dispatching Code...' : 'Send Reset Code'}
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+              <span>{loading ? 'DISPATCHING RESET CODE...' : 'SEND RESET CODE'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setAuthModalMode('signIn')}
-              style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.8rem', cursor: 'pointer', textAlign: 'center' }}
+              style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.78rem', cursor: 'pointer', textAlign: 'center' }}
             >
               Back to Sign In
             </button>
@@ -650,76 +786,99 @@ export default function AuthModal() {
 
         {/* CONFIRM RESET PASSWORD FORM */}
         {authModalMode === 'confirmReset' && (
-          <form onSubmit={handleConfirmReset} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form onSubmit={handleConfirmReset} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '6px' }}>
                 Reset Code
               </label>
-              <input
-                type="text"
-                required
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
-                placeholder="Enter 6-digit code"
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  borderRadius: '12px',
-                  color: '#ffffff',
-                  fontSize: '0.88rem',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
+              <div style={{ position: 'relative' }}>
+                <Key size={15} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="text"
+                  required
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  placeholder="Enter 6-digit code"
+                  style={{ ...inputStyle, fontFamily: '"Share Tech Mono", monospace', letterSpacing: '0.15em' }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#38bdf8';
+                    e.currentTarget.style.boxShadow = '0 0 12px rgba(56, 189, 248, 0.25)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                />
+              </div>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '6px' }}>
                 New Password
               </label>
-              <input
-                type="password"
-                required
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="••••••••••••"
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  borderRadius: '12px',
-                  color: '#ffffff',
-                  fontSize: '0.88rem',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
+              <div style={{ position: 'relative' }}>
+                <Lock size={15} color="#64748b" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  style={{ ...inputStyle, paddingRight: '40px' }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#38bdf8';
+                    e.currentTarget.style.boxShadow = '0 0 12px rgba(56, 189, 248, 0.25)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#64748b',
+                    cursor: 'pointer',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
               style={{
-                marginTop: '8px',
-                padding: '14px',
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                marginTop: '6px',
+                padding: '13px',
+                background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
                 color: '#ffffff',
-                border: 'none',
-                borderRadius: '12px',
+                border: '1px solid rgba(52, 211, 153, 0.5)',
+                borderRadius: '10px',
+                fontFamily: "'Outfit', sans-serif",
                 fontWeight: 700,
-                fontSize: '0.88rem',
+                fontSize: '0.86rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                cursor: loading ? 'not-allowed' : 'pointer'
+                cursor: loading ? 'not-allowed' : 'pointer',
+                boxShadow: '0 4px 16px rgba(16, 185, 129, 0.4)',
               }}
             >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
-              {loading ? 'Updating Password...' : 'Save New Password'}
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+              <span>{loading ? 'UPDATING CREDENTIALS...' : 'SAVE NEW PASSWORD'}</span>
             </button>
           </form>
         )}

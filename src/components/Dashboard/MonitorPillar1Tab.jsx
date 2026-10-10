@@ -27,7 +27,7 @@ export default function MonitorPillar1Tab({
           Pillar 1: Conditional Morning Predictive Advisory Test Bench
         </h3>
         <p style={{ margin: '0 0 16px 0', fontSize: '0.78rem', color: '#94a3b8' }}>
-          Tests our 6:30 AM predictive dispatch logic. If air quality is acceptable, the email is suppressed to eliminate alert fatigue. If a morning inversion spike is anticipated, a Gemini-driven clinical bulletin is generated and dispatched.
+          Tests our 6:30 AM predictive dispatch logic. If air quality is acceptable, the email is suppressed to eliminate alert fatigue. If a morning inversion spike is anticipated, a clinical atmospheric bulletin is generated and dispatched.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>

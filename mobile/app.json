@@ -25,7 +25,9 @@
     "extra": {
       "apiUrl": "https://vtcmfkzdfyd5sy3ugjfwdhlqsy0lcxaj.lambda-url.ap-south-1.on.aws",
       "cognitoDomain": "ap-south-1qzcin9dyx.auth.ap-south-1.amazoncognito.com",
-      "cognitoClientId": "4tvdv2buva9p70i7q9e0r04jqu"
+      "cognitoClientId": "4tvdv2buva9p70i7q9e0r04jqu",
+      "cognitoUserPoolId": "ap-south-1_QzcIN9DYx",
+      "cognitoRegion": "ap-south-1"
     },
     "plugins": [
       "expo-secure-store",

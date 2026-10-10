@@ -62,7 +62,7 @@ export default function AwsArchitectureModal({ isOpen, onClose, awsTelemetry, on
       color: '#3b82f6',
     },
     {
-      name: 'AI Explanation',
+      name: 'Forensic Health Advisory',
       service: 'Amazon Bedrock',
       icon: Bot,
       desc: 'Generates non-computational biological risk advisory (Claude 3 Haiku / Titan)',

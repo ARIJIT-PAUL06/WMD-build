@@ -45,7 +45,12 @@ if (process.env.FRONTEND_URL) {
 app.use(cors({
   origin: (origin, callback) => {
     // Non-browser callers (mobile app via Expo/fetch) send no origin
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (
+      !origin ||
+      allowedOrigins.includes(origin) ||
+      /^https:\/\/([a-zA-Z0-9-]+\.)*vercel\.app$/.test(origin) ||
+      /^https:\/\/([a-zA-Z0-9-]+\.)*amplifyapp\.com$/.test(origin)
+    ) {
       return callback(null, true);
     }
     return callback(null, false);

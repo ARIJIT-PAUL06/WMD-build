@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import CrtScreenLensCanvas from './CrtScreenLensCanvas';
+import AuthHeaderBadge from '../Auth/AuthHeaderBadge';
 import './PanoramicScrollHero.css';
 
 /**
@@ -44,6 +45,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
   const spotlightRef = useRef(null);
   const brandTextRef = useRef(null);
   const bottomFadeRef = useRef(null);
+  const authContainerRef = useRef(null);
 
   // High-frequency values use refs instead of React state to eliminate re-renders during interaction
   const scrollProgressRef = useRef(0);
@@ -84,6 +86,15 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
       isCleanRef.current = progress > 0.55;
 
       updateBrandStyles(progress);
+
+      if (authContainerRef.current) {
+        // Natural physical scroll-up: shifts upward and fades out smoothly with the front page
+        const yShift = -progress * 260;
+        const opacity = Math.max(0, 1 - progress * 4.8);
+        authContainerRef.current.style.transform = `translateY(${yShift}px)`;
+        authContainerRef.current.style.opacity = `${opacity}`;
+        authContainerRef.current.style.pointerEvents = opacity <= 0.05 ? 'none' : 'auto';
+      }
 
       const rightPhase = progress >= 0.68;
       setIsRightPhase(prev => (prev !== rightPhase ? rightPhase : prev));
@@ -312,6 +323,26 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
               VAYUVITALS
             </span>
           </div>
+        </div>
+
+        {/* ============================================================== */}
+        {/* CITIZEN AUTHENTICATION HUD (Blended Behind CRT Screen Lens)   */}
+        {/* Sits at z-index: 15 behind .hero-crt-screen-curvature (z-16)  */}
+        {/* Scrolls up and vanishes with the front page as user scrubs!   */}
+        {/* ============================================================== */}
+        <div
+          ref={authContainerRef}
+          className="hero-top-auth-cluster"
+          style={{
+            position: 'absolute',
+            top: '24px',
+            right: '28px',
+            zIndex: 15,
+            transition: 'transform 0.06s linear, opacity 0.1s ease',
+            willChange: 'transform, opacity',
+          }}
+        >
+          <AuthHeaderBadge />
         </div>
       </div>
     </div>

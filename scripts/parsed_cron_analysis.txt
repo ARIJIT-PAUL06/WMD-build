@@ -1,0 +1,212 @@
+Found 41 streams with EventBridge Cron executions.
+
+--- CRON STREAM #1 ---
+[2026-10-09 14:35:33 UTC] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[2026-10-09 14:35:33 UTC] 2026-10-09T14:35:33.804Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 14:35:33 UTC] 2026-10-09T14:35:33.931Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 14:35:33 UTC] 2026-10-09T14:35:33.971Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 14:35:33 UTC] 2026-10-09T14:35:33.973Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 14:35:34 UTC] START RequestId: 9d5b3d72-6977-4c64-aeda-9a1cfccae2db Version: $LATEST
+[2026-10-09 14:35:34 UTC] 2026-10-09T14:35:34.049Z	9d5b3d72-6977-4c64-aeda-9a1cfccae2db	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[2026-10-09 14:35:34 UTC] 2026-10-09T14:35:34.591Z	9d5b3d72-6977-4c64-aeda-9a1cfccae2db	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[2026-10-09 14:35:34 UTC] 2026-10-09T14:35:34.759Z	9d5b3d72-6977-4c64-aeda-9a1cfccae2db	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #199... (SES Dispatch: ENABLED)
+[2026-10-09 14:35:39 UTC] 2026-10-09T14:35:39.729Z	9d5b3d72-6977-4c64-aeda-9a1cfccae2db	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 20:05 (Active window: 06:00 - 09:30 IST).
+[2026-10-09 14:35:39 UTC] END RequestId: 9d5b3d72-6977-4c64-aeda-9a1cfccae2db
+[2026-10-09 14:35:39 UTC] REPORT RequestId: 9d5b3d72-6977-4c64-aeda-9a1cfccae2db	Duration: 5718.74 ms	Billed Duration: 6356 ms	Memory Size: 512 MB	Max Memory Used: 208 MB	Init Duration: 637.19 ms
+
+--- CRON STREAM #2 ---
+[2026-10-09 14:05:33 UTC] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[2026-10-09 14:05:33 UTC] 2026-10-09T14:05:33.512Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 14:05:33 UTC] 2026-10-09T14:05:33.616Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 14:05:33 UTC] 2026-10-09T14:05:33.649Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 14:05:33 UTC] 2026-10-09T14:05:33.651Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 14:05:33 UTC] START RequestId: 1f016871-4ccc-4c96-b0fd-f27803e8d9bf Version: $LATEST
+[2026-10-09 14:05:33 UTC] 2026-10-09T14:05:33.728Z	1f016871-4ccc-4c96-b0fd-f27803e8d9bf	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[2026-10-09 14:05:34 UTC] 2026-10-09T14:05:34.197Z	1f016871-4ccc-4c96-b0fd-f27803e8d9bf	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[2026-10-09 14:05:34 UTC] 2026-10-09T14:05:34.368Z	1f016871-4ccc-4c96-b0fd-f27803e8d9bf	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #198... (SES Dispatch: ENABLED)
+[2026-10-09 14:05:39 UTC] 2026-10-09T14:05:39.648Z	1f016871-4ccc-4c96-b0fd-f27803e8d9bf	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 19:35 (Active window: 06:00 - 09:30 IST).
+[2026-10-09 14:05:39 UTC] END RequestId: 1f016871-4ccc-4c96-b0fd-f27803e8d9bf
+[2026-10-09 14:05:39 UTC] REPORT RequestId: 1f016871-4ccc-4c96-b0fd-f27803e8d9bf	Duration: 5961.54 ms	Billed Duration: 6500 ms	Memory Size: 512 MB	Max Memory Used: 207 MB	Init Duration: 538.46 ms
+
+--- CRON STREAM #3 ---
+[2026-10-09 13:35:33 UTC] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[2026-10-09 13:35:33 UTC] 2026-10-09T13:35:33.684Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 13:35:33 UTC] 2026-10-09T13:35:33.811Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 13:35:33 UTC] 2026-10-09T13:35:33.852Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 13:35:33 UTC] 2026-10-09T13:35:33.854Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 13:35:33 UTC] START RequestId: 94e30e30-f39b-45b3-9d02-722ece189167 Version: $LATEST
+[2026-10-09 13:35:33 UTC] 2026-10-09T13:35:33.933Z	94e30e30-f39b-45b3-9d02-722ece189167	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[2026-10-09 13:35:34 UTC] 2026-10-09T13:35:34.433Z	94e30e30-f39b-45b3-9d02-722ece189167	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[2026-10-09 13:35:34 UTC] 2026-10-09T13:35:34.596Z	94e30e30-f39b-45b3-9d02-722ece189167	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #197... (SES Dispatch: ENABLED)
+[2026-10-09 13:35:39 UTC] 2026-10-09T13:35:39.656Z	94e30e30-f39b-45b3-9d02-722ece189167	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 19:05 (Active window: 06:00 - 09:30 IST).
+[2026-10-09 13:35:39 UTC] END RequestId: 94e30e30-f39b-45b3-9d02-722ece189167
+[2026-10-09 13:35:39 UTC] REPORT RequestId: 94e30e30-f39b-45b3-9d02-722ece189167	Duration: 5771.70 ms	Billed Duration: 6410 ms	Memory Size: 512 MB	Max Memory Used: 211 MB	Init Duration: 637.60 ms
+
+--- CRON STREAM #4 ---
+[2026-10-09 13:05:33 UTC] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[2026-10-09 13:05:33 UTC] 2026-10-09T13:05:33.669Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 13:05:33 UTC] 2026-10-09T13:05:33.795Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 13:05:33 UTC] 2026-10-09T13:05:33.834Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 13:05:33 UTC] 2026-10-09T13:05:33.836Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 13:05:33 UTC] START RequestId: b7fd0a16-ed2c-4990-ae9b-9f9eee606102 Version: $LATEST
+[2026-10-09 13:05:33 UTC] 2026-10-09T13:05:33.924Z	b7fd0a16-ed2c-4990-ae9b-9f9eee606102	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[2026-10-09 13:05:34 UTC] 2026-10-09T13:05:34.471Z	b7fd0a16-ed2c-4990-ae9b-9f9eee606102	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[2026-10-09 13:05:34 UTC] 2026-10-09T13:05:34.647Z	b7fd0a16-ed2c-4990-ae9b-9f9eee606102	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #196... (SES Dispatch: ENABLED)
+[2026-10-09 13:05:39 UTC] 2026-10-09T13:05:39.765Z	b7fd0a16-ed2c-4990-ae9b-9f9eee606102	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 18:35 (Active window: 06:00 - 09:30 IST).
+[2026-10-09 13:05:39 UTC] END RequestId: b7fd0a16-ed2c-4990-ae9b-9f9eee606102
+[2026-10-09 13:05:39 UTC] REPORT RequestId: b7fd0a16-ed2c-4990-ae9b-9f9eee606102	Duration: 5883.01 ms	Billed Duration: 6528 ms	Memory Size: 512 MB	Max Memory Used: 211 MB	Init Duration: 644.80 ms
+
+--- CRON STREAM #5 ---
+[2026-10-09 12:35:33 UTC] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[2026-10-09 12:35:33 UTC] 2026-10-09T12:35:33.597Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 12:35:33 UTC] 2026-10-09T12:35:33.699Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 12:35:33 UTC] 2026-10-09T12:35:33.731Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 12:35:33 UTC] 2026-10-09T12:35:33.733Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 12:35:33 UTC] START RequestId: 49c08a65-2428-4963-a36c-4d9575f9d238 Version: $LATEST
+[2026-10-09 12:35:33 UTC] 2026-10-09T12:35:33.813Z	49c08a65-2428-4963-a36c-4d9575f9d238	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[2026-10-09 12:35:34 UTC] 2026-10-09T12:35:34.278Z	49c08a65-2428-4963-a36c-4d9575f9d238	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[2026-10-09 12:35:34 UTC] 2026-10-09T12:35:34.453Z	49c08a65-2428-4963-a36c-4d9575f9d238	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #195... (SES Dispatch: ENABLED)
+[2026-10-09 12:35:39 UTC] 2026-10-09T12:35:39.513Z	49c08a65-2428-4963-a36c-4d9575f9d238	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 18:05 (Active window: 06:00 - 09:30 IST).
+[2026-10-09 12:35:39 UTC] END RequestId: 49c08a65-2428-4963-a36c-4d9575f9d238
+[2026-10-09 12:35:39 UTC] REPORT RequestId: 49c08a65-2428-4963-a36c-4d9575f9d238	Duration: 5757.13 ms	Billed Duration: 6285 ms	Memory Size: 512 MB	Max Memory Used: 210 MB	Init Duration: 527.27 ms
+
+--- CRON STREAM #6 ---
+[2026-10-09 12:05:33 UTC] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[2026-10-09 12:05:33 UTC] 2026-10-09T12:05:33.979Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 12:05:34 UTC] 2026-10-09T12:05:34.112Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 12:05:34 UTC] 2026-10-09T12:05:34.155Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 12:05:34 UTC] 2026-10-09T12:05:34.158Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 12:05:34 UTC] START RequestId: 617d9422-0ea2-4872-b5b7-354950c1e58f Version: $LATEST
+[2026-10-09 12:05:34 UTC] 2026-10-09T12:05:34.252Z	617d9422-0ea2-4872-b5b7-354950c1e58f	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[2026-10-09 12:05:34 UTC] 2026-10-09T12:05:34.836Z	617d9422-0ea2-4872-b5b7-354950c1e58f	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[2026-10-09 12:05:35 UTC] 2026-10-09T12:05:35.021Z	617d9422-0ea2-4872-b5b7-354950c1e58f	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #194... (SES Dispatch: ENABLED)
+[2026-10-09 12:05:40 UTC] 2026-10-09T12:05:40.272Z	617d9422-0ea2-4872-b5b7-354950c1e58f	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 17:35 (Active window: 06:00 - 09:30 IST).
+[2026-10-09 12:05:40 UTC] END RequestId: 617d9422-0ea2-4872-b5b7-354950c1e58f
+[2026-10-09 12:05:40 UTC] REPORT RequestId: 617d9422-0ea2-4872-b5b7-354950c1e58f	Duration: 6064.23 ms	Billed Duration: 6743 ms	Memory Size: 512 MB	Max Memory Used: 211 MB	Init Duration: 678.39 ms
+
+--- CRON STREAM #7 ---
+[2026-10-09 11:35:33 UTC] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[2026-10-09 11:35:33 UTC] 2026-10-09T11:35:33.712Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 11:35:33 UTC] 2026-10-09T11:35:33.845Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 11:35:33 UTC] 2026-10-09T11:35:33.885Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 11:35:33 UTC] 2026-10-09T11:35:33.887Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 11:35:33 UTC] START RequestId: ce91f875-e01b-49fa-a008-eeb4d3ed3010 Version: $LATEST
+[2026-10-09 11:35:33 UTC] 2026-10-09T11:35:33.974Z	ce91f875-e01b-49fa-a008-eeb4d3ed3010	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[2026-10-09 11:35:34 UTC] 2026-10-09T11:35:34.533Z	ce91f875-e01b-49fa-a008-eeb4d3ed3010	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[2026-10-09 11:35:34 UTC] 2026-10-09T11:35:34.714Z	ce91f875-e01b-49fa-a008-eeb4d3ed3010	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #193... (SES Dispatch: ENABLED)
+[2026-10-09 11:35:39 UTC] 2026-10-09T11:35:39.996Z	ce91f875-e01b-49fa-a008-eeb4d3ed3010	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 17:05 (Active window: 06:00 - 09:30 IST).
+[2026-10-09 11:35:40 UTC] END RequestId: ce91f875-e01b-49fa-a008-eeb4d3ed3010
+[2026-10-09 11:35:40 UTC] REPORT RequestId: ce91f875-e01b-49fa-a008-eeb4d3ed3010	Duration: 6074.86 ms	Billed Duration: 6735 ms	Memory Size: 512 MB	Max Memory Used: 208 MB	Init Duration: 659.17 ms
+
+--- CRON STREAM #8 ---
+[2026-10-09 11:05:33 UTC] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[2026-10-09 11:05:34 UTC] 2026-10-09T11:05:34.039Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 11:05:34 UTC] 2026-10-09T11:05:34.136Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 11:05:34 UTC] 2026-10-09T11:05:34.169Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 11:05:34 UTC] 2026-10-09T11:05:34.170Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 11:05:34 UTC] START RequestId: 7f059ec4-7fec-465e-99cb-42df9fd8cb4a Version: $LATEST
+[2026-10-09 11:05:34 UTC] 2026-10-09T11:05:34.216Z	7f059ec4-7fec-465e-99cb-42df9fd8cb4a	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[2026-10-09 11:05:34 UTC] 2026-10-09T11:05:34.741Z	7f059ec4-7fec-465e-99cb-42df9fd8cb4a	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[2026-10-09 11:05:34 UTC] 2026-10-09T11:05:34.914Z	7f059ec4-7fec-465e-99cb-42df9fd8cb4a	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #192... (SES Dispatch: ENABLED)
+[2026-10-09 11:05:40 UTC] 2026-10-09T11:05:40.195Z	7f059ec4-7fec-465e-99cb-42df9fd8cb4a	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 16:35 (Active window: 06:00 - 09:30 IST).
+[2026-10-09 11:05:40 UTC] END RequestId: 7f059ec4-7fec-465e-99cb-42df9fd8cb4a
+[2026-10-09 11:05:40 UTC] REPORT RequestId: 7f059ec4-7fec-465e-99cb-42df9fd8cb4a	Duration: 6013.61 ms	Billed Duration: 6514 ms	Memory Size: 512 MB	Max Memory Used: 208 MB	Init Duration: 499.66 ms
+
+--- CRON STREAM #9 ---
+[2026-10-09 10:35:33 UTC] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[2026-10-09 10:35:33 UTC] 2026-10-09T10:35:33.745Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 10:35:33 UTC] 2026-10-09T10:35:33.878Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 10:35:33 UTC] 2026-10-09T10:35:33.918Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 10:35:33 UTC] 2026-10-09T10:35:33.920Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 10:35:33 UTC] START RequestId: 1945d45a-0466-4327-82de-070b63801d68 Version: $LATEST
+[2026-10-09 10:35:34 UTC] 2026-10-09T10:35:34.016Z	1945d45a-0466-4327-82de-070b63801d68	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[2026-10-09 10:35:34 UTC] 2026-10-09T10:35:34.557Z	1945d45a-0466-4327-82de-070b63801d68	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[2026-10-09 10:35:34 UTC] 2026-10-09T10:35:34.738Z	1945d45a-0466-4327-82de-070b63801d68	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #191... (SES Dispatch: ENABLED)
+[2026-10-09 10:35:39 UTC] 2026-10-09T10:35:39.899Z	1945d45a-0466-4327-82de-070b63801d68	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 16:05 (Active window: 06:00 - 09:30 IST).
+[2026-10-09 10:35:39 UTC] END RequestId: 1945d45a-0466-4327-82de-070b63801d68
+[2026-10-09 10:35:39 UTC] REPORT RequestId: 1945d45a-0466-4327-82de-070b63801d68	Duration: 5937.07 ms	Billed Duration: 6615 ms	Memory Size: 512 MB	Max Memory Used: 209 MB	Init Duration: 677.70 ms
+
+--- CRON STREAM #10 ---
+[2026-10-09 10:05:33 UTC] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[2026-10-09 10:05:33 UTC] 2026-10-09T10:05:33.719Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 10:05:33 UTC] 2026-10-09T10:05:33.852Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 10:05:33 UTC] 2026-10-09T10:05:33.895Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 10:05:33 UTC] 2026-10-09T10:05:33.897Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 10:05:33 UTC] START RequestId: d5cc1ff1-9813-4d24-8d93-c17376e4c2a3 Version: $LATEST
+[2026-10-09 10:05:33 UTC] 2026-10-09T10:05:33.972Z	d5cc1ff1-9813-4d24-8d93-c17376e4c2a3	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[2026-10-09 10:05:34 UTC] 2026-10-09T10:05:34.478Z	d5cc1ff1-9813-4d24-8d93-c17376e4c2a3	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[2026-10-09 10:05:34 UTC] 2026-10-09T10:05:34.655Z	d5cc1ff1-9813-4d24-8d93-c17376e4c2a3	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #190... (SES Dispatch: ENABLED)
+[2026-10-09 10:05:39 UTC] 2026-10-09T10:05:39.829Z	d5cc1ff1-9813-4d24-8d93-c17376e4c2a3	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 15:35 (Active window: 06:00 - 09:30 IST).
+[2026-10-09 10:05:39 UTC] END RequestId: d5cc1ff1-9813-4d24-8d93-c17376e4c2a3
+[2026-10-09 10:05:39 UTC] REPORT RequestId: d5cc1ff1-9813-4d24-8d93-c17376e4c2a3	Duration: 5894.90 ms	Billed Duration: 6574 ms	Memory Size: 512 MB	Max Memory Used: 210 MB	Init Duration: 678.23 ms
+
+--- CRON STREAM #11 ---
+[2026-10-09 09:35:33 UTC] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[2026-10-09 09:35:33 UTC] 2026-10-09T09:35:33.814Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 09:35:33 UTC] 2026-10-09T09:35:33.942Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 09:35:33 UTC] 2026-10-09T09:35:33.984Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 09:35:33 UTC] 2026-10-09T09:35:33.986Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 09:35:34 UTC] START RequestId: 403fd18b-3166-4bb5-a667-df7a69c0f844 Version: $LATEST
+[2026-10-09 09:35:34 UTC] 2026-10-09T09:35:34.039Z	403fd18b-3166-4bb5-a667-df7a69c0f844	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[2026-10-09 09:35:34 UTC] 2026-10-09T09:35:34.570Z	403fd18b-3166-4bb5-a667-df7a69c0f844	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[2026-10-09 09:35:34 UTC] 2026-10-09T09:35:34.751Z	403fd18b-3166-4bb5-a667-df7a69c0f844	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #189... (SES Dispatch: ENABLED)
+[2026-10-09 09:35:39 UTC] 2026-10-09T09:35:39.711Z	403fd18b-3166-4bb5-a667-df7a69c0f844	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 15:05 (Active window: 06:00 - 09:30 IST).
+[2026-10-09 09:35:39 UTC] END RequestId: 403fd18b-3166-4bb5-a667-df7a69c0f844
+[2026-10-09 09:35:39 UTC] REPORT RequestId: 403fd18b-3166-4bb5-a667-df7a69c0f844	Duration: 5680.59 ms	Billed Duration: 6320 ms	Memory Size: 512 MB	Max Memory Used: 209 MB	Init Duration: 639.00 ms
+
+--- CRON STREAM #12 ---
+[2026-10-09 09:05:33 UTC] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[2026-10-09 09:05:34 UTC] 2026-10-09T09:05:34.149Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 09:05:34 UTC] 2026-10-09T09:05:34.279Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 09:05:34 UTC] 2026-10-09T09:05:34.321Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 09:05:34 UTC] 2026-10-09T09:05:34.323Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 09:05:34 UTC] START RequestId: d2710547-c25e-48fe-8b70-dfb0738ba389 Version: $LATEST
+[2026-10-09 09:05:34 UTC] 2026-10-09T09:05:34.385Z	d2710547-c25e-48fe-8b70-dfb0738ba389	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[2026-10-09 09:05:34 UTC] 2026-10-09T09:05:34.888Z	d2710547-c25e-48fe-8b70-dfb0738ba389	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[2026-10-09 09:05:35 UTC] 2026-10-09T09:05:35.066Z	d2710547-c25e-48fe-8b70-dfb0738ba389	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #188... (SES Dispatch: ENABLED)
+[2026-10-09 09:05:40 UTC] 2026-10-09T09:05:40.127Z	d2710547-c25e-48fe-8b70-dfb0738ba389	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 14:35 (Active window: 06:00 - 09:30 IST).
+[2026-10-09 09:05:40 UTC] END RequestId: d2710547-c25e-48fe-8b70-dfb0738ba389
+[2026-10-09 09:05:40 UTC] REPORT RequestId: d2710547-c25e-48fe-8b70-dfb0738ba389	Duration: 5773.45 ms	Billed Duration: 6445 ms	Memory Size: 512 MB	Max Memory Used: 210 MB	Init Duration: 670.92 ms
+
+--- CRON STREAM #13 ---
+[2026-10-09 08:35:33 UTC] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[2026-10-09 08:35:33 UTC] 2026-10-09T08:35:33.756Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 08:35:33 UTC] 2026-10-09T08:35:33.887Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 08:35:33 UTC] 2026-10-09T08:35:33.929Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 08:35:33 UTC] 2026-10-09T08:35:33.931Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 08:35:33 UTC] START RequestId: 0399f792-a86a-41f5-83e5-2ed8cad2892d Version: $LATEST
+[2026-10-09 08:35:34 UTC] 2026-10-09T08:35:34.003Z	0399f792-a86a-41f5-83e5-2ed8cad2892d	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[2026-10-09 08:35:34 UTC] 2026-10-09T08:35:34.579Z	0399f792-a86a-41f5-83e5-2ed8cad2892d	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[2026-10-09 08:35:34 UTC] 2026-10-09T08:35:34.741Z	0399f792-a86a-41f5-83e5-2ed8cad2892d	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #187... (SES Dispatch: ENABLED)
+[2026-10-09 08:35:39 UTC] 2026-10-09T08:35:39.781Z	0399f792-a86a-41f5-83e5-2ed8cad2892d	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 14:05 (Active window: 06:00 - 09:30 IST).
+[2026-10-09 08:35:39 UTC] END RequestId: 0399f792-a86a-41f5-83e5-2ed8cad2892d
+[2026-10-09 08:35:39 UTC] REPORT RequestId: 0399f792-a86a-41f5-83e5-2ed8cad2892d	Duration: 5816.18 ms	Billed Duration: 6476 ms	Memory Size: 512 MB	Max Memory Used: 206 MB	Init Duration: 659.47 ms
+
+--- CRON STREAM #14 ---
+[2026-10-09 08:05:33 UTC] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[2026-10-09 08:05:33 UTC] 2026-10-09T08:05:33.862Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 08:05:33 UTC] 2026-10-09T08:05:33.991Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 08:05:34 UTC] 2026-10-09T08:05:34.033Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 08:05:34 UTC] 2026-10-09T08:05:34.035Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 08:05:34 UTC] START RequestId: eaeb431b-b7e5-4395-82ef-603fc416fca9 Version: $LATEST
+[2026-10-09 08:05:34 UTC] 2026-10-09T08:05:34.112Z	eaeb431b-b7e5-4395-82ef-603fc416fca9	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[2026-10-09 08:05:34 UTC] 2026-10-09T08:05:34.711Z	eaeb431b-b7e5-4395-82ef-603fc416fca9	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[2026-10-09 08:05:34 UTC] 2026-10-09T08:05:34.890Z	eaeb431b-b7e5-4395-82ef-603fc416fca9	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #186... (SES Dispatch: ENABLED)
+[2026-10-09 08:05:40 UTC] 2026-10-09T08:05:40.013Z	eaeb431b-b7e5-4395-82ef-603fc416fca9	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 13:35 (Active window: 06:00 - 09:30 IST).
+[2026-10-09 08:05:40 UTC] END RequestId: eaeb431b-b7e5-4395-82ef-603fc416fca9
+[2026-10-09 08:05:40 UTC] REPORT RequestId: eaeb431b-b7e5-4395-82ef-603fc416fca9	Duration: 5924.61 ms	Billed Duration: 6586 ms	Memory Size: 512 MB	Max Memory Used: 207 MB	Init Duration: 660.55 ms
+
+--- CRON STREAM #15 ---
+[2026-10-09 07:35:33 UTC] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[2026-10-09 07:35:33 UTC] 2026-10-09T07:35:33.680Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 07:35:33 UTC] 2026-10-09T07:35:33.813Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 07:35:33 UTC] 2026-10-09T07:35:33.852Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 07:35:33 UTC] 2026-10-09T07:35:33.854Z	undefined	ERROR	◇ injected env (0) from .env
+[2026-10-09 07:35:33 UTC] START RequestId: a5067b41-8532-4f34-9d9f-225b1b1e7e1b Version: $LATEST
+[2026-10-09 07:35:33 UTC] 2026-10-09T07:35:33.943Z	a5067b41-8532-4f34-9d9f-225b1b1e7e1b	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[2026-10-09 07:35:34 UTC] 2026-10-09T07:35:34.504Z	a5067b41-8532-4f34-9d9f-225b1b1e7e1b	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[2026-10-09 07:35:34 UTC] 2026-10-09T07:35:34.672Z	a5067b41-8532-4f34-9d9f-225b1b1e7e1b	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #185... (SES Dispatch: ENABLED)
+[2026-10-09 07:35:39 UTC] 2026-10-09T07:35:39.644Z	a5067b41-8532-4f34-9d9f-225b1b1e7e1b	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 13:05 (Active window: 06:00 - 09:30 IST).
+[2026-10-09 07:35:39 UTC] END RequestId: a5067b41-8532-4f34-9d9f-225b1b1e7e1b
+[2026-10-09 07:35:39 UTC] REPORT RequestId: a5067b41-8532-4f34-9d9f-225b1b1e7e1b	Duration: 5756.20 ms	Billed Duration: 6419 ms	Memory Size: 512 MB	Max Memory Used: 209 MB	Init Duration: 661.82 ms
+

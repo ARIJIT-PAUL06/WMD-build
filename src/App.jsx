@@ -402,11 +402,6 @@ export default function App() {
   // Desktop Experience: Continuous 3-Section Vertical Long-Scroll (100% untouched)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#070a12', position: 'relative' }}>
-      {/* Floating Citizen Authentication Status Bar */}
-      <div style={{ position: 'fixed', top: '20px', right: '24px', zIndex: 9999 }}>
-        <AuthHeaderBadge />
-      </div>
-
       {/* 1. MOTION HERO: Horizontal Scroll-Scrub Experience */}
       <PanoramicScrollHero onExploreTwin={scrollToHeatmap} />
 

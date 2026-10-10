@@ -13,7 +13,9 @@
     "test:monitor": "node scripts/test_autonomous_monitor.js",
     "build:lambda": "node scripts/build_lambda.mjs",
     "sync:buffer": "node scripts/sync_buffer.js",
-    "export:android": "npm --prefix mobile run export:android"
+    "export:android": "npm --prefix mobile run export:android",
+    "start": "npm --prefix mobile start",
+    "expo": "npm --prefix mobile start"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1143.0",

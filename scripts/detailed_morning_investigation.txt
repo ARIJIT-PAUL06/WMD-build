@@ -1,0 +1,676 @@
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]e0a6598a1c114e649b674ff8b200021b
+LAST EVENT: 2026-10-09 15:09:02 UTC
+TOTAL EVENTS: 33 (Cron: False, Error: True, SES: False)
+======================================================
+[15:09:01] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[15:09:01] 2026-10-09T15:09:01.538Z	undefined	ERROR	◇ injected env (0) from .env
+[15:09:01] 2026-10-09T15:09:01.645Z	undefined	ERROR	◇ injected env (0) from .env
+[15:09:01] 2026-10-09T15:09:01.676Z	undefined	ERROR	◇ injected env (0) from .env
+[15:09:01] 2026-10-09T15:09:01.677Z	undefined	ERROR	◇ injected env (0) from .env
+[15:09:01] START RequestId: 7a34b691-8624-43fb-a082-7af1f8a44583 Version: $LATEST
+[15:09:01] 2026-10-09T15:09:01.800Z	7a34b691-8624-43fb-a082-7af1f8a44583	INFO	[GET] /api/petition/authorities - 200 (4ms)
+[15:09:01] END RequestId: 7a34b691-8624-43fb-a082-7af1f8a44583
+[15:09:01] REPORT RequestId: 7a34b691-8624-43fb-a082-7af1f8a44583	Duration: 94.29 ms	Billed Duration: 618 ms	Memory Size: 512 MB	Max Memory Used: 161 MB	Init Duration: 523.39 ms
+[15:09:01] START RequestId: 3998d6da-f02d-4b0d-ab93-82868eb1c773 Version: $LATEST
+[15:09:01] 2026-10-09T15:09:01.933Z	3998d6da-f02d-4b0d-ab93-82868eb1c773	INFO	[GET] /api/petition/schools?q=Delhi%20Public%20School - 200 (6ms)
+[15:09:01] END RequestId: 3998d6da-f02d-4b0d-ab93-82868eb1c773
+[15:09:01] REPORT RequestId: 3998d6da-f02d-4b0d-ab93-82868eb1c773	Duration: 8.90 ms	Billed Duration: 9 ms	Memory Size: 512 MB	Max Memory Used: 161 MB
+[15:09:02] START RequestId: 45436abf-2a8a-4730-9ca2-adc94fd5e9f4 Version: $LATEST
+[15:09:02] 2026-10-09T15:09:02.475Z	45436abf-2a8a-4730-9ca2-adc94fd5e9f4	INFO	[GET] /api/petition/evidence?schoolName=Delhi+Public+School%2C+Rohini&locality=Rohini+Sector+24&stationName=DTU%2C+Delhi&stationDistanceKm=1.8&days=14&threshold=60 - 200 (452ms)
+[15:09:02] END RequestId: 45436abf-2a8a-4730-9ca2-adc94fd5e9f4
+[15:09:02] REPORT RequestId: 45436abf-2a8a-4730-9ca2-adc94fd5e9f4	Duration: 573.37 ms	Billed Duration: 574 ms	Memory Size: 512 MB	Max Memory Used: 191 MB
+[15:09:02] START RequestId: 069029b2-e225-4fd2-9627-443ac0275354 Version: $LATEST
+[15:09:14] 2026-10-09T15:09:14.454Z	069029b2-e225-4fd2-9627-443ac0275354	INFO	[GET] /api/petition/forecast?schoolName=Delhi+Public+School%2C+Rohini&threshold=60 - 200 (11819ms)
+[15:09:14] END RequestId: 069029b2-e225-4fd2-9627-443ac0275354
+[15:09:14] REPORT RequestId: 069029b2-e225-4fd2-9627-443ac0275354	Duration: 11824.97 ms	Billed Duration: 11825 ms	Memory Size: 512 MB	Max Memory Used: 192 MB
+[15:09:14] START RequestId: d102e5cb-7562-4451-a602-f4bb6df71c72 Version: $LATEST
+[15:09:14] 2026-10-09T15:09:14.717Z	d102e5cb-7562-4451-a602-f4bb6df71c72	INFO	[GET] /api/petition/evidence?schoolName=Delhi+Public+School%2C+Rohini&locality=Rohini+Sector+24&stationName=DTU%2C+Delhi&days=14&threshold=60 - 200 (42ms)
+[15:09:14] END RequestId: d102e5cb-7562-4451-a602-f4bb6df71c72
+[15:09:14] REPORT RequestId: d102e5cb-7562-4451-a602-f4bb6df71c72	Duration: 61.14 ms	Billed Duration: 62 ms	Memory Size: 512 MB	Max Memory Used: 192 MB
+[15:09:14] START RequestId: 97320d31-bb55-420c-8935-ae7165cb4fb2 Version: $LATEST
+[15:09:14] 2026-10-09T15:09:14.775Z	97320d31-bb55-420c-8935-ae7165cb4fb2	INFO	[GET] /api/petition/authorities - 200 (0ms)
+[15:09:14] END RequestId: 97320d31-bb55-420c-8935-ae7165cb4fb2
+[15:09:14] REPORT RequestId: 97320d31-bb55-420c-8935-ae7165cb4fb2	Duration: 2.68 ms	Billed Duration: 3 ms	Memory Size: 512 MB	Max Memory Used: 192 MB
+[15:09:14] START RequestId: f3cde250-cb2c-4a87-b4bd-a7c9cb2a9e86 Version: $LATEST
+[15:09:14] 2026-10-09T15:09:14.835Z	f3cde250-cb2c-4a87-b4bd-a7c9cb2a9e86	INFO	[POST] /api/petition/generate-draft - 200 (11ms)
+[15:09:14] END RequestId: f3cde250-cb2c-4a87-b4bd-a7c9cb2a9e86
+[15:09:14] REPORT RequestId: f3cde250-cb2c-4a87-b4bd-a7c9cb2a9e86	Duration: 18.15 ms	Billed Duration: 19 ms	Memory Size: 512 MB	Max Memory Used: 192 MB
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]cd25bb664dff4baeb869489162dce26c
+LAST EVENT: 2026-10-09 15:05:34 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[15:05:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[15:05:33] 2026-10-09T15:05:33.673Z	undefined	ERROR	◇ injected env (0) from .env
+[15:05:33] 2026-10-09T15:05:33.778Z	undefined	ERROR	◇ injected env (0) from .env
+[15:05:33] 2026-10-09T15:05:33.814Z	undefined	ERROR	◇ injected env (0) from .env
+[15:05:33] 2026-10-09T15:05:33.816Z	undefined	ERROR	◇ injected env (0) from .env
+[15:05:33] START RequestId: 599d01f2-0d0c-440f-8fa5-732dcf269be7 Version: $LATEST
+[15:05:33] 2026-10-09T15:05:33.884Z	599d01f2-0d0c-440f-8fa5-732dcf269be7	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[15:05:34] 2026-10-09T15:05:34.428Z	599d01f2-0d0c-440f-8fa5-732dcf269be7	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[15:05:34] 2026-10-09T15:05:34.622Z	599d01f2-0d0c-440f-8fa5-732dcf269be7	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #200... (SES Dispatch: ENABLED)
+[15:05:40] 2026-10-09T15:05:40.048Z	599d01f2-0d0c-440f-8fa5-732dcf269be7	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 20:35 (Active window: 06:00 - 09:30 IST).
+[15:05:40] END RequestId: 599d01f2-0d0c-440f-8fa5-732dcf269be7
+[15:05:40] REPORT RequestId: 599d01f2-0d0c-440f-8fa5-732dcf269be7	Duration: 6212.92 ms	Billed Duration: 6759 ms	Memory Size: 512 MB	Max Memory Used: 209 MB	Init Duration: 545.87 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]b9a5c677137349ec92fc5efd6ce8d30f
+LAST EVENT: 2026-10-09 14:48:56 UTC
+TOTAL EVENTS: 57 (Cron: False, Error: True, SES: False)
+======================================================
+[14:48:51] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[14:48:51] 2026-10-09T14:48:51.855Z	undefined	ERROR	◇ injected env (0) from .env
+[14:48:51] 2026-10-09T14:48:51.983Z	undefined	ERROR	◇ injected env (0) from .env
+[14:48:52] 2026-10-09T14:48:52.023Z	undefined	ERROR	◇ injected env (0) from .env
+[14:48:52] 2026-10-09T14:48:52.025Z	undefined	ERROR	◇ injected env (0) from .env
+[14:48:52] START RequestId: 139bb3df-f773-4aa4-86f3-e720ac4aa3d0 Version: $LATEST
+[14:48:52] 2026-10-09T14:48:52.151Z	139bb3df-f773-4aa4-86f3-e720ac4aa3d0	INFO	[GET] /api/health - 200 (3ms)
+[14:48:52] END RequestId: 139bb3df-f773-4aa4-86f3-e720ac4aa3d0
+[14:48:52] REPORT RequestId: 139bb3df-f773-4aa4-86f3-e720ac4aa3d0	Duration: 94.58 ms	Billed Duration: 726 ms	Memory Size: 512 MB	Max Memory Used: 161 MB	Init Duration: 631.30 ms
+[14:48:52] START RequestId: 26518b1c-975a-4026-a124-ad21cefc256c Version: $LATEST
+[14:48:53] 2026-10-09T14:48:53.531Z	26518b1c-975a-4026-a124-ad21cefc256c	INFO	[GET] /api/aws-status - 200 (1003ms)
+[14:48:53] END RequestId: 26518b1c-975a-4026-a124-ad21cefc256c
+[14:48:53] REPORT RequestId: 26518b1c-975a-4026-a124-ad21cefc256c	Duration: 1021.47 ms	Billed Duration: 1022 ms	Memory Size: 512 MB	Max Memory Used: 180 MB
+[14:48:53] START RequestId: 8c821f3e-d103-4c2c-9538-85f2e198ec9e Version: $LATEST
+[14:48:53] 2026-10-09T14:48:53.828Z	8c821f3e-d103-4c2c-9538-85f2e198ec9e	INFO	[GET] /api/spatial-grids/mappings - 200 (36ms)
+[14:48:53] END RequestId: 8c821f3e-d103-4c2c-9538-85f2e198ec9e
+[14:48:53] REPORT RequestId: 8c821f3e-d103-4c2c-9538-85f2e198ec9e	Duration: 39.17 ms	Billed Duration: 40 ms	Memory Size: 512 MB	Max Memory Used: 180 MB
+[14:48:54] START RequestId: c8290645-161e-4e17-85b2-144e2cd25ab8 Version: $LATEST
+[14:48:54] 2026-10-09T14:48:54.209Z	c8290645-161e-4e17-85b2-144e2cd25ab8	INFO	[GET] /api/directory/facilities - 200 (60ms)
+[14:48:54] END RequestId: c8290645-161e-4e17-85b2-144e2cd25ab8
+[14:48:54] REPORT RequestId: c8290645-161e-4e17-85b2-144e2cd25ab8	Duration: 102.30 ms	Billed Duration: 103 ms	Memory Size: 512 MB	Max Memory Used: 182 MB
+[14:48:54] START RequestId: a9dee76a-f6ac-438e-87f1-0e58b784b281 Version: $LATEST
+[14:48:54] 2026-10-09T14:48:54.690Z	a9dee76a-f6ac-438e-87f1-0e58b784b281	INFO	[GET] /api/spatial-grids/directory - 200 (12ms)
+[14:48:54] END RequestId: a9dee76a-f6ac-438e-87f1-0e58b784b281
+[14:48:54] REPORT RequestId: a9dee76a-f6ac-438e-87f1-0e58b784b281	Duration: 32.11 ms	Billed Duration: 33 ms	Memory Size: 512 MB	Max Memory Used: 182 MB
+[14:48:55] START RequestId: d58694a0-17ab-44f0-bb6f-2c4ea3f9efdc Version: $LATEST
+[14:48:55] 2026-10-09T14:48:55.116Z	d58694a0-17ab-44f0-bb6f-2c4ea3f9efdc	INFO	[GET] /api/monitor/status - 200 (1ms)
+[14:48:55] END RequestId: d58694a0-17ab-44f0-bb6f-2c4ea3f9efdc
+[14:48:55] REPORT RequestId: d58694a0-17ab-44f0-bb6f-2c4ea3f9efdc	Duration: 3.02 ms	Billed Duration: 4 ms	Memory Size: 512 MB	Max Memory Used: 183 MB
+[14:48:55] START RequestId: 262fc89e-3405-47b1-904f-aab17f01495d Version: $LATEST
+[14:48:56] 2026-10-09T14:48:56.033Z	262fc89e-3405-47b1-904f-aab17f01495d	INFO	[GET] /api/ses/health - 200 (608ms)
+[14:48:56] END RequestId: 262fc89e-3405-47b1-904f-aab17f01495d
+[14:48:56] REPORT RequestId: 262fc89e-3405-47b1-904f-aab17f01495d	Duration: 610.55 ms	Billed Duration: 611 ms	Memory Size: 512 MB	Max Memory Used: 183 MB
+[14:49:13] START RequestId: 9c5a058c-bc8d-401c-a870-d9eac877de2e Version: $LATEST
+[14:49:13] 2026-10-09T14:49:13.125Z	9c5a058c-bc8d-401c-a870-d9eac877de2e	INFO	[POST] /api/ses/send-test - 404 (1ms)
+[14:49:13] END RequestId: 9c5a058c-bc8d-401c-a870-d9eac877de2e
+[14:49:13] REPORT RequestId: 9c5a058c-bc8d-401c-a870-d9eac877de2e	Duration: 10.81 ms	Billed Duration: 11 ms	Memory Size: 512 MB	Max Memory Used: 183 MB
+[14:49:13] START RequestId: a05d40d2-ab4b-4759-a683-305ed111bbfd Version: $LATEST
+[14:49:13] 2026-10-09T14:49:13.445Z	a05d40d2-ab4b-4759-a683-305ed111bbfd	INFO	[POST] /api/ses/verify-identity - 404 (1ms)
+[14:49:13] END RequestId: a05d40d2-ab4b-4759-a683-305ed111bbfd
+[14:49:13] REPORT RequestId: a05d40d2-ab4b-4759-a683-305ed111bbfd	Duration: 3.96 ms	Billed Duration: 4 ms	Memory Size: 512 MB	Max Memory Used: 183 MB
+[14:49:13] START RequestId: 299d7993-bf8e-40b0-9e17-8dca7ce37a57 Version: $LATEST
+[14:49:13] 2026-10-09T14:49:13.820Z	299d7993-bf8e-40b0-9e17-8dca7ce37a57	INFO	[POST] /api/sensor-ingest - 500 (1ms)
+[14:49:13] END RequestId: 299d7993-bf8e-40b0-9e17-8dca7ce37a57
+[14:49:13] REPORT RequestId: 299d7993-bf8e-40b0-9e17-8dca7ce37a57	Duration: 3.61 ms	Billed Duration: 4 ms	Memory Size: 512 MB	Max Memory Used: 183 MB
+[14:49:14] START RequestId: 72b1af56-6013-4820-94ea-de4c693b0726 Version: $LATEST
+[14:49:14] 2026-10-09T14:49:14.056Z	72b1af56-6013-4820-94ea-de4c693b0726	INFO	[POST] /api/bedrock-advisory - 400 (0ms)
+[14:49:14] END RequestId: 72b1af56-6013-4820-94ea-de4c693b0726
+[14:49:14] REPORT RequestId: 72b1af56-6013-4820-94ea-de4c693b0726	Duration: 3.15 ms	Billed Duration: 4 ms	Memory Size: 512 MB	Max Memory Used: 183 MB
+[14:49:14] START RequestId: 5d763719-d90e-4b6f-ba8d-bacc735c0607 Version: $LATEST
+[14:49:14] 2026-10-09T14:49:14.318Z	5d763719-d90e-4b6f-ba8d-bacc735c0607	INFO	[POST] /api/gemini-advisory - 400 (0ms)
+[14:49:14] END RequestId: 5d763719-d90e-4b6f-ba8d-bacc735c0607
+[14:49:14] REPORT RequestId: 5d763719-d90e-4b6f-ba8d-bacc735c0607	Duration: 2.72 ms	Billed Duration: 3 ms	Memory Size: 512 MB	Max Memory Used: 183 MB
+[14:49:14] START RequestId: 2ce0e57e-48d4-4124-9d1f-3ca0fc342171 Version: $LATEST
+[14:49:14] 2026-10-09T14:49:14.605Z	2ce0e57e-48d4-4124-9d1f-3ca0fc342171	INFO	[POST] /api/monitor/block-emergency - 500 (1ms)
+[14:49:14] END RequestId: 2ce0e57e-48d4-4124-9d1f-3ca0fc342171
+[14:49:14] REPORT RequestId: 2ce0e57e-48d4-4124-9d1f-3ca0fc342171	Duration: 4.28 ms	Billed Duration: 5 ms	Memory Size: 512 MB	Max Memory Used: 183 MB
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]22f6b865821c492ea2c3c06564dd2e18
+LAST EVENT: 2026-10-09 14:35:39 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[14:35:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[14:35:33] 2026-10-09T14:35:33.804Z	undefined	ERROR	◇ injected env (0) from .env
+[14:35:33] 2026-10-09T14:35:33.931Z	undefined	ERROR	◇ injected env (0) from .env
+[14:35:33] 2026-10-09T14:35:33.971Z	undefined	ERROR	◇ injected env (0) from .env
+[14:35:33] 2026-10-09T14:35:33.973Z	undefined	ERROR	◇ injected env (0) from .env
+[14:35:34] START RequestId: 9d5b3d72-6977-4c64-aeda-9a1cfccae2db Version: $LATEST
+[14:35:34] 2026-10-09T14:35:34.049Z	9d5b3d72-6977-4c64-aeda-9a1cfccae2db	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[14:35:34] 2026-10-09T14:35:34.591Z	9d5b3d72-6977-4c64-aeda-9a1cfccae2db	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[14:35:34] 2026-10-09T14:35:34.759Z	9d5b3d72-6977-4c64-aeda-9a1cfccae2db	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #199... (SES Dispatch: ENABLED)
+[14:35:39] 2026-10-09T14:35:39.729Z	9d5b3d72-6977-4c64-aeda-9a1cfccae2db	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 20:05 (Active window: 06:00 - 09:30 IST).
+[14:35:39] END RequestId: 9d5b3d72-6977-4c64-aeda-9a1cfccae2db
+[14:35:39] REPORT RequestId: 9d5b3d72-6977-4c64-aeda-9a1cfccae2db	Duration: 5718.74 ms	Billed Duration: 6356 ms	Memory Size: 512 MB	Max Memory Used: 208 MB	Init Duration: 637.19 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]75ae9db54d9e4db2908474a5b374bad8
+LAST EVENT: 2026-10-09 14:05:39 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[14:05:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[14:05:33] 2026-10-09T14:05:33.512Z	undefined	ERROR	◇ injected env (0) from .env
+[14:05:33] 2026-10-09T14:05:33.616Z	undefined	ERROR	◇ injected env (0) from .env
+[14:05:33] 2026-10-09T14:05:33.649Z	undefined	ERROR	◇ injected env (0) from .env
+[14:05:33] 2026-10-09T14:05:33.651Z	undefined	ERROR	◇ injected env (0) from .env
+[14:05:33] START RequestId: 1f016871-4ccc-4c96-b0fd-f27803e8d9bf Version: $LATEST
+[14:05:33] 2026-10-09T14:05:33.728Z	1f016871-4ccc-4c96-b0fd-f27803e8d9bf	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[14:05:34] 2026-10-09T14:05:34.197Z	1f016871-4ccc-4c96-b0fd-f27803e8d9bf	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[14:05:34] 2026-10-09T14:05:34.368Z	1f016871-4ccc-4c96-b0fd-f27803e8d9bf	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #198... (SES Dispatch: ENABLED)
+[14:05:39] 2026-10-09T14:05:39.648Z	1f016871-4ccc-4c96-b0fd-f27803e8d9bf	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 19:35 (Active window: 06:00 - 09:30 IST).
+[14:05:39] END RequestId: 1f016871-4ccc-4c96-b0fd-f27803e8d9bf
+[14:05:39] REPORT RequestId: 1f016871-4ccc-4c96-b0fd-f27803e8d9bf	Duration: 5961.54 ms	Billed Duration: 6500 ms	Memory Size: 512 MB	Max Memory Used: 207 MB	Init Duration: 538.46 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]f2f53e4a23a24db0bb42464992eb9212
+LAST EVENT: 2026-10-09 13:35:39 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[13:35:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[13:35:33] 2026-10-09T13:35:33.684Z	undefined	ERROR	◇ injected env (0) from .env
+[13:35:33] 2026-10-09T13:35:33.811Z	undefined	ERROR	◇ injected env (0) from .env
+[13:35:33] 2026-10-09T13:35:33.852Z	undefined	ERROR	◇ injected env (0) from .env
+[13:35:33] 2026-10-09T13:35:33.854Z	undefined	ERROR	◇ injected env (0) from .env
+[13:35:33] START RequestId: 94e30e30-f39b-45b3-9d02-722ece189167 Version: $LATEST
+[13:35:33] 2026-10-09T13:35:33.933Z	94e30e30-f39b-45b3-9d02-722ece189167	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[13:35:34] 2026-10-09T13:35:34.433Z	94e30e30-f39b-45b3-9d02-722ece189167	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[13:35:34] 2026-10-09T13:35:34.596Z	94e30e30-f39b-45b3-9d02-722ece189167	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #197... (SES Dispatch: ENABLED)
+[13:35:39] 2026-10-09T13:35:39.656Z	94e30e30-f39b-45b3-9d02-722ece189167	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 19:05 (Active window: 06:00 - 09:30 IST).
+[13:35:39] END RequestId: 94e30e30-f39b-45b3-9d02-722ece189167
+[13:35:39] REPORT RequestId: 94e30e30-f39b-45b3-9d02-722ece189167	Duration: 5771.70 ms	Billed Duration: 6410 ms	Memory Size: 512 MB	Max Memory Used: 211 MB	Init Duration: 637.60 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]36282f7502d941a4b00fa34a65633e69
+LAST EVENT: 2026-10-09 13:05:39 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[13:05:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[13:05:33] 2026-10-09T13:05:33.669Z	undefined	ERROR	◇ injected env (0) from .env
+[13:05:33] 2026-10-09T13:05:33.795Z	undefined	ERROR	◇ injected env (0) from .env
+[13:05:33] 2026-10-09T13:05:33.834Z	undefined	ERROR	◇ injected env (0) from .env
+[13:05:33] 2026-10-09T13:05:33.836Z	undefined	ERROR	◇ injected env (0) from .env
+[13:05:33] START RequestId: b7fd0a16-ed2c-4990-ae9b-9f9eee606102 Version: $LATEST
+[13:05:33] 2026-10-09T13:05:33.924Z	b7fd0a16-ed2c-4990-ae9b-9f9eee606102	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[13:05:34] 2026-10-09T13:05:34.471Z	b7fd0a16-ed2c-4990-ae9b-9f9eee606102	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[13:05:34] 2026-10-09T13:05:34.647Z	b7fd0a16-ed2c-4990-ae9b-9f9eee606102	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #196... (SES Dispatch: ENABLED)
+[13:05:39] 2026-10-09T13:05:39.765Z	b7fd0a16-ed2c-4990-ae9b-9f9eee606102	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 18:35 (Active window: 06:00 - 09:30 IST).
+[13:05:39] END RequestId: b7fd0a16-ed2c-4990-ae9b-9f9eee606102
+[13:05:39] REPORT RequestId: b7fd0a16-ed2c-4990-ae9b-9f9eee606102	Duration: 5883.01 ms	Billed Duration: 6528 ms	Memory Size: 512 MB	Max Memory Used: 211 MB	Init Duration: 644.80 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]d3e9fb2e78384e3c847c91304016c828
+LAST EVENT: 2026-10-09 12:35:39 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[12:35:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[12:35:33] 2026-10-09T12:35:33.597Z	undefined	ERROR	◇ injected env (0) from .env
+[12:35:33] 2026-10-09T12:35:33.699Z	undefined	ERROR	◇ injected env (0) from .env
+[12:35:33] 2026-10-09T12:35:33.731Z	undefined	ERROR	◇ injected env (0) from .env
+[12:35:33] 2026-10-09T12:35:33.733Z	undefined	ERROR	◇ injected env (0) from .env
+[12:35:33] START RequestId: 49c08a65-2428-4963-a36c-4d9575f9d238 Version: $LATEST
+[12:35:33] 2026-10-09T12:35:33.813Z	49c08a65-2428-4963-a36c-4d9575f9d238	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[12:35:34] 2026-10-09T12:35:34.278Z	49c08a65-2428-4963-a36c-4d9575f9d238	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[12:35:34] 2026-10-09T12:35:34.453Z	49c08a65-2428-4963-a36c-4d9575f9d238	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #195... (SES Dispatch: ENABLED)
+[12:35:39] 2026-10-09T12:35:39.513Z	49c08a65-2428-4963-a36c-4d9575f9d238	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 18:05 (Active window: 06:00 - 09:30 IST).
+[12:35:39] END RequestId: 49c08a65-2428-4963-a36c-4d9575f9d238
+[12:35:39] REPORT RequestId: 49c08a65-2428-4963-a36c-4d9575f9d238	Duration: 5757.13 ms	Billed Duration: 6285 ms	Memory Size: 512 MB	Max Memory Used: 210 MB	Init Duration: 527.27 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]ab4a323bacd84b808312aa9ede8738ad
+LAST EVENT: 2026-10-09 12:05:40 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[12:05:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[12:05:33] 2026-10-09T12:05:33.979Z	undefined	ERROR	◇ injected env (0) from .env
+[12:05:34] 2026-10-09T12:05:34.112Z	undefined	ERROR	◇ injected env (0) from .env
+[12:05:34] 2026-10-09T12:05:34.155Z	undefined	ERROR	◇ injected env (0) from .env
+[12:05:34] 2026-10-09T12:05:34.158Z	undefined	ERROR	◇ injected env (0) from .env
+[12:05:34] START RequestId: 617d9422-0ea2-4872-b5b7-354950c1e58f Version: $LATEST
+[12:05:34] 2026-10-09T12:05:34.252Z	617d9422-0ea2-4872-b5b7-354950c1e58f	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[12:05:34] 2026-10-09T12:05:34.836Z	617d9422-0ea2-4872-b5b7-354950c1e58f	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[12:05:35] 2026-10-09T12:05:35.021Z	617d9422-0ea2-4872-b5b7-354950c1e58f	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #194... (SES Dispatch: ENABLED)
+[12:05:40] 2026-10-09T12:05:40.272Z	617d9422-0ea2-4872-b5b7-354950c1e58f	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 17:35 (Active window: 06:00 - 09:30 IST).
+[12:05:40] END RequestId: 617d9422-0ea2-4872-b5b7-354950c1e58f
+[12:05:40] REPORT RequestId: 617d9422-0ea2-4872-b5b7-354950c1e58f	Duration: 6064.23 ms	Billed Duration: 6743 ms	Memory Size: 512 MB	Max Memory Used: 211 MB	Init Duration: 678.39 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]b209326eb79247e8a9c80fa477d0c69f
+LAST EVENT: 2026-10-09 11:35:40 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[11:35:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[11:35:33] 2026-10-09T11:35:33.712Z	undefined	ERROR	◇ injected env (0) from .env
+[11:35:33] 2026-10-09T11:35:33.845Z	undefined	ERROR	◇ injected env (0) from .env
+[11:35:33] 2026-10-09T11:35:33.885Z	undefined	ERROR	◇ injected env (0) from .env
+[11:35:33] 2026-10-09T11:35:33.887Z	undefined	ERROR	◇ injected env (0) from .env
+[11:35:33] START RequestId: ce91f875-e01b-49fa-a008-eeb4d3ed3010 Version: $LATEST
+[11:35:33] 2026-10-09T11:35:33.974Z	ce91f875-e01b-49fa-a008-eeb4d3ed3010	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[11:35:34] 2026-10-09T11:35:34.533Z	ce91f875-e01b-49fa-a008-eeb4d3ed3010	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[11:35:34] 2026-10-09T11:35:34.714Z	ce91f875-e01b-49fa-a008-eeb4d3ed3010	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #193... (SES Dispatch: ENABLED)
+[11:35:39] 2026-10-09T11:35:39.996Z	ce91f875-e01b-49fa-a008-eeb4d3ed3010	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 17:05 (Active window: 06:00 - 09:30 IST).
+[11:35:40] END RequestId: ce91f875-e01b-49fa-a008-eeb4d3ed3010
+[11:35:40] REPORT RequestId: ce91f875-e01b-49fa-a008-eeb4d3ed3010	Duration: 6074.86 ms	Billed Duration: 6735 ms	Memory Size: 512 MB	Max Memory Used: 208 MB	Init Duration: 659.17 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]b24fb695510544f588650402c0a5101c
+LAST EVENT: 2026-10-09 11:05:40 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[11:05:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[11:05:34] 2026-10-09T11:05:34.039Z	undefined	ERROR	◇ injected env (0) from .env
+[11:05:34] 2026-10-09T11:05:34.136Z	undefined	ERROR	◇ injected env (0) from .env
+[11:05:34] 2026-10-09T11:05:34.169Z	undefined	ERROR	◇ injected env (0) from .env
+[11:05:34] 2026-10-09T11:05:34.170Z	undefined	ERROR	◇ injected env (0) from .env
+[11:05:34] START RequestId: 7f059ec4-7fec-465e-99cb-42df9fd8cb4a Version: $LATEST
+[11:05:34] 2026-10-09T11:05:34.216Z	7f059ec4-7fec-465e-99cb-42df9fd8cb4a	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[11:05:34] 2026-10-09T11:05:34.741Z	7f059ec4-7fec-465e-99cb-42df9fd8cb4a	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[11:05:34] 2026-10-09T11:05:34.914Z	7f059ec4-7fec-465e-99cb-42df9fd8cb4a	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #192... (SES Dispatch: ENABLED)
+[11:05:40] 2026-10-09T11:05:40.195Z	7f059ec4-7fec-465e-99cb-42df9fd8cb4a	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 16:35 (Active window: 06:00 - 09:30 IST).
+[11:05:40] END RequestId: 7f059ec4-7fec-465e-99cb-42df9fd8cb4a
+[11:05:40] REPORT RequestId: 7f059ec4-7fec-465e-99cb-42df9fd8cb4a	Duration: 6013.61 ms	Billed Duration: 6514 ms	Memory Size: 512 MB	Max Memory Used: 208 MB	Init Duration: 499.66 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]71ae388c6cf541e39fb612f3266a73e7
+LAST EVENT: 2026-10-09 10:35:39 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[10:35:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[10:35:33] 2026-10-09T10:35:33.745Z	undefined	ERROR	◇ injected env (0) from .env
+[10:35:33] 2026-10-09T10:35:33.878Z	undefined	ERROR	◇ injected env (0) from .env
+[10:35:33] 2026-10-09T10:35:33.918Z	undefined	ERROR	◇ injected env (0) from .env
+[10:35:33] 2026-10-09T10:35:33.920Z	undefined	ERROR	◇ injected env (0) from .env
+[10:35:33] START RequestId: 1945d45a-0466-4327-82de-070b63801d68 Version: $LATEST
+[10:35:34] 2026-10-09T10:35:34.016Z	1945d45a-0466-4327-82de-070b63801d68	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[10:35:34] 2026-10-09T10:35:34.557Z	1945d45a-0466-4327-82de-070b63801d68	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[10:35:34] 2026-10-09T10:35:34.738Z	1945d45a-0466-4327-82de-070b63801d68	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #191... (SES Dispatch: ENABLED)
+[10:35:39] 2026-10-09T10:35:39.899Z	1945d45a-0466-4327-82de-070b63801d68	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 16:05 (Active window: 06:00 - 09:30 IST).
+[10:35:39] END RequestId: 1945d45a-0466-4327-82de-070b63801d68
+[10:35:39] REPORT RequestId: 1945d45a-0466-4327-82de-070b63801d68	Duration: 5937.07 ms	Billed Duration: 6615 ms	Memory Size: 512 MB	Max Memory Used: 209 MB	Init Duration: 677.70 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]98e46b9aea464bd885a247896c26c800
+LAST EVENT: 2026-10-09 10:05:39 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[10:05:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[10:05:33] 2026-10-09T10:05:33.719Z	undefined	ERROR	◇ injected env (0) from .env
+[10:05:33] 2026-10-09T10:05:33.852Z	undefined	ERROR	◇ injected env (0) from .env
+[10:05:33] 2026-10-09T10:05:33.895Z	undefined	ERROR	◇ injected env (0) from .env
+[10:05:33] 2026-10-09T10:05:33.897Z	undefined	ERROR	◇ injected env (0) from .env
+[10:05:33] START RequestId: d5cc1ff1-9813-4d24-8d93-c17376e4c2a3 Version: $LATEST
+[10:05:33] 2026-10-09T10:05:33.972Z	d5cc1ff1-9813-4d24-8d93-c17376e4c2a3	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[10:05:34] 2026-10-09T10:05:34.478Z	d5cc1ff1-9813-4d24-8d93-c17376e4c2a3	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[10:05:34] 2026-10-09T10:05:34.655Z	d5cc1ff1-9813-4d24-8d93-c17376e4c2a3	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #190... (SES Dispatch: ENABLED)
+[10:05:39] 2026-10-09T10:05:39.829Z	d5cc1ff1-9813-4d24-8d93-c17376e4c2a3	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 15:35 (Active window: 06:00 - 09:30 IST).
+[10:05:39] END RequestId: d5cc1ff1-9813-4d24-8d93-c17376e4c2a3
+[10:05:39] REPORT RequestId: d5cc1ff1-9813-4d24-8d93-c17376e4c2a3	Duration: 5894.90 ms	Billed Duration: 6574 ms	Memory Size: 512 MB	Max Memory Used: 210 MB	Init Duration: 678.23 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]172139b116ae4c1c93f488a117c56db0
+LAST EVENT: 2026-10-09 09:35:39 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[09:35:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[09:35:33] 2026-10-09T09:35:33.814Z	undefined	ERROR	◇ injected env (0) from .env
+[09:35:33] 2026-10-09T09:35:33.942Z	undefined	ERROR	◇ injected env (0) from .env
+[09:35:33] 2026-10-09T09:35:33.984Z	undefined	ERROR	◇ injected env (0) from .env
+[09:35:33] 2026-10-09T09:35:33.986Z	undefined	ERROR	◇ injected env (0) from .env
+[09:35:34] START RequestId: 403fd18b-3166-4bb5-a667-df7a69c0f844 Version: $LATEST
+[09:35:34] 2026-10-09T09:35:34.039Z	403fd18b-3166-4bb5-a667-df7a69c0f844	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[09:35:34] 2026-10-09T09:35:34.570Z	403fd18b-3166-4bb5-a667-df7a69c0f844	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[09:35:34] 2026-10-09T09:35:34.751Z	403fd18b-3166-4bb5-a667-df7a69c0f844	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #189... (SES Dispatch: ENABLED)
+[09:35:39] 2026-10-09T09:35:39.711Z	403fd18b-3166-4bb5-a667-df7a69c0f844	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 15:05 (Active window: 06:00 - 09:30 IST).
+[09:35:39] END RequestId: 403fd18b-3166-4bb5-a667-df7a69c0f844
+[09:35:39] REPORT RequestId: 403fd18b-3166-4bb5-a667-df7a69c0f844	Duration: 5680.59 ms	Billed Duration: 6320 ms	Memory Size: 512 MB	Max Memory Used: 209 MB	Init Duration: 639.00 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]51c37924102543fa94d26b687d4994d9
+LAST EVENT: 2026-10-09 09:05:40 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[09:05:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[09:05:34] 2026-10-09T09:05:34.149Z	undefined	ERROR	◇ injected env (0) from .env
+[09:05:34] 2026-10-09T09:05:34.279Z	undefined	ERROR	◇ injected env (0) from .env
+[09:05:34] 2026-10-09T09:05:34.321Z	undefined	ERROR	◇ injected env (0) from .env
+[09:05:34] 2026-10-09T09:05:34.323Z	undefined	ERROR	◇ injected env (0) from .env
+[09:05:34] START RequestId: d2710547-c25e-48fe-8b70-dfb0738ba389 Version: $LATEST
+[09:05:34] 2026-10-09T09:05:34.385Z	d2710547-c25e-48fe-8b70-dfb0738ba389	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[09:05:34] 2026-10-09T09:05:34.888Z	d2710547-c25e-48fe-8b70-dfb0738ba389	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[09:05:35] 2026-10-09T09:05:35.066Z	d2710547-c25e-48fe-8b70-dfb0738ba389	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #188... (SES Dispatch: ENABLED)
+[09:05:40] 2026-10-09T09:05:40.127Z	d2710547-c25e-48fe-8b70-dfb0738ba389	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 14:35 (Active window: 06:00 - 09:30 IST).
+[09:05:40] END RequestId: d2710547-c25e-48fe-8b70-dfb0738ba389
+[09:05:40] REPORT RequestId: d2710547-c25e-48fe-8b70-dfb0738ba389	Duration: 5773.45 ms	Billed Duration: 6445 ms	Memory Size: 512 MB	Max Memory Used: 210 MB	Init Duration: 670.92 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]02f7adf728614c20abd81da85fd782e6
+LAST EVENT: 2026-10-09 08:35:39 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[08:35:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[08:35:33] 2026-10-09T08:35:33.756Z	undefined	ERROR	◇ injected env (0) from .env
+[08:35:33] 2026-10-09T08:35:33.887Z	undefined	ERROR	◇ injected env (0) from .env
+[08:35:33] 2026-10-09T08:35:33.929Z	undefined	ERROR	◇ injected env (0) from .env
+[08:35:33] 2026-10-09T08:35:33.931Z	undefined	ERROR	◇ injected env (0) from .env
+[08:35:33] START RequestId: 0399f792-a86a-41f5-83e5-2ed8cad2892d Version: $LATEST
+[08:35:34] 2026-10-09T08:35:34.003Z	0399f792-a86a-41f5-83e5-2ed8cad2892d	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[08:35:34] 2026-10-09T08:35:34.579Z	0399f792-a86a-41f5-83e5-2ed8cad2892d	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[08:35:34] 2026-10-09T08:35:34.741Z	0399f792-a86a-41f5-83e5-2ed8cad2892d	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #187... (SES Dispatch: ENABLED)
+[08:35:39] 2026-10-09T08:35:39.781Z	0399f792-a86a-41f5-83e5-2ed8cad2892d	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 14:05 (Active window: 06:00 - 09:30 IST).
+[08:35:39] END RequestId: 0399f792-a86a-41f5-83e5-2ed8cad2892d
+[08:35:39] REPORT RequestId: 0399f792-a86a-41f5-83e5-2ed8cad2892d	Duration: 5816.18 ms	Billed Duration: 6476 ms	Memory Size: 512 MB	Max Memory Used: 206 MB	Init Duration: 659.47 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]518761e823984716b9e8b0f6ff9cc75b
+LAST EVENT: 2026-10-09 08:05:40 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[08:05:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[08:05:33] 2026-10-09T08:05:33.862Z	undefined	ERROR	◇ injected env (0) from .env
+[08:05:33] 2026-10-09T08:05:33.991Z	undefined	ERROR	◇ injected env (0) from .env
+[08:05:34] 2026-10-09T08:05:34.033Z	undefined	ERROR	◇ injected env (0) from .env
+[08:05:34] 2026-10-09T08:05:34.035Z	undefined	ERROR	◇ injected env (0) from .env
+[08:05:34] START RequestId: eaeb431b-b7e5-4395-82ef-603fc416fca9 Version: $LATEST
+[08:05:34] 2026-10-09T08:05:34.112Z	eaeb431b-b7e5-4395-82ef-603fc416fca9	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[08:05:34] 2026-10-09T08:05:34.711Z	eaeb431b-b7e5-4395-82ef-603fc416fca9	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[08:05:34] 2026-10-09T08:05:34.890Z	eaeb431b-b7e5-4395-82ef-603fc416fca9	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #186... (SES Dispatch: ENABLED)
+[08:05:40] 2026-10-09T08:05:40.013Z	eaeb431b-b7e5-4395-82ef-603fc416fca9	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 13:35 (Active window: 06:00 - 09:30 IST).
+[08:05:40] END RequestId: eaeb431b-b7e5-4395-82ef-603fc416fca9
+[08:05:40] REPORT RequestId: eaeb431b-b7e5-4395-82ef-603fc416fca9	Duration: 5924.61 ms	Billed Duration: 6586 ms	Memory Size: 512 MB	Max Memory Used: 207 MB	Init Duration: 660.55 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]2c2e7df50ff147e1ada9fdd67283ff80
+LAST EVENT: 2026-10-09 07:35:39 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[07:35:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[07:35:33] 2026-10-09T07:35:33.680Z	undefined	ERROR	◇ injected env (0) from .env
+[07:35:33] 2026-10-09T07:35:33.813Z	undefined	ERROR	◇ injected env (0) from .env
+[07:35:33] 2026-10-09T07:35:33.852Z	undefined	ERROR	◇ injected env (0) from .env
+[07:35:33] 2026-10-09T07:35:33.854Z	undefined	ERROR	◇ injected env (0) from .env
+[07:35:33] START RequestId: a5067b41-8532-4f34-9d9f-225b1b1e7e1b Version: $LATEST
+[07:35:33] 2026-10-09T07:35:33.943Z	a5067b41-8532-4f34-9d9f-225b1b1e7e1b	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[07:35:34] 2026-10-09T07:35:34.504Z	a5067b41-8532-4f34-9d9f-225b1b1e7e1b	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[07:35:34] 2026-10-09T07:35:34.672Z	a5067b41-8532-4f34-9d9f-225b1b1e7e1b	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #185... (SES Dispatch: ENABLED)
+[07:35:39] 2026-10-09T07:35:39.644Z	a5067b41-8532-4f34-9d9f-225b1b1e7e1b	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 13:05 (Active window: 06:00 - 09:30 IST).
+[07:35:39] END RequestId: a5067b41-8532-4f34-9d9f-225b1b1e7e1b
+[07:35:39] REPORT RequestId: a5067b41-8532-4f34-9d9f-225b1b1e7e1b	Duration: 5756.20 ms	Billed Duration: 6419 ms	Memory Size: 512 MB	Max Memory Used: 209 MB	Init Duration: 661.82 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]fe83471fd57045dea9328b4042f2291c
+LAST EVENT: 2026-10-09 07:05:39 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[07:05:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[07:05:33] 2026-10-09T07:05:33.895Z	undefined	ERROR	◇ injected env (0) from .env
+[07:05:33] 2026-10-09T07:05:33.987Z	undefined	ERROR	◇ injected env (0) from .env
+[07:05:34] 2026-10-09T07:05:34.022Z	undefined	ERROR	◇ injected env (0) from .env
+[07:05:34] 2026-10-09T07:05:34.024Z	undefined	ERROR	◇ injected env (0) from .env
+[07:05:34] START RequestId: b96462ca-f0af-4ad2-8e80-b695c5d09f2f Version: $LATEST
+[07:05:34] 2026-10-09T07:05:34.093Z	b96462ca-f0af-4ad2-8e80-b695c5d09f2f	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[07:05:34] 2026-10-09T07:05:34.635Z	b96462ca-f0af-4ad2-8e80-b695c5d09f2f	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[07:05:34] 2026-10-09T07:05:34.798Z	b96462ca-f0af-4ad2-8e80-b695c5d09f2f	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #184... (SES Dispatch: ENABLED)
+[07:05:39] 2026-10-09T07:05:39.874Z	b96462ca-f0af-4ad2-8e80-b695c5d09f2f	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 12:35 (Active window: 06:00 - 09:30 IST).
+[07:05:39] END RequestId: b96462ca-f0af-4ad2-8e80-b695c5d09f2f
+[07:05:39] REPORT RequestId: b96462ca-f0af-4ad2-8e80-b695c5d09f2f	Duration: 5832.59 ms	Billed Duration: 6341 ms	Memory Size: 512 MB	Max Memory Used: 208 MB	Init Duration: 508.02 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]695f94e7ef1c46f09e8bab0ed41cbc12
+LAST EVENT: 2026-10-09 06:35:39 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[06:35:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[06:35:33] 2026-10-09T06:35:33.577Z	undefined	ERROR	◇ injected env (0) from .env
+[06:35:33] 2026-10-09T06:35:33.675Z	undefined	ERROR	◇ injected env (0) from .env
+[06:35:33] 2026-10-09T06:35:33.707Z	undefined	ERROR	◇ injected env (0) from .env
+[06:35:33] 2026-10-09T06:35:33.709Z	undefined	ERROR	◇ injected env (0) from .env
+[06:35:33] START RequestId: 1a420cd0-e367-4f71-a968-dfffc7abf997 Version: $LATEST
+[06:35:33] 2026-10-09T06:35:33.804Z	1a420cd0-e367-4f71-a968-dfffc7abf997	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[06:35:34] 2026-10-09T06:35:34.353Z	1a420cd0-e367-4f71-a968-dfffc7abf997	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[06:35:34] 2026-10-09T06:35:34.522Z	1a420cd0-e367-4f71-a968-dfffc7abf997	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #183... (SES Dispatch: ENABLED)
+[06:35:39] 2026-10-09T06:35:39.468Z	1a420cd0-e367-4f71-a968-dfffc7abf997	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 12:05 (Active window: 06:00 - 09:30 IST).
+[06:35:39] END RequestId: 1a420cd0-e367-4f71-a968-dfffc7abf997
+[06:35:39] REPORT RequestId: 1a420cd0-e367-4f71-a968-dfffc7abf997	Duration: 5752.31 ms	Billed Duration: 6253 ms	Memory Size: 512 MB	Max Memory Used: 216 MB	Init Duration: 500.13 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]86831610832a496eb3b9c13eda946f80
+LAST EVENT: 2026-10-09 06:05:39 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[06:05:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[06:05:33] 2026-10-09T06:05:33.762Z	undefined	ERROR	◇ injected env (0) from .env
+[06:05:33] 2026-10-09T06:05:33.892Z	undefined	ERROR	◇ injected env (0) from .env
+[06:05:33] 2026-10-09T06:05:33.932Z	undefined	ERROR	◇ injected env (0) from .env
+[06:05:33] 2026-10-09T06:05:33.934Z	undefined	ERROR	◇ injected env (0) from .env
+[06:05:33] START RequestId: 48914877-0e39-4bb1-a917-65838e9b0b2c Version: $LATEST
+[06:05:34] 2026-10-09T06:05:34.020Z	48914877-0e39-4bb1-a917-65838e9b0b2c	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[06:05:34] 2026-10-09T06:05:34.503Z	48914877-0e39-4bb1-a917-65838e9b0b2c	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[06:05:34] 2026-10-09T06:05:34.669Z	48914877-0e39-4bb1-a917-65838e9b0b2c	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #182... (SES Dispatch: ENABLED)
+[06:05:39] 2026-10-09T06:05:39.822Z	48914877-0e39-4bb1-a917-65838e9b0b2c	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 11:35 (Active window: 06:00 - 09:30 IST).
+[06:05:39] END RequestId: 48914877-0e39-4bb1-a917-65838e9b0b2c
+[06:05:39] REPORT RequestId: 48914877-0e39-4bb1-a917-65838e9b0b2c	Duration: 5852.52 ms	Billed Duration: 6517 ms	Memory Size: 512 MB	Max Memory Used: 208 MB	Init Duration: 664.17 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]1896bc81844c4256b7fb42658e3bb53b
+LAST EVENT: 2026-10-09 05:35:39 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[05:35:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[05:35:33] 2026-10-09T05:35:33.598Z	undefined	ERROR	◇ injected env (0) from .env
+[05:35:33] 2026-10-09T05:35:33.697Z	undefined	ERROR	◇ injected env (0) from .env
+[05:35:33] 2026-10-09T05:35:33.733Z	undefined	ERROR	◇ injected env (0) from .env
+[05:35:33] 2026-10-09T05:35:33.734Z	undefined	ERROR	◇ injected env (0) from .env
+[05:35:33] START RequestId: 0bbba7ef-5655-437e-94e7-bb4197317cfa Version: $LATEST
+[05:35:33] 2026-10-09T05:35:33.812Z	0bbba7ef-5655-437e-94e7-bb4197317cfa	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[05:35:34] 2026-10-09T05:35:34.395Z	0bbba7ef-5655-437e-94e7-bb4197317cfa	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[05:35:34] 2026-10-09T05:35:34.574Z	0bbba7ef-5655-437e-94e7-bb4197317cfa	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #181... (SES Dispatch: ENABLED)
+[05:35:39] 2026-10-09T05:35:39.752Z	0bbba7ef-5655-437e-94e7-bb4197317cfa	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 11:05 (Active window: 06:00 - 09:30 IST).
+[05:35:39] END RequestId: 0bbba7ef-5655-437e-94e7-bb4197317cfa
+[05:35:39] REPORT RequestId: 0bbba7ef-5655-437e-94e7-bb4197317cfa	Duration: 5980.54 ms	Billed Duration: 6514 ms	Memory Size: 512 MB	Max Memory Used: 210 MB	Init Duration: 532.81 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]4ee4dd38adb348e0b77cb674a45e2a63
+LAST EVENT: 2026-10-09 05:05:39 UTC
+TOTAL EVENTS: 12 (Cron: True, Error: True, SES: True)
+======================================================
+[05:05:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[05:05:33] 2026-10-09T05:05:33.738Z	undefined	ERROR	◇ injected env (0) from .env
+[05:05:33] 2026-10-09T05:05:33.867Z	undefined	ERROR	◇ injected env (0) from .env
+[05:05:33] 2026-10-09T05:05:33.909Z	undefined	ERROR	◇ injected env (0) from .env
+[05:05:33] 2026-10-09T05:05:33.911Z	undefined	ERROR	◇ injected env (0) from .env
+[05:05:33] START RequestId: b3d07a7f-f0eb-4aee-9b9b-656b843e45fd Version: $LATEST
+[05:05:34] 2026-10-09T05:05:34.005Z	b3d07a7f-f0eb-4aee-9b9b-656b843e45fd	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[05:05:34] 2026-10-09T05:05:34.607Z	b3d07a7f-f0eb-4aee-9b9b-656b843e45fd	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[05:05:34] 2026-10-09T05:05:34.789Z	b3d07a7f-f0eb-4aee-9b9b-656b843e45fd	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #180... (SES Dispatch: ENABLED)
+[05:05:39] 2026-10-09T05:05:39.887Z	b3d07a7f-f0eb-4aee-9b9b-656b843e45fd	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 10:35 (Active window: 06:00 - 09:30 IST).
+[05:05:39] END RequestId: b3d07a7f-f0eb-4aee-9b9b-656b843e45fd
+[05:05:39] REPORT RequestId: b3d07a7f-f0eb-4aee-9b9b-656b843e45fd	Duration: 5936.62 ms	Billed Duration: 6591 ms	Memory Size: 512 MB	Max Memory Used: 210 MB	Init Duration: 653.54 ms
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]2d10dc47761243d0961055c4bddc8db0
+LAST EVENT: 2026-10-09 05:02:04 UTC
+TOTAL EVENTS: 5 (Cron: False, Error: True, SES: False)
+======================================================
+[05:02:03] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[05:02:03] 2026-10-09T05:02:03.967Z	undefined	ERROR	◇ injected env (0) from .env
+[05:02:04] 2026-10-09T05:02:04.100Z	undefined	ERROR	◇ injected env (0) from .env
+[05:02:04] 2026-10-09T05:02:04.138Z	undefined	ERROR	◇ injected env (0) from .env
+[05:02:04] 2026-10-09T05:02:04.140Z	undefined	ERROR	◇ injected env (0) from .env
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]8a1b657875fb40b683b2b7c36b5d663b
+LAST EVENT: 2026-10-09 04:53:40 UTC
+TOTAL EVENTS: 33 (Cron: False, Error: True, SES: False)
+======================================================
+[04:53:21] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[04:53:21] 2026-10-09T04:53:21.735Z	undefined	ERROR	◇ injected env (0) from .env
+[04:53:21] 2026-10-09T04:53:21.859Z	undefined	ERROR	◇ injected env (0) from .env
+[04:53:21] 2026-10-09T04:53:21.899Z	undefined	ERROR	◇ injected env (0) from .env
+[04:53:21] 2026-10-09T04:53:21.901Z	undefined	ERROR	◇ injected env (0) from .env
+[04:53:21] START RequestId: 9af2dfae-6ba1-4f6b-9779-62bd696b09b9 Version: $LATEST
+[04:53:22] 2026-10-09T04:53:22.040Z	9af2dfae-6ba1-4f6b-9779-62bd696b09b9	INFO	[GET] /api/petition/authorities - 200 (4ms)
+[04:53:22] END RequestId: 9af2dfae-6ba1-4f6b-9779-62bd696b09b9
+[04:53:22] REPORT RequestId: 9af2dfae-6ba1-4f6b-9779-62bd696b09b9	Duration: 96.70 ms	Billed Duration: 750 ms	Memory Size: 512 MB	Max Memory Used: 161 MB	Init Duration: 653.00 ms
+[04:53:22] START RequestId: bad9330a-76f1-419d-8a63-bbb9cba20df0 Version: $LATEST
+[04:53:22] 2026-10-09T04:53:22.518Z	bad9330a-76f1-419d-8a63-bbb9cba20df0	INFO	[GET] /api/petition/schools?q=Delhi%20Public%20School - 200 (11ms)
+[04:53:22] END RequestId: bad9330a-76f1-419d-8a63-bbb9cba20df0
+[04:53:22] REPORT RequestId: bad9330a-76f1-419d-8a63-bbb9cba20df0	Duration: 13.95 ms	Billed Duration: 14 ms	Memory Size: 512 MB	Max Memory Used: 161 MB
+[04:53:22] START RequestId: 63ed428f-aee5-465b-a999-95bbef85deeb Version: $LATEST
+[04:53:23] 2026-10-09T04:53:23.119Z	63ed428f-aee5-465b-a999-95bbef85deeb	INFO	[GET] /api/petition/evidence?schoolName=Delhi+Public+School%2C+Rohini&locality=Rohini+Sector+24&stationName=DTU%2C+Delhi&stationDistanceKm=1.8&days=14&threshold=60 - 200 (463ms)
+[04:53:23] END RequestId: 63ed428f-aee5-465b-a999-95bbef85deeb
+[04:53:23] REPORT RequestId: 63ed428f-aee5-465b-a999-95bbef85deeb	Duration: 562.82 ms	Billed Duration: 563 ms	Memory Size: 512 MB	Max Memory Used: 191 MB
+[04:53:23] START RequestId: c4506cc2-8fdc-42bb-b281-adc851677211 Version: $LATEST
+[04:53:34] 2026-10-09T04:53:34.617Z	c4506cc2-8fdc-42bb-b281-adc851677211	INFO	[GET] /api/petition/forecast?schoolName=Delhi+Public+School%2C+Rohini&threshold=60 - 200 (11381ms)
+[04:53:34] END RequestId: c4506cc2-8fdc-42bb-b281-adc851677211
+[04:53:34] REPORT RequestId: c4506cc2-8fdc-42bb-b281-adc851677211	Duration: 11396.47 ms	Billed Duration: 11397 ms	Memory Size: 512 MB	Max Memory Used: 192 MB
+[04:53:39] START RequestId: 8afd0952-e135-40e1-97ed-6e86fd79849b Version: $LATEST
+[04:53:39] 2026-10-09T04:53:39.619Z	8afd0952-e135-40e1-97ed-6e86fd79849b	INFO	[GET] /api/petition/evidence?schoolName=Delhi+Public+School%2C+Rohini&locality=Rohini+Sector+24&stationName=DTU%2C+Delhi&days=14&threshold=60 - 200 (61ms)
+[04:53:39] END RequestId: 8afd0952-e135-40e1-97ed-6e86fd79849b
+[04:53:39] REPORT RequestId: 8afd0952-e135-40e1-97ed-6e86fd79849b	Duration: 63.94 ms	Billed Duration: 64 ms	Memory Size: 512 MB	Max Memory Used: 192 MB
+[04:53:39] START RequestId: 6b9e287b-0ca5-4fb6-a1da-5351300b5a3f Version: $LATEST
+[04:53:39] 2026-10-09T04:53:39.787Z	6b9e287b-0ca5-4fb6-a1da-5351300b5a3f	INFO	[GET] /api/petition/authorities - 200 (0ms)
+[04:53:39] END RequestId: 6b9e287b-0ca5-4fb6-a1da-5351300b5a3f
+[04:53:39] REPORT RequestId: 6b9e287b-0ca5-4fb6-a1da-5351300b5a3f	Duration: 2.66 ms	Billed Duration: 3 ms	Memory Size: 512 MB	Max Memory Used: 192 MB
+[04:53:40] START RequestId: 87c1afff-2194-4f02-a7b3-3bfe4c17955f Version: $LATEST
+[04:53:40] 2026-10-09T04:53:40.020Z	87c1afff-2194-4f02-a7b3-3bfe4c17955f	INFO	[POST] /api/petition/generate-draft - 200 (4ms)
+[04:53:40] END RequestId: 87c1afff-2194-4f02-a7b3-3bfe4c17955f
+[04:53:40] REPORT RequestId: 87c1afff-2194-4f02-a7b3-3bfe4c17955f	Duration: 14.95 ms	Billed Duration: 15 ms	Memory Size: 512 MB	Max Memory Used: 192 MB
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]1329d7c028e943489aef8202e71637d9
+LAST EVENT: 2026-10-09 04:53:23 UTC
+TOTAL EVENTS: 5 (Cron: False, Error: True, SES: False)
+======================================================
+[04:53:23] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[04:53:23] 2026-10-09T04:53:23.754Z	undefined	ERROR	◇ injected env (0) from .env
+[04:53:23] 2026-10-09T04:53:23.885Z	undefined	ERROR	◇ injected env (0) from .env
+[04:53:23] 2026-10-09T04:53:23.927Z	undefined	ERROR	◇ injected env (0) from .env
+[04:53:23] 2026-10-09T04:53:23.929Z	undefined	ERROR	◇ injected env (0) from .env
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]2679c9899a3649549f0fd24da5dfca77
+LAST EVENT: 2026-10-09 04:36:06 UTC
+TOTAL EVENTS: 13 (Cron: False, Error: True, SES: False)
+======================================================
+[04:36:04] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[04:36:04] 2026-10-09T04:36:04.840Z	undefined	ERROR	◇ injected env (0) from .env
+[04:36:04] 2026-10-09T04:36:04.968Z	undefined	ERROR	◇ injected env (0) from .env
+[04:36:05] 2026-10-09T04:36:05.010Z	undefined	ERROR	◇ injected env (0) from .env
+[04:36:05] 2026-10-09T04:36:05.012Z	undefined	ERROR	◇ injected env (0) from .env
+[04:36:05] START RequestId: d5828dd2-081b-4c8f-b94d-f367651ee9f8 Version: $LATEST
+[04:36:05] 2026-10-09T04:36:05.160Z	d5828dd2-081b-4c8f-b94d-f367651ee9f8	INFO	[GET] /api/petition/authorities - 200 (20ms)
+[04:36:05] END RequestId: d5828dd2-081b-4c8f-b94d-f367651ee9f8
+[04:36:05] REPORT RequestId: d5828dd2-081b-4c8f-b94d-f367651ee9f8	Duration: 97.58 ms	Billed Duration: 757 ms	Memory Size: 512 MB	Max Memory Used: 161 MB	Init Duration: 658.64 ms
+[04:36:06] START RequestId: 0a07fe83-7d47-4f54-a132-1390b06ee4fb Version: $LATEST
+[04:36:06] 2026-10-09T04:36:06.402Z	0a07fe83-7d47-4f54-a132-1390b06ee4fb	INFO	[POST] /api/petition/generate-draft - 200 (16ms)
+[04:36:06] END RequestId: 0a07fe83-7d47-4f54-a132-1390b06ee4fb
+[04:36:06] REPORT RequestId: 0a07fe83-7d47-4f54-a132-1390b06ee4fb	Duration: 26.02 ms	Billed Duration: 27 ms	Memory Size: 512 MB	Max Memory Used: 161 MB
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]b11992a9dfb647c79b4afd36284a7db3
+LAST EVENT: 2026-10-09 04:36:02 UTC
+TOTAL EVENTS: 32 (Cron: True, Error: True, SES: True)
+======================================================
+[04:35:33] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[04:35:33] 2026-10-09T04:35:33.771Z	undefined	ERROR	◇ injected env (0) from .env
+[04:35:33] 2026-10-09T04:35:33.904Z	undefined	ERROR	◇ injected env (0) from .env
+[04:35:33] 2026-10-09T04:35:33.943Z	undefined	ERROR	◇ injected env (0) from .env
+[04:35:33] 2026-10-09T04:35:33.946Z	undefined	ERROR	◇ injected env (0) from .env
+[04:35:33] START RequestId: 49b74346-5fd4-4b30-987f-1851f8ac124f Version: $LATEST
+[04:35:34] 2026-10-09T04:35:34.020Z	49b74346-5fd4-4b30-987f-1851f8ac124f	INFO	[Lambda] Triggered by Amazon EventBridge Cron: Executing Autonomous Monitoring Cycle...
+[04:35:34] 2026-10-09T04:35:34.507Z	49b74346-5fd4-4b30-987f-1851f8ac124f	INFO	[AWS Services] AWS SDK clients initialized in region: ap-south-1
+[04:35:34] 2026-10-09T04:35:34.682Z	49b74346-5fd4-4b30-987f-1851f8ac124f	INFO	[AutonomousMonitor] 🔄 Running Autonomous Monitoring Cycle #179... (SES Dispatch: ENABLED)
+[04:35:39] 2026-10-09T04:35:39.846Z	49b74346-5fd4-4b30-987f-1851f8ac124f	INFO	[AutonomousMonitor] ⏳ Predictive morning advisory deferred: current IST is 10:05 (Active window: 06:00 - 09:30 IST).
+[04:35:39] END RequestId: 49b74346-5fd4-4b30-987f-1851f8ac124f
+[04:35:39] REPORT RequestId: 49b74346-5fd4-4b30-987f-1851f8ac124f	Duration: 5873.72 ms	Billed Duration: 6531 ms	Memory Size: 512 MB	Max Memory Used: 209 MB	Init Duration: 656.90 ms
+[04:35:42] START RequestId: 30fa77c4-fbb0-4706-8e9b-921939bf62c1 Version: $LATEST
+[04:35:42] 2026-10-09T04:35:42.827Z	30fa77c4-fbb0-4706-8e9b-921939bf62c1	INFO	[GET] /api/petition/authorities - 200 (3ms)
+[04:35:42] END RequestId: 30fa77c4-fbb0-4706-8e9b-921939bf62c1
+[04:35:42] REPORT RequestId: 30fa77c4-fbb0-4706-8e9b-921939bf62c1	Duration: 24.47 ms	Billed Duration: 25 ms	Memory Size: 512 MB	Max Memory Used: 209 MB
+[04:35:43] START RequestId: e887e66f-5334-4e23-832c-82a0a8663542 Version: $LATEST
+[04:35:43] 2026-10-09T04:35:43.219Z	e887e66f-5334-4e23-832c-82a0a8663542	INFO	[GET] /api/petition/schools?q=Delhi%20Public%20School - 200 (4ms)
+[04:35:43] END RequestId: e887e66f-5334-4e23-832c-82a0a8663542
+[04:35:43] REPORT RequestId: e887e66f-5334-4e23-832c-82a0a8663542	Duration: 7.77 ms	Billed Duration: 8 ms	Memory Size: 512 MB	Max Memory Used: 209 MB
+[04:35:43] START RequestId: 713be15e-8ad6-42ae-8731-de489bf6dc7e Version: $LATEST
+[04:35:43] 2026-10-09T04:35:43.403Z	713be15e-8ad6-42ae-8731-de489bf6dc7e	INFO	[GET] /api/petition/evidence?schoolName=Delhi+Public+School%2C+Rohini&locality=Rohini+Sector+24&stationName=DTU%2C+Delhi&stationDistanceKm=1.8&days=14&threshold=60 - 200 (76ms)
+[04:35:43] END RequestId: 713be15e-8ad6-42ae-8731-de489bf6dc7e
+[04:35:43] REPORT RequestId: 713be15e-8ad6-42ae-8731-de489bf6dc7e	Duration: 94.88 ms	Billed Duration: 95 ms	Memory Size: 512 MB	Max Memory Used: 209 MB
+[04:35:43] START RequestId: ba70b714-713d-46df-8c09-05bfc01fb9a2 Version: $LATEST
+[04:35:54] 2026-10-09T04:35:54.523Z	ba70b714-713d-46df-8c09-05bfc01fb9a2	INFO	[GET] /api/petition/forecast?schoolName=Delhi+Public+School%2C+Rohini&threshold=60 - 200 (10909ms)
+[04:35:54] END RequestId: ba70b714-713d-46df-8c09-05bfc01fb9a2
+[04:35:54] REPORT RequestId: ba70b714-713d-46df-8c09-05bfc01fb9a2	Duration: 10927.36 ms	Billed Duration: 10928 ms	Memory Size: 512 MB	Max Memory Used: 209 MB
+[04:36:02] START RequestId: bda2135d-a1c3-4e70-a77f-20be2f195568 Version: $LATEST
+[04:36:02] 2026-10-09T04:36:02.284Z	bda2135d-a1c3-4e70-a77f-20be2f195568	INFO	[GET] /api/petition/evidence?schoolName=Delhi+Public+School%2C+Rohini&locality=Rohini+Sector+24&stationName=DTU%2C+Delhi&days=14&threshold=60 - 200 (32ms)
+[04:36:02] END RequestId: bda2135d-a1c3-4e70-a77f-20be2f195568
+[04:36:02] REPORT RequestId: bda2135d-a1c3-4e70-a77f-20be2f195568	Duration: 49.81 ms	Billed Duration: 50 ms	Memory Size: 512 MB	Max Memory Used: 209 MB
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]ea89cb8f88134ecfa00cd2f690c1b197
+LAST EVENT: 2026-10-09 04:23:40 UTC
+TOTAL EVENTS: 33 (Cron: False, Error: True, SES: False)
+======================================================
+[04:23:26] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[04:23:26] 2026-10-09T04:23:26.818Z	undefined	ERROR	◇ injected env (0) from .env
+[04:23:26] 2026-10-09T04:23:26.948Z	undefined	ERROR	◇ injected env (0) from .env
+[04:23:26] 2026-10-09T04:23:26.990Z	undefined	ERROR	◇ injected env (0) from .env
+[04:23:26] 2026-10-09T04:23:26.993Z	undefined	ERROR	◇ injected env (0) from .env
+[04:23:27] START RequestId: 2df1a40f-75d3-4405-9d41-d9f830e45925 Version: $LATEST
+[04:23:27] 2026-10-09T04:23:27.130Z	2df1a40f-75d3-4405-9d41-d9f830e45925	INFO	[GET] /api/petition/authorities - 200 (4ms)
+[04:23:27] END RequestId: 2df1a40f-75d3-4405-9d41-d9f830e45925
+[04:23:27] REPORT RequestId: 2df1a40f-75d3-4405-9d41-d9f830e45925	Duration: 96.70 ms	Billed Duration: 750 ms	Memory Size: 512 MB	Max Memory Used: 161 MB	Init Duration: 653.14 ms
+[04:23:27] START RequestId: ded9ee72-a8ed-4946-a3bc-a563ffdd665a Version: $LATEST
+[04:23:27] 2026-10-09T04:23:27.531Z	ded9ee72-a8ed-4946-a3bc-a563ffdd665a	INFO	[GET] /api/petition/schools?q=Delhi%20Public%20School - 200 (8ms)
+[04:23:27] END RequestId: ded9ee72-a8ed-4946-a3bc-a563ffdd665a
+[04:23:27] REPORT RequestId: ded9ee72-a8ed-4946-a3bc-a563ffdd665a	Duration: 23.74 ms	Billed Duration: 24 ms	Memory Size: 512 MB	Max Memory Used: 161 MB
+[04:23:27] START RequestId: 8f206be8-4611-43bf-af13-b91b0813dca6 Version: $LATEST
+[04:23:28] 2026-10-09T04:23:28.125Z	8f206be8-4611-43bf-af13-b91b0813dca6	INFO	[GET] /api/petition/evidence?schoolName=Delhi+Public+School%2C+Rohini&locality=Rohini+Sector+24&stationName=DTU%2C+Delhi&stationDistanceKm=1.8&days=14&threshold=60 - 200 (477ms)
+[04:23:28] END RequestId: 8f206be8-4611-43bf-af13-b91b0813dca6
+[04:23:28] REPORT RequestId: 8f206be8-4611-43bf-af13-b91b0813dca6	Duration: 578.38 ms	Billed Duration: 579 ms	Memory Size: 512 MB	Max Memory Used: 191 MB
+[04:23:28] START RequestId: 276c6103-c0cf-4e87-85b5-16ce153b1d76 Version: $LATEST
+[04:23:39] 2026-10-09T04:23:39.407Z	276c6103-c0cf-4e87-85b5-16ce153b1d76	INFO	[GET] /api/petition/forecast?schoolName=Delhi+Public+School%2C+Rohini&threshold=60 - 200 (11160ms)
+[04:23:39] END RequestId: 276c6103-c0cf-4e87-85b5-16ce153b1d76
+[04:23:39] REPORT RequestId: 276c6103-c0cf-4e87-85b5-16ce153b1d76	Duration: 11162.76 ms	Billed Duration: 11163 ms	Memory Size: 512 MB	Max Memory Used: 192 MB
+[04:23:40] START RequestId: deb4ffc8-ae73-4c1a-b9d5-246690267617 Version: $LATEST
+[04:23:40] 2026-10-09T04:23:40.286Z	deb4ffc8-ae73-4c1a-b9d5-246690267617	INFO	[GET] /api/petition/evidence?schoolName=Delhi+Public+School%2C+Rohini&locality=Rohini+Sector+24&stationName=DTU%2C+Delhi&days=14&threshold=60 - 200 (46ms)
+[04:23:40] END RequestId: deb4ffc8-ae73-4c1a-b9d5-246690267617
+[04:23:40] REPORT RequestId: deb4ffc8-ae73-4c1a-b9d5-246690267617	Duration: 66.01 ms	Billed Duration: 67 ms	Memory Size: 512 MB	Max Memory Used: 192 MB
+[04:23:40] START RequestId: eea5d4a2-4083-405d-bd01-933cd8929f7c Version: $LATEST
+[04:23:40] 2026-10-09T04:23:40.413Z	eea5d4a2-4083-405d-bd01-933cd8929f7c	INFO	[GET] /api/petition/authorities - 200 (1ms)
+[04:23:40] END RequestId: eea5d4a2-4083-405d-bd01-933cd8929f7c
+[04:23:40] REPORT RequestId: eea5d4a2-4083-405d-bd01-933cd8929f7c	Duration: 2.83 ms	Billed Duration: 3 ms	Memory Size: 512 MB	Max Memory Used: 192 MB
+[04:23:40] START RequestId: 8d7fa250-cc69-48ef-beef-c30f7403d82e Version: $LATEST
+[04:23:40] 2026-10-09T04:23:40.545Z	8d7fa250-cc69-48ef-beef-c30f7403d82e	INFO	[POST] /api/petition/generate-draft - 200 (19ms)
+[04:23:40] END RequestId: 8d7fa250-cc69-48ef-beef-c30f7403d82e
+[04:23:40] REPORT RequestId: 8d7fa250-cc69-48ef-beef-c30f7403d82e	Duration: 27.58 ms	Billed Duration: 28 ms	Memory Size: 512 MB	Max Memory Used: 192 MB
+
+======================================================
+STREAM: 2026/10/09/[$LATEST]037a9aeada4f4b63b5b7f1cd8bbf6bb0
+LAST EVENT: 2026-10-09 04:11:53 UTC
+TOTAL EVENTS: 33 (Cron: False, Error: True, SES: False)
+======================================================
+[04:11:37] INIT_START Runtime Version: nodejs:22.mainline.v122	Runtime Version ARN: arn:aws:lambda:ap-south-1::runtime:fcbc591235a4e3989a2616147843a9d1214dfe36ccdcfe556551b0c1bb3010e9
+[04:11:37] 2026-10-09T04:11:37.722Z	undefined	ERROR	◇ injected env (0) from .env
+[04:11:37] 2026-10-09T04:11:37.821Z	undefined	ERROR	◇ injected env (0) from .env
+[04:11:37] 2026-10-09T04:11:37.854Z	undefined	ERROR	◇ injected env (0) from .env
+[04:11:37] 2026-10-09T04:11:37.856Z	undefined	ERROR	◇ injected env (0) from .env
+[04:11:37] START RequestId: f5f78088-a070-4251-8395-751f4875d272 Version: $LATEST
+[04:11:37] 2026-10-09T04:11:37.972Z	f5f78088-a070-4251-8395-751f4875d272	INFO	[GET] /api/petition/authorities - 200 (3ms)
+[04:11:37] END RequestId: f5f78088-a070-4251-8395-751f4875d272
+[04:11:37] REPORT RequestId: f5f78088-a070-4251-8395-751f4875d272	Duration: 95.37 ms	Billed Duration: 618 ms	Memory Size: 512 MB	Max Memory Used: 161 MB	Init Duration: 521.75 ms
+[04:11:39] START RequestId: 3b3e3aaa-1cdf-4b11-b5d7-0215af9a193e Version: $LATEST
+[04:11:39] 2026-10-09T04:11:39.632Z	3b3e3aaa-1cdf-4b11-b5d7-0215af9a193e	INFO	[GET] /api/petition/schools?q=Delhi%20Public%20School - 200 (6ms)
+[04:11:39] END RequestId: 3b3e3aaa-1cdf-4b11-b5d7-0215af9a193e
+[04:11:39] REPORT RequestId: 3b3e3aaa-1cdf-4b11-b5d7-0215af9a193e	Duration: 24.80 ms	Billed Duration: 25 ms	Memory Size: 512 MB	Max Memory Used: 161 MB
+[04:11:39] START RequestId: 12bed332-5567-40be-a361-3e53460bc880 Version: $LATEST
+[04:11:40] 2026-10-09T04:11:40.229Z	12bed332-5567-40be-a361-3e53460bc880	INFO	[GET] /api/petition/evidence?schoolName=Delhi+Public+School%2C+Rohini&locality=Rohini+Sector+24&stationName=DTU%2C+Delhi&stationDistanceKm=1.8&days=14&threshold=60 - 200 (390ms)
+[04:11:40] END RequestId: 12bed332-5567-40be-a361-3e53460bc880
+[04:11:40] REPORT RequestId: 12bed332-5567-40be-a361-3e53460bc880	Duration: 452.93 ms	Billed Duration: 453 ms	Memory Size: 512 MB	Max Memory Used: 191 MB
+[04:11:40] START RequestId: 1310dbad-da77-42a3-b200-de76bbd13f60 Version: $LATEST
+[04:11:52] 2026-10-09T04:11:52.052Z	1310dbad-da77-42a3-b200-de76bbd13f60	INFO	[GET] /api/petition/forecast?schoolName=Delhi+Public+School%2C+Rohini&threshold=60 - 200 (11675ms)
+[04:11:52] END RequestId: 1310dbad-da77-42a3-b200-de76bbd13f60
+[04:11:52] REPORT RequestId: 1310dbad-da77-42a3-b200-de76bbd13f60	Duration: 11694.34 ms	Billed Duration: 11695 ms	Memory Size: 512 MB	Max Memory Used: 193 MB
+[04:11:52] START RequestId: 27d7fee1-095b-4294-97c9-db697cb93d78 Version: $LATEST
+[04:11:52] 2026-10-09T04:11:52.671Z	27d7fee1-095b-4294-97c9-db697cb93d78	INFO	[GET] /api/petition/evidence?schoolName=Delhi+Public+School%2C+Rohini&locality=Rohini+Sector+24&stationName=DTU%2C+Delhi&days=14&threshold=60 - 200 (31ms)
+[04:11:52] END RequestId: 27d7fee1-095b-4294-97c9-db697cb93d78
+[04:11:52] REPORT RequestId: 27d7fee1-095b-4294-97c9-db697cb93d78	Duration: 34.05 ms	Billed Duration: 35 ms	Memory Size: 512 MB	Max Memory Used: 193 MB
+[04:11:52] START RequestId: 4c8da362-6279-4324-8897-77bc6f74f3d7 Version: $LATEST
+[04:11:52] 2026-10-09T04:11:52.817Z	4c8da362-6279-4324-8897-77bc6f74f3d7	INFO	[GET] /api/petition/authorities - 200 (0ms)
+[04:11:52] END RequestId: 4c8da362-6279-4324-8897-77bc6f74f3d7
+[04:11:52] REPORT RequestId: 4c8da362-6279-4324-8897-77bc6f74f3d7	Duration: 2.68 ms	Billed Duration: 3 ms	Memory Size: 512 MB	Max Memory Used: 193 MB
+[04:11:53] START RequestId: 92f5b623-2888-4362-8ffd-fa40010bbb68 Version: $LATEST
+[04:11:53] 2026-10-09T04:11:53.031Z	92f5b623-2888-4362-8ffd-fa40010bbb68	INFO	[POST] /api/petition/generate-draft - 200 (2ms)
+[04:11:53] END RequestId: 92f5b623-2888-4362-8ffd-fa40010bbb68
+[04:11:53] REPORT RequestId: 92f5b623-2888-4362-8ffd-fa40010bbb68	Duration: 26.09 ms	Billed Duration: 27 ms	Memory Size: 512 MB	Max Memory Used: 193 MB
