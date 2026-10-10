@@ -13,11 +13,21 @@ There's no router library. `src/App.jsx` (464 lines) chooses a view from query p
 | `?view=map`, `#map` / `#heatmap` | `DelhiAqiHeatmap` (Mapbox GL + IDW raster), full screen |
 | `?view=school` | `SchoolSafetyContainer` (14-day evidence, activity guidance, petition) |
 | `?pollutant=<id>` | `PollutantDetailPage` (3D lungs, 24 h curve) |
-| `?documentary=<id>` | `PollutantDocumentary` (editorial story pages) |
+| `?documentary=<id>` | `PollutantDocumentary` (WMD editorial layout, one component for all 7 pollutants) |
 | `#cargo` / `#truck` | `AtmosphericCargoTruck` |
 | `?shield=true`, `?view=monitor`, `#monitor` | `AutonomousMonitorModal` (monitor status and test bench) |
 
 ### Main features and files
+- **Documentary (`src/components/PollutantDocumentary/`), WMD layout:** spec in `docs/PM25_DOCUMENTARY_REDESIGN_PLAN.md`, fixes in `docs/PM25_DOCUMENTARY_FIX_PLAN.md`, reference in `docs/reference/` (dev overlay: `?documentary=pm25&ref=1`).
+  - New bands in `wmd/`: header, hero, coverage map (d3-geo), documentaries strip, impact row (stored-readings bar chart, IDW contour, key statistics), footer.
+  - The older deep-dive sections (pinned story, editorial sections, data section) are kept and restyled through tokens.
+  - **Animation layer unchanged:** `documentaryAnimations.js`, `HeroAtmosphericCanvas` and `useAtmosphericMouseField` are driven through hook class names kept on the new markup.
+  - **CSS cascade layers:** `index.css` declares `@layer reset, legacy, wmd`. The universal reset sits in `reset`, the old documentary CSS in `legacy`, and the new styles in `wmd`. Unlayered CSS (e.g. `commonVisuals.css`) still beats every layer.
+  - **Data provenance on screen:**
+    - Map and contour captions name the source the API reports. Today that's Open-Meteo CAMS model points, not CAAQMS monitors.
+    - The static `DEFAULT_DELHI_BASELINE` is flagged `isBaseline` and shown as "not live".
+    - The bar chart plots `/api/history` (DynamoDB). It holds only 2 non-test Delhi readings at the moment.
+    - The section-06 diurnal values are labelled illustrative.
 - **Heatmap:** `src/components/Heatmap/`. `DelhiAqiHeatmap.jsx` is down to 3,327 lines, split from 4,726 into controls, HUD, search, drawer, raster utils and constants.
   - **Mapbox token:** if `VITE_MAPBOX_TOKEN` is missing, the map shows a token-entry message instead of a black screen.
 - **Petition:** `src/components/Petition/`, made up of:
@@ -41,13 +51,13 @@ There's no router library. `src/App.jsx` (464 lines) chooses a view from query p
 
 ### Build (vite build, this snapshot)
 - **Builds:** successfully.
-- **Main entry:** 362 kB (106 kB gzip). It was 2.5 MB before lazy loading.
+- **Main entry:** 409 kB (120 kB gzip). Views stay lazy-loaded.
 - **Largest chunks:**
-  - `three-vendor` 938 kB (250 kB gzip, loaded by the hero);
-  - `PetitionModal` 502 kB (jsPDF + html2canvas, loaded when the petition modal opens);
-  - `PollutantDocumentary` 258 kB;
-  - `schoolsDirectory` 108 kB.
-- **Remaining warning:** some chunks are over 500 kB. Acceptable for a demo.
+  - `DelhiAqiHeatmap` 2.08 MB (589 kB gzip, Mapbox; loaded with the map view);
+  - `three-vendor` (loaded by the hero);
+  - `PetitionModal` (jsPDF + html2canvas, loaded when the petition modal opens);
+  - `PollutantDocumentary` 311 kB (106 kB gzip), plus `world-atlas` loaded on demand.
+- **Tests:** 202 tests: 200 pass, 0 fail, 2 skipped. App-level tests now prerender with `react-dom/static` so they wait for lazy views.
 
 ### Known web issues
 
@@ -56,7 +66,6 @@ There's no router library. `src/App.jsx` (464 lines) chooses a view from query p
 | Save to My petitions sends the wrong format → always 400; the error is only logged to the console | **Blocker** | V2 plan A1 |
 | Monitor modal shows dispatch buttons that return 403 in production | High (demo) | V2 plan A7 |
 | Web still calls the Vercel API until `VITE_API_BASE_URL` is set | Config | V2 plan D1 |
-| 8 UI tests fail since lazy loading (server rendering only shows the loading fallback) | Low | Update the tests to wait for lazy views or render the views directly |
 | Unused components: `Dashboard/BedrockAdvisoryCard`, `CitySelector`, `HistoryChart`, `PollutantGrid`, `SimulationControl`, `AwsArchitectureModal`. Unused packages: `leaflet`, `maplibre-gl` | Low | Delete after the demo |
 | `src/data/sagemakerModelMetadata.json` is the **old** model's metadata (24 features, MAE 29.29). Nothing imports it now | Low | Delete, or replace with the current metadata (ML_STATE §3) |
 | `AwsArchitectureModal.jsx` hard-codes "332,4…" training samples. The modal isn't used | Low | Remove or read from metadata if it's used again |

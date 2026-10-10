@@ -18,7 +18,17 @@ import test, { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
+import { prerenderToNodeStream } from 'react-dom/static';
 import { createServer } from 'vite';
+
+// App lazy-loads its views; renderToString would only capture the Suspense fallback,
+// so App-level tests prerender and wait for the lazy chunks to resolve.
+const renderComplete = async (element) => {
+  const { prelude } = await prerenderToNodeStream(element);
+  let html = '';
+  for await (const chunk of prelude) html += chunk;
+  return html;
+};
 
 describe('School Safety Container & App Integration (Phase 4 Tests)', () => {
   let viteServer;
@@ -222,10 +232,10 @@ describe('School Safety Container & App Integration (Phase 4 Tests)', () => {
   // ==========================================================================
   // Test 7: Existing query parameter ?view=school renders School Safety
   // ==========================================================================
-  it('7. Query parameter ?view=school renders School Safety feature in App.jsx', () => {
+  it('7. Query parameter ?view=school renders School Safety feature in App.jsx', async () => {
     setupWindowMock('?view=school');
 
-    const html = renderToString(React.createElement(App));
+    const html = await renderComplete(React.createElement(App));
     assert.ok(html.includes('Back to National AQI Map'), 'App must render navigation back to map when ?view=school');
     assert.ok(
       html.includes('SafeRecess™ School Safety Dashboard') ||
@@ -237,10 +247,10 @@ describe('School Safety Container & App Integration (Phase 4 Tests)', () => {
   // ==========================================================================
   // Test 8: Existing map view (?view=map) still works
   // ==========================================================================
-  it('8. Existing map view (?view=map) continues to work without regression', () => {
+  it('8. Existing map view (?view=map) continues to work without regression', async () => {
     setupWindowMock('?view=map');
 
-    const html = renderToString(React.createElement(App));
+    const html = await renderComplete(React.createElement(App));
     assert.ok(html.includes('id="delhi-aqi-heatmap"'), 'App must render Map element when ?view=map');
     assert.ok(!html.includes('id="school-selector"'), 'App must not render School Safety selector in map-only view');
     assert.ok(!html.includes('id="back-to-map-btn"'), 'App must not render Back to Map button in map-only view');
@@ -249,10 +259,10 @@ describe('School Safety Container & App Integration (Phase 4 Tests)', () => {
   // ==========================================================================
   // Test 9: Existing petition button still works
   // ==========================================================================
-  it('9. Existing "Petition & Action" button remains present and intact on heatmap', () => {
+  it('9. Existing "Petition & Action" button remains present and intact on heatmap', async () => {
     setupWindowMock('?view=map');
 
-    const html = renderToString(React.createElement(App));
+    const html = await renderComplete(React.createElement(App));
     assert.ok(html.includes('id="petition-action-deck-btn"'), 'Petition button ID must be intact');
     assert.ok(html.includes('Petition &amp; Action') || html.includes('Petition & Action'), 'Petition button label must be present');
   });
@@ -260,10 +270,10 @@ describe('School Safety Container & App Integration (Phase 4 Tests)', () => {
   // ==========================================================================
   // Test 10: School Safety launcher navigates correctly
   // ==========================================================================
-  it('10. School Safety launcher button is present beside Petition button and navigates to ?view=school', () => {
+  it('10. School Safety launcher button is present beside Petition button and navigates to ?view=school', async () => {
     setupWindowMock('?view=map');
 
-    const html = renderToString(React.createElement(App));
+    const html = await renderComplete(React.createElement(App));
     assert.ok(html.includes('id="school-safety-deck-btn"'), 'School Safety launcher button ID must exist');
     assert.ok(html.includes('School Safety'), 'Launcher button must be labeled School Safety');
     assert.ok(html.includes('SafeRecess™ School Safety Dashboard &amp; Activity Guidance') || html.includes('SafeRecess™ School Safety Dashboard & Activity Guidance'), 'Must have informative tooltip');

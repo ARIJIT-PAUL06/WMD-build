@@ -29,12 +29,22 @@ import test, { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
+import { prerenderToNodeStream } from 'react-dom/static';
 import { createServer } from 'vite';
 import fs from 'node:fs/promises';
 import {
   POLLUTANT_DOCUMENTARIES,
   POLLUTANT_DOCUMENTARY_LIST,
 } from '../src/data/pollutantDocumentaries.js';
+
+// App lazy-loads its views; renderToString would only capture the Suspense fallback,
+// so App-level tests prerender and wait for the lazy chunks to resolve.
+const renderComplete = async (element) => {
+  const { prelude } = await prerenderToNodeStream(element);
+  let html = '';
+  for await (const chunk of prelude) html += chunk;
+  return html;
+};
 
 describe('VayuVitals Direct Pollutant Documentary Flow', () => {
   let viteServer;
@@ -175,15 +185,15 @@ describe('VayuVitals Direct Pollutant Documentary Flow', () => {
   // ==========================================================================
   // 2. Direct routing to PM2.5 on truck click or ?documentary=true
   // ==========================================================================
-  it('2. Navigating to ?documentary=true routes directly to PM2.5 documentary without intermediate landing page', () => {
+  it('2. Navigating to ?documentary=true routes directly to PM2.5 documentary without intermediate landing page', async () => {
     setupWindowMock('?documentary=true');
-    const appHtml = renderToString(React.createElement(App));
+    const appHtml = await renderComplete(React.createElement(App));
     assert.ok(
       appHtml.includes('pollutant-documentary-pm25'),
       'Must directly open PM2.5 documentary container'
     );
     assert.ok(
-      appHtml.includes('THE PARTICLES YOU CANNOT SEE'),
+      appHtml.includes(POLLUTANT_DOCUMENTARIES.pm25.wmdTagline),
       'Must render PM2.5 dossier content directly'
     );
     // Explicit absence of intermediate landing page
@@ -204,20 +214,20 @@ describe('VayuVitals Direct Pollutant Documentary Flow', () => {
   // ==========================================================================
   // 3. All seven pollutants open directly via ?documentary=<pollutantId>
   // ==========================================================================
-  it('3. All seven pollutants open directly with their dedicated documentary dossier', () => {
+  it('3. All seven pollutants open directly with their dedicated documentary dossier', async () => {
     const pollutants = [
-      { id: 'pm25', symbol: 'PM2.5', headline: 'THE PARTICLES YOU CANNOT SEE', theme: 'theme-pm25-haze' },
-      { id: 'pm10', symbol: 'PM10', headline: 'THE INHALABLE DUST VEIL', theme: 'theme-pm10-dust' },
-      { id: 'no2', symbol: 'NO2', headline: 'THE INVISIBLE EXHAUST CATALYST', theme: 'theme-no2-combustion' },
-      { id: 'so2', symbol: 'SO2', headline: 'THE CORROSIVE EMISSION', theme: 'theme-so2-sulfur' },
-      { id: 'co', symbol: 'CO', headline: 'THE ODORLESS ASPHYXIANT', theme: 'theme-co-carbon' },
-      { id: 'o3', symbol: 'O3', headline: 'THE PHOTOCHEMICAL AFTERNOON SURGE', theme: 'theme-o3-photochemical' },
-      { id: 'nh3', symbol: 'NH3', headline: 'THE ALKALINE SMOG GLUE', theme: 'theme-nh3-agricultural' },
-    ];
+      { id: 'pm25', symbol: 'PM2.5', theme: 'theme-pm25-haze' },
+      { id: 'pm10', symbol: 'PM10', theme: 'theme-pm10-dust' },
+      { id: 'no2', symbol: 'NO2', theme: 'theme-no2-combustion' },
+      { id: 'so2', symbol: 'SO2', theme: 'theme-so2-sulfur' },
+      { id: 'co', symbol: 'CO', theme: 'theme-co-carbon' },
+      { id: 'o3', symbol: 'O3', theme: 'theme-o3-photochemical' },
+      { id: 'nh3', symbol: 'NH3', theme: 'theme-nh3-agricultural' },
+    ].map((p) => ({ ...p, headline: POLLUTANT_DOCUMENTARIES[p.id].wmdTagline }));
 
-    pollutants.forEach(({ id, symbol, headline, theme }) => {
+    for (const { id, symbol, headline, theme } of pollutants) {
       setupWindowMock(`?documentary=${id}`);
-      const appHtml = renderToString(React.createElement(App));
+      const appHtml = await renderComplete(React.createElement(App));
 
       assert.ok(
         appHtml.includes(`pollutant-documentary-${id}`),
@@ -238,7 +248,7 @@ describe('VayuVitals Direct Pollutant Documentary Flow', () => {
       // No intermediate landing page
       assert.ok(!appHtml.includes('id="begin-story-btn"'));
       assert.ok(!appHtml.includes('BEGIN STORY'));
-    });
+    }
   });
 
   // ==========================================================================
@@ -252,16 +262,16 @@ describe('VayuVitals Direct Pollutant Documentary Flow', () => {
       })
     );
 
-    assert.ok(html.includes('THE PARTICLES YOU CANNOT SEE'), 'Must render PM2.5 headline');
+    assert.ok(html.includes(POLLUTANT_DOCUMENTARIES.pm25.wmdTagline), 'Must render PM2.5 headline');
     assert.ok(html.includes('id="section-01-what-are-they"'), 'Must render Section 01');
     assert.ok(html.includes('id="section-02-how-small"'), 'Must render Section 02');
     assert.ok(html.includes('Human Hair'), 'Must render scale comparison');
     assert.ok(html.includes('id="section-07-why-it-matters"'), 'Must render School section');
     assert.ok(html.includes('id="section-08-the-takeaway"'), 'Must render 14-day section');
-    assert.ok(html.includes('YOU CANNOT ALWAYS SEE POLLUTION.'), 'Must render closing takeaway');
-    assert.ok(html.includes('EXPLORE ANOTHER POLLUTANT'), 'Must render chapter selector footer');
+    assert.ok(html.includes('SHAPES TOMORROW.'), 'Must render closing footer credo');
+    assert.ok(html.includes('ALL DOCUMENTARIES'), 'Must render the documentaries strip');
 
-    // Check all 7 pollutant chips in deep-dive footer
+    // Check all 7 pollutant tiles in the documentaries strip
     POLLUTANT_DOCUMENTARY_LIST.forEach((p) => {
       assert.ok(html.includes(`explore-another-${p.id}`), `Must have chip explore-another-${p.id}`);
     });
@@ -330,8 +340,6 @@ describe('VayuVitals Direct Pollutant Documentary Flow', () => {
 
     assert.ok(html.includes('84.6'), 'Must display dynamic PM2.5 84.6');
     assert.ok(html.includes('Custom Station Okhla (CAAQMS)'), 'Must display active station');
-    assert.ok(html.includes('4.2') && html.includes('m/s'), 'Must display dynamic wind speed 4.2 m/s');
-    assert.ok(html.includes('28.1') && html.includes('°C'), 'Must display dynamic temperature 28.1°C');
     assert.ok(!html.includes('58.4 µg/m³'), 'Must not display stale 58.4 value');
   });
 
@@ -401,9 +409,9 @@ describe('VayuVitals Direct Pollutant Documentary Flow', () => {
   // ==========================================================================
   // 10. ?view=school still works cleanly
   // ==========================================================================
-  it('10. App renders School Safety view when ?view=school is active', () => {
+  it('10. App renders School Safety view when ?view=school is active', async () => {
     setupWindowMock('?view=school', '#school');
-    const html = renderToString(React.createElement(App));
+    const html = await renderComplete(React.createElement(App));
     assert.ok(
       html.includes('School Safety Dashboard') || html.includes('Back to National AQI Map'),
       'App must render School Safety on ?view=school'

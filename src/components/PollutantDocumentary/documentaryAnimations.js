@@ -54,7 +54,7 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
   if (prefersReducedMotion) {
     // Reveal all elements statically with zero transitions
     const elements = containerEl.querySelectorAll(
-      '.documentary-nav, .documentary-hero-editorial-col, .documentary-value-container, .documentary-data-panel, .documentary-section, .documentary-image-frame, .documentary-data-section, .documentary-pinned-card, .doc-scale-fill'
+      '.documentary-nav, .documentary-hero-editorial-col, .documentary-value-container, .documentary-data-panel, .documentary-section, .documentary-image-frame, .documentary-data-section, .documentary-pinned-card, .doc-scale-fill, .wmd-hero__particles, .documentary-footer'
     );
     elements.forEach((el) => {
       el.style.opacity = '1';

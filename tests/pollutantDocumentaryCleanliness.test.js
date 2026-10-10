@@ -39,13 +39,13 @@ describe('Pollutant Documentary Pages - Configurator Cleanliness & Environmental
 
   it('3. verifies that all 7 authentic Indian vehicle images exist in public assets', () => {
     const expectedImages = [
-      'indian_pm25_truck.jpg',
-      'indian_pm10_tipper.jpg',
-      'indian_no2_traffic.jpg',
-      'indian_so2_industrial.jpg',
-      'indian_co_underpass.jpg',
-      'indian_o3_sky.jpg',
-      'indian_nh3_tractor.jpg',
+      'indian_pm25_truck.webp',
+      'indian_pm10_tipper.webp',
+      'indian_no2_traffic.webp',
+      'indian_so2_industrial.webp',
+      'indian_co_underpass.webp',
+      'indian_o3_sky.webp',
+      'indian_nh3_tractor.webp',
     ];
 
     for (const img of expectedImages) {

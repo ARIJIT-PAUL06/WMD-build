@@ -135,6 +135,38 @@ export const POLLUTANT_DOCUMENTARIES = {
       tagline: 'The Respirable Freight',
       scaleMicrons: 2.5,
     },
+        "wmdTagline": "A SILENT KILLER",
+        "wmdIntro": "A rigorous investigation into the invisible threat of PM2.5 — microscopic combustion particles in the Delhi airshed rewriting human respiratory health.",
+        "globalStats": [
+            {
+                "label": "GLOBAL DEATHS / YEAR",
+                "value": "≈ 6,700,000",
+                "detail": "ambient + household air pollution",
+                "sourceLabel": "WHO (2022) Ambient & Household Air Pollution Factsheet",
+                "sourceUrl": "https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health"
+            },
+            {
+                "label": "PEOPLE EXPOSED",
+                "value": "≈ 99%",
+                "detail": "of world population breathes air exceeding WHO limits",
+                "sourceLabel": "WHO (2022) Global Air Quality Database",
+                "sourceUrl": "https://www.who.int/news/item/04-04-2022-billions-of-people-still-breathe-unhealthy-air"
+            },
+            {
+                "label": "WHO GUIDELINE",
+                "value": "15 µg/m³ (24-h)",
+                "detail": "Annual guideline: 5 µg/m³",
+                "sourceLabel": "WHO Global Air Quality Guidelines (2021)",
+                "sourceUrl": "https://www.who.int/publications/i/item/9789240034228"
+            },
+            {
+                "label": "INDIAN NAAQS",
+                "value": "60 µg/m³ (24-h)",
+                "detail": "Annual standard: 40 µg/m³",
+                "sourceLabel": "CPCB National Ambient Air Quality Standards (2009)",
+                "sourceUrl": "https://cpcb.nic.in/air-quality-standard/"
+            }
+        ],
   },
 
   pm10: {
@@ -261,6 +293,38 @@ export const POLLUTANT_DOCUMENTARIES = {
       tagline: 'The Coarse Crustal Freight',
       scaleMicrons: 10,
     },
+        "wmdTagline": "THE INHALABLE VEIL",
+        "wmdIntro": "Mechanical pulverization, construction dust, and road resuspension churn coarse particles across northern India, blanketing regional airsheds in persistent particulate sheets.",
+        "globalStats": [
+            {
+                "label": "GLOBAL BURDEN",
+                "value": "≈ 3,200,000",
+                "detail": "disability-adjusted life years lost annually",
+                "sourceLabel": "Global Burden of Disease Study (2021)",
+                "sourceUrl": "https://www.healthdata.org/gbd"
+            },
+            {
+                "label": "PEOPLE EXPOSED",
+                "value": "> 90%",
+                "detail": "of global urban population exposed above guidelines",
+                "sourceLabel": "WHO Air Quality Database",
+                "sourceUrl": "https://www.who.int/data/gho/data/themes/air-pollution"
+            },
+            {
+                "label": "WHO GUIDELINE",
+                "value": "45 µg/m³ (24-h)",
+                "detail": "Annual guideline: 15 µg/m³",
+                "sourceLabel": "WHO Global Air Quality Guidelines (2021)",
+                "sourceUrl": "https://www.who.int/publications/i/item/9789240034228"
+            },
+            {
+                "label": "INDIAN NAAQS",
+                "value": "100 µg/m³ (24-h)",
+                "detail": "Annual standard: 60 µg/m³",
+                "sourceLabel": "CPCB National Ambient Air Quality Standards (2009)",
+                "sourceUrl": "https://cpcb.nic.in/air-quality-standard/"
+            }
+        ],
   },
 
   no2: {
@@ -386,6 +450,38 @@ export const POLLUTANT_DOCUMENTARIES = {
       tagline: 'The Combustion Catalyst',
       scaleMicrons: 0.0003,
     },
+        "wmdTagline": "THE COMBUSTION CORRIDOR",
+        "wmdIntro": "Emitted directly from high-temperature vehicle combustion and fossil fuel generation, nitrogen dioxide triggers airway inflammation and acts as the crucial precursor to toxic secondary aerosols.",
+        "globalStats": [
+            {
+                "label": "CHILD ASTHMA CASES",
+                "value": "≈ 1,850,000",
+                "detail": "new pediatric asthma cases annually attributed to NO2",
+                "sourceLabel": "Lancet Planetary Health (2022)",
+                "sourceUrl": "https://www.thelancet.com/journals/lanplh/home"
+            },
+            {
+                "label": "URBAN EXPOSURE",
+                "value": "> 80%",
+                "detail": "of global urban population exposed above WHO limit",
+                "sourceLabel": "Health Effects Institute (2022)",
+                "sourceUrl": "https://www.stateofglobalair.org/"
+            },
+            {
+                "label": "WHO GUIDELINE",
+                "value": "25 µg/m³ (24-h)",
+                "detail": "Annual guideline: 10 µg/m³",
+                "sourceLabel": "WHO Global Air Quality Guidelines (2021)",
+                "sourceUrl": "https://www.who.int/publications/i/item/9789240034228"
+            },
+            {
+                "label": "INDIAN NAAQS",
+                "value": "80 µg/m³ (24-h)",
+                "detail": "Annual standard: 40 µg/m³",
+                "sourceLabel": "CPCB National Ambient Air Quality Standards (2009)",
+                "sourceUrl": "https://cpcb.nic.in/air-quality-standard/"
+            }
+        ],
   },
 
   so2: {
@@ -511,6 +607,38 @@ export const POLLUTANT_DOCUMENTARIES = {
       tagline: 'The Industrial Acid Precursor',
       scaleMicrons: 0.00036,
     },
+        "wmdTagline": "THE ACID PLUME",
+        "wmdIntro": "From thermal power boilers to heavy furnace oil combustion, sulfur dioxide creates acidic atmospheric plumes that corrode pulmonary tissue and accelerate sulfate aerosol formation.",
+        "globalStats": [
+            {
+                "label": "PREMATURE MORTALITY",
+                "value": "≈ 4,200,000",
+                "detail": "premature deaths linked to sulfur-bearing fossil combustion",
+                "sourceLabel": "WHO Ambient Air Pollution Report",
+                "sourceUrl": "https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health"
+            },
+            {
+                "label": "INDUSTRIAL SHARE",
+                "value": "> 70%",
+                "detail": "of global emissions from coal combustion & smelting",
+                "sourceLabel": "UNEP Global Environmental Monitoring",
+                "sourceUrl": "https://www.unep.org/"
+            },
+            {
+                "label": "WHO GUIDELINE",
+                "value": "40 µg/m³ (24-h)",
+                "detail": "Short-term peak risk threshold",
+                "sourceLabel": "WHO Global Air Quality Guidelines (2021)",
+                "sourceUrl": "https://www.who.int/publications/i/item/9789240034228"
+            },
+            {
+                "label": "INDIAN NAAQS",
+                "value": "80 µg/m³ (24-h)",
+                "detail": "Annual standard: 50 µg/m³",
+                "sourceLabel": "CPCB National Ambient Air Quality Standards (2009)",
+                "sourceUrl": "https://cpcb.nic.in/air-quality-standard/"
+            }
+        ],
   },
 
   co: {
@@ -636,6 +764,38 @@ export const POLLUTANT_DOCUMENTARIES = {
       tagline: 'The Silent Hypoxic Gas',
       scaleMicrons: 0.00028,
     },
+        "wmdTagline": "THE OXYGEN ROBBER",
+        "wmdIntro": "An odorless, colorless asphyxiant produced by incomplete engine combustion. Carbon monoxide binds aggressively to blood hemoglobin, displacing essential cellular oxygen transport.",
+        "globalStats": [
+            {
+                "label": "HOSPITALIZATION RISK",
+                "value": "+1.1% per mg/m³",
+                "detail": "increase in cardiovascular emergency admissions",
+                "sourceLabel": "American Heart Association (Circulation)",
+                "sourceUrl": "https://www.ahajournals.org/journal/circ"
+            },
+            {
+                "label": "HOUSEHOLD BURDEN",
+                "value": "≈ 3,200,000",
+                "detail": "deaths from incomplete solid-fuel burning",
+                "sourceLabel": "WHO Household Air Pollution Factsheet",
+                "sourceUrl": "https://www.who.int/news-room/fact-sheets/detail/household-air-pollution-and-health"
+            },
+            {
+                "label": "WHO GUIDELINE",
+                "value": "4 mg/m³ (24-h)",
+                "detail": "15-min guideline: 100 mg/m³",
+                "sourceLabel": "WHO Global Air Quality Guidelines (2021)",
+                "sourceUrl": "https://www.who.int/publications/i/item/9789240034228"
+            },
+            {
+                "label": "INDIAN NAAQS",
+                "value": "2 mg/m³ (8-h)",
+                "detail": "1-hr standard: 4 mg/m³",
+                "sourceLabel": "CPCB National Ambient Air Quality Standards (2009)",
+                "sourceUrl": "https://cpcb.nic.in/air-quality-standard/"
+            }
+        ],
   },
 
   o3: {
@@ -761,6 +921,38 @@ export const POLLUTANT_DOCUMENTARIES = {
       tagline: 'The Photochemical Oxidant',
       scaleMicrons: 0.00038,
     },
+        "wmdTagline": "THE PHOTOCHEMICAL TRAP",
+        "wmdIntro": "Formed not at the tailpipe, but in the troposphere when sunlight cooks volatile organics and NOx. Ground-level ozone burns delicate lung parenchyma and slashes regional agricultural yields.",
+        "globalStats": [
+            {
+                "label": "GLOBAL DEATHS / YEAR",
+                "value": "≈ 365,000",
+                "detail": "chronic respiratory deaths attributed to ozone",
+                "sourceLabel": "Global Burden of Disease & WHO",
+                "sourceUrl": "https://www.healthdata.org/gbd"
+            },
+            {
+                "label": "CROP YIELD LOSS",
+                "value": "7% – 12%",
+                "detail": "loss of global wheat & soybean harvests from O3 exposure",
+                "sourceLabel": "Nature Food & FAO Assessment",
+                "sourceUrl": "https://www.nature.com/natfood/"
+            },
+            {
+                "label": "WHO GUIDELINE",
+                "value": "100 µg/m³ (8-h)",
+                "detail": "Peak season 8-h limit: 60 µg/m³",
+                "sourceLabel": "WHO Global Air Quality Guidelines (2021)",
+                "sourceUrl": "https://www.who.int/publications/i/item/9789240034228"
+            },
+            {
+                "label": "INDIAN NAAQS",
+                "value": "100 µg/m³ (8-h)",
+                "detail": "1-hr standard: 180 µg/m³",
+                "sourceLabel": "CPCB National Ambient Air Quality Standards (2009)",
+                "sourceUrl": "https://cpcb.nic.in/air-quality-standard/"
+            }
+        ],
   },
 
   nh3: {
@@ -886,6 +1078,38 @@ export const POLLUTANT_DOCUMENTARIES = {
       tagline: 'The Alkaline Smog Glue',
       scaleMicrons: 0.00032,
     },
+        "wmdTagline": "THE ALKALINE SMOG GLUE",
+        "wmdIntro": "The elusive catalyst of winter smog. Ammonia from agricultural fertilizers and unsewered urban drains neutralizes acidic gases to form heavy, respirable secondary ammonium aerosol salts.",
+        "globalStats": [
+            {
+                "label": "PM2.5 CONTRIBUTION",
+                "value": "30% – 50%",
+                "detail": "of winter secondary inorganic PM2.5 mass in north India",
+                "sourceLabel": "Atmospheric Environment (2021)",
+                "sourceUrl": "https://www.sciencedirect.com/journal/atmospheric-environment"
+            },
+            {
+                "label": "AGRICULTURE SHARE",
+                "value": "> 80%",
+                "detail": "of atmospheric ammonia comes from fertilizer & livestock",
+                "sourceLabel": "FAO Emissions Database",
+                "sourceUrl": "https://www.fao.org/faostat/"
+            },
+            {
+                "label": "ADVISORY CEILING",
+                "value": "100 µg/m³",
+                "detail": "ecosystem critical level threshold",
+                "sourceLabel": "UNECE Air Convention Guidelines",
+                "sourceUrl": "https://unece.org/environment-policy/air"
+            },
+            {
+                "label": "INDIAN NAAQS",
+                "value": "400 µg/m³ (24-h)",
+                "detail": "Annual standard: 100 µg/m³",
+                "sourceLabel": "CPCB National Ambient Air Quality Standards (2009)",
+                "sourceUrl": "https://cpcb.nic.in/air-quality-standard/"
+            }
+        ],
   },
 };
 

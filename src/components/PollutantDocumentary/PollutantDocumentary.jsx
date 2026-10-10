@@ -19,10 +19,7 @@
  */
 
 import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
-import {
-  POLLUTANT_DOCUMENTARIES,
-  POLLUTANT_DOCUMENTARY_LIST,
-} from '../../data/pollutantDocumentaries.js';
+import { POLLUTANT_DOCUMENTARIES } from '../../data/pollutantDocumentaries.js';
 import { apiFetch } from '../../utils/apiFetch';
 import schoolsDirectory from '../../data/schoolsDirectory.json';
 import {
@@ -36,20 +33,28 @@ import {
   buildSchoolEvidenceWindow,
 } from '../SchoolSafety/schoolSafetyEvidence.js';
 import { setupDocumentaryAnimations } from './documentaryAnimations.js';
-import DocumentaryNav from './DocumentaryNav.jsx';
-import DocumentaryHero from './DocumentaryHero.jsx';
+import WmdGrain from './wmd/WmdGrain.jsx';
+import WmdHeader from './wmd/WmdHeader.jsx';
+import WmdHero from './wmd/WmdHero.jsx';
+import WmdCoverageBand from './wmd/WmdCoverageBand.jsx';
+import WmdDocumentaryStrip from './wmd/WmdDocumentaryStrip.jsx';
+import WmdImpactRow from './wmd/WmdImpactRow.jsx';
+import WmdFooter from './wmd/WmdFooter.jsx';
+import { useReadingHistory } from './wmd/useReadingHistory.js';
 import DocumentaryPinnedStory from './DocumentaryPinnedStory.jsx';
 import DocumentarySection from './DocumentarySection.jsx';
 import DocumentaryImageSection from './DocumentaryImageSection.jsx';
 import DocumentaryDataSection from './DocumentaryDataSection.jsx';
-import DocumentaryFooter from './DocumentaryFooter.jsx';
 import './PollutantDocumentary.css';
+import './wmd/WmdDocumentary.css';
 
 /* ==========================================================================
-   Continuous Delhi CAAQMS Baseline Telemetry Fallback
-   Real CPCB monitoring stations & atmospheric baseline for Delhi airshed.
+   Static Delhi fallback, used only when /api/delhi-heatmap is unreachable.
+   These are fixed reference numbers, not live readings: every consumer must
+   label them as a static fallback (isBaseline) and never as live telemetry.
    ========================================================================== */
 export const DEFAULT_DELHI_BASELINE = {
+  isBaseline: true,
   stations: [
     {
       id: 'anand-vihar',
@@ -65,8 +70,9 @@ export const DEFAULT_DELHI_BASELINE = {
       co: 2.4,
       o3: 42.1,
       nh3: 38.6,
-      source: 'CAAQMS BAM-1020 Continuous',
-      status: 'Active',
+      source: 'Static fallback (not live)',
+      status: 'Static',
+      isBaseline: true,
     },
     {
       id: 'rk-puram',
@@ -82,8 +88,9 @@ export const DEFAULT_DELHI_BASELINE = {
       co: 1.8,
       o3: 38.4,
       nh3: 28.2,
-      source: 'CAAQMS BAM-1020 Continuous',
-      status: 'Active',
+      source: 'Static fallback (not live)',
+      status: 'Static',
+      isBaseline: true,
     },
     {
       id: 'punjabi-bagh',
@@ -99,8 +106,9 @@ export const DEFAULT_DELHI_BASELINE = {
       co: 2.1,
       o3: 40.8,
       nh3: 31.4,
-      source: 'CAAQMS BAM-1020 Continuous',
-      status: 'Active',
+      source: 'Static fallback (not live)',
+      status: 'Static',
+      isBaseline: true,
     },
     {
       id: 'mandir-marg',
@@ -116,8 +124,9 @@ export const DEFAULT_DELHI_BASELINE = {
       co: 1.4,
       o3: 34.2,
       nh3: 24.5,
-      source: 'CAAQMS BAM-1020 Continuous',
-      status: 'Active',
+      source: 'Static fallback (not live)',
+      status: 'Static',
+      isBaseline: true,
     },
   ],
   userEstimate: {
@@ -130,7 +139,7 @@ export const DEFAULT_DELHI_BASELINE = {
     humidity: 64,
     pressure: 1012,
   },
-  lastUpdated: new Date().toISOString(),
+  lastUpdated: null,
 };
 
 /* ==========================================================================
@@ -348,23 +357,40 @@ export default function PollutantDocumentary({
     return stations.length > 0 ? stations[0] : null;
   }, [internalLiveData]);
 
-  // Extract real live reading for this specific pollutant
-  const currentPollutantValue = useMemo(() => {
-    // 1. Check user estimate for PM2.5
-    if (currentPollutantKey === 'pm25' && internalLiveData?.userEstimate?.pm25 != null) {
-      return internalLiveData.userEstimate.pm25;
+  // Current reading for this pollutant, with where it came from. Order: the API's location
+  // estimate (PM2.5 only), then the first returned point, then the static fallback. The
+  // fallback is flagged so the UI never presents it as a live value.
+  const currentReading = useMemo(() => {
+    const dataIsBaseline = Boolean(internalLiveData?.isBaseline);
+    const estimate = internalLiveData?.userEstimate;
+    if (currentPollutantKey === 'pm25' && estimate?.pm25 != null) {
+      return {
+        value: estimate.pm25,
+        isBaseline: dataIsBaseline,
+        label: dataIsBaseline
+          ? 'Static fallback (not live)'
+          : `Model estimate near ${estimate.nearestStation?.name || 'Delhi'}`,
+      };
     }
-    // 2. Check station reading for this pollutant
     if (currentStation?.[currentPollutantKey] != null) {
-      return currentStation[currentPollutantKey];
+      return {
+        value: currentStation[currentPollutantKey],
+        isBaseline: dataIsBaseline || Boolean(currentStation.isBaseline),
+        label: `${currentStation.name} · ${currentStation.source || 'unknown source'}`,
+      };
     }
-    // 3. Fallback to default baseline station reading
     const baselineStation = DEFAULT_DELHI_BASELINE.stations[0];
     if (baselineStation?.[currentPollutantKey] != null) {
-      return baselineStation[currentPollutantKey];
+      return {
+        value: baselineStation[currentPollutantKey],
+        isBaseline: true,
+        label: `${baselineStation.name} · Static fallback (not live)`,
+      };
     }
-    return null;
+    return { value: null, isBaseline: false, label: 'No reading available' };
   }, [currentPollutantKey, internalLiveData, currentStation]);
+
+  const currentPollutantValue = currentReading.value;
 
   // Live environmental weather variables
   const weatherVariables = useMemo(() => {
@@ -460,45 +486,88 @@ export default function PollutantDocumentary({
     [activePollutantId, onSelectPollutant]
   );
 
+  // Dev-only design check: ?ref=1 overlays the reference mock-up (served from docs/ by the
+  // Vite dev server; never part of a production build).
+  const showRefOverlay = import.meta.env.DEV && typeof window !== 'undefined' && (
+    new URLSearchParams(window.location.search).get('ref') === '1'
+  );
+
+  const mapPoints = useMemo(() => internalLiveData?.stations || [], [internalLiveData]);
+  const dataIsBaseline = Boolean(internalLiveData?.isBaseline);
+  // Human-readable provenance of the map points, taken from the data itself.
+  const dataSourceLabel = useMemo(() => {
+    const sources = [...new Set(mapPoints.map((p) => p.source).filter(Boolean))];
+    return sources.length > 0 ? sources.join(' + ') : 'Unknown source';
+  }, [mapPoints]);
+  const readingHistory = useReadingHistory();
+
   return (
     <div
       ref={containerRef}
-      className={`documentary-page cinematic-pollutant-documentary ${cinematicTheme.moodClass}`}
+      className={`wmd-doc documentary-page cinematic-pollutant-documentary ${cinematicTheme.moodClass}`}
       id={`pollutant-documentary-${pollutantData.id}`}
       style={{
-        '--pollutant-accent': cinematicTheme.accent,
-        '--pollutant-glow': cinematicTheme.accentGlow,
-        '--pollutant-ambient': cinematicTheme.ambientColor,
+        // WMD series palette: accents resolve to the page tokens (see WmdDocumentary.css)
+        '--pollutant-accent': 'var(--bone-200)',
+        '--pollutant-glow': 'rgba(216, 207, 185, 0.25)',
+        '--pollutant-ambient': 'rgba(216, 207, 185, 0.06)',
       }}
     >
-      {/* 1. FLOATING COMPACT NAVIGATION BAR */}
-      <DocumentaryNav
-        activePollutantId={pollutantData.id}
-        onBack={onBack}
-        onSelectPollutant={handleSelectAnotherPollutant}
-        currentLocationName={currentStation?.zone || 'Delhi NCR Airshed'}
-      />
+      {/* Dev-only Reference Mockup Comparison Overlay (?documentary=pm25&ref=1) */}
+      {showRefOverlay && (
+        <img
+          src="/docs/reference/pm25-wmd-reference.webp"
+          alt="Reference Mockup Overlay"
+          className="wmd-ref-overlay"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Global Paper / Film Grain Texture Overlay */}
+      <WmdGrain />
+
+      {/* 1. VayuVitals editorial header with logo, nav, and icon buttons */}
+      <WmdHeader onBack={onBack} />
 
       <main className="documentary-main-flow">
-        {/* 2-6. ATMOSPHERIC HERO VIEWPORT WITH CENTRAL GAUGE & DATA BAR */}
-        <DocumentaryHero
+        {/* 2. Atmospheric Editorial Hero (Full Bleed Skyline, Kicker, Title, Tagline, Actions) */}
+        <WmdHero
           pollutantData={pollutantData}
           cinematicTheme={cinematicTheme}
-          environmentData={environmentData}
-          currentValue={currentPollutantValue}
-          currentStation={currentStation}
           weatherVariables={weatherVariables}
+        />
+
+        {/* 3. Global Coverage Parchment Band (d3 Natural Earth Map, Stations, Smokestacks, Topics) */}
+        <WmdCoverageBand
+          stations={mapPoints}
+          dataSourceLabel={dataSourceLabel}
+          isBaseline={dataIsBaseline}
+        />
+
+        {/* 4. All Documentaries Strip (7 Pollutant Dossiers with Number & Symbol) */}
+        <WmdDocumentaryStrip
+          activePollutantId={pollutantData.id}
           onSelectPollutant={handleSelectAnotherPollutant}
         />
 
-        {/* FORGE-INSPIRED PINNED AIRSHED STORY SEQUENCE (SOURCE -> MOVEMENT -> EXPOSURE -> IMPACT) */}
+        {/* 5. Global Impact Row (24-Hour Profile, Spatial Contour Plate, Key Statistics Table) */}
+        <WmdImpactRow
+          pollutantData={pollutantData}
+          currentReading={currentReading}
+          stations={mapPoints}
+          dataSourceLabel={dataSourceLabel}
+          isBaseline={dataIsBaseline}
+          lastUpdated={internalLiveData?.lastUpdated}
+          readingHistory={readingHistory}
+        />
+
+        {/* 6. Authentic Atmospheric Deep-Dive Sections (Kept & Restyled per D4) */}
         <DocumentaryPinnedStory
           pollutantData={pollutantData}
           cinematicTheme={cinematicTheme}
           environmentData={environmentData}
         />
 
-        {/* 7. SPACIOUS EDITORIAL SECTIONS (WHERE IT COMES FROM, WHAT IT DOES, WHY IT MATTERS, SCHOOL SAFETY, 14-DAY ARCHIVE) */}
         <DocumentarySection
           pollutantData={pollutantData}
           cinematicTheme={cinematicTheme}
@@ -510,27 +579,21 @@ export default function PollutantDocumentary({
           dailyEvidenceWindow={dailyEvidenceWindow}
         />
 
-        {/* 8. CINEMATIC INDIAN ENVIRONMENTAL PHOTOGRAPHIC SHOWCASE */}
         <DocumentaryImageSection
           pollutantData={pollutantData}
           cinematicTheme={cinematicTheme}
           environmentData={environmentData}
         />
 
-        {/* 9. SCIENCE & TELEMETRY DATA SECTION (STANDARDS, DIURNAL, CAAQMS RECEPTORS) */}
         <DocumentaryDataSection
           pollutantData={pollutantData}
           currentValue={currentPollutantValue}
           currentStation={currentStation}
-          stationsList={internalLiveData?.stations || []}
+          stationsList={internalLiveData?.stations || DEFAULT_DELHI_BASELINE.stations}
         />
 
-        {/* 10. CLEAN MINIMALIST ENVIRONMENTAL CLOSING & EXPLORATION FOOTER */}
-        <DocumentaryFooter
-          activePollutantId={pollutantData.id}
-          onSelectPollutant={handleSelectAnotherPollutant}
-          onBack={onBack}
-        />
+        {/* 7. VayuVitals editorial closing footer */}
+        <WmdFooter onBack={onBack} />
       </main>
     </div>
   );

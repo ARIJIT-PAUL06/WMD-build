@@ -84,13 +84,13 @@ export default function DocumentaryPinnedStory({
           >
             {pollutantData.symbol}
           </div>
-          <div className="documentary-pinned-ambient-glow" style={{ background: `radial-gradient(ellipse at 50% 60%, ${cinematicTheme.ambientColor || 'rgba(16, 185, 129, 0.12)'} 0%, transparent 70%)` }} />
+          <div className="documentary-pinned-ambient-glow" style={{ background: `radial-gradient(ellipse at 50% 60%, var(--pollutant-ambient) 0%, transparent 70%)` }} />
         </div>
 
         {/* Top Progress Stepper Ribbon */}
         <div className="documentary-pinned-top-ribbon">
           <div className="doc-ribbon-tag">
-            <span className="doc-ribbon-pulse" style={{ backgroundColor: cinematicTheme.accent }} />
+            <span className="doc-ribbon-pulse" style={{ backgroundColor: 'var(--pollutant-accent)' }} />
             <span>CASE DOSSIER // {pollutantData.symbol}</span>
           </div>
 
@@ -135,7 +135,7 @@ export default function DocumentaryPinnedStory({
                 <p className="doc-card-lead">{beat.lead}</p>
 
                 <div className="doc-card-detail-box">
-                  <div className="doc-detail-accent-bar" style={{ backgroundColor: cinematicTheme.accent }} />
+                  <div className="doc-detail-accent-bar" style={{ backgroundColor: 'var(--pollutant-accent)' }} />
                   <p className="doc-detail-text">{beat.detail}</p>
                 </div>
 

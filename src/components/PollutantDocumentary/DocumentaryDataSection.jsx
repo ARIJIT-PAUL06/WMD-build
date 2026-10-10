@@ -7,13 +7,14 @@
  * - CPCB NAAQS Standard vs WHO 2021 Benchmark comparison
  * - Physical scale & aerodynamic particle dimension / molecular properties
  * - 24-Hour diurnal dynamics curve
- * - Active Delhi CAAQMS monitoring network readings
+ * - Delhi monitoring points as returned by the API (labelled with their reported source)
  * - STRICTLY NO dashboard grids, NO technical vehicle cards, NO excessive glass cards
  */
 
 import React, { useMemo } from 'react';
 import { ShieldCheck, AlertCircle, BarChart3, Radio } from 'lucide-react';
 import AnimatedCounter from '../common/AnimatedCounter';
+import { firstSentence } from './documentaryHelpers.js';
 
 export default function DocumentaryDataSection({
   pollutantData,
@@ -80,7 +81,7 @@ export default function DocumentaryDataSection({
               <span className="doc-card-unit">{unit}</span>
             </div>
             <p className="doc-card-note">
-              {currentStation?.name || 'Delhi CAAQMS Monitoring Station'}
+              {currentStation?.name || 'Delhi monitoring network'}
             </p>
           </div>
 
@@ -151,7 +152,7 @@ export default function DocumentaryDataSection({
             </div>
             <p className="doc-scale-prose single-line">
               {sections.section02?.body
-                ? sections.section02.body.split('.')[0] + '.'
+                ? firstSentence(sections.section02.body)
                 : 'Particles ≤ 2.5 µm bypass natural anatomical filters, descending into terminal pulmonary alveoli.'}
             </p>
           </div>
@@ -161,9 +162,9 @@ export default function DocumentaryDataSection({
         {diurnalPoints.length > 0 && (
           <div className="documentary-diurnal-block">
             <div className="doc-block-header">
-              <h3 className="doc-block-title">24-HOUR DIURNAL CONCENTRATION CYCLE</h3>
+              <h3 className="doc-block-title">TYPICAL DAILY PATTERN · ILLUSTRATIVE</h3>
               <span className="doc-block-subtitle">
-                Night inversion traps emissions near the ground; afternoon solar heating expands the boundary layer.
+                Representative values from the documentary data file, not measurements. Night inversion traps emissions near the ground; afternoon solar heating expands the boundary layer.
               </span>
             </div>
 
@@ -197,8 +198,8 @@ export default function DocumentaryDataSection({
               >
                 <defs>
                   <linearGradient id="docDiurnalGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                    <stop offset="0%" stopColor="var(--pollutant-accent)" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="var(--pollutant-accent)" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
                 {(() => {
@@ -220,7 +221,7 @@ export default function DocumentaryDataSection({
                       <path
                         d={pathD}
                         fill="none"
-                        stroke="#10b981"
+                        stroke="var(--pollutant-accent)"
                         strokeWidth="2.5"
                       />
                       {coords.map((c, i) => (
@@ -229,14 +230,14 @@ export default function DocumentaryDataSection({
                             cx={c.x}
                             cy={c.y}
                             r="4"
-                            fill="#ffffff"
-                            stroke="#10b981"
+                            fill="var(--bone-100)"
+                            stroke="var(--pollutant-accent)"
                             strokeWidth="2"
                           />
                           <text
                             x={c.x}
                             y={c.y - 12}
-                            fill="#cbd5e1"
+                            fill="var(--bone-200)"
                             fontSize="11"
                             textAnchor="middle"
                             fontWeight="600"
@@ -259,13 +260,13 @@ export default function DocumentaryDataSection({
           </div>
         )}
 
-        {/* 4. REAL CAAQMS STATIONS GRID */}
+        {/* 4. MONITORING POINTS (labelled with the source each point reports) */}
         {stationsList.length > 0 && (
           <div className="documentary-stations-editorial-block">
             <div className="doc-block-header">
-              <h3 className="doc-block-title">CAAQMS REGIONAL GROUND STATIONS</h3>
+              <h3 className="doc-block-title">MONITORING POINTS</h3>
               <span className="doc-block-subtitle">
-                Continuous Beta Attenuation Monitors & Spectrometry across Delhi NCR
+                {[...new Set(stationsList.map((st) => st.source).filter(Boolean))].join(' + ') || 'Source not reported'}
               </span>
             </div>
 
@@ -277,7 +278,7 @@ export default function DocumentaryDataSection({
                   <div className="doc-st-value-row">
                     <span className="doc-st-num">
                       {(() => {
-                        const val = st[pollutantData.id] ?? st.pm25;
+                        const val = st[pollutantData.id];
                         return typeof val === 'number' ? (
                           <AnimatedCounter value={Math.round(val)} />
                         ) : (
@@ -287,7 +288,9 @@ export default function DocumentaryDataSection({
                     </span>
                     <span className="doc-st-unit">{unit}</span>
                   </div>
-                  <div className="doc-st-badge">VERIFIED SENSOR</div>
+                  <div className="doc-st-badge">
+                    {st.isBaseline ? 'STATIC FALLBACK' : /model/i.test(st.source || '') ? 'MODEL VALUE' : 'REPORTED VALUE'}
+                  </div>
                 </div>
               ))}
             </div>

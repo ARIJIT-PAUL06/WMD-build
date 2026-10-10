@@ -15,7 +15,7 @@
 
 import React, { useMemo } from 'react';
 import { Layers, Activity, AlertTriangle, Wind, Info, AlertCircle, ArrowRight, ShieldCheck, HeartPulse, CheckCircle2, Calendar } from 'lucide-react';
-import { POLLUTANT_SYNTHESIS_FLOWS } from './documentaryHelpers.js';
+import { POLLUTANT_SYNTHESIS_FLOWS, firstSentence } from './documentaryHelpers.js';
 import PhysiologicalImpactMatrix from '../common/PhysiologicalImpactMatrix';
 import ConnectedProcessFlow from '../common/ConnectedProcessFlow';
 import ComparisonSplitPanel from '../common/ComparisonSplitPanel';
@@ -150,8 +150,8 @@ export default function DocumentarySection({
           <div className="documentary-prose-editorial-block">
             <p className="documentary-editorial-body single-line">
               {sections.section01?.body
-                ? sections.section01.body.split('.')[0] + '.'
-                : pollutantData.whatIsIt.split('.')[0] + '.'}
+                ? firstSentence(sections.section01.body)
+                : firstSentence(pollutantData.whatIsIt)}
             </p>
           </div>
         </div>
@@ -207,7 +207,7 @@ export default function DocumentarySection({
 
             <p className="doc-scale-footer-prose single-line">
               {sections.section02?.body
-                ? sections.section02.body.split('.')[0] + '.'
+                ? firstSentence(sections.section02.body)
                 : 'Particles ≤ 2.5 µm bypass natural anatomical filters, descending into terminal pulmonary alveoli.'}
             </p>
           </div>
@@ -252,7 +252,7 @@ export default function DocumentarySection({
                       <h3 className="doc-card-category">{src.category}</h3>
                     </div>
                     <p className="doc-card-body">
-                      {src.description.split('.')[0] + '.'}
+                      {firstSentence(src.description)}
                     </p>
                     <div className="documentary-source-card-footer">
                       <span className="doc-card-tag">AIRSHED VECTOR</span>
@@ -267,7 +267,7 @@ export default function DocumentarySection({
                   <span>ATMOSPHERIC BEHAVIOR IN DELHI BASIN</span>
                 </div>
                 <p className="doc-behavior-text">
-                  {pollutantData.atmosphericBehavior.split('.')[0] + '.'}
+                  {firstSentence(pollutantData.atmosphericBehavior)}
                 </p>
                 <div className="doc-behavior-chips">
                   <span className="doc-behavior-chip">INVERSION: &lt; 150m</span>
@@ -288,7 +288,7 @@ export default function DocumentarySection({
                   <span className="doc-card-unit">{unit}</span>
                 </div>
                 <p className="doc-card-note">
-                  {currentStation?.name || 'Delhi CAAQMS Network Telemetry'}
+                  {currentStation?.name || 'Delhi monitoring network'}
                 </p>
               </div>
 
@@ -333,7 +333,7 @@ export default function DocumentarySection({
             whoValue={pollutantData.whoLimit || 15}
             unit={unit}
             pollutantName={pollutantData.name}
-            stationName={currentStation?.name || 'Delhi CAAQMS Ground Network'}
+            stationName={currentStation?.name || 'Delhi monitoring network'}
           />
         </div>
       </section>
@@ -364,7 +364,7 @@ export default function DocumentarySection({
             stages={stages}
             title="ATMOSPHERIC TRANSPORT PIPELINE"
             subtitle="The physical journey from initial injection to human exposure"
-            accentColor={cinematicTheme?.accentColor || '#10b981'}
+            accentColor="var(--pollutant-accent)"
           />
 
           {stages.length > 0 && (
@@ -373,7 +373,7 @@ export default function DocumentarySection({
                 <div key={stg.step} className="documentary-flow-card">
                   <div className="doc-flow-step-num">{stg.step}</div>
                   <h3 className="doc-flow-stage-title">{stg.stage}</h3>
-                  <p className="doc-flow-detail">{stg.detail.split('.')[0] + '.'}</p>
+                  <p className="doc-flow-detail">{firstSentence(stg.detail)}</p>
                 </div>
               ))}
             </div>
@@ -437,7 +437,7 @@ export default function DocumentarySection({
           <PhysiologicalImpactMatrix
             pollutantId={pollutantData.id}
             pollutantName={pollutantData.name}
-            accentColor={cinematicTheme?.accentColor || '#ef4444'}
+            accentColor="var(--pollutant-accent)"
           />
 
           {/* Physiological Health Points */}
@@ -445,14 +445,14 @@ export default function DocumentarySection({
             {impactPoints.map((pt, idx) => (
               <div key={idx} className="documentary-impact-card">
                 <span className="doc-impact-idx">0{idx + 1}</span>
-                <p className="doc-impact-text">{pt.split('.')[0] + '.'}</p>
+                <p className="doc-impact-text">{firstSentence(pt)}</p>
               </div>
             ))}
           </div>
 
           <div className="documentary-impact-prose-block">
             <p className="doc-impact-prose single-line">
-              {pollutantData.whyItMatters ? pollutantData.whyItMatters.split('.')[0] + '.' : 'Cumulative exposure imposes continuous physiological strain on developing pediatric lung tissue.'}
+              {pollutantData.whyItMatters ? firstSentence(pollutantData.whyItMatters) : 'Cumulative exposure imposes continuous physiological strain on developing pediatric lung tissue.'}
             </p>
           </div>
         </div>
@@ -559,7 +559,7 @@ export default function DocumentarySection({
                 "{sections.section08.statement}"
               </blockquote>
               <p className="doc-takeaway-subtext">
-                {sections.section08.subtext ? sections.section08.subtext.split('.')[0] + '.' : 'Every breath in an elevated basin carries empirical evidence demanding civic stewardship.'}
+                {sections.section08.subtext ? firstSentence(sections.section08.subtext) : 'Every breath in an elevated basin carries empirical evidence demanding civic stewardship.'}
               </p>
             </div>
           )}
