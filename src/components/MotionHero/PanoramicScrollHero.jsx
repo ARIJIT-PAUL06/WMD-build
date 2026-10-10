@@ -1,19 +1,26 @@
 import React, { useRef, useState, useEffect } from 'react';
+import {
+  Home,
+  MapPin,
+  Wind,
+  BarChart3,
+  Info
+} from 'lucide-react';
 import CrtScreenLensCanvas from './CrtScreenLensCanvas';
 import './PanoramicScrollHero.css';
 
 /**
  * Continuous smooth color transition for VAYUVITALS brand text and ambient field
- * Left (pollution red: 248, 113, 113) -> Mid (amber: 251, 191, 36) -> Right (clean green: 52, 211, 153)
+ * Left (amber: 245, 158, 11) -> Mid (golden: 251, 191, 36) -> Right (clean green: 52, 211, 153)
  */
 function getBrandTheme(progress) {
   const p = Math.max(0, Math.min(1, progress));
   let r, g, b;
   if (p <= 0.5) {
     const t = p / 0.5;
-    r = Math.round(248 + (251 - 248) * t);
-    g = Math.round(113 + (191 - 113) * t);
-    b = Math.round(113 + (36 - 113) * t);
+    r = Math.round(245 + (251 - 245) * t);
+    g = Math.round(158 + (191 - 158) * t);
+    b = Math.round(11 + (36 - 11) * t);
   } else {
     const t = (p - 0.5) / 0.5;
     r = Math.round(251 + (52 - 251) * t);
@@ -55,6 +62,27 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
 
   // Low-frequency phase state: only re-renders when crossing the 0.68 threshold for the CTA button overlay
   const [isRightPhase, setIsRightPhase] = useState(false);
+  const [activeNav, setActiveNav] = useState('home');
+
+  const handleNavClick = (id) => {
+    setActiveNav(id);
+    if (id === 'home') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (id === 'map') {
+      if (onExploreTwin) onExploreTwin();
+      else {
+        const el = document.getElementById('heatmap') || document.querySelector('[data-section="heatmap"]');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else if (id === 'pollutants') {
+      const el = document.getElementById('atmospheric-cargo-section') || document.getElementById('atmospheric-cargo-placeholder');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } else if (id === 'statistics') {
+      // route placeholder
+    } else if (id === 'about') {
+      // route placeholder
+    }
+  };
 
   // Direct DOM style calibration on scroll without triggering React state updates
   const updateBrandStyles = (progress) => {
@@ -292,7 +320,62 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
         />
 
         {/* ============================================================== */}
-        {/* TOP BRAND DISPLAY (Clean, Modern, Uncluttered)                */}
+        {/* LEFT VERTICAL NAVIGATION SIDEBAR                               */}
+        {/* ============================================================== */}
+        <aside className="hero-left-sidebar" aria-label="Primary Navigation">
+          <button
+            type="button"
+            className={`hero-nav-item ${activeNav === 'home' ? 'active' : ''}`}
+            onClick={() => handleNavClick('home')}
+            aria-label="Home"
+          >
+            <Home size={19} className="hero-nav-icon" />
+            <span className="hero-nav-label">Home</span>
+          </button>
+
+          <button
+            type="button"
+            className={`hero-nav-item ${activeNav === 'map' ? 'active' : ''}`}
+            onClick={() => handleNavClick('map')}
+            aria-label="Live AQI Map"
+          >
+            <MapPin size={19} className="hero-nav-icon" />
+            <span className="hero-nav-label">Live AQI Map</span>
+          </button>
+
+          <button
+            type="button"
+            className={`hero-nav-item ${activeNav === 'pollutants' ? 'active' : ''}`}
+            onClick={() => handleNavClick('pollutants')}
+            aria-label="Pollutants"
+          >
+            <Wind size={19} className="hero-nav-icon" />
+            <span className="hero-nav-label">Pollutants</span>
+          </button>
+
+          <button
+            type="button"
+            className={`hero-nav-item ${activeNav === 'statistics' ? 'active' : ''}`}
+            onClick={() => handleNavClick('statistics')}
+            aria-label="Statistics"
+          >
+            <BarChart3 size={19} className="hero-nav-icon" />
+            <span className="hero-nav-label">Statistics</span>
+          </button>
+
+          <button
+            type="button"
+            className={`hero-nav-item ${activeNav === 'about' ? 'active' : ''}`}
+            onClick={() => handleNavClick('about')}
+            aria-label="About"
+          >
+            <Info size={19} className="hero-nav-icon" />
+            <span className="hero-nav-label">About</span>
+          </button>
+        </aside>
+
+        {/* ============================================================== */}
+        {/* TOP BRAND DISPLAY (Clean, Modern, Warm Amber)                 */}
         {/* ============================================================== */}
         <div className="hero-top-hud">
           <div className="hero-hud-brand">
@@ -304,8 +387,8 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
                 fontSize: '1.45rem',
                 letterSpacing: '0.15em',
                 textTransform: 'uppercase',
-                color: '#f87171',
-                textShadow: '0 0 16px rgba(248, 113, 113, 0.65), 0 0 32px rgba(248, 113, 113, 0.25)',
+                color: '#f59e0b',
+                textShadow: '0 0 16px rgba(245, 158, 11, 0.65), 0 0 32px rgba(245, 158, 11, 0.25)',
                 transition: 'color 0.15s ease, text-shadow 0.15s ease',
               }}
             >
@@ -313,6 +396,9 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             </span>
           </div>
         </div>
+
+        {/* Luminous Curved CRT Screen Top Glare Tube */}
+        <div className="hero-crt-top-tube" aria-hidden="true" />
       </div>
     </div>
   );

@@ -321,7 +321,7 @@ export default function CrtScreenLensCanvas({
       curY += badgeFont + (isMobile ? 8 : 14);
 
       // Row 2: The Striking Line (Dynamic headline with RGB chromatic convergence glitch filter)
-      const fontSize = cardW < 360 ? 15 : cardW < 460 ? 18 : cardW < 600 ? 21 : 32;
+      const fontSize = cardW < 360 ? 13 : cardW < 460 ? 15 : 17;
       const lineHeight = fontSize + (isMobile ? 4 : 6);
       ctx.font = `800 ${fontSize}px "Share Tech Mono", "JetBrains Mono", monospace`;
 
@@ -498,12 +498,12 @@ export default function CrtScreenLensCanvas({
       textCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       // Strictly equal dimensions for Template 1, Template 2, and Template 3
-      const isMobile = width < 600;
-      const cardW = Math.min(560, width * (isMobile ? 0.92 : 0.88));
-      const cardH = isMobile ? 225 : 250;
+      const isMobile = width < 768;
+      const cardW = isMobile ? Math.min(width * 0.92, 440) : 510;
+      const cardH = isMobile ? 210 : 225;
 
       // Common vertical levels for symmetrical opposite motion
-      const restingY = height * (isMobile ? 0.38 : 0.44);
+      const restingY = height * (isMobile ? 0.42 : 0.47);
       const bottomOffscreenY = height * 1.08;
       const travelDist = bottomOffscreenY - restingY;
 
@@ -513,7 +513,7 @@ export default function CrtScreenLensCanvas({
       // ==============================================================
       const p1Drop = smooth(0.00, 0.20, scroll);
       const y1 = restingY + p1Drop * travelDist;
-      const x1 = isMobile ? (width - cardW) / 2 : (width * 0.08 - scroll * width * 0.35);
+      const x1 = isMobile ? (width - cardW) / 2 : (Math.max(235, width * 0.16) - scroll * width * 0.35);
       const op1 = Math.max(0, 1.0 - smooth(0.06, 0.20, scroll));
 
       drawAncientGlitchCard(textCtx, {

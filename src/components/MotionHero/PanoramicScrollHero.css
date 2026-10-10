@@ -119,13 +119,106 @@
 /* 5. Minimalist Floating Telemetry HUD Capsule */
 .hero-top-hud {
   position: absolute;
-  top: 24px;
-  left: 28px;
+  top: 26px;
+  left: 220px;
   z-index: 30;
   display: flex;
   align-items: center;
   gap: 14px;
   pointer-events: auto;
+}
+
+/* ============================================================== */
+/* AUTHENTIC FROSTED GLASS LEFT SIDEBAR NAVIGATION                */
+/* ============================================================== */
+.hero-left-sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 195px;
+  z-index: 28;
+  display: flex;
+  flex-direction: column;
+  padding-top: 110px;
+  padding-bottom: 32px;
+  padding-left: 14px;
+  padding-right: 14px;
+  gap: 18px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(90deg, rgba(7, 10, 18, 0.55) 0%, rgba(7, 10, 18, 0.20) 85%, transparent 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  pointer-events: auto;
+}
+
+.hero-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #cbd5e1;
+  font-family: var(--font-heading, 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif);
+  font-size: 0.88rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+  user-select: none;
+}
+
+.hero-nav-item:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+.hero-nav-item.active {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.hero-nav-icon {
+  flex-shrink: 0;
+  opacity: 0.82;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.hero-nav-item:hover .hero-nav-icon,
+.hero-nav-item.active .hero-nav-icon {
+  opacity: 1;
+}
+
+/* ============================================================== */
+/* LUMINOUS CURVED CRT SCREEN TOP TUBE HIGHLIGHT                  */
+/* ============================================================== */
+.hero-crt-top-tube {
+  position: absolute;
+  top: 13.5vh;
+  left: calc(50% + 40px);
+  transform: translateX(-50%);
+  width: min(1040px, 76vw);
+  height: 5px;
+  border-radius: 50% 50% 0 0 / 6px 6px 0 0;
+  background: #ffffff;
+  box-shadow: 
+    0 0 10px #ffffff,
+    0 0 22px rgba(255, 255, 255, 0.95),
+    0 0 45px rgba(56, 189, 248, 0.75),
+    0 -3px 8px rgba(239, 68, 68, 0.65),
+    0 3px 8px rgba(34, 211, 238, 0.75);
+  pointer-events: none;
+  z-index: 24;
+  opacity: 0.92;
 }
 
 .hero-hud-brand {
@@ -380,6 +473,21 @@
 }
 
 /* Mobile Responsive Optimizations */
+@media (max-width: 900px) {
+  .hero-left-sidebar {
+    display: none;
+  }
+
+  .hero-top-hud {
+    left: 20px;
+    top: 18px;
+  }
+
+  .hero-crt-top-tube {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .hero-top-hud {
     top: 14px;
@@ -400,4 +508,5 @@
     box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
   }
 }
+
 

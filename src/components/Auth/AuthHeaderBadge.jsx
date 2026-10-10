@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, User, LogOut, LogIn, School } from 'lucide-react';
+import { User, LogOut, LogIn, School } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function AuthHeaderBadge() {
@@ -30,10 +30,11 @@ export default function AuthHeaderBadge() {
           gap: '10px',
           background: 'rgba(15, 23, 42, 0.8)',
           border: '1px solid rgba(255, 255, 255, 0.12)',
-          borderRadius: '9999px',
-          padding: '4px 6px 4px 12px',
-          backdropFilter: 'blur(8px)',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+          borderRadius: '12px',
+          padding: '6px 8px 6px 14px',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          boxShadow: '0 4px 18px rgba(0, 0, 0, 0.28)'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -92,63 +93,45 @@ export default function AuthHeaderBadge() {
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
       <button
+        type="button"
         onClick={() => openAuthModal('signIn')}
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '6px',
-          padding: '6px 14px',
-          borderRadius: '9999px',
-          background: 'rgba(15, 23, 42, 0.75)',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-          color: '#e2e8f0',
-          fontSize: '0.78rem',
-          fontWeight: 600,
+          gap: '8px',
+          padding: '9px 16px',
+          borderRadius: '12px',
+          background: 'rgba(255, 255, 255, 0.08)',
+          border: '1px solid rgba(255, 255, 255, 0.16)',
+          color: '#cbd5e1',
+          fontFamily: "var(--font-heading, 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif)",
+          fontSize: '0.86rem',
+          fontWeight: 500,
+          letterSpacing: '-0.01em',
           cursor: 'pointer',
-          backdropFilter: 'blur(8px)',
-          transition: 'all 0.2s'
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
+          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+          userSelect: 'none',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = '#38bdf8';
-          e.currentTarget.style.color = '#38bdf8';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-          e.currentTarget.style.color = '#e2e8f0';
-        }}
-      >
-        <LogIn size={13} />
-        <span>Sign In</span>
-      </button>
-
-      <button
-        onClick={() => openAuthModal('signUp')}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '6px 14px',
-          borderRadius: '9999px',
-          background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-          border: 'none',
-          color: '#ffffff',
-          fontSize: '0.78rem',
-          fontWeight: 700,
-          cursor: 'pointer',
-          boxShadow: '0 2px 10px rgba(2, 132, 199, 0.3)',
-          transition: 'all 0.2s'
-        }}
-        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.14)';
+          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.28)';
+          e.currentTarget.style.color = '#ffffff';
           e.currentTarget.style.transform = 'translateY(-1px)';
         }}
         onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.16)';
+          e.currentTarget.style.color = '#cbd5e1';
           e.currentTarget.style.transform = 'translateY(0)';
         }}
       >
-        <Shield size={13} />
-        <span>Sign Up</span>
+        <LogIn size={15} style={{ opacity: 0.85 }} />
+        <span>Sign In</span>
       </button>
     </div>
   );
