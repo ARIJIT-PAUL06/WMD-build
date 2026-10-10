@@ -1,0 +1,927 @@
+/**
+ * StatsPage.css
+ * VayuVitals - Monochromatic Scientific Visualization Experience
+ * Inspired by atmospheric research instrument telemetry & particle wave topography.
+ *
+ * Strict Visual Rules:
+ * - 100% Monochromatic: Pure black (#000000), luminous white (#ffffff), silver (#cbd5e1), muted gray (#666666)
+ * - Space Grotesk for bold editorial headers, IBM Plex Mono for technical instrumentation telemetry
+ * - Hairline grid lines (0.75px - 1px) and precision crosshairs (+)
+ * - High contrast, generous negative space, desktop-first adapting gracefully to mobile
+ */
+
+/* ==========================================================================
+   1. ROOT PAGE CONTAINER & ATMOSPHERE
+   ========================================================================== */
+.stats-page {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #000000;
+  color: #ffffff;
+  --stats-font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --stats-font-body: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --stats-font-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  font-family: var(--stats-font-body);
+  overflow-x: hidden;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.stats-page *,
+.stats-page *::before,
+.stats-page *::after {
+  box-sizing: border-box;
+}
+
+/* Fine Laboratory Coordinate Grid Background */
+.stats-laboratory-grid-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 80px 80px;
+}
+
+/* ==========================================================================
+   2. REUSABLE TOP-LEFT CIRCULAR BACK BUTTON
+   ========================================================================== */
+.stats-back-button-root {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  z-index: 150;
+}
+
+.stats-back-button {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(10, 10, 10, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.stats-back-button:hover {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+}
+
+.stats-back-button:active {
+  transform: scale(0.96);
+}
+
+.stats-back-icon {
+  width: 17px;
+  height: 17px;
+  stroke-width: 2.2;
+  transition: transform 0.25s ease;
+}
+
+.stats-back-button:hover .stats-back-icon {
+  transform: translateX(-2px);
+}
+
+.stats-back-tooltip {
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-6px);
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f1f5f9;
+  font-family: var(--stats-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  padding: 5px 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+}
+
+.stats-back-button-root:hover .stats-back-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* ==========================================================================
+   3. TOP HUD & TELEMETRY STRIP (INSPIRED BY REFERENCE)
+   ========================================================================== */
+.stats-top-hud {
+  position: fixed;
+  top: 24px;
+  right: 28px;
+  z-index: 140;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.stats-hud-code {
+  font-family: var(--stats-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  color: #888888;
+}
+
+.stats-hud-badge {
+  font-family: var(--stats-font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   4. MAIN CONTENT WRAPPER
+   ========================================================================== */
+.stats-content-wrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+}
+
+/* ==========================================================================
+   5. SECTION 01: HERO — MODEL PERFORMANCE
+   ========================================================================== */
+.stats-hero-section {
+  position: relative;
+  width: 100%;
+  padding: 110px 8vw 60px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stats-instrument-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  gap: 24px;
+}
+
+.stats-telemetry-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 900px;
+}
+
+.stats-inst-id {
+  font-family: var(--stats-font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  color: #888888;
+  text-transform: uppercase;
+}
+
+.stats-inst-name {
+  font-family: var(--stats-font-display);
+  font-size: clamp(2.2rem, 4.4vw, 3.8rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  color: #ffffff;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.stats-inst-ref-tag {
+  font-family: var(--stats-font-mono);
+  font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  white-space: nowrap;
+}
+
+/* Frame around 3D Particle Mountain */
+.stats-terrain-frame {
+  position: relative;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: radial-gradient(circle at 50% 70%, rgba(20, 20, 20, 0.6) 0%, rgba(0, 0, 0, 0.98) 100%);
+  overflow: hidden;
+}
+
+/* Precision Crosshairs in Frame Corners */
+.stats-frame-crosshair {
+  position: absolute;
+  font-family: var(--stats-font-mono);
+  font-size: 14px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+  z-index: 20;
+}
+
+.crosshair-tl { top: 12px; left: 14px; }
+.crosshair-tr { top: 12px; right: 14px; }
+.crosshair-bl { bottom: 12px; left: 14px; }
+.crosshair-br { bottom: 12px; right: 14px; }
+
+/* Metrics Overlay Strip */
+.stats-hero-metrics-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stats-metric-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(12, 12, 12, 0.5);
+  border-radius: 2px;
+  transition: all 0.25s ease;
+}
+
+.stats-metric-cell:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(22, 22, 22, 0.85);
+  transform: translateY(-2px);
+}
+
+.stats-metric-label {
+  font-family: var(--stats-font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #777777;
+}
+
+.stats-metric-value {
+  font-family: var(--stats-font-display);
+  font-size: clamp(1.8rem, 3.2vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.stats-metric-sub {
+  font-family: var(--stats-font-mono);
+  font-size: 0.7rem;
+  color: #888888;
+}
+
+.stats-regression-note {
+  grid-column: 1 / -1;
+  font-family: var(--stats-font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: #666666;
+  text-transform: uppercase;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+/* ==========================================================================
+   6. COMMON SECTION HEADERS & FILTER CONTROLS
+   ========================================================================== */
+.stats-section {
+  position: relative;
+  width: 100%;
+  padding: 130px 8vw;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stats-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.stats-section-tag {
+  font-family: var(--stats-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #888888;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.stats-section-headline {
+  font-family: var(--stats-font-display);
+  font-size: clamp(2.4rem, 5vw, 4.2rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin: 0;
+}
+
+.stats-section-coord {
+  font-family: var(--stats-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  color: #666666;
+}
+
+/* Interactive Filter Pill Group */
+.stats-filter-controls-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.stats-filter-pill-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(18, 18, 18, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  padding: 4px;
+}
+
+.stats-filter-pill {
+  position: relative;
+  background: transparent;
+  border: none;
+  color: #888888;
+  font-family: var(--stats-font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  outline: none;
+}
+
+.stats-filter-pill:hover {
+  color: #ffffff;
+}
+
+.stats-filter-pill.active {
+  color: #000000 !important;
+  font-weight: 700;
+}
+
+.stats-filter-pill-bg {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  border-radius: 9999px;
+  z-index: 0;
+}
+
+.stats-filter-pill span {
+  position: relative;
+  z-index: 1;
+}
+
+.stats-filter-caption {
+  font-family: var(--stats-font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: #777777;
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   7. SECTION 02: DATASET VISUALIZATION
+   ========================================================================== */
+.stats-dataset-canvas-wrap {
+  position: relative;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: radial-gradient(circle at 50% 50%, rgba(15, 15, 15, 0.5) 0%, rgba(0, 0, 0, 0.98) 100%);
+  margin-bottom: 36px;
+  overflow: hidden;
+}
+
+.stats-dataset-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stats-dset-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stats-dset-label {
+  font-family: var(--stats-font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #777777;
+}
+
+.stats-dset-val {
+  font-family: var(--stats-font-display);
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.stats-dset-detail {
+  font-family: var(--stats-font-mono);
+  font-size: 0.72rem;
+  color: #888888;
+}
+
+/* ==========================================================================
+   8. SECTION 03: MODEL EVALUATION (PLOTS)
+   ========================================================================== */
+.stats-eval-grid,
+.stats-eval-plots-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 36px;
+  width: 100%;
+}
+
+.stats-span-full {
+  grid-column: 1 / -1;
+}
+
+.stats-plot-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(8, 8, 8, 0.75);
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+}
+
+.stats-plot-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stats-plot-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stats-plot-tag {
+  font-family: var(--stats-font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  color: #888888;
+  text-transform: uppercase;
+}
+
+.stats-plot-coord {
+  font-family: var(--stats-font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: #555555;
+}
+
+.stats-plot-headline {
+  font-family: var(--stats-font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.stats-plot-sub {
+  font-family: var(--stats-font-body);
+  font-size: 0.85rem;
+  color: #888888;
+  margin: 0;
+}
+
+.stats-svg-plot-wrap {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #000000;
+}
+
+.stats-needle-svg,
+.stats-scatter-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Floating Precision Tooltip */
+.stats-plot-floating-tooltip {
+  position: absolute;
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 8px 12px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9);
+  font-family: var(--stats-font-mono);
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.stats-plot-floating-tooltip .tooltip-title {
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.stats-plot-floating-tooltip .tooltip-stat {
+  color: #cbd5e1;
+}
+
+.stats-plot-floating-tooltip .tooltip-note {
+  color: #666666;
+  font-size: 0.62rem;
+}
+
+.stats-plot-meta-row {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--stats-font-mono);
+  font-size: 0.74rem;
+  color: #888888;
+}
+
+.stats-plot-kpi strong {
+  color: #ffffff;
+}
+
+/* Feature Importance Horizontal Matrix */
+.stats-features-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.stats-feature-row {
+  display: grid;
+  grid-template-columns: 220px 1fr 140px;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--stats-font-mono);
+  font-size: 0.74rem;
+  padding: 4px 6px;
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+.stats-feature-row.active {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.stats-feature-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stats-feature-idx {
+  color: #555555;
+}
+
+.stats-feature-name {
+  color: #ffffff;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.stats-feature-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.stats-feature-bar-fill {
+  height: 100%;
+  background: #ffffff;
+}
+
+.stats-feature-splits {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.stats-feature-pct {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.stats-feature-count {
+  color: #666666;
+  font-size: 0.68rem;
+}
+
+/* Cascading Horizons Table */
+.stats-horizons-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.stats-horizons-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--stats-font-mono);
+  font-size: 0.76rem;
+  text-align: left;
+}
+
+.stats-horizons-table th {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  color: #888888;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+
+.stats-horizons-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: #cccccc;
+  transition: background 0.15s ease;
+}
+
+.stats-tr-selected {
+  background: rgba(255, 255, 255, 0.09) !important;
+}
+
+.stats-tr-selected td {
+  color: #ffffff !important;
+}
+
+.stats-td-mono {
+  font-family: var(--stats-font-mono);
+}
+
+.stats-td-highlight {
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   9. SECTION 04: DATA DISTRIBUTION
+   ========================================================================== */
+.stats-dist-canvas-wrap {
+  position: relative;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #000000;
+  margin-bottom: 24px;
+}
+
+.stats-dist-legend {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--stats-font-mono);
+  font-size: 0.72rem;
+  color: #777777;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ==========================================================================
+   10. SECTION 05: TECHNICAL TRANSPARENCY & FOOTER
+   ========================================================================== */
+.stats-transparency-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.stats-transparency-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 10, 10, 0.6);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stats-transparency-tag {
+  font-family: var(--stats-font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  color: #777777;
+  text-transform: uppercase;
+}
+
+.stats-transparency-title {
+  font-family: var(--stats-font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.stats-transparency-body {
+  font-family: var(--stats-font-mono);
+  font-size: 0.74rem;
+  color: #999999;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.stats-footer-section {
+  position: relative;
+  width: 100%;
+  padding: 80px 8vw 60px;
+  background: #000000;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.stats-footer-metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 28px;
+}
+
+.stats-footer-meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stats-footer-meta-label {
+  font-family: var(--stats-font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #666666;
+}
+
+.stats-footer-meta-val {
+  font-family: var(--stats-font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.stats-footer-meta-sub {
+  font-family: var(--stats-font-mono);
+  font-size: 0.7rem;
+  color: #888888;
+}
+
+.stats-footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--stats-font-mono);
+  font-size: 0.72rem;
+  color: #555555;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.stats-footer-brand {
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+/* ==========================================================================
+   11. RESPONSIVE ADAPTATIONS
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .stats-hero-metrics-strip {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .stats-dataset-meta-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stats-eval-grid,
+  .stats-eval-plots-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-transparency-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-footer-metadata-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stats-feature-row {
+    grid-template-columns: 160px 1fr 100px;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-hero-section {
+    padding: 90px 6vw 50px;
+  }
+
+  .stats-section {
+    padding: 80px 6vw;
+  }
+
+  .stats-hero-metrics-strip {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .stats-dataset-meta-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .stats-footer-metadata-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .stats-feature-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .stats-feature-splits {
+    justify-content: flex-start;
+  }
+
+  .stats-top-hud {
+    display: none;
+  }
+
+  .stats-back-button-root {
+    top: 16px;
+    left: 16px;
+  }
+
+  .stats-back-button {
+    width: 38px;
+    height: 38px;
+  }
+}

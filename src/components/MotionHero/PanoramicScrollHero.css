@@ -247,28 +247,6 @@
   transform: translateY(-50%) translateX(0);
 }
 
-/* ============================================================== */
-/* LUMINOUS CURVED CRT SCREEN TOP TUBE HIGHLIGHT                  */
-/* ============================================================== */
-.hero-crt-top-tube {
-  position: absolute;
-  top: 13.5vh;
-  left: calc(50% + 40px);
-  transform: translateX(-50%);
-  width: min(1040px, 76vw);
-  height: 5px;
-  border-radius: 50% 50% 0 0 / 6px 6px 0 0;
-  background: #ffffff;
-  box-shadow: 
-    0 0 10px #ffffff,
-    0 0 22px rgba(255, 255, 255, 0.95),
-    0 0 45px rgba(56, 189, 248, 0.75),
-    0 -3px 8px rgba(239, 68, 68, 0.65),
-    0 3px 8px rgba(34, 211, 238, 0.75);
-  pointer-events: none;
-  z-index: 24;
-  opacity: 0.92;
-}
 
 .hero-hud-brand {
   font-family: var(--font-heading, 'Outfit', sans-serif);
@@ -279,6 +257,43 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.hero-about-link-btn {
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  padding: 5px 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hero-about-link-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.hero-about-link-btn:active {
+  transform: translateY(0);
+}
+
+.hero-about-link-btn:focus-visible {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35);
 }
 
 .hero-hud-pill {
