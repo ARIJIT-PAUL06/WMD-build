@@ -513,7 +513,7 @@ export default function CrtScreenLensCanvas({
       // ==============================================================
       const p1Drop = smooth(0.00, 0.20, scroll);
       const y1 = restingY + p1Drop * travelDist;
-      const x1 = isMobile ? (width - cardW) / 2 : (Math.max(235, width * 0.16) - scroll * width * 0.35);
+      const x1 = isMobile ? (width - cardW) / 2 : (Math.max(200, width * 0.14) - scroll * width * 0.35);
       const op1 = Math.max(0, 1.0 - smooth(0.06, 0.20, scroll));
 
       drawAncientGlitchCard(textCtx, {

@@ -330,7 +330,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             aria-label="Home"
           >
             <Home size={19} className="hero-nav-icon" />
-            <span className="hero-nav-label">Home</span>
+            <span className="hero-nav-tooltip" role="tooltip">Home</span>
           </button>
 
           <button
@@ -340,7 +340,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             aria-label="Live AQI Map"
           >
             <MapPin size={19} className="hero-nav-icon" />
-            <span className="hero-nav-label">Live AQI Map</span>
+            <span className="hero-nav-tooltip" role="tooltip">Live AQI Map</span>
           </button>
 
           <button
@@ -350,7 +350,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             aria-label="Pollutants"
           >
             <Wind size={19} className="hero-nav-icon" />
-            <span className="hero-nav-label">Pollutants</span>
+            <span className="hero-nav-tooltip" role="tooltip">Pollutants</span>
           </button>
 
           <button
@@ -360,7 +360,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             aria-label="Statistics"
           >
             <BarChart3 size={19} className="hero-nav-icon" />
-            <span className="hero-nav-label">Statistics</span>
+            <span className="hero-nav-tooltip" role="tooltip">Statistics</span>
           </button>
 
           <button
@@ -370,7 +370,7 @@ export default function PanoramicScrollHero({ onExploreTwin }) {
             aria-label="About"
           >
             <Info size={19} className="hero-nav-icon" />
-            <span className="hero-nav-label">About</span>
+            <span className="hero-nav-tooltip" role="tooltip">About</span>
           </button>
         </aside>
 
