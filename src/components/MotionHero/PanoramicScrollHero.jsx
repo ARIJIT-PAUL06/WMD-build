@@ -132,6 +132,41 @@ export default function PanoramicScrollHero({
   const [isRightPhase, setIsRightPhase] = useState(false);
   const [activeNav, setActiveNav] = useState(() => currentRoute || getRouteFromUrl());
 
+  // 0: TV screen playing analog TV static snow (UI hidden)
+  // 1: Broadcast tuning in, sidebar buttons and HUD flicker in sequentially matching map
+  // 2: All elements settled permanently
+  const [heroBootStage, setHeroBootStage] = useState(0);
+
+  useEffect(() => {
+    // 0ms - 1450ms: TV screen shows pure analog TV static
+    // 1450ms: TV tunes in, sidebar buttons flicker in sequentially
+    const t1 = setTimeout(() => {
+      setHeroBootStage(1);
+    }, 1450);
+
+    // 2400ms: All elements have settled permanently
+    const t2 = setTimeout(() => {
+      setHeroBootStage(2);
+    }, 2400);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
+
+  const getSidebarFlickerClass = () => {
+    if (heroBootStage === 0) return 'crt-ui-hidden';
+    if (heroBootStage === 1) return 'crt-btn-flicker';
+    return '';
+  };
+
+  const getSidebarFlickerStyle = (delayMs) => {
+    if (heroBootStage === 0) return { opacity: 0, visibility: 'hidden' };
+    if (heroBootStage === 1) return { animationDelay: `${delayMs}ms` };
+    return {};
+  };
+
   // Keep active sidebar navigation synchronized with current route and browser history
   useEffect(() => {
     if (currentRoute) {
@@ -424,7 +459,14 @@ export default function PanoramicScrollHero({
         {/* Phosphor flicker and film grain now live in the CRT shader (see CrtScreenLensCanvas) */}
 
         {/* 6. Calm Floating Particulate Field (Soot & Spores) */}
-        <canvas ref={canvasRef} className="hero-particles-canvas" />
+        <canvas
+          ref={canvasRef}
+          className="hero-particles-canvas"
+          style={{
+            opacity: heroBootStage === 0 ? 0 : 1,
+            transition: 'opacity 0.6s ease',
+          }}
+        />
 
         {/* 7. Mouse-reactive Volumetric Lens Spotlight */}
         <div
@@ -435,6 +477,8 @@ export default function PanoramicScrollHero({
             inset: 0,
             pointerEvents: 'none',
             zIndex: 14,
+            opacity: heroBootStage === 0 ? 0 : 1,
+            transition: 'opacity 0.6s ease',
             background: 'radial-gradient(circle 420px at 50vw 50vh, rgba(248, 113, 113, 0.16) 0%, transparent 80%)',
           }}
           aria-hidden="true"
@@ -456,10 +500,19 @@ export default function PanoramicScrollHero({
         {/* ============================================================== */}
         {/* LEFT VERTICAL NAVIGATION SIDEBAR                               */}
         {/* ============================================================== */}
-        <aside className="hero-left-sidebar" aria-label="Primary Navigation">
+        <aside
+          className="hero-left-sidebar"
+          aria-label="Primary Navigation"
+          style={{
+            opacity: heroBootStage === 0 ? 0 : 1,
+            pointerEvents: heroBootStage === 0 ? 'none' : 'auto',
+            transition: 'opacity 0.4s ease',
+          }}
+        >
           <button
             type="button"
-            className={`hero-nav-item ${activeNav === 'home' ? 'active' : ''}`}
+            className={`hero-nav-item ${activeNav === 'home' ? 'active' : ''} ${getSidebarFlickerClass()}`}
+            style={getSidebarFlickerStyle(80)}
             onClick={() => handleNavClick('home')}
             aria-label="Home"
             id="hero-sidebar-nav-home"
@@ -470,7 +523,8 @@ export default function PanoramicScrollHero({
 
           <button
             type="button"
-            className={`hero-nav-item ${activeNav === 'map' ? 'active' : ''}`}
+            className={`hero-nav-item ${activeNav === 'map' ? 'active' : ''} ${getSidebarFlickerClass()}`}
+            style={getSidebarFlickerStyle(180)}
             onClick={() => handleNavClick('map')}
             aria-label="Live AQI Map"
             id="hero-sidebar-nav-map"
@@ -481,7 +535,8 @@ export default function PanoramicScrollHero({
 
           <button
             type="button"
-            className={`hero-nav-item ${activeNav === 'pollutants' ? 'active' : ''}`}
+            className={`hero-nav-item ${activeNav === 'pollutants' ? 'active' : ''} ${getSidebarFlickerClass()}`}
+            style={getSidebarFlickerStyle(280)}
             onClick={() => handleNavClick('pollutants')}
             aria-label="Pollutants"
             id="hero-sidebar-nav-pollutants"
@@ -492,7 +547,8 @@ export default function PanoramicScrollHero({
 
           <button
             type="button"
-            className={`hero-nav-item ${activeNav === 'statistics' ? 'active' : ''}`}
+            className={`hero-nav-item ${activeNav === 'statistics' ? 'active' : ''} ${getSidebarFlickerClass()}`}
+            style={getSidebarFlickerStyle(380)}
             onClick={() => handleNavClick('statistics')}
             aria-label="Statistics"
             id="hero-sidebar-nav-stats"
@@ -503,7 +559,8 @@ export default function PanoramicScrollHero({
 
           <button
             type="button"
-            className={`hero-nav-item ${activeNav === 'aws-services' ? 'active' : ''}`}
+            className={`hero-nav-item ${activeNav === 'aws-services' ? 'active' : ''} ${getSidebarFlickerClass()}`}
+            style={getSidebarFlickerStyle(430)}
             onClick={() => handleNavClick('aws-services')}
             aria-label="AWS Services"
             id="hero-sidebar-nav-aws"
@@ -514,7 +571,8 @@ export default function PanoramicScrollHero({
 
           <button
             type="button"
-            className={`hero-nav-item ${activeNav === 'about' ? 'active' : ''}`}
+            className={`hero-nav-item ${activeNav === 'about' ? 'active' : ''} ${getSidebarFlickerClass()}`}
+            style={getSidebarFlickerStyle(480)}
             onClick={() => handleNavClick('about')}
             aria-label="About"
             id="hero-sidebar-nav-about"

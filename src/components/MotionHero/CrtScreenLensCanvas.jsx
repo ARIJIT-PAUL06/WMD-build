@@ -95,6 +95,7 @@ export default function CrtScreenLensCanvas({
         uCurvature: { value: width < 600 ? 0.04 : 0.28 }, // Authentic CRT faceplate bulge on desktop, subtle on mobile
         uAspect: { value: width / height },
         uResolution: { value: new THREE.Vector2(width, height) },
+        uTvStatic: { value: 1.0 }, // 1.0 = 100% analog TV static snow, fades to 0.0 upon broadcast tune-in
       },
       vertexShader: `
         varying vec2 vUv;
@@ -112,6 +113,7 @@ export default function CrtScreenLensCanvas({
         uniform float uCurvature;
         uniform float uAspect;
         uniform vec2 uResolution;
+        uniform float uTvStatic;
         varying vec2 vUv;
 
         // Balanced spherical CRT barrel distortion math
@@ -131,6 +133,48 @@ export default function CrtScreenLensCanvas({
           vec3 p3 = fract(vec3(p.xyx) * 0.1031);
           p3 += dot(p3, p3.yzx + 33.33);
           return fract((p3.x + p3.y) * p3.z);
+        }
+
+        // Authentic Analog TV Static / White Noise Snow (Untuned Broadcast Channel)
+        vec3 generateTvStatic(vec2 screenUv, float time, vec2 resolution) {
+          // 1. Dual-frequency dancing phosphor snow grains (changes at 32 fps)
+          vec2 p = gl_FragCoord.xy * 0.95;
+          float tStep = floor(time * 32.0);
+          vec2 seed1 = vec2(tStep * 163.7, tStep * 391.3);
+          vec2 seed2 = vec2(tStep * 281.9, tStep * 109.1);
+
+          float n1 = hash12(p + seed1);
+          float n2 = hash12(p * 1.73 + seed2);
+          float snow = mix(n1, n2, 0.42);
+          
+          // Micro-grain salt & pepper threshold for crisp analog noise
+          snow = smoothstep(0.14, 0.86, snow);
+
+          // 2. Prominent Rolling Horizontal Sync Band (matching untuned CRT photo)
+          float barSpeed = 0.38;
+          float barY = fract(time * barSpeed);
+          float distToBar = abs(fract(screenUv.y - barY + 0.5) - 0.5);
+          float rollingBar = smoothstep(0.16, 0.0, distToBar);
+
+          // Invert and brighten noise inside the interference bar (classic analog V-sync drift)
+          float barSnow = hash12(p * 0.8 + seed1 * 1.5);
+          snow = mix(snow, barSnow * 1.25 + 0.15, rollingBar * 0.65);
+
+          // 3. Horizontal fine tear lines / scanline jitter streaks
+          float tearLine = step(0.965, hash12(vec2(floor(screenUv.y * 140.0), tStep))) * (hash12(vec2(tStep, 9.0)) - 0.5) * 0.35;
+          snow = clamp(snow + tearLine, 0.0, 1.0);
+
+          // 4. Subtle 50Hz/60Hz AC ground hum ripple
+          float acHum = sin(screenUv.y * 50.0 + time * 18.0) * 0.05;
+          snow = clamp(snow + acHum, 0.0, 1.0);
+
+          // 5. Phosphor color: High-contrast silver-white with authentic analog CRT temperature
+          vec3 staticColor = vec3(snow) * vec3(0.94, 0.97, 1.0);
+          
+          // Boost luminance inside the horizontal rolling bar
+          staticColor += vec3(rollingBar * 0.22);
+
+          return staticColor;
         }
 
         void main() {
@@ -221,7 +265,19 @@ export default function CrtScreenLensCanvas({
           // and an infinite blend-mode animation, both forcing browser re-composites)
           float grain = hash12(gl_FragCoord.xy + floor(uTime * 24.0) * 17.0) - 0.5;
           color.rgb += grain * 0.07;
-          color.rgb *= 1.0 + 0.02 * sin(uTime * 52.0);
+          // 14c. Analog TV Static Snow (Untuned Broadcast Channel Noise)
+          if (uTvStatic > 0.001) {
+            vec3 tvStatic = generateTvStatic(screenUv, uTime, uResolution);
+            
+            // Curved phosphor interlace scanlines on the static noise
+            float staticScanlines = sin(curvedY * uResolution.y * 1.3) * 0.22 + 0.78;
+            tvStatic *= staticScanlines;
+            
+            // Quick broadcast tuning bloom as the TV locks onto the signal
+            float lockFlash = smoothstep(0.15, 0.85, uTvStatic) * (1.0 - smoothstep(0.15, 0.85, uTvStatic)) * 0.40;
+            
+            color.rgb = mix(color.rgb, tvStatic, uTvStatic) + vec3(lockFlash);
+          }
 
           // 15. Blend cleanly into dark bezel background (#070a12)
           vec3 bgCol = vec3(0.027, 0.039, 0.07);
@@ -499,6 +555,21 @@ export default function CrtScreenLensCanvas({
       return t * t * (3 - 2 * t);
     };
 
+    // Helper: Evaluates the exact CRT button flicker keyframe waveform matching index.css @keyframes crtButtonFlicker
+    const getCrtFlickerAlpha = (startTime, curTime, duration = 0.35) => {
+      if (curTime < startTime) return 0.0;
+      const elapsed = curTime - startTime;
+      if (elapsed >= duration) return 1.0;
+      const p = elapsed / duration;
+      if (p < 0.15) return (p / 0.15) * 0.95;
+      if (p < 0.28) return 0.95 - ((p - 0.15) / 0.13) * 0.85; // drop to 0.10
+      if (p < 0.42) return 0.10 + ((p - 0.28) / 0.14) * 0.80; // rise to 0.90
+      if (p < 0.58) return 0.90 - ((p - 0.42) / 0.16) * 0.65; // drop to 0.25
+      if (p < 0.72) return 0.25 + ((p - 0.58) / 0.14) * 0.73; // rise to 0.98
+      if (p < 0.85) return 0.98 - ((p - 0.72) / 0.13) * 0.28; // drop to 0.70
+      return 0.70 + ((p - 0.85) / 0.15) * 0.30; // settle to 1.00
+    };
+
     // Function to draw all templates onto the offscreen canvas
     // 1. Template 1 & Template 3 have strictly EQUAL SIZES.
     // 2. Template 1 and Template 3 have OPPOSITE / MIRRORED animations:
@@ -519,23 +590,26 @@ export default function CrtScreenLensCanvas({
       // Styled in the authentic vintage CRT terminal template aesthetic
       // with Fraktur / Gothic calligraphy (matching opposite Sign In HUD).
       // ==============================================================
-      const p = Math.max(0, Math.min(1, scroll));
-      let brandR, brandG, brandB;
-      if (p <= 0.5) {
-        const t = p / 0.5;
-        brandR = Math.round(245 + (251 - 245) * t);
-        brandG = Math.round(158 + (191 - 158) * t);
-        brandB = Math.round(11 + (36 - 11) * t);
-      } else {
-        const t = (p - 0.5) / 0.5;
-        brandR = Math.round(251 + (52 - 251) * t);
-        brandG = Math.round(191 + (211 - 191) * t);
-        brandB = Math.round(36 + (153 - 36) * t);
-      }
-      const brandColor = `rgb(${brandR}, ${brandG}, ${brandB})`;
-      const brandGlow = `rgba(${brandR}, ${brandG}, ${brandB}, 0.65)`;
+      const brandFlicker = getCrtFlickerAlpha(1.50, time, 0.35);
+      if (brandFlicker > 0.001) {
+        const p = Math.max(0, Math.min(1, scroll));
+        let brandR, brandG, brandB;
+        if (p <= 0.5) {
+          const t = p / 0.5;
+          brandR = Math.round(245 + (251 - 245) * t);
+          brandG = Math.round(158 + (191 - 158) * t);
+          brandB = Math.round(11 + (36 - 11) * t);
+        } else {
+          const t = (p - 0.5) / 0.5;
+          brandR = Math.round(251 + (52 - 251) * t);
+          brandG = Math.round(191 + (211 - 191) * t);
+          brandB = Math.round(36 + (153 - 36) * t);
+        }
+        const brandColor = `rgb(${brandR}, ${brandG}, ${brandB})`;
+        const brandGlow = `rgba(${brandR}, ${brandG}, ${brandB}, 0.65)`;
 
-      textCtx.save();
+        textCtx.save();
+        textCtx.globalAlpha = brandFlicker;
       // Prominent, authoritative typography laid over the curved TV glass
       const brandFontSize = isMobile ? 17 : 21;
       textCtx.font = `900 ${brandFontSize}px "Outfit", -apple-system, BlinkMacSystemFont, sans-serif`;
@@ -624,6 +698,7 @@ export default function CrtScreenLensCanvas({
       textCtx.restore();
 
       textCtx.restore();
+      }
 
       // ==============================================================
       // Sign In Button (Curved by CRT Screen Curvature)
@@ -632,10 +707,12 @@ export default function CrtScreenLensCanvas({
       // Styled in the authentic vintage CRT terminal template aesthetic.
       // ==============================================================
       const authOpacity = Math.max(0, 1 - scroll * 4.8);
-      if (authOpacity > 0.01) {
+      const signFlicker = getCrtFlickerAlpha(1.65, time, 0.35);
+      const finalAuthAlpha = authOpacity * signFlicker;
+      if (finalAuthAlpha > 0.01) {
         const { user: curUser, isAuthenticated: curAuth } = authStateRef.current;
         textCtx.save();
-        textCtx.globalAlpha = authOpacity;
+        textCtx.globalAlpha = finalAuthAlpha;
 
         const isHovered = isSignInHoverRef.current;
         const authFontSize = isMobile ? 14 : 17;
@@ -738,7 +815,7 @@ export default function CrtScreenLensCanvas({
           y: authBtnY,
           w: authBtnW,
           h: authBtnH,
-          active: authOpacity > 0.5,
+          active: finalAuthAlpha > 0.5,
         };
       } else {
         signInBounds.current = { x: 0, y: 0, w: 0, h: 0, active: false };
@@ -760,7 +837,8 @@ export default function CrtScreenLensCanvas({
       const p1Drop = smooth(0.00, 0.20, scroll);
       const y1 = restingY + p1Drop * travelDist;
       const x1 = isMobile ? (width - cardW) / 2 : (Math.max(200, width * 0.14) - scroll * width * 0.35);
-      const op1 = Math.max(0, 1.0 - smooth(0.06, 0.20, scroll));
+      const cardFlicker = getCrtFlickerAlpha(1.80, time, 0.40);
+      const op1 = Math.max(0, 1.0 - smooth(0.06, 0.20, scroll)) * cardFlicker;
 
       drawAncientGlitchCard(textCtx, {
         x: x1,
@@ -937,6 +1015,19 @@ export default function CrtScreenLensCanvas({
       const time = clock.getElapsedTime();
       crtMaterial.uniforms.uTime.value = time;
 
+      // Analog TV Static Intro Sequence:
+      // 0.0s to 1.1s: 100% pure analog TV static snow
+      // 1.1s to 1.45s: broadcast tune-in lock transition
+      // 1.45s+: clear tuned-in signal
+      let tvStatic = 0.0;
+      if (time < 1.1) {
+        tvStatic = 1.0;
+      } else if (time < 1.45) {
+        const p = (time - 1.1) / 0.35;
+        tvStatic = 1.0 - (p * p * (3.0 - 2.0 * p));
+      }
+      crtMaterial.uniforms.uTvStatic.value = tvStatic;
+
       const currentScroll = scrollProgressRef ? scrollProgressRef.current : scrollRef.current;
       const currentMouse = mousePosRef ? mousePosRef.current : mousePos;
 
@@ -944,8 +1035,9 @@ export default function CrtScreenLensCanvas({
       crtMaterial.uniforms.uParallax.value = (currentMouse.x / width) * -0.015;
 
       const tick = Math.floor(time * TEXT_FPS);
-      if (forceTextRedraw || Math.abs(currentScroll - lastTextScroll) > 1e-4 || tick !== lastTextTick) {
-        updateTextTexture(currentScroll, tick / TEXT_FPS);
+      // During boot sequence (time < 2.3s), update every frame for silky 60fps CRT flicker
+      if (forceTextRedraw || time < 2.3 || Math.abs(currentScroll - lastTextScroll) > 1e-4 || tick !== lastTextTick) {
+        updateTextTexture(currentScroll, time);
         lastTextScroll = currentScroll;
         lastTextTick = tick;
         forceTextRedraw = false;
