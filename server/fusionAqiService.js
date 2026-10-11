@@ -150,7 +150,7 @@ export async function getDelhiHeatmapData(userLat = 28.7495, userLon = 77.1171) 
     const lats = DELHI_STATION_COORDS.map((s) => s.lat).join(',');
     const lons = DELHI_STATION_COORDS.map((s) => s.lon).join(',');
 
-    const openMeteoUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lons}&current=us_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone&timezone=auto`;
+    const openMeteoUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lons}&current=us_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,ammonia&timezone=auto`;
 
     const res = await fetch(openMeteoUrl, {
       headers: { Accept: 'application/json' },
@@ -179,6 +179,7 @@ export async function getDelhiHeatmapData(userLat = 28.7495, userLon = 77.1171) 
         so2: live.sulphur_dioxide !== undefined && live.sulphur_dioxide !== null ? Math.round(Number(live.sulphur_dioxide) * 10) / 10 : (meta.so2 ?? null),
         co: live.carbon_monoxide !== undefined && live.carbon_monoxide !== null ? Math.round((Number(live.carbon_monoxide) > 20 ? Number(live.carbon_monoxide) / 1000 : Number(live.carbon_monoxide)) * 10) / 10 : (meta.co ?? null),
         o3: live.ozone !== undefined && live.ozone !== null ? Math.round(Number(live.ozone) * 10) / 10 : (meta.o3 ?? null),
+        nh3: live.ammonia !== undefined && live.ammonia !== null ? Math.round(Number(live.ammonia) * 10) / 10 : (meta.nh3 ?? null),
         source: 'Live Open-Meteo (CAMS / Copernicus Model)',
         updatedAt: live.time || new Date().toISOString(),
       };

@@ -45,6 +45,7 @@ const requiredFiles = [
   'ml/data/spatial_grids.json',
   'src/data/schoolsDirectory.json',
   'src/data/authoritiesConfig.json',
+  'src/data/indiaStations.json',
   'ml/model/sagemaker_forecast_metadata.json',
   'ml/model/xgboost_forecast_model.json'
 ];

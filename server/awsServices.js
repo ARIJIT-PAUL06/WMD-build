@@ -63,6 +63,7 @@ export async function saveReadingToDynamoDB(reading) {
     so2: reading.pollutants?.so2 ?? 0,
     o3: reading.pollutants?.o3 ?? 0,
     co: reading.pollutants?.co ?? 0,
+    nh3: reading.pollutants?.nh3 ?? null,
     temp: reading.weather?.temp ?? 0,
     humidity: reading.weather?.humidity ?? 0,
     advisory: reading.advisory || '',

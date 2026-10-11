@@ -36,7 +36,7 @@ export class EnvironmentalDataProvider {
 
     try {
       // Fetch live data from Open-Meteo Air Quality & Weather API
-      const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${coords.lat}&longitude=${coords.lon}&current=us_aqi,european_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,dust,uv_index&hourly=pm2_5,pm10,us_aqi&timezone=auto`;
+      const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${coords.lat}&longitude=${coords.lon}&current=us_aqi,european_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,dust,uv_index,ammonia&hourly=pm2_5,pm10,us_aqi&timezone=auto`;
       
       const response = await fetch(url, {
         headers: { 'Accept': 'application/json' },
@@ -79,6 +79,7 @@ export class EnvironmentalDataProvider {
           o3: current.ozone != null ? Math.round(Number(current.ozone) * 10) / 10 : null,
           co: current.carbon_monoxide != null ? Math.round((current.carbon_monoxide > 20 ? current.carbon_monoxide / 1000 : current.carbon_monoxide) * 10) / 10 : null,
           dust: current.dust != null ? Math.round(Number(current.dust) * 10) / 10 : null,
+          nh3: current.ammonia != null ? Math.round(Number(current.ammonia) * 10) / 10 : null,
         },
         weather: {
           temp: current.temperature_2m ?? null,

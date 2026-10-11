@@ -83,6 +83,18 @@ export function getKnownStations() {
   for (const s of schools) {
     if (s.nearestStation) stations.add(s.nearestStation.toLowerCase());
   }
+  try {
+    const p = resolveFilePath('src/data/indiaStations.json');
+    if (fs.existsSync(p)) {
+      const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+      if (Array.isArray(data)) {
+        for (const st of data) {
+          if (st.name) stations.add(st.name.toLowerCase());
+          if (st.id) stations.add(st.id.toLowerCase());
+        }
+      }
+    }
+  } catch (_e) {}
   const buffer = getGrid14DayBuffer();
   for (const g of Object.values(buffer)) {
     if (Array.isArray(g.hourlyBuffer)) {
@@ -243,7 +255,12 @@ export function aggregateSchoolEvidence({
       const p = resolveFilePath('src/data/indiaStations.json');
       if (fs.existsSync(p)) {
         const stations = JSON.parse(fs.readFileSync(p, 'utf8'));
-        const stMatch = stations.find(s => s.name?.toLowerCase().includes(stationName.toLowerCase()) || s.id?.toLowerCase().includes(stationName.toLowerCase()));
+        const qSt = stationName.toLowerCase().replace(/\s*caaqms/gi, '').trim();
+        const stMatch = stations.find(s => {
+          const sName = (s.name?.toLowerCase() || '').replace(/\s*caaqms/gi, '').trim();
+          const sId = (s.id?.toLowerCase() || '').trim();
+          return sName === qSt || sId === qSt || sName.includes(qSt) || qSt.includes(sName);
+        });
         if (stMatch && stMatch.lat && stMatch.lon) {
           const g = findGridForCoordinates(stMatch.lat, stMatch.lon);
           stationGrid = g?.grid_id || g?.id || null;

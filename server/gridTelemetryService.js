@@ -357,10 +357,24 @@ export async function fetchLiveTelemetryBatch(gridsChunk, daysPast = 14, now = n
     const lons = gridsChunk.map(g => g.centroid.lon).join(',');
     const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lons}&hourly=pm2_5,pm10,nitrogen_dioxide,carbon_monoxide&past_days=${daysPast}&forecast_days=1&timezone=GMT`;
 
-    const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
-    if (!res.ok) return [];
+    let json = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(35000) });
+        if (res.ok) {
+          json = await res.json();
+          break;
+        }
+        console.warn(`[GridTelemetryService] Batch attempt ${attempt} returned HTTP ${res.status}`);
+      } catch (retryErr) {
+        console.warn(`[GridTelemetryService] Batch attempt ${attempt} failed: ${retryErr.message}`);
+        if (attempt < 3) {
+          await new Promise(r => setTimeout(r, 1500));
+        }
+      }
+    }
+    if (!json) return [];
 
-    const json = await res.json();
     const locations = Array.isArray(json) ? json : [json];
     const results = [];
 
@@ -430,20 +444,20 @@ export async function fetchLiveTelemetryBatch(gridsChunk, daysPast = 14, now = n
 }
 
 /**
- * Synchronize live empirical telemetry across all populated spatial grids in Delhi-NCR (all 60 blocks)
- * Uses high-performance batching: 60 blocks synced in just 2 polite HTTP requests!
+ * Synchronize live empirical telemetry across all populated spatial grids in Delhi-NCR (all 99 blocks)
+ * Uses high-performance batching: 10 blocks per request with resilient retries!
  */
 export async function syncAllPopulatedGrids(daysPast = 14) {
   const populated = Object.values(spatialGrids).filter(g => (g.facility_count > 0 || g.centroid) && g.centroid?.lat && g.centroid?.lon);
   const results = [];
-  const BATCH_SIZE = 30;
+  const BATCH_SIZE = 10;
 
   for (let i = 0; i < populated.length; i += BATCH_SIZE) {
     const chunk = populated.slice(i, i + BATCH_SIZE);
     const chunkResults = await fetchLiveTelemetryBatch(chunk, daysPast);
     results.push(...chunkResults);
     if (i + BATCH_SIZE < populated.length) {
-      await new Promise(res => setTimeout(res, 200)); // Polite pause between batches
+      await new Promise(res => setTimeout(res, 300)); // Polite pause between batches
     }
   }
 
