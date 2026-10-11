@@ -3,11 +3,11 @@ import { ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import ParticleTerrainCanvas from './ParticleTerrainCanvas';
-import ParticleWaveCanvas from './ParticleWaveCanvas';
+import StatsPredictionHero from './StatsPredictionHero';
 import StatsEvaluationPlots from './StatsEvaluationPlots';
 import StatsGrain from './StatsGrain';
 import statsData from '../../data/statsModelMetrics.json';
+import { apiFetch } from '../../utils/apiFetch';
 import './StatsPage.css';
 
 if (typeof window !== 'undefined') {
@@ -27,7 +27,13 @@ if (typeof window !== 'undefined') {
 export default function StatsPage({ onBack, onOpenDashboard }) {
   const pageRef = useRef(null);
   const [activeDatasetSubset, setActiveDatasetSubset] = useState('ALL');
-  const [activeSeason, setActiveSeason] = useState('ALL');
+  const [forecastData, setForecastData] = useState(null);
+  const [liveDelhiTelemetry, setLiveDelhiTelemetry] = useState(null);
+  const [isLoadingForecast, setIsLoadingForecast] = useState(false);
+  const [forecastError, setForecastError] = useState(null);
+  const [lastRefreshedTime, setLastRefreshedTime] = useState(null);
+  const [modelEvaluation, setModelEvaluation] = useState(null);
+  const [evaluationError, setEvaluationError] = useState(null);
 
   // Enforce scroll reset when mounting
   useEffect(() => {
@@ -36,6 +42,96 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
       if (document.documentElement) document.documentElement.scrollTop = 0;
       if (document.body) document.body.scrollTop = 0;
     }
+  }, []);
+
+  // Fetch live Delhi telemetry and SageMaker/Local 48h ML forecast
+  const fetchRealTimeStats = useCallback(async () => {
+    setIsLoadingForecast(true);
+    setForecastError(null);
+    try {
+      // 1. Ground baseline in empirical Delhi station readings
+      let baselinePm25 = undefined;
+      try {
+        const heatmapRes = await apiFetch('/api/delhi-heatmap');
+        if (heatmapRes.ok) {
+          const heatmapJson = await heatmapRes.json();
+          if (heatmapJson?.stations?.length > 0) {
+            const valid = heatmapJson.stations.filter(
+              (s) => typeof s.pm25 === 'number' && !isNaN(s.pm25)
+            );
+            if (valid.length > 0) {
+              const avg = Math.round(
+                valid.reduce((acc, s) => acc + s.pm25, 0) / valid.length
+              );
+              baselinePm25 = avg;
+              setLiveDelhiTelemetry({
+                meanPm25: avg,
+                stationCount: valid.length,
+                lastUpdated: heatmapJson.lastUpdated || new Date().toISOString(),
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[StatsPage] Live heatmap baseline fetch warning:', e);
+      }
+
+      // 2. Fetch 48-Hour multi-horizon forecast from SageMaker / Local native XGBoost
+      const forecastUrl = baselinePm25 !== undefined
+        ? `/api/sagemaker/forecast?basePm25=${baselinePm25}&lat=28.6139&lon=77.2090`
+        : '/api/sagemaker/forecast?lat=28.6139&lon=77.2090';
+
+      const forecastRes = await apiFetch(forecastUrl);
+      if (!forecastRes.ok) {
+        throw new Error(`Forecast service status: ${forecastRes.status}`);
+      }
+      const forecastJson = await forecastRes.json();
+      if (forecastJson?.success) {
+        setForecastData(forecastJson);
+        const now = new Date();
+        setLastRefreshedTime(
+          now.toLocaleTimeString('en-IN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          })
+        );
+      } else {
+        throw new Error(forecastJson?.error || 'Forecast retrieval failure');
+      }
+    } catch (err) {
+      console.error('[StatsPage] Real-time forecast error:', err);
+      setForecastError(err.message || 'Service offline');
+    } finally {
+      setIsLoadingForecast(false);
+    }
+  }, []);
+
+  // Client-side auto-fetch on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      fetchRealTimeStats();
+    }
+  }, [fetchRealTimeStats]);
+
+  // Held-out test-set diagnostics computed server-side from the deployed model + its test partition
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiFetch('/api/model-evaluation');
+        const json = await res.json();
+        if (!res.ok || !json?.success) throw new Error(json?.error || `Evaluation service status: ${res.status}`);
+        if (!cancelled) setModelEvaluation(json);
+      } catch (err) {
+        console.error('[StatsPage] Model evaluation fetch error:', err);
+        if (!cancelled) setEvaluationError(err.message || 'Evaluation service offline');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // GSAP ScrollTrigger Choreography
@@ -125,11 +221,13 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
   const {
     model_metadata,
     dataset_info,
-    feature_importance,
-    cascading_horizons,
     error_distribution,
-    sample_observations,
   } = statsData;
+
+  // Horizons shown in the FIG. 04 table, measured on the held-out test set
+  const TABLE_HORIZONS = [1, 3, 6, 12, 24, 48];
+  const evaluatedHorizons = (modelEvaluation?.horizons || []).filter((h) => TABLE_HORIZONS.includes(h.lead_hours));
+  const horizon24h = modelEvaluation?.horizons?.find((h) => h.lead_hours === 24);
 
   // Staggered animation variants for Framer Motion metric cells
   const metricContainerVariants = {
@@ -159,51 +257,46 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
         <StatsGrain />
       </div>
 
-      {/* TOP-LEFT CIRCULAR BACK BUTTON (Framer Motion Enhanced) */}
-      <div className="stats-back-button-root">
-        <motion.button
-          type="button"
-          className="stats-back-button"
-          onClick={handleGoBack}
-          aria-label="Go back to dashboard"
-          id="stats-back-btn"
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.94 }}
-        >
-          <ArrowLeft className="stats-back-icon" aria-hidden="true" />
-        </motion.button>
-        <span className="stats-back-tooltip" role="tooltip">Return to Dashboard</span>
-      </div>
-
-      {/* TOP HUD / TELEMETRY STAMP */}
-      <header className="stats-top-hud" aria-label="Instrumentation Telemetry">
-        <span className="stats-hud-code">SYS-REF: 8:010:008</span>
-        <span className="stats-hud-badge">ML INSTRUMENTATION</span>
-      </header>
-
       <main className="stats-content-wrapper">
         {/* ================================================================= */}
         {/* 01. HERO — MODEL PERFORMANCE                                      */}
         {/* ================================================================= */}
         <section className="stats-hero-section" id="hero-performance" aria-label="Model Performance">
-          <div className="stats-instrument-header">
-            <div className="stats-telemetry-meta">
-              <span className="stats-inst-id">SYS-ID: 3111 001 · PROD-SAGEMAKER</span>
-              <h1 className="stats-inst-name">
-                {`${model_metadata.model_framework.toUpperCase()} v${model_metadata.framework_version} — 48H SERVERLESS LEAD TIME REGRESSOR`}
-              </h1>
+          {/* Top Integrated Navigation & Telemetry Row */}
+          <div className="stats-hero-top-nav">
+            <div className="stats-hero-nav-left">
+              <button
+                type="button"
+                className="stats-back-button"
+                onClick={handleGoBack}
+                aria-label="Go back to dashboard"
+                id="stats-back-btn"
+              >
+                <ArrowLeft className="stats-back-icon" aria-hidden="true" size={16} />
+              </button>
+              <span className="stats-inst-tag-line">
+                CORE PREDICTIVE ENGINE (USP) · XGBOOST v1.7-1 · 48H SERVERLESS LEAD TIME REGRESSOR
+              </span>
             </div>
-            <span className="stats-inst-ref-tag" aria-hidden="true">-8/7C6</span>
+            <div className="stats-hero-nav-right">
+              <span className="stats-hud-code">AWS SAGEMAKER SERVERLESS · AP-SOUTH-1</span>
+              <span className="stats-hud-badge">ML INSTRUMENTATION</span>
+            </div>
           </div>
 
-          {/* Large 3D Particle Mountain Landscape */}
-          <div className="stats-terrain-frame">
-            <span className="stats-frame-crosshair crosshair-tl">+</span>
-            <span className="stats-frame-crosshair crosshair-tr">+</span>
-            <span className="stats-frame-crosshair crosshair-bl">+</span>
-            <span className="stats-frame-crosshair crosshair-br">+</span>
-            <ParticleTerrainCanvas height={480} />
-          </div>
+          {/* 48-Hour Forward Trajectory & Ground-Truth Calibration Showcase (Core USP) */}
+          <StatsPredictionHero
+            modelMetadata={model_metadata}
+            cascadingHorizons={evaluatedHorizons}
+            evaluation={modelEvaluation}
+            evaluationError={evaluationError}
+            forecastData={forecastData}
+            liveBaseline={liveDelhiTelemetry?.meanPm25}
+            isLoading={isLoadingForecast}
+            error={forecastError}
+            onRefresh={fetchRealTimeStats}
+            lastRefreshedTime={lastRefreshedTime}
+          />
 
           {/* Model Performance Metrics Strip (Framer Motion Staggered Entrance) */}
           <motion.div
@@ -294,18 +387,7 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
             <span className="stats-filter-caption">CPCB REGULATORY ARCHIVE TELEMETRY</span>
           </div>
 
-          {/* Secondary Particle Wave Visualization */}
-          <div className="stats-dataset-canvas-wrap">
-            <span className="stats-frame-crosshair crosshair-tl">+</span>
-            <span className="stats-frame-crosshair crosshair-tr">+</span>
-            <span className="stats-frame-crosshair crosshair-bl">+</span>
-            <span className="stats-frame-crosshair crosshair-br">+</span>
-            <ParticleWaveCanvas
-              height={360}
-              mode="dataset"
-              activeSubset={activeDatasetSubset}
-            />
-          </div>
+
 
           {/* Dataset Metadata Annotations */}
           <div className="stats-dataset-meta-grid">
@@ -349,76 +431,14 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
 
           <StatsEvaluationPlots
             errorDistribution={error_distribution}
-            featureImportance={feature_importance}
-            cascadingHorizons={cascading_horizons}
+            featureImportance={modelEvaluation?.featureImportance || []}
+            cascadingHorizons={evaluatedHorizons}
+            evaluation={modelEvaluation}
+            evaluationError={evaluationError}
           />
         </section>
 
-        {/* ================================================================= */}
-        {/* 04. DATA DISTRIBUTION                                             */}
-        {/* ================================================================= */}
-        <section className="stats-section" id="data-distribution" aria-label="Data Distribution">
-          <div className="stats-section-header">
-            <div>
-              <span className="stats-section-tag">04 / TIME-SERIES LANDSCAPE</span>
-              <h2 className="stats-section-headline">Historical Observation Distribution</h2>
-            </div>
-            <span className="stats-section-coord">DELHI NCR CAAQMS STATIONS</span>
-          </div>
 
-          {/* Seasonal Observation Selector */}
-          <div className="stats-filter-controls-row">
-            <div className="stats-filter-pill-group" role="tablist" aria-label="Seasonal envelope filter">
-              {[
-                { key: 'ALL', label: 'Continuous Archive' },
-                { key: 'WINTER', label: 'Winter Inversions (Peak 350+)' },
-                { key: 'SUMMER', label: 'Summer Dust Convection' },
-                { key: 'MONSOON', label: 'Monsoon Washout (Low 30)' },
-                { key: 'POST_MONSOON', label: 'Post-Monsoon Fires' },
-              ].map((btn) => {
-                const isActive = activeSeason === btn.key;
-                return (
-                  <button
-                    key={btn.key}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    className={`stats-filter-pill ${isActive ? 'active' : ''}`}
-                    onClick={() => setActiveSeason(btn.key)}
-                  >
-                    {isActive && (
-                      <motion.div
-                        className="stats-filter-pill-bg"
-                        layoutId="seasonFilterPillBg"
-                        transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-                      />
-                    )}
-                    <span>{btn.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <span className="stats-filter-caption">GROUND OBSERVATION PROFILES</span>
-          </div>
-
-          <div className="stats-dist-canvas-wrap">
-            <span className="stats-frame-crosshair crosshair-tl">+</span>
-            <span className="stats-frame-crosshair crosshair-tr">+</span>
-            <span className="stats-frame-crosshair crosshair-bl">+</span>
-            <span className="stats-frame-crosshair crosshair-br">+</span>
-            <ParticleWaveCanvas
-              height={380}
-              mode="distribution"
-              observations={sample_observations}
-              activeSeason={activeSeason}
-            />
-          </div>
-
-          <div className="stats-dist-legend">
-            <span>OBSERVATION TOPOGRAPHY: MULTI-YEAR AMBIENT PARTICULATE DYNAMICS (OCTOBER WINTER INVERSION PEAKS VS SUMMER MONSOON VALLEYS)</span>
-            <span>2021-10-15 → 2023-08-15</span>
-          </div>
-        </section>
 
         {/* ================================================================= */}
         {/* 05. TECHNICAL TRANSPARENCY & FOOTER                               */}
@@ -446,7 +466,7 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
               <span className="stats-transparency-tag">OPERATIONAL LIMITS</span>
               <h3 className="stats-transparency-title">Known Horizon Boundary</h3>
               <p className="stats-transparency-body">
-                Degradation curve exhibits highest accuracy within +24h (MAE 24.3 µg/m³). Beyond +36h, uncertainty bands widen as weather advection predictions drift.
+                {`Degradation curve exhibits highest accuracy within +24h (MAE ${horizon24h ? horizon24h.mae.toFixed(1) : '—'} µg/m³). Beyond +36h, uncertainty bands widen as weather advection predictions drift.`}
               </p>
             </div>
           </div>
