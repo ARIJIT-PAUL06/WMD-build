@@ -97,13 +97,13 @@ export default function StatsEvaluationPlots({
                 y1={gy}
                 x2="510"
                 y2={gy}
-                stroke="rgba(255,255,255,0.08)"
+                style={{ stroke: 'var(--stats-plot-grid)' }}
                 strokeDasharray="2,4"
               />
             ))}
 
             {/* Baseline */}
-            <line x1="40" y1="180" x2="510" y2="180" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+            <line x1="40" y1="180" x2="510" y2="180" style={{ stroke: 'var(--stats-plot-axis)' }} strokeWidth="1" />
 
             {/* High-density needle bars mimicking reference */}
             {errorDistribution.map((bin, bi) => {
@@ -127,7 +127,7 @@ export default function StatsEvaluationPlots({
                     y={20}
                     width={64}
                     height={170}
-                    fill={isHovered ? 'rgba(255,255,255,0.04)' : 'transparent'}
+                    style={{ fill: isHovered ? 'var(--stats-plot-hover-band)' : 'transparent' }}
                     rx={3}
                   />
 
@@ -143,7 +143,7 @@ export default function StatsEvaluationPlots({
                         y1={180}
                         x2={nx}
                         y2={ny}
-                        stroke={isHovered ? '#ffffff' : '#cbd5e1'}
+                        style={{ stroke: isHovered ? 'var(--stats-plot-mark-active)' : 'var(--stats-plot-mark)' }}
                         strokeWidth="1.2"
                         strokeOpacity={isHovered ? 1.0 : (0.85 - ni * 0.025)}
                       />
@@ -154,7 +154,7 @@ export default function StatsEvaluationPlots({
                   <text
                     x={binX}
                     y={barY - 8}
-                    fill={isHovered ? '#ffffff' : '#e2e8f0'}
+                    style={{ fill: isHovered ? 'var(--stats-plot-mark-active)' : 'var(--stats-plot-mark)' }}
                     fontSize="9.5"
                     fontWeight={isHovered ? 'bold' : 'normal'}
                     fontFamily="IBM Plex Mono"
@@ -164,11 +164,11 @@ export default function StatsEvaluationPlots({
                   </text>
 
                   {/* Tick mark and X label */}
-                  <line x1={binX} y1="180" x2={binX} y2="186" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
+                  <line x1={binX} y1="180" x2={binX} y2="186" style={{ stroke: 'var(--stats-plot-axis)' }} strokeWidth="1" />
                   <text
                     x={binX}
-                    y="204"
-                    fill={isHovered ? '#ffffff' : '#888888'}
+                    y={204}
+                    style={{ fill: isHovered ? 'var(--stats-bone-100)' : 'var(--stats-plot-label)' }}
                     fontSize="9"
                     fontFamily="IBM Plex Mono"
                     textAnchor="middle"
@@ -244,7 +244,7 @@ export default function StatsEvaluationPlots({
                 y1={gy}
                 x2="500"
                 y2={gy}
-                stroke="rgba(255,255,255,0.06)"
+                style={{ stroke: 'var(--stats-plot-grid)' }}
                 strokeDasharray="2,4"
               />
             ))}
@@ -255,7 +255,7 @@ export default function StatsEvaluationPlots({
                 y1="20"
                 x2={gx}
                 y2="185"
-                stroke="rgba(255,255,255,0.06)"
+                style={{ stroke: 'var(--stats-plot-grid)' }}
                 strokeDasharray="2,4"
               />
             ))}
@@ -263,7 +263,7 @@ export default function StatsEvaluationPlots({
             {/* Tolerance corridor ±20 */}
             <path
               d="M 50 165 L 485 10 L 500 25 L 65 180 Z"
-              fill="rgba(255,255,255,0.035)"
+              style={{ fill: 'var(--stats-plot-corridor)' }}
             />
 
             {/* 1:1 Perfect Agreement Diagonal */}
@@ -272,14 +272,14 @@ export default function StatsEvaluationPlots({
               y1="180"
               x2="495"
               y2="18"
-              stroke="rgba(255,255,255,0.4)"
+              style={{ stroke: 'var(--stats-plot-axis)' }}
               strokeWidth="1.2"
               strokeDasharray="4,4"
             />
 
             {/* Axis Baselines */}
-            <line x1="50" y1="185" x2="500" y2="185" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-            <line x1="50" y1="15" x2="50" y2="185" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+            <line x1="50" y1="185" x2="500" y2="185" style={{ stroke: 'var(--stats-plot-axis)' }} strokeWidth="1" />
+            <line x1="50" y1="15" x2="50" y2="185" style={{ stroke: 'var(--stats-plot-axis)' }} strokeWidth="1" />
 
             {/* Empirical Scatter Points */}
             {scatterPoints.map((pt) => {
@@ -295,7 +295,7 @@ export default function StatsEvaluationPlots({
                     cx={pt.x}
                     cy={pt.y}
                     r={isPtHovered ? 4.5 : 2.0}
-                    fill={isPtHovered ? '#ffffff' : '#cbd5e1'}
+                    style={{ fill: isPtHovered ? 'var(--stats-plot-mark-active)' : 'var(--stats-plot-mark)' }}
                     opacity={isPtHovered ? 1 : 0.85}
                   />
                   {pt.id % 6 === 0 && (
@@ -304,7 +304,7 @@ export default function StatsEvaluationPlots({
                       cy={pt.y}
                       r="5.5"
                       fill="none"
-                      stroke="rgba(255,255,255,0.3)"
+                      style={{ stroke: 'var(--stats-plot-axis)' }}
                       strokeWidth="0.8"
                     />
                   )}
@@ -313,10 +313,10 @@ export default function StatsEvaluationPlots({
             })}
 
             {/* X Labels */}
-            <text x="50" y="202" fill="#888" fontSize="9" fontFamily="IBM Plex Mono" textAnchor="middle">0</text>
-            <text x="200" y="202" fill="#888" fontSize="9" fontFamily="IBM Plex Mono" textAnchor="middle">100</text>
-            <text x="350" y="202" fill="#888" fontSize="9" fontFamily="IBM Plex Mono" textAnchor="middle">200</text>
-            <text x="495" y="202" fill="#888" fontSize="9" fontFamily="IBM Plex Mono" textAnchor="middle">300 µg/m³</text>
+            <text x="50" y="202" style={{ fill: 'var(--stats-plot-label)' }} fontSize="9" fontFamily="IBM Plex Mono" textAnchor="middle">0</text>
+            <text x="200" y="202" style={{ fill: 'var(--stats-plot-label)' }} fontSize="9" fontFamily="IBM Plex Mono" textAnchor="middle">100</text>
+            <text x="350" y="202" style={{ fill: 'var(--stats-plot-label)' }} fontSize="9" fontFamily="IBM Plex Mono" textAnchor="middle">200</text>
+            <text x="495" y="202" style={{ fill: 'var(--stats-plot-label)' }} fontSize="9" fontFamily="IBM Plex Mono" textAnchor="middle">300 µg/m³</text>
           </svg>
 
           {/* Interactive Inspection Tooltip for Scatter Points */}
@@ -396,7 +396,7 @@ export default function StatsEvaluationPlots({
 
                 <div className="stats-feature-splits">
                   <span className="stats-feature-pct">{(item.importance * 100).toFixed(1)}%</span>
-                  <span className="stats-feature-count">{`(${item.splits.toLocaleString()} splits)`}</span>
+                  <span className="stats-feature-count">{`(${item.splits.toLocaleString('en-US')} splits)`}</span>
                 </div>
               </motion.div>
             );

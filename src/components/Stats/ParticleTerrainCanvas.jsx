@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
+// Mist tint (bone-200 token #d3d9dc normalised to its max channel) for the cyanotype palette.
+const PARTICLE_TINT = [0.959, 0.986, 1.0];
+
 /**
  * ParticleTerrainCanvas
  * Recreates the high-density 3D particle mountain terrain from the scientific reference image.
@@ -109,9 +112,9 @@ export default function ParticleTerrainCanvas({ height = 520, className = '' }) 
 
         // Height-based luminance: pure white peaks, silver ridges, muted charcoal base
         const lum = Math.min(1.0, 0.32 + (elevation / 28) * 0.68);
-        colors[pIdx * 3] = lum;
-        colors[pIdx * 3 + 1] = lum;
-        colors[pIdx * 3 + 2] = lum;
+        colors[pIdx * 3] = lum * PARTICLE_TINT[0];
+        colors[pIdx * 3 + 1] = lum * PARTICLE_TINT[1];
+        colors[pIdx * 3 + 2] = lum * PARTICLE_TINT[2];
 
         pIdx++;
       }
@@ -165,7 +168,7 @@ export default function ParticleTerrainCanvas({ height = 520, className = '' }) 
     const lineGeometry = new THREE.BufferGeometry();
     lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
     const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0xffffff,
+      color: 0xd3d9dc,
       transparent: true,
       opacity: 0.12,
       blending: THREE.AdditiveBlending,
@@ -174,7 +177,7 @@ export default function ParticleTerrainCanvas({ height = 520, className = '' }) 
     scene.add(lineMesh);
 
     // 4. Subtle Coordinate Ground Grid
-    const gridHelper = new THREE.GridHelper(92, 36, 0x555555, 0x1f1f1f);
+    const gridHelper = new THREE.GridHelper(92, 36, 0x66707a, 0x262c32);
     gridHelper.position.y = 0.05;
     scene.add(gridHelper);
 
@@ -344,8 +347,8 @@ export default function ParticleTerrainCanvas({ height = 520, className = '' }) 
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'radial-gradient(ellipse at 50% 60%, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.95) 70%)',
-          color: '#888',
+          background: 'radial-gradient(ellipse at 50% 60%, rgba(211,217,220,0.06) 0%, rgba(12,15,18,0.96) 70%)',
+          color: '#8c969f',
           fontFamily: 'IBM Plex Mono, monospace',
           fontSize: '11px',
           letterSpacing: '0.1em',

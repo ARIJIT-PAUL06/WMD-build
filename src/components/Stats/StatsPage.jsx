@@ -6,6 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import ParticleTerrainCanvas from './ParticleTerrainCanvas';
 import ParticleWaveCanvas from './ParticleWaveCanvas';
 import StatsEvaluationPlots from './StatsEvaluationPlots';
+import StatsGrain from './StatsGrain';
 import statsData from '../../data/statsModelMetrics.json';
 import './StatsPage.css';
 
@@ -154,7 +155,9 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
   return (
     <div className="stats-page" id="stats-page-root" ref={pageRef}>
       {/* Fine Laboratory Coordinate Grid Background */}
-      <div className="stats-laboratory-grid-bg" aria-hidden="true" />
+      <div className="stats-laboratory-grid-bg" aria-hidden="true">
+        <StatsGrain />
+      </div>
 
       {/* TOP-LEFT CIRCULAR BACK BUTTON (Framer Motion Enhanced) */}
       <div className="stats-back-button-root">
@@ -249,7 +252,7 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
         {/* ================================================================= */}
         {/* 02. DATASET VISUALIZATION                                         */}
         {/* ================================================================= */}
-        <section className="stats-section" id="dataset-structure" aria-label="Dataset Architecture">
+        <section className="stats-section stats-section--parchment" id="dataset-structure" aria-label="Dataset Architecture">
           <div className="stats-section-header">
             <div>
               <span className="stats-section-tag">02 / ARCHIVE DISTRIBUTION</span>
@@ -314,8 +317,8 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
 
             <div className="stats-dset-cell">
               <span className="stats-dset-label">TOTAL TRAINING PAIRS</span>
-              <span className="stats-dset-val">{dataset_info.total_training_pairs.toLocaleString()}</span>
-              <span className="stats-dset-detail">{`${dataset_info.total_hourly_records.toLocaleString()} Base Hourly Timestamps`}</span>
+              <span className="stats-dset-val">{dataset_info.total_training_pairs.toLocaleString('en-US')}</span>
+              <span className="stats-dset-detail">{`${dataset_info.total_hourly_records.toLocaleString('en-US')} Base Hourly Timestamps`}</span>
             </div>
 
             <div className="stats-dset-cell">
@@ -335,7 +338,7 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
         {/* ================================================================= */}
         {/* 03. MODEL EVALUATION                                              */}
         {/* ================================================================= */}
-        <section className="stats-section" id="model-evaluation" aria-label="Model Evaluation">
+        <section className="stats-section stats-section--deep" id="model-evaluation" aria-label="Model Evaluation">
           <div className="stats-section-header">
             <div>
               <span className="stats-section-tag">03 / EMPIRICAL EVALUATION</span>

@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
+// Mist tint (bone-200 token #d3d9dc normalised to its max channel) for the cyanotype palette.
+const PARTICLE_TINT = [0.959, 0.986, 1.0];
+
 /**
  * ParticleWaveCanvas
  * Secondary particle-wave landscape for Dataset & Historical Observation distributions.
@@ -149,9 +152,9 @@ export default function ParticleWaveCanvas({
 
         // Initial luminance
         const lum = Math.min(1.0, 0.35 + Math.max(0, initialY / 14) * 0.65);
-        colors[pIdx * 3] = lum;
-        colors[pIdx * 3 + 1] = lum;
-        colors[pIdx * 3 + 2] = lum;
+        colors[pIdx * 3] = lum * PARTICLE_TINT[0];
+        colors[pIdx * 3 + 1] = lum * PARTICLE_TINT[1];
+        colors[pIdx * 3 + 2] = lum * PARTICLE_TINT[2];
 
         pIdx++;
       }
@@ -205,7 +208,7 @@ export default function ParticleWaveCanvas({
     const lineGeometry = new THREE.BufferGeometry();
     lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
     const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0xffffff,
+      color: 0xd3d9dc,
       transparent: true,
       opacity: 0.1,
       blending: THREE.AdditiveBlending,
@@ -294,9 +297,9 @@ export default function ParticleWaveCanvas({
 
           // Update color based on elevation
           const lum = Math.min(1.0, 0.32 + Math.max(0, finalY / 14) * 0.68);
-          colorArr[pointIndex * 3] = lum;
-          colorArr[pointIndex * 3 + 1] = lum;
-          colorArr[pointIndex * 3 + 2] = lum;
+          colorArr[pointIndex * 3] = lum * PARTICLE_TINT[0];
+          colorArr[pointIndex * 3 + 1] = lum * PARTICLE_TINT[1];
+          colorArr[pointIndex * 3 + 2] = lum * PARTICLE_TINT[2];
 
           pointIndex++;
         }
@@ -372,8 +375,8 @@ export default function ParticleWaveCanvas({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'rgba(255,255,255,0.02)',
-          color: '#888',
+          background: 'rgba(211,217,220,0.03)',
+          color: '#8c969f',
           fontFamily: 'IBM Plex Mono, monospace',
           fontSize: '11px',
         }}

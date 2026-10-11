@@ -4,6 +4,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { POLLUTANT_DOCUMENTARY_LIST } from '../../data/pollutantDocumentaries';
 import './AboutPage.css';
+import AboutGrain from './AboutGrain';
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
@@ -362,7 +363,9 @@ export default function AboutPage({ onBack, onSelectPollutant, onOpenDashboard }
   return (
     <div className="about-page" ref={containerRef} id="about-page-root">
       {/* 1. Ambient Background Base */}
-      <div className="about-ambient-background" aria-hidden="true" />
+      <div className="about-ambient-background" aria-hidden="true">
+        <AboutGrain />
+      </div>
 
       {/* TOP-LEFT CIRCULAR BACK BUTTON */}
       <div className="about-back-button-root">
@@ -693,7 +696,7 @@ export default function AboutPage({ onBack, onSelectPollutant, onOpenDashboard }
         {/* ================================================================= */}
         {/* SCENE 4 — WHY VAYUVITALS (THREE VISUAL COMPOSITIONS)               */}
         {/* ================================================================= */}
-        <section className="about-why-section" id="why" aria-label="Why VayuVitals Compositions">
+        <section className="about-why-section about-why-section--parchment" id="why" aria-label="Why VayuVitals Compositions">
           <div className="about-section-header">
             <div className="about-header-meta">
               <span className="about-poster-index">SCENE 04</span>
@@ -784,12 +787,12 @@ export default function AboutPage({ onBack, onSelectPollutant, onOpenDashboard }
                   <svg className="about-trend-svg" viewBox="0 0 400 160" preserveAspectRatio="none">
                     <defs>
                       <linearGradient id="trendGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.4" />
-                        <stop offset="60%" stopColor="#f59e0b" stopOpacity="0.15" />
-                        <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                        <stop offset="0%" style={{ stopColor: 'var(--about-accent)', stopOpacity: 0.4 }} />
+                        <stop offset="60%" style={{ stopColor: 'var(--about-accent)', stopOpacity: 0.15 }} />
+                        <stop offset="100%" style={{ stopColor: 'var(--about-accent)', stopOpacity: 0 }} />
                       </linearGradient>
                     </defs>
-                    <line x1="0" y1="95" x2="400" y2="95" stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+                    <line x1="0" y1="95" x2="400" y2="95" style={{ stroke: 'var(--about-rule-strong)' }} strokeDasharray="4 4" />
                     <path
                       d="M 0 50 Q 70 20, 140 70 T 260 120 T 340 40 T 400 80 L 400 160 L 0 160 Z"
                       fill="url(#trendGradient)"
@@ -797,7 +800,7 @@ export default function AboutPage({ onBack, onSelectPollutant, onOpenDashboard }
                     <path
                       d="M 0 50 Q 70 20, 140 70 T 260 120 T 340 40 T 400 80"
                       fill="none"
-                      stroke="#f43f5e"
+                      style={{ stroke: 'var(--about-accent)' }}
                       strokeWidth="2.5"
                     />
                   </svg>
