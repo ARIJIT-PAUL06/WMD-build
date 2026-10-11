@@ -61,6 +61,8 @@ import {
   getIndiaBoundaryMask,
   computeRawSpatialGrid,
   sampleRasterGridVal,
+  calculatePointPollutantEstimate,
+  calculatePointTelemetrySnapshot,
   calculateAdaptiveRange,
   renderSeamlessRasterImage,
   getPollutantValue,
@@ -358,11 +360,12 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     const isCo = currentPollutant === 'co';
 
     let effectiveMin, effectiveMax;
+    let activeRangePayload = null;
     if (isAdaptiveModeRef.current) {
       const rangeResult = calculateAdaptiveRange(gridCacheRef.current, bounds, zoom, true, currentPollutant);
       effectiveMin = rangeResult.effectiveMin;
       effectiveMax = rangeResult.effectiveMax;
-      setActiveRange({
+      activeRangePayload = {
         min: isCo ? Math.round(effectiveMin * 10) / 10 : Math.round(effectiveMin),
         max: isCo ? Math.round(effectiveMax * 10) / 10 : Math.round(effectiveMax),
         localMin: rangeResult.localMin,
@@ -372,11 +375,12 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         zoomFactor: rangeResult.zoomFactor,
         isZoomed: rangeResult.zoomFactor > 0.05,
         zoom: Math.round(zoom * 10) / 10,
-      });
+      };
+      setActiveRange(activeRangePayload);
     } else {
       effectiveMin = gridCacheRef.current.nationalMin;
       effectiveMax = gridCacheRef.current.nationalMax;
-      setActiveRange({
+      activeRangePayload = {
         min: isCo ? Math.round(effectiveMin * 10) / 10 : Math.round(effectiveMin),
         max: isCo ? Math.round(effectiveMax * 10) / 10 : Math.round(effectiveMax),
         localMin: isCo ? Math.round(effectiveMin * 10) / 10 : Math.round(effectiveMin),
@@ -386,10 +390,17 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         zoomFactor: 0,
         isZoomed: false,
         zoom: Math.round(zoom * 10) / 10,
-      });
+      };
+      setActiveRange(activeRangePayload);
     }
 
-    const newRasterUrl = renderSeamlessRasterImage(gridCacheRef.current, effectiveMin, effectiveMax);
+    const newRasterUrl = renderSeamlessRasterImage(
+      gridCacheRef.current,
+      effectiveMin,
+      effectiveMax,
+      currentPollutant,
+      activeRangePayload
+    );
     if (newRasterUrl) {
       source.updateImage({
         url: newRasterUrl,
@@ -727,58 +738,37 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
     // Determine nearest station and distance for complete telemetry & UI safety
     const currentStations = stationsRef.current && stationsRef.current.length > 0 ? stationsRef.current : initialIndiaStations;
-    let nearestSt = feature.isStation && feature.station ? feature.station : currentStations[0];
-    let minDist = feature.isStation ? 0 : 999999;
-    if (!feature.isStation) {
-      currentStations.forEach((st) => {
-        const d = calculateDistanceKm(lat, lon, st.lat, st.lon);
-        if (d < minDist) {
-          minDist = d;
-          nearestSt = st;
-        }
+
+    if (feature.isStation && feature.station) {
+      const st = feature.station;
+      setInspectedPoint({
+        lat: Math.round(st.lat * 10000) / 10000,
+        lon: Math.round(st.lon * 10000) / 10000,
+        aqi: st.aqi || 100,
+        pm25: st.pm25 || 60,
+        pm10: st.pm10 || 100,
+        no2: st.no2 != null ? Number(st.no2) : 24,
+        so2: st.so2 != null ? Number(st.so2) : 10,
+        co: st.co != null ? Number(st.co) : 0.8,
+        o3: st.o3 != null ? Number(st.o3) : 32,
+        nearestStation: st.name,
+        nearestState: st.state || st.zone || 'India',
+        distanceKm: 0,
+        label: `${st.name} Monitoring Station`,
+        isPinpoint: true,
+        badge: 'Ground Station',
+      });
+    } else {
+      const snapshot = calculatePointTelemetrySnapshot(lat, lon, currentStations);
+      setInspectedPoint({
+        lat: Math.round(lat * 10000) / 10000,
+        lon: Math.round(lon * 10000) / 10000,
+        ...snapshot,
+        label: feature.place_name || feature.text || feature.name || 'Searched Location',
+        isPinpoint: feature.isPinpoint,
+        badge: feature.badge,
       });
     }
-    minDist = Math.round(minDist * 10) / 10;
-
-    // Drop pinpoint target marker with live estimated AQI on the searched location
-    let sampledAqi = sampleRasterGridVal(gridCacheRef.current, lon, lat);
-    if (sampledAqi === null) {
-      let totalW = 0;
-      let weightedAqi = 0;
-      currentStations.forEach((st) => {
-        const d = calculateDistanceKm(lat, lon, st.lat, st.lon);
-        const w = 1 / Math.pow(Math.max(15.0, d), 2.0);
-        totalW += w;
-        weightedAqi += st.aqi * w;
-      });
-      sampledAqi = weightedAqi / (totalW || 1);
-    }
-
-    const estAqi = Math.round(sampledAqi);
-    const estPm25 = Math.round((nearestSt?.pm25 ? (estAqi / (nearestSt.aqi || 1)) * nearestSt.pm25 : estAqi * 0.55) * 10) / 10;
-    const estPm10 = Math.round((nearestSt?.pm10 ? (estAqi / (nearestSt.aqi || 1)) * nearestSt.pm10 : estAqi * 1.15) * 10) / 10;
-    const estNo2 = nearestSt?.no2 != null ? Number(nearestSt.no2) : 24;
-    const estSo2 = nearestSt?.so2 != null ? Number(nearestSt.so2) : 10;
-    const estCo = nearestSt?.co != null ? Number(nearestSt.co) : 0.8;
-    const estO3 = nearestSt?.o3 != null ? Number(nearestSt.o3) : 32;
-
-    setInspectedPoint({
-      lat: Math.round(lat * 10000) / 10000,
-      lon: Math.round(lon * 10000) / 10000,
-      aqi: estAqi,
-      pm25: estPm25,
-      pm10: estPm10,
-      no2: estNo2,
-      so2: estSo2,
-      co: estCo,
-      o3: estO3,
-      nearestStation: nearestSt ? nearestSt.name : 'Indian Subcontinent Ground Station',
-      nearestState: nearestSt?.state || 'India',
-      distanceKm: minDist,
-      label: feature.place_name || feature.text || feature.name || 'Searched Location',
-      isPinpoint: feature.isPinpoint,
-      badge: feature.badge,
-    });
 
     // Auto-open Telemetry HUD with the micro-zone pinpoint reading
     setIsSidebarOpen(true);
@@ -1289,31 +1279,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
     if (!userLocation.isLiveGps || !userLocation.lat || !userLocation.lon) {
       return null;
     }
-    let totalWeight = 0;
-    let weightedVal = 0;
-    let nearestDist = Infinity;
-    let nearestVal = 0;
-
-    stations.forEach((st) => {
-      const d = calculateDistanceKm(userLocation.lat, userLocation.lon, st.lat, st.lon);
-      const stVal = getPollutantValue(st, activePollutant);
-      if (d < nearestDist) {
-        nearestDist = d;
-        nearestVal = stVal;
-      }
-      const w = 1 / Math.pow(Math.max(1.2, d), 2.0);
-      totalWeight += w;
-      weightedVal += stVal * w;
-    });
-
-    const interp = weightedVal / (totalWeight || 1);
-    // If within 1.5 km of a ground monitoring station, anchor directly to the station's ground-truth sensor reading
-    if (nearestDist <= 1.5) {
-      const blend = nearestDist / 1.5;
-      return Math.round(((1 - blend) * nearestVal + blend * interp) * 10) / 10;
-    }
-
-    return Math.round(interp * 10) / 10;
+    const currentStations = stationsRef.current && stationsRef.current.length > 0 ? stationsRef.current : stations;
+    return calculatePointPollutantEstimate(userLocation.lat, userLocation.lon, currentStations, activePollutant);
   }, [stations, userLocation, activePollutant]);
 
   const userColor = useMemo(() => {
@@ -1391,6 +1358,12 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         scrollZoom: true,
         touchZoomRotate: true,
         doubleClickZoom: true,
+        cooperativeGestures: true,
+        locale: {
+          'ScrollZoomBlocker.CtrlMessage': '',
+          'ScrollZoomBlocker.CmdMessage': '',
+          'TouchPanBlocker.Message': '',
+        },
       });
       mapInstanceRef.current = map;
       setIsTokenMissing(false);
@@ -1485,7 +1458,9 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       const initialRasterUrl = renderSeamlessRasterImage(
         gridCacheRef.current,
         gridCacheRef.current.nationalMin,
-        gridCacheRef.current.nationalMax
+        gridCacheRef.current.nationalMax,
+        activePollutantRef.current || 'aqi',
+        null
       );
 
       map.addSource('india-aqi-raster', {
@@ -1723,77 +1698,15 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         }
         const { lng, lat } = e.lngLat;
         const currentStations = stationsRef.current && stationsRef.current.length > 0 ? stationsRef.current : initialIndiaStations;
-        let nearest = currentStations[0];
-        let minD = Infinity;
+        if (!currentStations || currentStations.length === 0) return;
 
-        currentStations.forEach((st) => {
-          const d = calculateDistanceKm(lat, lng, st.lat, st.lon);
-          if (d < minD) {
-            minD = d;
-            nearest = st;
-          }
-        });
-
-        // Sample the EXACT continuous spatial raster grid value that determines the screen color!
-        const currentActivePollutant = activePollutantRef.current || 'aqi';
-
-        // Sample the EXACT continuous spatial raster grid value that determines the screen color!
-        let sampledVal = sampleRasterGridVal(gridCacheRef.current, lng, lat);
-        if (sampledVal === null) {
-          let totalW = 0;
-          let weightedVal = 0;
-          currentStations.forEach((st) => {
-            const d = calculateDistanceKm(lat, lng, st.lat, st.lon);
-            const w = 1 / Math.pow(Math.max(1.5, d), 2.0);
-            totalW += w;
-            weightedVal += getPollutantValue(st, currentActivePollutant) * w;
-          });
-          sampledVal = weightedVal / (totalW || 1);
-        }
-
-        let pAqi, pPm25, pPm10, pNo2, pSo2, pCo, pO3;
-
-        if (currentActivePollutant === 'aqi') {
-          pAqi = Math.round(sampledVal);
-          pPm25 = Math.round((nearest?.pm25 ? (pAqi / (nearest.aqi || 1)) * nearest.pm25 : pAqi * 0.55) * 10) / 10;
-          pPm10 = Math.round((nearest?.pm10 ? (pAqi / (nearest.aqi || 1)) * nearest.pm10 : pAqi * 1.15) * 10) / 10;
-          pNo2 = nearest?.no2 != null ? Number(nearest.no2) : 24;
-          pSo2 = nearest?.so2 != null ? Number(nearest.so2) : 10;
-          pCo = nearest?.co != null ? Number(nearest.co) : 0.8;
-          pO3 = nearest?.o3 != null ? Number(nearest.o3) : 30;
-        } else {
-          // Continuous raster grid was computed directly for this active pollutant
-          let activeVal = Math.round(sampledVal * 10) / 10;
-          const nearestBaseVal = getPollutantValue(nearest, currentActivePollutant) || 1;
-          if (minD <= 1.5 && nearest) {
-            const blend = minD / 1.5;
-            activeVal = Math.round(((1 - blend) * nearestBaseVal + blend * activeVal) * 10) / 10;
-          }
-          const ratio = Math.max(0.4, Math.min(2.5, activeVal / nearestBaseVal));
-          pAqi = currentActivePollutant === 'pm25'
-            ? calculateUncappedAqi(activeVal)
-            : (nearest?.aqi ? Math.round(nearest.aqi * (0.85 + 0.15 * ratio)) : 100);
-          pPm25 = currentActivePollutant === 'pm25' ? activeVal : Math.round((getPollutantValue(nearest, 'pm25') * ratio) * 10) / 10;
-          pPm10 = currentActivePollutant === 'pm10' ? activeVal : Math.round((getPollutantValue(nearest, 'pm10') * ratio) * 10) / 10;
-          pNo2 = currentActivePollutant === 'no2' ? activeVal : Math.round(getPollutantValue(nearest, 'no2') * ratio);
-          pSo2 = currentActivePollutant === 'so2' ? activeVal : Math.round(getPollutantValue(nearest, 'so2') * ratio);
-          pCo = currentActivePollutant === 'co' ? activeVal : Math.round((getPollutantValue(nearest, 'co') * ratio) * 10) / 10;
-          pO3 = currentActivePollutant === 'o3' ? activeVal : Math.round(getPollutantValue(nearest, 'o3') * ratio);
-        }
+        // Calculate unified high-precision empirical continuous spatial snapshot
+        const snapshot = calculatePointTelemetrySnapshot(lat, lng, currentStations);
 
         setInspectedPoint({
           lat: Math.round(lat * 10000) / 10000,
           lon: Math.round(lng * 10000) / 10000,
-          aqi: pAqi,
-          pm25: pPm25,
-          pm10: pPm10,
-          no2: pNo2,
-          so2: pSo2,
-          co: pCo,
-          o3: pO3,
-          nearestStation: nearest ? nearest.name : 'Indian Subcontinent Ground Station',
-          nearestState: nearest?.state || 'India',
-          distanceKm: minD,
+          ...snapshot,
           label: `Pinpoint Inspection (${lat.toFixed(3)}°N, ${lng.toFixed(3)}°E)`,
         });
         setIsSidebarOpen(true);

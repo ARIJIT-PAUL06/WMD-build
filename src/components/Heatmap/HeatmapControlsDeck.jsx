@@ -91,7 +91,7 @@ export default function HeatmapControlsDeck({
         {/* Adaptive Contrast Mode Toggle */}
         <button
           onClick={() => setIsAdaptiveMode((v) => !v)}
-          title="Dynamically recalibrate palette: lowest visible AQI becomes green, highest becomes bright red as you zoom in"
+          title="Adaptive Contrast: Enhances micro-scale neighborhood contrast while strictly preserving health-safe AQI color thresholds (moderate AQI never turns green)"
           className={`glass-cuboid-btn ${isAdaptiveMode ? 'glass-cuboid-btn-success' : ''} ${getBtnFlickerClass()}`}
           style={getBtnFlickerStyle(880)}
         >
@@ -100,7 +100,7 @@ export default function HeatmapControlsDeck({
           {isAdaptiveMode && activeRange.isZoomed && (
             <span
               style={{
-                background: '#10b981',
+                background: '#38bdf8',
                 color: '#040711',
                 fontSize: '9px',
                 fontWeight: 800,

@@ -546,7 +546,7 @@ export default function HeatmapTelemetryHud({
             style={{
               padding: '14px 18px',
               borderRadius: '16px',
-              border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)',
+              border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(56, 189, 248, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)',
               background: 'rgba(15, 23, 42, 0.65)',
               transition: 'border-color 0.3s ease',
             }}
@@ -554,7 +554,7 @@ export default function HeatmapTelemetryHud({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#94a3b8', marginBottom: '8px' }}>
               <span style={{ fontWeight: 700, color: '#e2e8f0', fontSize: '0.76rem' }}>{activePollutant.toUpperCase()} Spectrum</span>
               <span
-                className={`glass-pill ${isAdaptiveMode && activeRange.isZoomed ? 'glass-pill-success' : 'glass-pill-active'}`}
+                className={`glass-pill ${isAdaptiveMode && activeRange.isZoomed ? 'glass-pill-active' : 'glass-pill-subtle'}`}
                 style={{
                   fontWeight: 700,
                   fontSize: '0.68rem',
@@ -573,8 +573,9 @@ export default function HeatmapTelemetryHud({
               style={{
                 height: '11px',
                 borderRadius: '6px',
-                background:
-                  'linear-gradient(90deg, #10b981 0%, #34d399 14%, #a3e635 28%, #eab308 42%, #f97316 58%, #ea580c 72%, #dc2626 86%, #b91c1c 100%)',
+                background: isAdaptiveMode && activeRange.isZoomed
+                  ? `linear-gradient(90deg, ${getPollutantMeta(activeRange.min, activePollutant, activeRange).hex} 0%, ${getPollutantMeta(activeRange.min + (activeRange.max - activeRange.min) * 0.33, activePollutant, activeRange).hex} 33%, ${getPollutantMeta(activeRange.min + (activeRange.max - activeRange.min) * 0.66, activePollutant, activeRange).hex} 66%, ${getPollutantMeta(activeRange.max, activePollutant, activeRange).hex} 100%)`
+                  : 'linear-gradient(90deg, #10b981 0%, #34d399 14%, #a3e635 28%, #eab308 42%, #f97316 58%, #ea580c 72%, #dc2626 86%, #b91c1c 100%)',
                 marginBottom: '8px',
                 boxShadow: '0 2px 10px rgba(0, 0, 0, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.2)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -583,14 +584,18 @@ export default function HeatmapTelemetryHud({
 
             {/* Dynamic tick labels synchronized with viewport AQI range */}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.66rem', color: '#cbd5e1', fontWeight: 700 }}>
-              <span style={{ color: '#10b981' }}>{activeRange.min} (Min)</span>
-              <span style={{ color: '#a3e635' }}>
+              <span style={{ color: getPollutantMeta(activeRange.min, activePollutant, activeRange).hex }}>
+                {activeRange.min} (Min)
+              </span>
+              <span style={{ color: getPollutantMeta(activeRange.min + (activeRange.max - activeRange.min) * 0.33, activePollutant, activeRange).hex }}>
                 {Math.round(activeRange.min + (activeRange.max - activeRange.min) * 0.33)}
               </span>
-              <span style={{ color: '#fb923c' }}>
+              <span style={{ color: getPollutantMeta(activeRange.min + (activeRange.max - activeRange.min) * 0.66, activePollutant, activeRange).hex }}>
                 {Math.round(activeRange.min + (activeRange.max - activeRange.min) * 0.66)}
               </span>
-              <span style={{ color: '#f87171' }}>{activeRange.max} (Max)</span>
+              <span style={{ color: getPollutantMeta(activeRange.max, activePollutant, activeRange).hex }}>
+                {activeRange.max} (Max)
+              </span>
             </div>
           </div>
         </div>

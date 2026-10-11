@@ -1,4 +1,4 @@
-import indiaBoundaryGeoJson from '../../data/indiaBoundary.json';
+import indiaBoundaryGeoJson from '../../data/indiaBoundary.json' with { type: 'json' };
 import {
   INDIA_RASTER_BOUNDS,
   latToMercatorY,
@@ -229,18 +229,161 @@ export function computeRawSpatialGrid(stationsList, pollutantType = 'aqi', bound
 }
 
 /**
- * Samples continuous spatial AQI/pollutant value from active 2D raster grid at any (lon, lat).
+ * Samples continuous spatial AQI/pollutant value from active 2D raster grid at any (lon, lat)
+ * using smooth bilinear interpolation across neighbor cells rather than coarse nearest-neighbor snapping.
  */
 export function sampleRasterGridVal(gridObj, lon, lat) {
   if (!gridObj || !gridObj.rawGrid) return null;
   const { rawGrid, width, height } = gridObj;
   const u = (lon - INDIA_RASTER_BOUNDS.minLon) / LON_SPAN;
-  const x = Math.max(0, Math.min(width - 1, Math.round(u * (width - 1))));
   const mercY = latToMercatorY(lat);
   const v = (Y_MAX - mercY) / Y_SPAN;
-  const y = Math.max(0, Math.min(height - 1, Math.round(v * (height - 1))));
-  const val = rawGrid[y * width + x];
+
+  const gx = u * (width - 1);
+  const gy = v * (height - 1);
+
+  if (gx < 0 || gx > width - 1 || gy < 0 || gy > height - 1) {
+    const x = Math.max(0, Math.min(width - 1, Math.round(gx)));
+    const y = Math.max(0, Math.min(height - 1, Math.round(gy)));
+    const val = rawGrid[y * width + x];
+    return Number.isFinite(val) ? val : null;
+  }
+
+  // Smooth bilinear interpolation across 4 surrounding grid cells
+  const x0 = Math.floor(gx);
+  const x1 = Math.min(width - 1, x0 + 1);
+  const y0 = Math.floor(gy);
+  const y1 = Math.min(height - 1, y0 + 1);
+
+  const fx = gx - x0;
+  const fy = gy - y0;
+
+  const v00 = rawGrid[y0 * width + x0];
+  const v10 = rawGrid[y0 * width + x1];
+  const v01 = rawGrid[y1 * width + x0];
+  const v11 = rawGrid[y1 * width + x1];
+
+  const val = (1 - fx) * (1 - fy) * v00 +
+              fx * (1 - fy) * v10 +
+              (1 - fx) * fy * v01 +
+              fx * fy * v11;
+
   return Number.isFinite(val) ? val : null;
+}
+
+/**
+ * Calculates high-precision continuous spatial estimate of any pollutant (or AQI)
+ * at any arbitrary geographic coordinate (lat, lon) across India.
+ *
+ * Uses continuous inverse-distance-weighting (IDW, power=2, epsilon=1.2 km)
+ * and smoothly anchors to ground-truth CAAQMS sensors when within 1.5 km of a station.
+ */
+export function calculatePointPollutantEstimate(lat, lon, stationsList, pollutantType = 'aqi') {
+  if (!stationsList || stationsList.length === 0 || lat == null || lon == null) {
+    return pollutantType === 'co' ? 0.8 : (pollutantType === 'so2' ? 10 : (pollutantType === 'no2' ? 24 : 100));
+  }
+
+  let totalWeight = 0;
+  let weightedVal = 0;
+  let nearestDist = Infinity;
+  let nearestVal = 0;
+
+  for (let i = 0; i < stationsList.length; i++) {
+    const st = stationsList[i];
+    const d = calculateDistanceKm(lat, lon, st.lat, st.lon);
+    const stVal = getPollutantValue(st, pollutantType);
+    if (d < nearestDist) {
+      nearestDist = d;
+      nearestVal = stVal;
+    }
+    const w = 1 / Math.pow(Math.max(1.2, d), 2.0);
+    totalWeight += w;
+    weightedVal += stVal * w;
+  }
+
+  const interp = weightedVal / (totalWeight || 1);
+  let result = interp;
+  if (nearestDist <= 1.5) {
+    const blend = nearestDist / 1.5;
+    result = (1 - blend) * nearestVal + blend * interp;
+  }
+
+  if (pollutantType === 'co' || pollutantType === 'pm25' || pollutantType === 'pm10') {
+    return Math.round(result * 10) / 10;
+  }
+  return Math.round(result);
+}
+
+/**
+ * Generates a complete, multi-pollutant empirical snapshot at an exact (lat, lon) coordinate.
+ * Synchronizes AQI, PM2.5, PM10, NO2, SO2, CO, and O3 to the identical spatial weighting model,
+ * guaranteeing zero disparity between pinpoint inspections, GPS beacons, and searched places.
+ */
+export function calculatePointTelemetrySnapshot(lat, lon, stationsList) {
+  if (!stationsList || stationsList.length === 0 || lat == null || lon == null) {
+    return {
+      aqi: 100,
+      pm25: 60,
+      pm10: 100,
+      no2: 24,
+      so2: 10,
+      co: 0.8,
+      o3: 32,
+      nearestStation: 'Indian Ground Station',
+      nearestState: 'India',
+      distanceKm: 0,
+      nearestStationObj: null,
+    };
+  }
+
+  let nearest = stationsList[0];
+  let minD = Infinity;
+
+  const weights = new Float64Array(stationsList.length);
+  let totalW = 0;
+
+  for (let i = 0; i < stationsList.length; i++) {
+    const st = stationsList[i];
+    const d = calculateDistanceKm(lat, lon, st.lat, st.lon);
+    if (d < minD) {
+      minD = d;
+      nearest = st;
+    }
+    const w = 1 / Math.pow(Math.max(1.2, d), 2.0);
+    weights[i] = w;
+    totalW += w;
+  }
+
+  const safeTotalW = totalW || 1;
+  const isAnchored = minD <= 1.5;
+  const blend = isAnchored ? minD / 1.5 : 1.0;
+
+  const interpolatePollutant = (pollutant) => {
+    let sum = 0;
+    for (let i = 0; i < stationsList.length; i++) {
+      sum += getPollutantValue(stationsList[i], pollutant) * weights[i];
+    }
+    const interp = sum / safeTotalW;
+    if (isAnchored) {
+      const nearestVal = getPollutantValue(nearest, pollutant);
+      return (1 - blend) * nearestVal + blend * interp;
+    }
+    return interp;
+  };
+
+  return {
+    aqi: Math.round(interpolatePollutant('aqi')),
+    pm25: Math.round(interpolatePollutant('pm25') * 10) / 10,
+    pm10: Math.round(interpolatePollutant('pm10') * 10) / 10,
+    no2: Math.round(interpolatePollutant('no2') * 10) / 10,
+    so2: Math.round(interpolatePollutant('so2') * 10) / 10,
+    co: Math.round(interpolatePollutant('co') * 10) / 10,
+    o3: Math.round(interpolatePollutant('o3') * 10) / 10,
+    nearestStation: nearest ? (nearest.name || 'Indian Ground Station') : 'Indian Ground Station',
+    nearestState: nearest?.state || nearest?.zone || 'India',
+    distanceKm: Math.round(minD * 10) / 10,
+    nearestStationObj: nearest,
+  };
 }
 
 /**
@@ -345,13 +488,167 @@ export function calculateAdaptiveRange(gridObj, mapBounds, zoom, isAdaptiveMode 
     nationalMin: roundVal(nationalMin),
     nationalMax: roundVal(nationalMax),
     zoomFactor,
+    isZoomed: zoomFactor > 0.05,
   };
 }
 
 /**
- * Renders the seamless continuous raster image with dynamic normalization and polygon clipping.
+ * Scientific Absolute Color Anchor:
+ * Maps any physical pollutant reading to its canonical position [0, 1] in SEAMLESS_AQI_STOPS.
+ * Guarantees that:
+ * - Clean / Good air is in Green [0.00, 0.15]
+ * - Satisfactory air is in Emerald / Lime [0.15, 0.30]
+ * - Moderate air (101-200 AQI, e.g. 156 AQI) is strictly in Warm Yellow / Amber [0.30, 0.62] (156 is ~0.48)
+ * - Poor air (201-300 AQI) is in Vivid Orange / Burnt Ochre [0.62, 0.76]
+ * - Very Poor air (301-400 AQI) is in Scarlet Red [0.76, 0.90]
+ * - Severe air (401+ AQI) is in Deep Crimson [0.90, 1.00]
  */
-export function renderSeamlessRasterImage(gridObj, effectiveMin, effectiveMax) {
+export function getAbsolutePollutantT(val, pollutant = 'aqi') {
+  const v = Math.max(0, Number(val) || 0);
+
+  if (pollutant === 'pm25') {
+    if (v <= 30) return (v / 30) * 0.15;
+    if (v <= 60) return 0.15 + ((v - 30) / 30) * 0.15;
+    if (v <= 90) return 0.30 + ((v - 60) / 30) * 0.16;
+    if (v <= 120) return 0.46 + ((v - 90) / 30) * 0.16;
+    if (v <= 250) return 0.62 + ((v - 120) / 130) * 0.28;
+    return Math.min(1.0, 0.90 + ((v - 250) / 100) * 0.10);
+  }
+
+  if (pollutant === 'pm10') {
+    if (v <= 50) return (v / 50) * 0.15;
+    if (v <= 100) return 0.15 + ((v - 50) / 50) * 0.15;
+    if (v <= 250) return 0.30 + ((v - 100) / 150) * 0.16;
+    if (v <= 350) return 0.46 + ((v - 250) / 100) * 0.16;
+    if (v <= 430) return 0.62 + ((v - 350) / 80) * 0.28;
+    return Math.min(1.0, 0.90 + ((v - 430) / 100) * 0.10);
+  }
+
+  if (pollutant === 'no2') {
+    if (v <= 40) return (v / 40) * 0.15;
+    if (v <= 80) return 0.15 + ((v - 40) / 40) * 0.15;
+    if (v <= 180) return 0.30 + ((v - 80) / 100) * 0.20;
+    if (v <= 280) return 0.50 + ((v - 180) / 100) * 0.25;
+    return Math.min(1.0, 0.75 + ((v - 280) / 100) * 0.25);
+  }
+
+  if (pollutant === 'so2') {
+    if (v <= 40) return (v / 40) * 0.15;
+    if (v <= 80) return 0.15 + ((v - 40) / 40) * 0.15;
+    if (v <= 200) return 0.30 + ((v - 80) / 120) * 0.30;
+    return Math.min(1.0, 0.60 + ((v - 200) / 100) * 0.40);
+  }
+
+  if (pollutant === 'co') {
+    if (v <= 1.0) return (v / 1.0) * 0.15;
+    if (v <= 2.0) return 0.15 + ((v - 1.0) / 1.0) * 0.15;
+    if (v <= 10.0) return 0.30 + ((v - 2.0) / 8.0) * 0.35;
+    return Math.min(1.0, 0.65 + ((v - 10.0) / 10.0) * 0.35);
+  }
+
+  if (pollutant === 'o3') {
+    if (v <= 50) return (v / 50) * 0.15;
+    if (v <= 100) return 0.15 + ((v - 50) / 50) * 0.15;
+    if (v <= 168) return 0.30 + ((v - 100) / 68) * 0.30;
+    return Math.min(1.0, 0.60 + ((v - 168) / 100) * 0.40);
+  }
+
+  // Standard CPCB / EPA AQI Breakpoints
+  if (v <= 50) {
+    return (v / 50) * 0.15; // 0..50 -> 0.00..0.15 (Pristine Green to Emerald Mint)
+  }
+  if (v <= 100) {
+    return 0.15 + ((v - 50) / 50) * 0.15; // 50..100 -> 0.15..0.30 (Emerald Mint to Vivid Lime)
+  }
+  if (v <= 200) {
+    // 100..200 -> 0.30..0.62 (Lime -> Warm Yellow at 150 -> Vivid Orange at 200)
+    // 156 maps to: 0.30 + (56/100) * 0.32 = 0.4792 (Warm Golden Yellow, NEVER GREEN!)
+    return 0.30 + ((v - 100) / 100) * 0.32;
+  }
+  if (v <= 300) {
+    return 0.62 + ((v - 200) / 100) * 0.14; // 200..300 -> 0.62..0.76 (Orange to Burnt Ochre)
+  }
+  if (v <= 400) {
+    return 0.76 + ((v - 300) / 100) * 0.14; // 300..400 -> 0.76..0.90 (Burnt Ochre to Scarlet Red)
+  }
+  return Math.min(1.0, 0.90 + ((v - 400) / 100) * 0.10); // 400..500+ -> 0.90..1.00 (Deep Crimson)
+}
+
+/**
+ * Calibrates normalized color stop [0, 1] considering zoom and active viewport range.
+ * Dynamically enhances local micro-contrast while strictly anchoring health safety floors:
+ * - When zoomed in on Moderate pollution (AQI 101-200, such as 156 AQI), the color floor is
+ *   locked to Warm Yellow (>= 0.38) and CAN NEVER drop into Green (< 0.25).
+ * - When zoomed in on Clean air (AQI 0-50), the color ceiling can never turn falsely red.
+ */
+export function getCalibratedPollutantT(val, pollutant = 'aqi', activeRange = null) {
+  const num = Number(val) || 0;
+  const tBase = getAbsolutePollutantT(num, pollutant);
+
+  if (!activeRange || !activeRange.isZoomed || activeRange.max <= activeRange.min) {
+    return tBase;
+  }
+
+  const { min, max, zoomFactor = 1 } = activeRange;
+  const tMin = getAbsolutePollutantT(min, pollutant);
+  const tMax = getAbsolutePollutantT(max, pollutant);
+
+  // If local range is effectively uniform, maintain absolute color
+  if (tMax - tMin < 0.01) {
+    return tBase;
+  }
+
+  // Position of value within local min/max [0, 1]
+  const u = Math.max(0, Math.min(1, (num - min) / (max - min)));
+
+  // Center and span of the local color band
+  const centerT = (tMin + tMax) / 2;
+  const spanT = tMax - tMin;
+
+  // Controlled contrast stretch across the local neighborhood
+  const boost = 1.30;
+  let tLocal = centerT + (u - 0.5) * spanT * boost;
+
+  // STRICT HEALTH & SAFETY BOUNDS (Zero false-greens on polluted air):
+  if (pollutant === 'aqi') {
+    if (num > 100) {
+      // Moderate (101-200) floor is Warm Yellow (0.38)
+      // Poor (201-300) floor is Vivid Orange (0.58)
+      // Very Poor (301+) floor is Scarlet Red (0.75)
+      const floorT = num >= 300 ? 0.75 : num >= 200 ? 0.58 : 0.38;
+      tLocal = Math.max(floorT, tLocal);
+    } else if (num <= 50) {
+      // Good (0-50) air can NEVER exceed Lime/Yellow (<= 0.28)
+      tLocal = Math.min(0.28, tLocal);
+    }
+  } else if (pollutant === 'pm25') {
+    if (num > 60) {
+      const floorT = num >= 120 ? 0.60 : num >= 90 ? 0.44 : 0.36;
+      tLocal = Math.max(floorT, tLocal);
+    } else if (num <= 30) {
+      tLocal = Math.min(0.28, tLocal);
+    }
+  } else if (pollutant === 'pm10') {
+    if (num > 100) {
+      const floorT = num >= 350 ? 0.60 : num >= 250 ? 0.44 : 0.36;
+      tLocal = Math.max(floorT, tLocal);
+    } else if (num <= 50) {
+      tLocal = Math.min(0.28, tLocal);
+    }
+  }
+
+  // Clamped to valid unit range [0, 1]
+  tLocal = Math.max(0, Math.min(1, tLocal));
+
+  // Seamlessly blend between national scale and adaptive local scale
+  const zf = Math.max(0, Math.min(1, zoomFactor));
+  return (1 - zf) * tBase + zf * tLocal;
+}
+
+/**
+ * Renders the seamless continuous raster image with calibrated dynamic normalization and polygon clipping.
+ */
+export function renderSeamlessRasterImage(gridObj, effectiveMin, effectiveMax, pollutant = 'aqi', activeRange = null) {
   if (typeof document === 'undefined' || !gridObj) return '';
   const { rawGrid, mask, width, height } = gridObj;
 
@@ -363,7 +660,13 @@ export function renderSeamlessRasterImage(gridObj, effectiveMin, effectiveMax) {
 
   const imgData = rawCtx.createImageData(width, height);
   const data = imgData.data;
-  const range = effectiveMax - effectiveMin || 1;
+
+  const rangeContext = activeRange || {
+    min: effectiveMin,
+    max: effectiveMax,
+    isZoomed: (effectiveMax - effectiveMin) < 220,
+    zoomFactor: 1,
+  };
 
   for (let i = 0; i < width * height; i++) {
     if (mask[i] === 0) {
@@ -372,7 +675,7 @@ export function renderSeamlessRasterImage(gridObj, effectiveMin, effectiveMax) {
     }
 
     const val = rawGrid[i];
-    const t = Math.max(0, Math.min(1, (val - effectiveMin) / range));
+    const t = getCalibratedPollutantT(val, pollutant, rangeContext);
     const [r, g, b] = interpolateSeamlessRgb(t);
 
     const idx = i * 4;
@@ -419,85 +722,80 @@ export function getPollutantValue(station, pollutant = 'aqi') {
 export function getPollutantMeta(val, pollutant = 'aqi', activeRange = null) {
   const num = Number(val) || 0;
   
+  // Continuous scientific seamless color evaluation with zero-false-greens
+  const t = getCalibratedPollutantT(num, pollutant, activeRange);
+  const [r, g, b] = interpolateSeamlessRgb(t);
+  const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+
   if (pollutant === 'pm25') {
-    if (num <= 30) return { hex: '#10b981', label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'µg/m³', maxScale: 250 };
-    if (num <= 60) return { hex: '#84cc16', label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'µg/m³', maxScale: 250 };
-    if (num <= 90) return { hex: '#eab308', label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'µg/m³', maxScale: 250 };
-    if (num <= 120) return { hex: '#f97316', label: 'Poor', badgeBg: 'rgba(249, 115, 22, 0.2)', textHex: '#fb923c', unit: 'µg/m³', maxScale: 250 };
-    if (num <= 250) return { hex: '#ef4444', label: 'Very Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'µg/m³', maxScale: 250 };
-    return { hex: '#991b1b', label: 'Severe / Hazardous', badgeBg: 'rgba(153, 27, 27, 0.25)', textHex: '#fca5a5', unit: 'µg/m³', maxScale: 250 };
+    if (num <= 30) return { hex, label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'µg/m³', maxScale: 250 };
+    if (num <= 60) return { hex, label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'µg/m³', maxScale: 250 };
+    if (num <= 90) return { hex, label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'µg/m³', maxScale: 250 };
+    if (num <= 120) return { hex, label: 'Poor', badgeBg: 'rgba(249, 115, 22, 0.2)', textHex: '#fb923c', unit: 'µg/m³', maxScale: 250 };
+    if (num <= 250) return { hex, label: 'Very Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'µg/m³', maxScale: 250 };
+    return { hex, label: 'Severe / Hazardous', badgeBg: 'rgba(153, 27, 27, 0.25)', textHex: '#fca5a5', unit: 'µg/m³', maxScale: 250 };
   }
 
   if (pollutant === 'pm10') {
-    if (num <= 50) return { hex: '#10b981', label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'µg/m³', maxScale: 430 };
-    if (num <= 100) return { hex: '#84cc16', label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'µg/m³', maxScale: 430 };
-    if (num <= 250) return { hex: '#eab308', label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'µg/m³', maxScale: 430 };
-    if (num <= 350) return { hex: '#f97316', label: 'Poor', badgeBg: 'rgba(249, 115, 22, 0.2)', textHex: '#fb923c', unit: 'µg/m³', maxScale: 430 };
-    if (num <= 430) return { hex: '#ef4444', label: 'Very Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'µg/m³', maxScale: 430 };
-    return { hex: '#991b1b', label: 'Severe / Hazardous', badgeBg: 'rgba(153, 27, 27, 0.25)', textHex: '#fca5a5', unit: 'µg/m³', maxScale: 430 };
+    if (num <= 50) return { hex, label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'µg/m³', maxScale: 430 };
+    if (num <= 100) return { hex, label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'µg/m³', maxScale: 430 };
+    if (num <= 250) return { hex, label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'µg/m³', maxScale: 430 };
+    if (num <= 350) return { hex, label: 'Poor', badgeBg: 'rgba(249, 115, 22, 0.2)', textHex: '#fb923c', unit: 'µg/m³', maxScale: 430 };
+    if (num <= 430) return { hex, label: 'Very Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'µg/m³', maxScale: 430 };
+    return { hex, label: 'Severe / Hazardous', badgeBg: 'rgba(153, 27, 27, 0.25)', textHex: '#fca5a5', unit: 'µg/m³', maxScale: 430 };
   }
 
   if (pollutant === 'no2') {
-    if (num <= 40) return { hex: '#10b981', label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'µg/m³', maxScale: 280 };
-    if (num <= 80) return { hex: '#84cc16', label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'µg/m³', maxScale: 280 };
-    if (num <= 180) return { hex: '#eab308', label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'µg/m³', maxScale: 280 };
-    if (num <= 280) return { hex: '#f97316', label: 'Poor', badgeBg: 'rgba(249, 115, 22, 0.2)', textHex: '#fb923c', unit: 'µg/m³', maxScale: 280 };
-    return { hex: '#ef4444', label: 'Very Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'µg/m³', maxScale: 280 };
+    if (num <= 40) return { hex, label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'µg/m³', maxScale: 280 };
+    if (num <= 80) return { hex, label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'µg/m³', maxScale: 280 };
+    if (num <= 180) return { hex, label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'µg/m³', maxScale: 280 };
+    if (num <= 280) return { hex, label: 'Poor', badgeBg: 'rgba(249, 115, 22, 0.2)', textHex: '#fb923c', unit: 'µg/m³', maxScale: 280 };
+    return { hex, label: 'Very Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'µg/m³', maxScale: 280 };
   }
 
   if (pollutant === 'so2') {
-    if (num <= 40) return { hex: '#10b981', label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'µg/m³', maxScale: 200 };
-    if (num <= 80) return { hex: '#84cc16', label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'µg/m³', maxScale: 200 };
-    if (num <= 200) return { hex: '#eab308', label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'µg/m³', maxScale: 200 };
-    return { hex: '#ef4444', label: 'Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'µg/m³', maxScale: 200 };
+    if (num <= 40) return { hex, label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'µg/m³', maxScale: 200 };
+    if (num <= 80) return { hex, label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'µg/m³', maxScale: 200 };
+    if (num <= 200) return { hex, label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'µg/m³', maxScale: 200 };
+    return { hex, label: 'Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'µg/m³', maxScale: 200 };
   }
 
   if (pollutant === 'co') {
-    if (num <= 1.0) return { hex: '#10b981', label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'mg/m³', maxScale: 10 };
-    if (num <= 2.0) return { hex: '#84cc16', label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'mg/m³', maxScale: 10 };
-    if (num <= 10.0) return { hex: '#eab308', label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'mg/m³', maxScale: 10 };
-    return { hex: '#ef4444', label: 'Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'mg/m³', maxScale: 10 };
+    if (num <= 1.0) return { hex, label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'mg/m³', maxScale: 10 };
+    if (num <= 2.0) return { hex, label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'mg/m³', maxScale: 10 };
+    if (num <= 10.0) return { hex, label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'mg/m³', maxScale: 10 };
+    return { hex, label: 'Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'mg/m³', maxScale: 10 };
   }
 
   if (pollutant === 'o3') {
-    if (num <= 50) return { hex: '#10b981', label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'µg/m³', maxScale: 200 };
-    if (num <= 100) return { hex: '#84cc16', label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'µg/m³', maxScale: 200 };
-    if (num <= 168) return { hex: '#eab308', label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'µg/m³', maxScale: 200 };
-    return { hex: '#ef4444', label: 'Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'µg/m³', maxScale: 200 };
+    if (num <= 50) return { hex, label: 'Good / Clean', badgeBg: 'rgba(16, 185, 129, 0.2)', textHex: '#34d399', unit: 'µg/m³', maxScale: 200 };
+    if (num <= 100) return { hex, label: 'Satisfactory', badgeBg: 'rgba(132, 204, 22, 0.2)', textHex: '#a3e635', unit: 'µg/m³', maxScale: 200 };
+    if (num <= 168) return { hex, label: 'Moderate', badgeBg: 'rgba(234, 179, 8, 0.2)', textHex: '#facc15', unit: 'µg/m³', maxScale: 200 };
+    return { hex, label: 'Poor', badgeBg: 'rgba(220, 38, 38, 0.2)', textHex: '#f87171', unit: 'µg/m³', maxScale: 200 };
   }
 
-  // Fallback / AQI mode
-  let hex = '#f97316';
-  if (activeRange && activeRange.max > activeRange.min) {
-    const t = Math.max(0, Math.min(1, (val - activeRange.min) / (activeRange.max - activeRange.min)));
-    const [r, g, b] = interpolateSeamlessRgb(t);
-    hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-  } else {
-    const [r, g, b] = interpolateSeamlessRgb(Math.max(0, Math.min(1, (val - 40) / 260)));
-    hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-  }
-
+  // Standard AQI (CPCB / EPA breakpoints)
   let label = 'Good';
   let badgeBg = 'rgba(16, 185, 129, 0.2)';
   let textHex = '#34d399';
 
-  if (val <= 50) {
+  if (num <= 50) {
     label = 'Good / Pristine';
     badgeBg = 'rgba(16, 185, 129, 0.2)';
     textHex = '#34d399';
-  } else if (val <= 100) {
+  } else if (num <= 100) {
     label = 'Satisfactory';
     badgeBg = 'rgba(132, 204, 22, 0.2)';
     textHex = '#a3e635';
-  } else if (val <= 200) {
+  } else if (num <= 200) {
     label = 'Moderate';
     badgeBg = 'rgba(234, 179, 8, 0.2)';
     textHex = '#facc15';
-  } else if (val <= 300) {
+  } else if (num <= 300) {
     label = 'Poor';
     badgeBg = 'rgba(249, 115, 22, 0.2)';
     textHex = '#fb923c';
-  } else if (val <= 400) {
+  } else if (num <= 400) {
     label = 'Very Poor';
     badgeBg = 'rgba(220, 38, 38, 0.2)';
     textHex = '#f87171';
