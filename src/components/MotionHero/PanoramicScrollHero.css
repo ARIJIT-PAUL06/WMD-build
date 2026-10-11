@@ -121,7 +121,7 @@
   position: absolute;
   top: var(--crt-brand-top, 26px);
   left: var(--crt-brand-left, 96px);
-  z-index: 15;            /* was 30: now sits under the CRT glass (.hero-crt-screen-curvature, z 16) like the auth cluster */
+  z-index: 18;  /* above the CRT glass (16) and bottom-fade/ambient tint (17); below the sidebar (28) and CTA hotspot (35) */
   display: flex;
   align-items: center;
   gap: 14px;
@@ -314,6 +314,19 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
+  isolation: isolate;   /* keeps the ::before scrim behind the text but inside this box */
+}
+
+/* Soft CRT-corner shadow behind the wordmark so it separates from bright sky / foliage */
+.hero-hud-brand::before {
+  content: '';
+  position: absolute;
+  inset: -16px -26px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse closest-side, rgba(7, 10, 18, 0.62) 0%, rgba(7, 10, 18, 0.38) 55%, transparent 100%);
+  z-index: -1;
+  pointer-events: none;
 }
 
 .hero-about-link-btn {
@@ -622,7 +635,7 @@
   }
 
   .hero-hud-brand span {
-    font-size: 1.15rem !important;
+    font-size: 1.25rem !important;
     letter-spacing: 0.10em !important;
   }
 

@@ -36,9 +36,23 @@ function getBrandTheme(progress) {
     accentColor: `rgb(${rgb})`,
     glow: `rgba(${rgb}, 0.65)`,
     glowSoft: `rgba(${rgb}, 0.25)`,
+    glowCore: `rgba(${rgb}, 0.85)`,
+    glowMid: `rgba(${rgb}, 0.5)`,
     ambient: `rgba(${rgb}, 0.12)`,
     spotlight: `rgba(${rgb}, 0.16)`,
   };
+}
+
+// Dark separation layers first (keeps the wordmark legible on bright smog sky and green canopy),
+// then the phosphor glow in the current brand colour.
+function brandTextShadow(theme) {
+  return [
+    '0 1px 0 rgba(7, 10, 18, 0.85)',
+    '0 0 3px rgba(7, 10, 18, 0.9)',
+    `0 0 8px ${theme.glowCore}`,
+    `0 0 22px ${theme.glowMid}`,
+    `0 0 44px ${theme.glowSoft}`,
+  ].join(', ');
 }
 
 /**
@@ -191,7 +205,7 @@ export default function PanoramicScrollHero({
 
     if (brandTextRef.current) {
       brandTextRef.current.style.color = theme.textColor;
-      brandTextRef.current.style.textShadow = `0 0 16px ${theme.glow}, 0 0 32px ${theme.glowSoft}`;
+      brandTextRef.current.style.textShadow = brandTextShadow(theme);
     }
     if (bottomFadeRef.current) {
       bottomFadeRef.current.style.background = `linear-gradient(to bottom, rgba(7, 10, 18, 0.45) 0%, transparent 14%, transparent 60%, rgba(7, 10, 18, 0.88) 85%, #070a12 100%), ${theme.ambient}`;
@@ -369,8 +383,12 @@ export default function PanoramicScrollHero({
       const brand = crtCornerAnchor(CRT_CORNER_INSET_X, CRT_CORNER_INSET_Y, brandW, w, h, 'left');
       const auth = crtCornerAnchor(1 - CRT_CORNER_INSET_X, CRT_CORNER_INSET_Y, authW, w, h, 'right');
 
+      const brandH = brandHudRef.current ? brandHudRef.current.offsetHeight : 0;
+      const authH = authContainerRef.current ? authContainerRef.current.offsetHeight : brandH;
+
       root.style.setProperty('--crt-brand-left', `${brand.x}px`);
-      root.style.setProperty('--crt-brand-top', `${brand.y}px`);
+      // Both anchors share the same glass y (mirror-symmetric); offset the brand so the two centrelines match
+      root.style.setProperty('--crt-brand-top', `${brand.y + (authH - brandH) / 2}px`);
       root.style.setProperty('--crt-brand-tilt', `${brand.angle * CRT_TILT_FACTOR}deg`);
       root.style.setProperty('--crt-auth-right', `${auth.x}px`);
       root.style.setProperty('--crt-auth-top', `${auth.y}px`);
@@ -384,6 +402,7 @@ export default function PanoramicScrollHero({
     // Auth badge width changes between loading / Sign In / signed-in states
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(place) : null;
     if (ro && authContainerRef.current) ro.observe(authContainerRef.current);
+    if (ro && brandHudRef.current) ro.observe(brandHudRef.current);
 
     return () => {
       window.removeEventListener('resize', place);
@@ -556,11 +575,11 @@ export default function PanoramicScrollHero({
                 style={{
                   fontFamily: "'Outfit', sans-serif",
                   fontWeight: 900,
-                  fontSize: '1.45rem',
+                  fontSize: '1.6rem',
                   letterSpacing: '0.15em',
                   textTransform: 'uppercase',
                   color: '#f59e0b',
-                  textShadow: '0 0 16px rgba(245, 158, 11, 0.65), 0 0 32px rgba(245, 158, 11, 0.25)',
+                  textShadow: brandTextShadow(getBrandTheme(0)),
                   transition: 'color 0.15s ease, text-shadow 0.15s ease',
                 }}
               >
