@@ -26,7 +26,6 @@ if (typeof window !== 'undefined') {
  */
 export default function StatsPage({ onBack, onOpenDashboard }) {
   const pageRef = useRef(null);
-  const [activeDatasetSubset, setActiveDatasetSubset] = useState('ALL');
   const [forecastData, setForecastData] = useState(null);
   const [liveDelhiTelemetry, setLiveDelhiTelemetry] = useState(null);
   const [isLoadingForecast, setIsLoadingForecast] = useState(false);
@@ -356,35 +355,12 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
             <span className="stats-section-coord">LAT: 28.40N–28.85N / LON: 76.90E–77.40E</span>
           </div>
 
-          {/* Interactive Subset Filter Controls */}
+          {/* Dataset Archive Scope */}
           <div className="stats-filter-controls-row">
-            <div className="stats-filter-pill-group" role="tablist" aria-label="Dataset perspective filter">
-              {[
-                { key: 'ALL', label: 'Full Archive Lattice (332k Pairs)' },
-                { key: 'TRAIN', label: '80% Train Subset' },
-                { key: 'TEST', label: '20% Held-Out Horizon' },
-              ].map((btn) => {
-                const isActive = activeDatasetSubset === btn.key;
-                return (
-                  <button
-                    key={btn.key}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    className={`stats-filter-pill ${isActive ? 'active' : ''}`}
-                    onClick={() => setActiveDatasetSubset(btn.key)}
-                  >
-                    {isActive && (
-                      <motion.div
-                        className="stats-filter-pill-bg"
-                        layoutId="datasetFilterPillBg"
-                        transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-                      />
-                    )}
-                    <span>{btn.label}</span>
-                  </button>
-                );
-              })}
+            <div className="stats-filter-pill-group">
+              <div className="stats-filter-pill active">
+                <span>Full Archive Lattice (332k Pairs)</span>
+              </div>
             </div>
             <span className="stats-filter-caption">CPCB REGULATORY ARCHIVE TELEMETRY</span>
           </div>
