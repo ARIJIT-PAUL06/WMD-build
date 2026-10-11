@@ -516,6 +516,8 @@ export default function CrtScreenLensCanvas({
       // VAYUVITALS Brand Wordmark (Curved by CRT Screen Curvature)
       // Painted directly onto the CRT faceplate canvas at the top-left
       // corner so it organically curves with curveFaceplate() in WebGL!
+      // Styled in the authentic vintage CRT terminal template aesthetic
+      // with Fraktur / Gothic calligraphy (matching opposite Sign In HUD).
       // ==============================================================
       const p = Math.max(0, Math.min(1, scroll));
       let brandR, brandG, brandB;
@@ -535,67 +537,200 @@ export default function CrtScreenLensCanvas({
 
       textCtx.save();
       // Prominent, authoritative typography laid over the curved TV glass
-      const brandFontSize = isMobile ? 22 : 32;
+      const brandFontSize = isMobile ? 17 : 21;
       textCtx.font = `900 ${brandFontSize}px "Outfit", -apple-system, BlinkMacSystemFont, sans-serif`;
       if ('letterSpacing' in textCtx) {
-        textCtx.letterSpacing = isMobile ? '2.5px' : '4px';
+        textCtx.letterSpacing = isMobile ? '2.0px' : '3.5px';
       }
+
+      const brandText = 'VAYUVITALS';
+
+      const brandTextMetrics = textCtx.measureText(brandText);
+      const brandTextW = brandTextMetrics.width;
+
+      // Symmetrical box dimensions matching the opposite Sign-In button
+      const brandBoxW = Math.max(isMobile ? 140 : 190, brandTextW + (isMobile ? 36 : 48));
+      const brandBoxH = isMobile ? 38 : 46;
+      const leftInset = isMobile ? Math.max(16, width * 0.04) : Math.max(68, width * 0.038);
+      const brandBoxX = leftInset;
+      const brandBoxY = isMobile ? Math.max(14, height * 0.036 - 3) : Math.max(26, height * 0.036 - 6);
+
+      // 1. Dark Analog Cathode Ray Glass Box Plate
+      textCtx.beginPath();
+      if (textCtx.roundRect) {
+        textCtx.roundRect(brandBoxX, brandBoxY, brandBoxW, brandBoxH, 8);
+      } else {
+        textCtx.rect(brandBoxX, brandBoxY, brandBoxW, brandBoxH);
+      }
+      textCtx.fillStyle = 'rgba(10, 12, 18, 0.90)';
+      textCtx.fill();
+
+      // 2. Phosphor Border with Analog CRT Glow
+      textCtx.save();
+      textCtx.strokeStyle = brandColor;
+      textCtx.lineWidth = 1.4;
+      textCtx.shadowColor = brandGlow;
+      textCtx.shadowBlur = 12;
+      textCtx.stroke();
+      textCtx.restore();
+
+      // 3. Cathode Ray Scanline Texture baked into the brand box face
+      textCtx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+      for (let sy = brandBoxY + 2; sy < brandBoxY + brandBoxH - 2; sy += 3) {
+        textCtx.fillRect(brandBoxX + 2, sy, brandBoxW - 4, 1.2);
+      }
+
+      // 4. Vintage Terminal Corner Crosshairs (Matching Template Reticles)
+      textCtx.save();
+      textCtx.strokeStyle = brandColor;
+      textCtx.lineWidth = 1.8;
+      textCtx.shadowColor = brandGlow;
+      textCtx.shadowBlur = 6;
+      const bMarkLen = isMobile ? 5 : 7;
+      // Top-left
+      textCtx.beginPath();
+      textCtx.moveTo(brandBoxX + 4, brandBoxY + 4 + bMarkLen);
+      textCtx.lineTo(brandBoxX + 4, brandBoxY + 4);
+      textCtx.lineTo(brandBoxX + 4 + bMarkLen, brandBoxY + 4);
+      textCtx.stroke();
+      // Top-right
+      textCtx.beginPath();
+      textCtx.moveTo(brandBoxX + brandBoxW - 4 - bMarkLen, brandBoxY + 4);
+      textCtx.lineTo(brandBoxX + brandBoxW - 4, brandBoxY + 4);
+      textCtx.lineTo(brandBoxX + brandBoxW - 4, brandBoxY + 4 + bMarkLen);
+      textCtx.stroke();
+      // Bottom-left
+      textCtx.beginPath();
+      textCtx.moveTo(brandBoxX + 4, brandBoxY + brandBoxH - 4 - bMarkLen);
+      textCtx.lineTo(brandBoxX + 4, brandBoxY + brandBoxH - 4);
+      textCtx.lineTo(brandBoxX + 4 + bMarkLen, brandBoxY + brandBoxH - 4);
+      textCtx.stroke();
+      // Bottom-right
+      textCtx.beginPath();
+      textCtx.moveTo(brandBoxX + brandBoxW - 4 - bMarkLen, brandBoxY + brandBoxH - 4);
+      textCtx.lineTo(brandBoxX + brandBoxW - 4, brandBoxY + brandBoxH - 4);
+      textCtx.lineTo(brandBoxX + brandBoxW - 4, brandBoxY + brandBoxH - 4 - bMarkLen);
+      textCtx.stroke();
+      textCtx.restore();
+
+      // 5. Brand Wordmark (Cleanly Centered)
+      textCtx.save();
       textCtx.fillStyle = brandColor;
       textCtx.shadowColor = brandGlow;
-      textCtx.shadowBlur = isMobile ? 16 : 24;
-      textCtx.textBaseline = 'top';
+      textCtx.shadowBlur = isMobile ? 14 : 20;
+      textCtx.textAlign = 'center';
+      textCtx.textBaseline = 'middle';
+      textCtx.fillText(brandText, brandBoxX + brandBoxW / 2, brandBoxY + brandBoxH / 2);
+      textCtx.restore();
 
-      const brandX = isMobile ? Math.max(16, width * 0.04) : Math.max(68, width * 0.038);
-      const brandY = isMobile ? Math.max(18, height * 0.036) : Math.max(32, height * 0.036);
-      textCtx.fillText('VAYUVITALS', brandX, brandY);
       textCtx.restore();
 
       // ==============================================================
       // Sign In Button (Curved by CRT Screen Curvature)
       // Painted directly onto the CRT faceplate canvas at the top-right
       // corner so it organically curves with curveFaceplate() in WebGL!
+      // Styled in the authentic vintage CRT terminal template aesthetic.
       // ==============================================================
       const authOpacity = Math.max(0, 1 - scroll * 4.8);
       if (authOpacity > 0.01) {
         const { user: curUser, isAuthenticated: curAuth } = authStateRef.current;
         textCtx.save();
         textCtx.globalAlpha = authOpacity;
-        const authFontSize = isMobile ? 13 : 15;
-        textCtx.font = `700 ${authFontSize}px "Outfit", -apple-system, BlinkMacSystemFont, sans-serif`;
+
         const isHovered = isSignInHoverRef.current;
+        const authFontSize = isMobile ? 14 : 17;
+        textCtx.font = `700 ${authFontSize}px "Share Tech Mono", "JetBrains Mono", monospace`;
+        if ('letterSpacing' in textCtx) {
+          textCtx.letterSpacing = isMobile ? '1.0px' : '1.4px';
+        }
+
         const displayText = curAuth && curUser
-          ? (curUser.email ? curUser.email.split('@')[0] : 'Citizen')
-          : 'Sign In';
+          ? (curUser.email ? curUser.email.split('@')[0] : 'Citizen').toUpperCase()
+          : 'SIGN IN';
 
         const textMetrics = textCtx.measureText(displayText);
-        const authBtnW = textMetrics.width + (isMobile ? 28 : 38);
-        const authBtnH = isMobile ? 32 : 38;
+        const textW = textMetrics.width;
+
+        // Substantially bigger button dimensions to balance VAYUVITALS opposite it
+        const authBtnW = Math.max(isMobile ? 122 : 158, textW + (isMobile ? 40 : 54));
+        const authBtnH = isMobile ? 38 : 46;
         const rightInset = isMobile ? Math.max(16, width * 0.04) : Math.max(68, width * 0.038);
         const authBtnX = width - rightInset - authBtnW;
-        const authBtnY = isMobile ? Math.max(18, height * 0.036) : Math.max(32, height * 0.036);
+        const authBtnY = isMobile ? Math.max(14, height * 0.036 - 3) : Math.max(26, height * 0.036 - 6);
 
-        // Translucent CRT glass pill backdrop
-        textCtx.fillStyle = isHovered ? 'rgba(255, 255, 255, 0.18)' : 'rgba(15, 23, 42, 0.78)';
+        // Template Palette: Vintage phosphor amber with high-contrast cathode plate
+        const accentColor = isHovered ? '#fef08a' : '#d4a359';
+        const accentGlow = isHovered ? 'rgba(254, 240, 138, 0.75)' : 'rgba(212, 163, 89, 0.60)';
+        const plateBg = isHovered ? 'rgba(24, 20, 16, 0.94)' : 'rgba(10, 12, 18, 0.90)';
+
+        // 1. Dark Analog Cathode Ray Glass Box Plate
         textCtx.beginPath();
         if (textCtx.roundRect) {
-          textCtx.roundRect(authBtnX, authBtnY, authBtnW, authBtnH, 10);
+          textCtx.roundRect(authBtnX, authBtnY, authBtnW, authBtnH, 8);
         } else {
           textCtx.rect(authBtnX, authBtnY, authBtnW, authBtnH);
         }
+        textCtx.fillStyle = plateBg;
         textCtx.fill();
 
-        textCtx.strokeStyle = isHovered ? 'rgba(255, 255, 255, 0.40)' : 'rgba(255, 255, 255, 0.20)';
-        textCtx.lineWidth = 1.4;
-        textCtx.shadowColor = isHovered ? 'rgba(255, 255, 255, 0.35)' : 'rgba(0, 0, 0, 0.45)';
-        textCtx.shadowBlur = isHovered ? 14 : 8;
+        // 2. Phosphor Border with Analog CRT Glow
+        textCtx.save();
+        textCtx.strokeStyle = accentColor;
+        textCtx.lineWidth = isHovered ? 1.8 : 1.4;
+        textCtx.shadowColor = accentGlow;
+        textCtx.shadowBlur = isHovered ? 16 : 10;
         textCtx.stroke();
+        textCtx.restore();
 
-        textCtx.fillStyle = isHovered ? '#ffffff' : '#f1f5f9';
+        // 3. Cathode Ray Scanline Texture baked into the button face
+        textCtx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+        for (let sy = authBtnY + 2; sy < authBtnY + authBtnH - 2; sy += 3) {
+          textCtx.fillRect(authBtnX + 2, sy, authBtnW - 4, 1.2);
+        }
+
+        // 4. Vintage Terminal Corner Crosshairs (Matching Template Reticles)
+        textCtx.save();
+        textCtx.strokeStyle = accentColor;
+        textCtx.lineWidth = 1.8;
+        textCtx.shadowColor = accentGlow;
+        textCtx.shadowBlur = isHovered ? 8 : 4;
+        const markLen = isMobile ? 5 : 7;
+        // Top-left
+        textCtx.beginPath();
+        textCtx.moveTo(authBtnX + 4, authBtnY + 4 + markLen);
+        textCtx.lineTo(authBtnX + 4, authBtnY + 4);
+        textCtx.lineTo(authBtnX + 4 + markLen, authBtnY + 4);
+        textCtx.stroke();
+        // Top-right
+        textCtx.beginPath();
+        textCtx.moveTo(authBtnX + authBtnW - 4 - markLen, authBtnY + 4);
+        textCtx.lineTo(authBtnX + authBtnW - 4, authBtnY + 4);
+        textCtx.lineTo(authBtnX + authBtnW - 4, authBtnY + 4 + markLen);
+        textCtx.stroke();
+        // Bottom-left
+        textCtx.beginPath();
+        textCtx.moveTo(authBtnX + 4, authBtnY + authBtnH - 4 - markLen);
+        textCtx.lineTo(authBtnX + 4, authBtnY + authBtnH - 4);
+        textCtx.lineTo(authBtnX + 4 + markLen, authBtnY + authBtnH - 4);
+        textCtx.stroke();
+        // Bottom-right
+        textCtx.beginPath();
+        textCtx.moveTo(authBtnX + authBtnW - 4 - markLen, authBtnY + authBtnH - 4);
+        textCtx.lineTo(authBtnX + authBtnW - 4, authBtnY + authBtnH - 4);
+        textCtx.lineTo(authBtnX + authBtnW - 4, authBtnY + authBtnH - 4 - markLen);
+        textCtx.stroke();
+        textCtx.restore();
+
+        // 5. Monospace Terminal Label (Cleanly Centered)
+        textCtx.save();
+        textCtx.fillStyle = isHovered ? '#ffffff' : '#fef3c7';
+        textCtx.shadowColor = accentGlow;
+        textCtx.shadowBlur = isHovered ? 12 : 6;
         textCtx.textAlign = 'center';
         textCtx.textBaseline = 'middle';
-        textCtx.shadowColor = 'rgba(0, 0, 0, 0.45)';
-        textCtx.shadowBlur = 6;
         textCtx.fillText(displayText, authBtnX + authBtnW / 2, authBtnY + authBtnH / 2);
+        textCtx.restore();
+
         textCtx.restore();
 
         signInBounds.current = {

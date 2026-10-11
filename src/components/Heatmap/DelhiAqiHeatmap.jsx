@@ -1285,7 +1285,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
 
   const userColor = useMemo(() => {
     if (userAqiEstimate === null) {
-      return { hex: '#38bdf8', label: 'Measuring...', textHex: '#38bdf8', badgeBg: 'rgba(56, 189, 248, 0.2)', unit: activePollutant.toUpperCase() };
+      return { hex: '#d4a359', label: 'Measuring...', textHex: '#f3ce85', badgeBg: 'rgba(217, 155, 65, 0.22)', unit: activePollutant.toUpperCase() };
     }
     return getPollutantMeta(userAqiEstimate, activePollutant, activeRange);
   }, [userAqiEstimate, activeRange, activePollutant]);
@@ -1440,7 +1440,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           type: 'line',
           source: 'user-gps-accuracy-source',
           paint: {
-            'line-color': '#38bdf8',
+            'line-color': '#d4a359',
             'line-width': 2,
             'line-opacity': 0.85,
             'line-dasharray': [5, 4],
@@ -1600,7 +1600,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           type: 'line',
           source: 'india-boundary-source',
           paint: {
-            'line-color': '#38bdf8',
+            'line-color': '#d4a359',
             'line-width': 2.2,
             'line-opacity': 0.95,
             'line-dasharray': [3, 1.5],
@@ -1623,7 +1623,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           type: 'fill',
           source: 'selected-place-boundary-source',
           paint: {
-            'fill-color': '#38bdf8',
+            'fill-color': '#d4a359',
             'fill-opacity': [
               'interpolate',
               ['linear'],
@@ -1644,7 +1644,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           type: 'line',
           source: 'selected-place-boundary-source',
           paint: {
-            'line-color': '#38bdf8',
+            'line-color': '#d4a359',
             'line-width': [
               'interpolate',
               ['linear'],
@@ -1810,7 +1810,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         },
         paint: {
           'text-color': ['get', 'color'],
-          'text-halo-color': 'rgba(15, 23, 42, 0.96)',
+          'text-halo-color': 'rgba(18, 15, 12, 0.96)',
           'text-halo-width': 2.4,
         },
       });
@@ -2203,16 +2203,16 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       </div>
       <div style="
         margin-top: 6px;
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.92) 100%);
+        background: linear-gradient(135deg, rgba(18, 15, 12, 0.94) 0%, rgba(32, 26, 20, 0.92) 100%);
         backdrop-filter: blur(14px);
         -webkit-backdrop-filter: blur(14px);
         border: 1px solid var(--aqi-color);
-        border-top: 1px solid rgba(255, 255, 255, 0.35);
+        border-top: 1px solid rgba(216, 196, 162, 0.35);
         padding: 5px 12px;
         border-radius: 10px;
         font-size: 11px;
         font-weight: 700;
-        color: #ffffff;
+        color: #ede6d6;
         white-space: nowrap;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65), 0 0 18px var(--aqi-color);
         display: flex;
@@ -2317,8 +2317,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             width: 3px;
             height: 3px;
             border-radius: 50%;
-            background: #10b981;
-            box-shadow: 0 0 5px #10b981, 0 0 10px #10b981;
+            background: #d4a359;
+            box-shadow: 0 0 5px #d4a359, 0 0 10px #d4a359;
             animation: liveParticleDrift3 2.6s ease-out infinite 1.0s;
             pointer-events: none;
           "></span>
@@ -2342,8 +2342,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             width: 3px;
             height: 3px;
             border-radius: 50%;
-            background: #10b981;
-            box-shadow: 0 0 5px #10b981, 0 0 10px #10b981;
+            background: #d4a359;
+            box-shadow: 0 0 5px #d4a359, 0 0 10px #d4a359;
             animation: liveParticleDrift5 2.6s ease-out infinite 2.0s;
             pointer-events: none;
           "></span>
@@ -2363,16 +2363,16 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
         </div>
         <div id="user-live-beacon-badge" style="
           margin-top: 6px;
-          background: linear-gradient(135deg, rgba(11, 17, 32, 0.95) 0%, rgba(26, 36, 56, 0.92) 100%);
+          background: linear-gradient(135deg, rgba(18, 15, 12, 0.95) 0%, rgba(32, 26, 20, 0.92) 100%);
           backdrop-filter: blur(14px);
           -webkit-backdrop-filter: blur(14px);
           border: 1px solid var(--user-color);
-          border-top: 1px solid rgba(255, 255, 255, 0.4);
+          border-top: 1px solid rgba(216, 196, 162, 0.3);
           padding: 5px 12px;
           border-radius: 10px;
           font-size: 11px;
           font-weight: 800;
-          color: #ffffff;
+          color: #ede6d6;
           white-space: nowrap;
           box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px var(--user-color);
           display: flex;
@@ -2381,8 +2381,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           z-index: 5;
           transition: border-color 0.35s ease, box-shadow 0.35s ease;
         ">
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981; animation: pulse 1s infinite; flex-shrink: 0;"></span>
-          <span>LIVE GPS: <strong style="color: var(--user-color); transition: color 0.35s ease;">${userAqiEstimate !== null ? `${activePollutant.toUpperCase()} ${userAqiEstimate} ${liveColor.unit}` : 'Measuring...'}</strong>${userLocation.accuracy ? ` <span style="color: #94a3b8; font-weight: 500; font-size: 10px;">(±${userLocation.accuracy}m)</span>` : ''}</span>
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #d4a359; box-shadow: 0 0 10px #d4a359; animation: pulse 1s infinite; flex-shrink: 0;"></span>
+          <span>LIVE GPS: <strong style="color: var(--user-color); transition: color 0.35s ease;">${userAqiEstimate !== null ? `${activePollutant.toUpperCase()} ${userAqiEstimate} ${liveColor.unit}` : 'Measuring...'}</strong>${userLocation.accuracy ? ` <span style="color: #9c9180; font-weight: 500; font-size: 10px;">(±${userLocation.accuracy}m)</span>` : ''}</span>
         </div>
       `;
 
@@ -2398,8 +2398,8 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
       const badge = document.getElementById('user-live-beacon-badge');
       if (badge) {
         badge.innerHTML = `
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981; animation: pulse 1s infinite; flex-shrink: 0;"></span>
-          <span>LIVE GPS: <strong style="color: var(--user-color); transition: color 0.35s ease;">${userAqiEstimate !== null ? `${activePollutant.toUpperCase()} ${userAqiEstimate} ${liveColor.unit}` : 'Measuring...'}</strong>${userLocation.accuracy ? ` <span style="color: #94a3b8; font-weight: 500; font-size: 10px;">(±${userLocation.accuracy}m)</span>` : ''}</span>
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #d4a359; box-shadow: 0 0 10px #d4a359; animation: pulse 1s infinite; flex-shrink: 0;"></span>
+          <span>LIVE GPS: <strong style="color: var(--user-color); transition: color 0.35s ease;">${userAqiEstimate !== null ? `${activePollutant.toUpperCase()} ${userAqiEstimate} ${liveColor.unit}` : 'Measuring...'}</strong>${userLocation.accuracy ? ` <span style="color: #9c9180; font-weight: 500; font-size: 10px;">(±${userLocation.accuracy}m)</span>` : ''}</span>
         `;
       }
     }
@@ -2460,7 +2460,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '24px',
-            background: 'radial-gradient(circle at center, rgba(15, 23, 42, 0.94) 0%, rgba(7, 10, 18, 0.98) 100%)',
+            background: 'radial-gradient(circle at center, rgba(22, 18, 14, 0.94) 0%, rgba(10, 8, 7, 0.98) 100%)',
             backdropFilter: 'blur(16px)',
             textAlign: 'center',
             pointerEvents: 'auto',
@@ -2472,9 +2472,9 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
               width: '90%',
               padding: '32px 28px',
               borderRadius: '20px',
-              background: 'rgba(30, 41, 59, 0.75)',
-              border: '1px solid rgba(56, 189, 248, 0.28)',
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(56, 189, 248, 0.12)',
+              background: 'rgba(24, 20, 16, 0.85)',
+              border: '1px solid rgba(216, 196, 162, 0.2)',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(217, 155, 65, 0.15)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -2486,23 +2486,23 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 width: '56px',
                 height: '56px',
                 borderRadius: '50%',
-                background: 'rgba(56, 189, 248, 0.14)',
-                border: '1px solid rgba(56, 189, 248, 0.4)',
+                background: 'rgba(217, 155, 65, 0.16)',
+                border: '1px solid rgba(217, 155, 65, 0.4)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <MapPin size={28} color="#38bdf8" />
+              <MapPin size={28} color="#d4a359" />
             </div>
 
             <div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f8fafc', marginBottom: '8px', letterSpacing: '-0.01em' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ede6d6', marginBottom: '8px', letterSpacing: '-0.01em' }}>
                 Mapbox Public Token Required
               </h3>
-              <p style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
+              <p style={{ fontSize: '0.85rem', color: '#9c9180', lineHeight: 1.6, margin: 0 }}>
                 To unlock the live interactive 3D spatial raster map of Delhi &amp; India, configure{' '}
-                <code style={{ color: '#38bdf8', background: 'rgba(56, 189, 248, 0.12)', padding: '2px 6px', borderRadius: '4px' }}>
+                <code style={{ color: '#f3ce85', background: 'rgba(217, 155, 65, 0.14)', padding: '2px 6px', borderRadius: '4px' }}>
                   VITE_MAPBOX_TOKEN
                 </code>{' '}
                 in your <code style={{ color: '#cbd5e1' }}>.env</code> file.
@@ -2521,9 +2521,9 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   flex: 1,
                   padding: '10px 14px',
                   borderRadius: '10px',
-                  background: 'rgba(15, 23, 42, 0.85)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  color: '#f8fafc',
+                  background: 'rgba(18, 15, 12, 0.85)',
+                  border: '1px solid rgba(216, 196, 162, 0.18)',
+                  color: '#ede6d6',
                   fontSize: '0.8rem',
                   outline: 'none',
                 }}
@@ -2534,10 +2534,10 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 style={{
                   padding: '10px 18px',
                   borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                  background: 'linear-gradient(135deg, #d4a359 0%, #b88636 100%)',
                   border: 'none',
-                  color: '#ffffff',
-                  fontWeight: 700,
+                  color: '#1a140b',
+                  fontWeight: 800,
                   fontSize: '0.8rem',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
@@ -2547,11 +2547,11 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
               </button>
             </div>
 
-            <div style={{ height: '1px', width: '100%', background: 'rgba(255, 255, 255, 0.08)', margin: '4px 0' }} />
+            <div style={{ height: '1px', width: '100%', background: 'rgba(216, 196, 162, 0.12)', margin: '4px 0' }} />
 
-            <p style={{ fontSize: '0.78rem', color: '#64748b', margin: 0 }}>
+            <p style={{ fontSize: '0.78rem', color: '#9c9180', margin: 0 }}>
               All other modules are active. Scroll down to explore the{' '}
-              <span style={{ color: '#34d399', fontWeight: 600 }}>Atmospheric Cargo Truck</span> below.
+              <span style={{ color: '#f3ce85', fontWeight: 600 }}>Atmospheric Cargo Truck</span> below.
             </p>
 
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -2568,9 +2568,9 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   gap: '6px',
                   padding: '8px 16px',
                   borderRadius: '9999px',
-                  background: 'rgba(52, 211, 153, 0.12)',
-                  border: '1px solid rgba(52, 211, 153, 0.35)',
-                  color: '#34d399',
+                  background: 'rgba(217, 155, 65, 0.14)',
+                  border: '1px solid rgba(217, 155, 65, 0.35)',
+                  color: '#f3ce85',
                   fontSize: '0.78rem',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -2654,12 +2654,12 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   width: '7px',
                   height: '7px',
                   borderRadius: '50%',
-                  background: '#38bdf8',
-                  boxShadow: '0 0 10px #38bdf8',
+                  background: '#d4a359',
+                  boxShadow: '0 0 10px #d4a359',
                   animation: 'pulse 1.8s infinite',
                 }}
               />
-              <span style={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.04em', color: '#f8fafc' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.04em', color: '#ede6d6' }}>
                 INDIA AQI
               </span>
             </div>
@@ -2672,7 +2672,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 className={`glass-cuboid-btn glass-btn-compact ${userLocation.isLiveGps ? 'glass-cuboid-btn-success' : ''} ${getBtnFlickerClass()}`}
                 style={{ padding: '5px 8px', borderRadius: '7px', ...getBtnFlickerStyle(650) }}
               >
-                <Navigation size={12} color={userLocation.isLiveGps ? '#10b981' : '#38bdf8'} />
+                <Navigation size={12} color={userLocation.isLiveGps ? '#e8c87a' : '#d4a359'} />
               </button>
 
               <button
@@ -2682,7 +2682,7 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 className={`glass-cuboid-btn glass-btn-compact ${getBtnFlickerClass()}`}
                 style={{ padding: '5px 8px', borderRadius: '7px', ...getBtnFlickerStyle(800) }}
               >
-                <RefreshCw size={12} className={isLoadingLive ? 'animate-spin' : ''} color="#38bdf8" />
+                <RefreshCw size={12} className={isLoadingLive ? 'animate-spin' : ''} color="#d4a359" />
               </button>
 
               {/* The Mobile Burger Menu Button */}
@@ -2702,14 +2702,14 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   fontSize: '0.72rem',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.45) 0%, rgba(14, 165, 233, 0.35) 100%)',
-                  border: '1px solid rgba(56, 189, 248, 0.5)',
-                  boxShadow: '0 0 12px rgba(56, 189, 248, 0.3)',
-                  color: '#ffffff',
+                  background: 'linear-gradient(135deg, rgba(217, 155, 65, 0.32) 0%, rgba(185, 125, 45, 0.24) 100%)',
+                  border: '1px solid rgba(217, 155, 65, 0.45)',
+                  boxShadow: '0 0 12px rgba(217, 155, 65, 0.25)',
+                  color: '#ede6d6',
                   ...getBtnFlickerStyle(950),
                 }}
               >
-                <Menu size={13} color="#38bdf8" />
+                <Menu size={13} color="#f3ce85" />
                 <span>Controls</span>
               </button>
             </div>
@@ -2735,33 +2735,39 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   width: '7px',
                   height: '7px',
                   borderRadius: '50%',
-                  background: '#38bdf8',
-                  boxShadow: '0 0 10px #38bdf8',
+                  background: '#d4a359',
+                  boxShadow: '0 0 10px #d4a359',
                 }}
               />
-              <span style={{ fontSize: '0.76rem', fontWeight: 800, letterSpacing: '0.04em', color: '#f8fafc' }}>
+              <span style={{ fontSize: '0.76rem', fontWeight: 800, letterSpacing: '0.04em', color: '#ede6d6' }}>
                 INDIA AQI ENGINE
               </span>
-              <span style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>•</span>
-              <span style={{ fontSize: '0.7rem', color: '#e2e8f0', fontWeight: 500 }}>{lastUpdated}</span>
+              <span style={{ fontSize: '0.68rem', color: '#9c9180' }}>•</span>
+              <span style={{ fontSize: '0.7rem', color: '#ede6d6', fontWeight: 500 }}>{lastUpdated}</span>
             </div>
 
             {/* Right Deck: Controls, Location, Glide, Orbit & Telemetry Toggle */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
 
               {/* Glide Dropdown Button with Search Icon */}
               <button
                 onClick={() => setIsGlideDropdownOpen((prev) => !prev)}
                 className={`glass-cuboid-btn ${isGlideDropdownOpen ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
                 style={{
-                  padding: '6px 14px',
-                  borderRadius: '9px',
-                  fontSize: '0.78rem',
+                  height: '34px',
+                  padding: '0 14px',
+                  borderRadius: '8px',
+                  fontSize: '0.76rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  boxSizing: 'border-box',
                   ...getBtnFlickerStyle(640),
                 }}
                 title="Toggle Glide cities and search bar dropdown"
               >
-                <Search size={13} color="#38bdf8" />
+                <Search size={13} color="#d4a359" />
                 <span>Glide & Search</span>
                 <ChevronDown
                   size={13}
@@ -2771,23 +2777,13 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   }}
                 />
               </button>
-            </div>
 
-            {/* Action Buttons: Metrics, Refresh, GPS & Integrated Telemetry Toggle */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              {/* Metric Selector Tabs */}
+              {/* Group: Metric Selector Buttons - Grouped together with NO boundary & equal button sizes */}
               <div
-                className={`glass-panel-sub ${getPanelClass()}`}
                 style={{
                   display: 'flex',
-                  padding: '3px',
-                  borderRadius: '10px',
+                  alignItems: 'center',
                   gap: '3px',
-                  background: 'rgba(28, 41, 62, 0.65)',
-                  border: '1px solid rgba(148, 163, 184, 0.25)',
-                  overflowX: 'auto',
-                  WebkitOverflowScrolling: 'touch',
-                  scrollbarWidth: 'none',
                 }}
               >
                 {[
@@ -2804,12 +2800,19 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                     onClick={() => setActivePollutant(m.id)}
                     className={`glass-cuboid-btn ${activePollutant === m.id ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
                     style={{
-                      padding: '5px 11px',
-                      borderRadius: '7px',
+                      height: '34px',
+                      width: '54px',
+                      minWidth: '54px',
+                      padding: '0',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '8px',
                       fontSize: '0.74rem',
                       fontWeight: 700,
                       cursor: 'pointer',
                       whiteSpace: 'nowrap',
+                      boxSizing: 'border-box',
                       ...getBtnFlickerStyle(760 + idx * 100),
                     }}
                   >
@@ -2818,19 +2821,31 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 ))}
               </div>
 
-              {/* Action Buttons: Refresh, GPS & Follow */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                {/* Refresh Live Button - Fixed width & constant label to eliminate sizing jitter */}
+              {/* Group: Action Buttons - Grouped together with NO boundary & equal button sizes */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                }}
+              >
+                {/* Refresh Live Button */}
                 <button
                   onClick={() => fetchLiveNationalData(userLocation.lat, userLocation.lon)}
                   disabled={isLoadingLive}
                   className={`glass-cuboid-btn ${getBtnFlickerClass()}`}
                   style={{
-                    minWidth: '96px',
+                    height: '34px',
+                    width: '144px',
+                    minWidth: '144px',
+                    padding: '0 10px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
                     justifyContent: 'center',
-                    padding: '6px 14px',
-                    borderRadius: '9px',
-                    fontSize: '0.78rem',
+                    gap: '6px',
+                    borderRadius: '8px',
+                    fontSize: '0.76rem',
+                    boxSizing: 'border-box',
                     ...getBtnFlickerStyle(1500),
                   }}
                 >
@@ -2844,20 +2859,28 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   title={userLocation.isLiveGps ? 'Center camera on your live GPS position' : 'Start live GPS tracking'}
                   className={`glass-cuboid-btn ${userLocation.isLiveGps ? 'glass-cuboid-btn-success' : ''} ${getBtnFlickerClass()}`}
                   style={{
-                    padding: '6px 14px',
-                    borderRadius: '9px',
-                    fontSize: '0.78rem',
+                    height: '34px',
+                    width: '144px',
+                    minWidth: '144px',
+                    padding: '0 10px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    borderRadius: '8px',
+                    fontSize: '0.76rem',
+                    boxSizing: 'border-box',
                     ...getBtnFlickerStyle(1620),
                   }}
                 >
                   {isLocating ? (
-                    <RefreshCw size={13} className="animate-spin" color="#38bdf8" />
+                    <RefreshCw size={13} className="animate-spin" color="#d4a359" />
                   ) : userLocation.isLiveGps ? (
-                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981', animation: 'pulse 1.2s infinite' }} />
+                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#e8c87a', boxShadow: '0 0 8px #e8c87a', animation: 'pulse 1.2s infinite', flexShrink: 0 }} />
                   ) : (
-                    <Navigation size={13} color="#38bdf8" />
+                    <Navigation size={13} color="#d4a359" />
                   )}
-                  <span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {isLocating
                       ? 'Acquiring...'
                       : userLocation.isLiveGps
@@ -2872,13 +2895,21 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                     title="Toggle automatic camera tracking as you move"
                     className={`glass-cuboid-btn ${isFollowingUser ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
                     style={{
-                      padding: '6px 12px',
-                      borderRadius: '9px',
+                      height: '34px',
+                      width: '144px',
+                      minWidth: '144px',
+                      padding: '0 10px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      borderRadius: '8px',
                       fontSize: '0.76rem',
+                      boxSizing: 'border-box',
                       ...getBtnFlickerStyle(1740),
                     }}
                   >
-                    <LocateFixed size={13} color={isFollowingUser ? '#38bdf8' : '#94a3b8'} />
+                    <LocateFixed size={13} color={isFollowingUser ? '#f3ce85' : '#9c9180'} />
                     <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
                   </button>
                 )}
@@ -2912,12 +2943,12 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 padding: '8px 14px',
                 borderRadius: '12px',
                 boxShadow: '0 12px 30px rgba(0, 0, 0, 0.55)',
-                border: '1px solid rgba(56, 189, 248, 0.25)',
+                border: '1px solid rgba(216, 196, 162, 0.16)',
               }}
             >
               {/* Quick Glide Capital City Shortcuts */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.67rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '3px' }}>
+                <span style={{ fontSize: '0.67rem', fontWeight: 800, color: '#d4a359', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '3px' }}>
                   GLIDE:
                 </span>
                 {INDIA_REGION_PRESETS.map((preset) => {
@@ -3043,15 +3074,15 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
               fontSize: '0.74rem',
               fontWeight: 800,
               flexShrink: 0,
-              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.45) 0%, rgba(5, 150, 105, 0.35) 100%)',
-              border: '1px solid rgba(52, 211, 153, 0.5)',
-              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
-              color: '#ffffff',
+              background: 'linear-gradient(135deg, rgba(217, 155, 65, 0.35) 0%, rgba(185, 125, 45, 0.25) 100%)',
+              border: '1px solid rgba(217, 155, 65, 0.45)',
+              boxShadow: '0 4px 14px rgba(217, 155, 65, 0.25)',
+              color: '#ede6d6',
               cursor: 'pointer',
               ...getBtnFlickerStyle(1300),
             }}
           >
-            <Activity size={14} color="#34d399" />
+            <Activity size={14} color="#f3ce85" />
             <span>HUD</span>
           </button>
         </div>
@@ -3155,18 +3186,18 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
             padding: '9px 14px',
             borderRadius: '12px',
             cursor: 'pointer',
-            border: '1px solid rgba(56, 189, 248, 0.35)',
-            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.2)',
-            color: '#38bdf8',
+            border: '1px solid rgba(217, 155, 65, 0.35)',
+            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(217, 155, 65, 0.2)',
+            color: '#f3ce85',
             fontSize: '0.78rem',
             fontWeight: 700,
             transition: 'all 0.2s ease',
             ...getBtnFlickerStyle(1950),
           }}
         >
-          <ChevronLeft size={16} color="#38bdf8" />
+          <ChevronLeft size={16} color="#f3ce85" />
           <span>HUD</span>
-          <Activity size={14} color="#10b981" />
+          <Activity size={14} color="#d4a359" />
         </button>
       )}
 

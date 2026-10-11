@@ -4,7 +4,6 @@ import {
   Wind
 } from 'lucide-react';
 import useInView from '../../hooks/useInView';
-import AtmosphericCargoCanvas from './AtmosphericCargoCanvas';
 import './AtmosphericCargoTruck.css';
 
 // Master Indian Pollutants Specification (NAAQS Benchmark Standards)
@@ -463,16 +462,6 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
             '--cargo-active-glow': activePollutant.contGlow,
           }}
         >
-          {/* Volumetric 3D Environmental Particle & Spatial Lighting Engine */}
-          <AtmosphericCargoCanvas
-            activePollutantId={selectedPollutantId}
-            hoveredPollutantId={hoveredPollutantId}
-            mouseNorm={mouseNorm}
-            inView={sectionInView}
-          />
-
-          <div className="weighbridge-spotlight"></div>
-
           {/* Truck Viewport */}
           <div
             id="atmospheric-cargo-truck-interactive"
@@ -493,9 +482,8 @@ export default function AtmosphericCargoTruck({ onSelectPollutant, onOpenDocumen
                 '--underglow-color': payloadStats.underglowColor
               }}
             >
-              {/* Ground Shadow & Underglow */}
+              {/* Ground Shadow */}
               <div className="truck-ground-shadow"></div>
-              <div className="truck-underglow"></div>
 
               {/* Laser Scanning Beam Sweeping Over Cargo Deck */}
               <div className="weighbridge-scanner-beam">

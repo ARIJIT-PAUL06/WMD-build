@@ -88,7 +88,7 @@ export default function HeatmapMobileDrawer({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Sliders size={16} color="#38bdf8" />
+            <Sliders size={16} color="#d4a359" />
             <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
               Map Controls & Layers
             </span>
@@ -128,7 +128,7 @@ export default function HeatmapMobileDrawer({
         >
           {/* Section 1: Location & GPS Lock */}
           <div>
-            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#d4a359', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
               Location Mode
             </span>
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -137,7 +137,7 @@ export default function HeatmapMobileDrawer({
                 className={`glass-cuboid-btn ${userLocation.isLiveGps ? 'glass-cuboid-btn-success' : ''}`}
                 style={{ flex: 1, padding: '8px 12px', justifyContent: 'center' }}
               >
-                <Navigation size={14} color={userLocation.isLiveGps ? '#10b981' : '#38bdf8'} />
+                <Navigation size={14} color={userLocation.isLiveGps ? '#e8c87a' : '#d4a359'} />
                 <span>{userLocation.isLiveGps ? 'GPS Centered (Active)' : 'Lock Live GPS'}</span>
               </button>
             </div>
@@ -145,7 +145,7 @@ export default function HeatmapMobileDrawer({
 
           {/* Section 2: Capital City Glide */}
           <div>
-            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#d4a359', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
               Quick Glide Regions
             </span>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -176,7 +176,7 @@ export default function HeatmapMobileDrawer({
 
           {/* Section 3: Place Search Bar */}
           <div>
-            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#d4a359', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
               Search Location
             </span>
             <div
@@ -189,7 +189,7 @@ export default function HeatmapMobileDrawer({
                 padding: '8px 12px',
               }}
             >
-              <Search size={14} color="#94a3b8" />
+              <Search size={14} color="#9c9180" />
               <input
                 type="text"
                 placeholder="Search house, society, PIN code across India..."
@@ -199,12 +199,12 @@ export default function HeatmapMobileDrawer({
                   background: 'transparent',
                   border: 'none',
                   outline: 'none',
-                  color: '#ffffff',
+                  color: '#ede6d6',
                   fontSize: '0.8rem',
                   width: '100%',
                 }}
               />
-              {isSearching && <RefreshCw size={12} className="animate-spin" color="#38bdf8" />}
+              {isSearching && <RefreshCw size={12} className="animate-spin" color="#d4a359" />}
             </div>
 
             {searchResults.length > 0 && (
@@ -230,22 +230,22 @@ export default function HeatmapMobileDrawer({
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                      borderBottom: '1px solid rgba(216, 196, 162, 0.08)',
                       fontSize: '0.74rem',
                     }}
                   >
-                    <MapPin size={13} color="#38bdf8" style={{ flexShrink: 0 }} />
+                    <MapPin size={13} color="#d4a359" style={{ flexShrink: 0 }} />
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'space-between' }}>
-                        <strong style={{ color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.text}</strong>
+                        <strong style={{ color: '#ede6d6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.text}</strong>
                         {f.badge && (
                           <span style={{
                             fontSize: '0.6rem',
                             padding: '1px 6px',
                             borderRadius: '999px',
-                            background: 'rgba(56, 189, 248, 0.15)',
-                            color: '#38bdf8',
-                            border: '1px solid rgba(56, 189, 248, 0.3)',
+                            background: 'rgba(217, 155, 65, 0.18)',
+                            color: '#f3ce85',
+                            border: '1px solid rgba(217, 155, 65, 0.35)',
                             whiteSpace: 'nowrap',
                             flexShrink: 0
                           }}>
@@ -265,7 +265,7 @@ export default function HeatmapMobileDrawer({
 
           {/* Section 4: Map Layers */}
           <div>
-            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#d4a359', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
               Map Layers
             </span>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -274,7 +274,7 @@ export default function HeatmapMobileDrawer({
                 className={`glass-cuboid-btn ${showHeatmapLayer ? 'glass-cuboid-btn-active' : ''}`}
                 style={{ padding: '8px 12px', justifyContent: 'center' }}
               >
-                <Layers size={14} color={showHeatmapLayer ? '#38bdf8' : '#94a3b8'} />
+                <Layers size={14} color={showHeatmapLayer ? '#f3ce85' : '#9c9180'} />
                 <span>Heatmap: {showHeatmapLayer ? 'ON' : 'OFF'}</span>
               </button>
 
@@ -283,7 +283,7 @@ export default function HeatmapMobileDrawer({
                 className={`glass-cuboid-btn ${isAdaptiveMode ? 'glass-cuboid-btn-success' : ''}`}
                 style={{ padding: '8px 12px', justifyContent: 'center' }}
               >
-                <Sparkles size={14} color={isAdaptiveMode ? '#34d399' : '#94a3b8'} />
+                <Sparkles size={14} color={isAdaptiveMode ? '#edd18a' : '#9c9180'} />
                 <span>Adaptive: {isAdaptiveMode ? 'ON' : 'OFF'}</span>
               </button>
 
@@ -292,7 +292,7 @@ export default function HeatmapMobileDrawer({
                 className={`glass-cuboid-btn ${showStateBorders ? 'glass-cuboid-btn-active' : ''}`}
                 style={{ padding: '8px 12px', justifyContent: 'center' }}
               >
-                <MapIcon size={14} color={showStateBorders ? '#38bdf8' : '#94a3b8'} />
+                <MapIcon size={14} color={showStateBorders ? '#f3ce85' : '#9c9180'} />
                 <span>State Borders</span>
               </button>
 
@@ -301,7 +301,7 @@ export default function HeatmapMobileDrawer({
                 className={`glass-cuboid-btn ${showStationPins ? 'glass-cuboid-btn-active' : ''}`}
                 style={{ padding: '8px 12px', justifyContent: 'center' }}
               >
-                {showStationPins ? <Eye size={14} color="#38bdf8" /> : <EyeOff size={14} color="#94a3b8" />}
+                {showStationPins ? <Eye size={14} color="#f3ce85" /> : <EyeOff size={14} color="#9c9180" />}
                 <span>108 Station Pins</span>
               </button>
 
@@ -318,10 +318,10 @@ export default function HeatmapMobileDrawer({
           {/* Section 5: Atmospheric Heat Opacity */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#d4a359', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                 Heat Layer Opacity
               </span>
-              <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.8rem' }}>
+              <span style={{ color: '#f3ce85', fontWeight: 700, fontSize: '0.8rem' }}>
                 {Math.round(heatIntensity * 100)}%
               </span>
             </div>
@@ -332,7 +332,7 @@ export default function HeatmapMobileDrawer({
               step="0.02"
               value={heatIntensity}
               onChange={(e) => setHeatIntensity(parseFloat(e.target.value))}
-              style={{ width: '100%', accentColor: '#38bdf8', cursor: 'pointer', marginBottom: '8px' }}
+              style={{ width: '100%', accentColor: '#d4a359', cursor: 'pointer', marginBottom: '8px' }}
             />
             <div style={{ display: 'flex', gap: '6px' }}>
               {[
@@ -371,13 +371,13 @@ export default function HeatmapMobileDrawer({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.4) 0%, rgba(3, 105, 161, 0.4) 100%)',
-                border: '1px solid rgba(56, 189, 248, 0.5)',
+                background: 'linear-gradient(135deg, rgba(200, 145, 55, 0.45) 0%, rgba(160, 105, 30, 0.35) 100%)',
+                border: '1px solid rgba(225, 175, 85, 0.5)',
                 color: '#ffffff',
                 cursor: 'pointer',
               }}
             >
-              <ShieldCheck size={16} color="#38bdf8" />
+              <ShieldCheck size={16} color="#f3ce85" />
               <span>Launch Autonomous Shield Test Bench ►</span>
             </button>
           </div>

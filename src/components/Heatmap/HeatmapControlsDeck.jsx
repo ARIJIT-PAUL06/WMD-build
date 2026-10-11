@@ -59,110 +59,183 @@ export default function HeatmapControlsDeck({
           <span>Click anywhere on map for <strong style={{ color: '#f43f5e' }}>micro-zone AQI</strong></span>
         </div>
         {!isSidebarOpen && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.68rem', color: '#94a3b8' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.68rem', color: '#9c9180' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#d4a359', boxShadow: '0 0 6px #d4a359' }} />
               108 Ground Monitoring Stations Active
             </span>
           </div>
         )}
       </div>
 
-      <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', width: '100%' }} />
+      <div style={{ height: '1px', background: 'rgba(216, 196, 162, 0.12)', width: '100%' }} />
 
       {/* TIER 1: PRIMARY MAP LAYERS & DISPLAY MODES */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-        <span className={getBtnFlickerClass()} style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '2px', ...getBtnFlickerStyle(640) }}>
+        <span className={getBtnFlickerClass()} style={{ fontSize: '0.68rem', fontWeight: 800, color: '#d4a359', letterSpacing: '0.06em', textTransform: 'uppercase', marginRight: '2px', ...getBtnFlickerStyle(640) }}>
           Layers:
         </span>
 
-        {/* Heatmap Layer Toggle */}
-        <button
-          onClick={() => setShowHeatmapLayer((v) => !v)}
-          className={`glass-cuboid-btn ${showHeatmapLayer ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
-          style={getBtnFlickerStyle(760)}
-          title="Toggle spatial continuous IDW air quality heatmap layer"
-        >
-          <Layers size={14} color={showHeatmapLayer ? '#38bdf8' : '#94a3b8'} />
-          <span>Heatmap</span>
-        </button>
+        {/* Group: Layer Buttons - Grouped together with NO boundary & equal button sizes */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexWrap: 'wrap' }}>
+          {/* Heatmap Layer Toggle */}
+          <button
+            onClick={() => setShowHeatmapLayer((v) => !v)}
+            className={`glass-cuboid-btn ${showHeatmapLayer ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
+            style={{
+              height: '34px',
+              width: '160px',
+              minWidth: '160px',
+              padding: '0 10px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              borderRadius: '8px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              boxSizing: 'border-box',
+              ...getBtnFlickerStyle(760),
+            }}
+            title="Toggle spatial continuous IDW air quality heatmap layer"
+          >
+            <Layers size={14} color={showHeatmapLayer ? '#f3ce85' : '#9c9180'} />
+            <span>Heatmap</span>
+          </button>
 
-        {/* Adaptive Contrast Mode Toggle */}
-        <button
-          onClick={() => setIsAdaptiveMode((v) => !v)}
-          title="Adaptive Contrast: Enhances micro-scale neighborhood contrast while strictly preserving health-safe AQI color thresholds (moderate AQI never turns green)"
-          className={`glass-cuboid-btn ${isAdaptiveMode ? 'glass-cuboid-btn-success' : ''} ${getBtnFlickerClass()}`}
-          style={getBtnFlickerStyle(880)}
-        >
-          <Sliders size={13} color={isAdaptiveMode ? '#34d399' : '#94a3b8'} />
-          <span>Adaptive Contrast</span>
-          {isAdaptiveMode && activeRange.isZoomed && (
-            <span
-              style={{
-                background: '#38bdf8',
-                color: '#040711',
-                fontSize: '9px',
-                fontWeight: 800,
-                padding: '1px 5px',
-                borderRadius: '4px',
-                marginLeft: '2px',
-              }}
-            >
-              ZOOMED
-            </span>
-          )}
-        </button>
+          {/* Adaptive Contrast Mode Toggle */}
+          <button
+            onClick={() => setIsAdaptiveMode((v) => !v)}
+            title="Adaptive Contrast: Enhances micro-scale neighborhood contrast while strictly preserving health-safe AQI color thresholds (moderate AQI never turns green)"
+            className={`glass-cuboid-btn ${isAdaptiveMode ? 'glass-cuboid-btn-success' : ''} ${getBtnFlickerClass()}`}
+            style={{
+              height: '34px',
+              width: '160px',
+              minWidth: '160px',
+              padding: '0 10px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              borderRadius: '8px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              boxSizing: 'border-box',
+              ...getBtnFlickerStyle(880),
+            }}
+          >
+            <Sliders size={13} color={isAdaptiveMode ? '#edd18a' : '#9c9180'} />
+            <span>Adaptive Contrast</span>
+            {isAdaptiveMode && activeRange.isZoomed && (
+              <span
+                style={{
+                  background: '#d4a359',
+                  color: '#1a140b',
+                  fontSize: '8.5px',
+                  fontWeight: 800,
+                  padding: '1px 4px',
+                  borderRadius: '3px',
+                  marginLeft: '2px',
+                }}
+              >
+                ZOOMED
+              </span>
+            )}
+          </button>
 
-        {/* State Borders Toggle */}
-        <button
-          onClick={() => setShowStateBorders((v) => !v)}
-          className={`glass-cuboid-btn ${showStateBorders ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
-          style={getBtnFlickerStyle(1000)}
-          title="Toggle official Survey of India administrative state borders"
-        >
-          <MapIcon size={14} color={showStateBorders ? '#38bdf8' : '#94a3b8'} />
-          <span>Borders</span>
-        </button>
+          {/* State Borders Toggle */}
+          <button
+            onClick={() => setShowStateBorders((v) => !v)}
+            className={`glass-cuboid-btn ${showStateBorders ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
+            style={{
+              height: '34px',
+              width: '160px',
+              minWidth: '160px',
+              padding: '0 10px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              borderRadius: '8px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              boxSizing: 'border-box',
+              ...getBtnFlickerStyle(1000),
+            }}
+            title="Toggle official Survey of India administrative state borders"
+          >
+            <MapIcon size={14} color={showStateBorders ? '#f3ce85' : '#9c9180'} />
+            <span>Borders</span>
+          </button>
 
-        {/* 108 Monitoring Pins Toggle */}
-        <button
-          onClick={() => setShowStationPins((v) => !v)}
-          className={`glass-cuboid-btn ${showStationPins ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
-          style={getBtnFlickerStyle(1120)}
-          title="Toggle 108 nationwide ground monitoring stations"
-        >
-          <MapPin size={13} color={showStationPins ? '#38bdf8' : '#94a3b8'} />
-          <span>Stations</span>
-        </button>
+          {/* 108 Monitoring Pins Toggle */}
+          <button
+            onClick={() => setShowStationPins((v) => !v)}
+            className={`glass-cuboid-btn ${showStationPins ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
+            style={{
+              height: '34px',
+              width: '160px',
+              minWidth: '160px',
+              padding: '0 10px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              borderRadius: '8px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              boxSizing: 'border-box',
+              ...getBtnFlickerStyle(1120),
+            }}
+            title="Toggle 108 nationwide ground monitoring stations"
+          >
+            <MapPin size={13} color={showStationPins ? '#f3ce85' : '#9c9180'} />
+            <span>Stations</span>
+          </button>
 
-        {/* 3D Buildings Toggle */}
-        <button
-          onClick={() => {
-            setIs3DBuildings((v) => {
-              const next = !v;
-              const map = mapInstanceRef.current;
-              if (map && next && map.getPitch() < 20) {
-                map.easeTo({ pitch: 55, duration: 800 });
-              }
-              return next;
-            });
-          }}
-          className={`glass-cuboid-btn ${is3DBuildings ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
-          style={getBtnFlickerStyle(1240)}
-          title="Toggle 3D urban building extrusions and tilt camera"
-        >
-          <Building2 size={13} color={is3DBuildings ? '#38bdf8' : '#94a3b8'} />
-          <span>3D City</span>
-        </button>
+          {/* 3D Buildings Toggle */}
+          <button
+            onClick={() => {
+              setIs3DBuildings((v) => {
+                const next = !v;
+                const map = mapInstanceRef.current;
+                if (map && next && map.getPitch() < 20) {
+                  map.easeTo({ pitch: 55, duration: 800 });
+                }
+                return next;
+              });
+            }}
+            className={`glass-cuboid-btn ${is3DBuildings ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
+            style={{
+              height: '34px',
+              width: '160px',
+              minWidth: '160px',
+              padding: '0 10px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              borderRadius: '8px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              boxSizing: 'border-box',
+              ...getBtnFlickerStyle(1240),
+            }}
+            title="Toggle 3D urban building extrusions and tilt camera"
+          >
+            <Building2 size={13} color={is3DBuildings ? '#f3ce85' : '#9c9180'} />
+            <span>3D City</span>
+          </button>
+        </div>
       </div>
 
       {/* HAIRLINE DIVIDER */}
-      <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', width: '100%' }} />
+      <div style={{ height: '1px', background: 'rgba(216, 196, 162, 0.12)', width: '100%' }} />
 
       {/* TIER 2: ATMOSPHERIC HEAT OPACITY CONTROLS & PRESETS */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
         <div className={getBtnFlickerClass()} style={{ display: 'flex', alignItems: 'center', gap: '7px', ...getBtnFlickerStyle(1380) }}>
-          <Sliders size={13} color="#38bdf8" />
+          <Sliders size={13} color="#d4a359" />
           <span style={{ color: '#cbd5e1', fontWeight: 600, fontSize: '0.72rem' }}>Heat Opacity:</span>
           <input
             type="range"
@@ -171,38 +244,48 @@ export default function HeatmapControlsDeck({
             step="0.02"
             value={heatIntensity}
             onChange={(e) => setHeatIntensity(parseFloat(e.target.value))}
-            style={{ width: '70px', accentColor: '#38bdf8', cursor: 'pointer' }}
+            style={{ width: '70px', accentColor: '#d4a359', cursor: 'pointer' }}
           />
-          <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.74rem', minWidth: '32px' }}>
+          <span style={{ color: '#f3ce85', fontWeight: 700, fontSize: '0.74rem', minWidth: '32px' }}>
             {Math.round(heatIntensity * 100)}%
           </span>
         </div>
 
-        {/* Quick Opacity Presets */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        {/* Quick Opacity Presets - Grouped together with NO boundary & equal button sizes */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span className={getBtnFlickerClass()} style={{ color: '#cbd5e1', fontSize: '0.68rem', marginRight: '2px', fontWeight: 600, ...getBtnFlickerStyle(1500) }}>Presets:</span>
-          {[
-            { label: 'Subtle', val: 0.28 },
-            { label: 'Balanced', val: 0.45 },
-            { label: 'Vivid', val: 0.68 },
-          ].map((p, pIdx) => {
-            const isSelected = Math.abs(heatIntensity - p.val) < 0.05;
-            return (
-              <button
-                key={p.label}
-                onClick={() => setHeatIntensity(p.val)}
-                className={`glass-cuboid-btn ${isSelected ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
-                style={{
-                  padding: '3px 9px',
-                  borderRadius: '7px',
-                  fontSize: '0.70rem',
-                  ...getBtnFlickerStyle(1600 + pIdx * 100),
-                }}
-              >
-                {p.label}
-              </button>
-            );
-          })}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+            {[
+              { label: 'Subtle', val: 0.28 },
+              { label: 'Balanced', val: 0.45 },
+              { label: 'Vivid', val: 0.68 },
+            ].map((p, pIdx) => {
+              const isSelected = Math.abs(heatIntensity - p.val) < 0.05;
+              return (
+                <button
+                  key={p.label}
+                  onClick={() => setHeatIntensity(p.val)}
+                  className={`glass-cuboid-btn ${isSelected ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
+                  style={{
+                    height: '34px',
+                    width: '80px',
+                    minWidth: '80px',
+                    padding: '0',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    boxSizing: 'border-box',
+                    ...getBtnFlickerStyle(1600 + pIdx * 100),
+                  }}
+                >
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
