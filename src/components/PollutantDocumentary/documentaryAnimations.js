@@ -35,7 +35,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
  */
 export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
   if (typeof window === 'undefined' || typeof document === 'undefined' || !containerEl) {
-    return () => { };
+    return () => {};
   }
 
   // 1. Enforce scroll reset to top (scrollY = 0) and clear ScrollTrigger memory
@@ -54,7 +54,7 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
   if (prefersReducedMotion) {
     // Reveal all elements statically with zero transitions
     const elements = containerEl.querySelectorAll(
-      '.documentary-nav, .documentary-hero-editorial-col, .documentary-value-container, .documentary-data-panel, .documentary-section, .documentary-image-frame, .documentary-data-section, .documentary-pinned-card, .doc-scale-fill'
+      '.documentary-nav, .documentary-hero-editorial-col, .documentary-value-container, .documentary-data-panel, .documentary-section, .documentary-image-frame, .documentary-data-section, .documentary-pinned-card, .doc-scale-fill, .wmd-hero__particles, .documentary-footer'
     );
     elements.forEach((el) => {
       el.style.opacity = '1';
@@ -63,7 +63,7 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
         el.style.display = 'block';
       }
     });
-    return () => { };
+    return () => {};
   }
 
   // 3. Create scoped GSAP context for complete React lifecycle safety
@@ -136,10 +136,9 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     if (pollutantNameEl) {
       if (!pollutantNameEl.querySelector('.doc-hero-char')) {
         const rawChars = Array.from(pollutantNameEl.textContent.trim());
-        const mappedHtml = rawChars
+        pollutantNameEl.innerHTML = rawChars
           .map((c) => `<span class="doc-char-mask"><span class="doc-hero-char">${c === ' ' ? '&nbsp;' : c}</span></span>`)
           .join('');
-        pollutantNameEl.innerHTML = `<span class="doc-pollutant-name-nowrap">${mappedHtml}</span>`;
       }
       const heroChars = pollutantNameEl.querySelectorAll('.doc-hero-char');
       if (heroChars.length > 0) {
@@ -308,16 +307,38 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
       }
     }
 
-    // Step 8: Large number resolution effect (blur-to-sharp optical resolving while preserving authentic measurement)
+    // Step 8: Large number resolution effect (blur -> rapid visual count-up -> sharp real value)
     const numEl = containerEl.querySelector('#doc-central-numeric-readout');
     const unitEl = containerEl.querySelector('.documentary-value-unit-row');
     if (numEl) {
+      const rawText = numEl.innerText.trim();
+      const targetVal = parseFloat(rawText);
       heroTl.fromTo(
         numEl,
-        { opacity: 0, scale: 0.93, filter: 'blur(16px)' },
-        { opacity: 1, scale: 1.0, filter: 'blur(0px)', duration: 0.85, ease: 'power2.out' },
-        0.36
+        { opacity: 0, scale: 0.92, filter: 'blur(12px)' },
+        { opacity: 1, scale: 1.0, filter: 'blur(0px)', duration: 0.7, ease: 'power3.out' },
+        0.38
       );
+      if (!isNaN(targetVal) && targetVal > 0) {
+        const counter = { val: 0 };
+        heroTl.to(
+          counter,
+          {
+            val: targetVal,
+            duration: 0.95,
+            ease: 'power2.out',
+            onUpdate: () => {
+              if (numEl) {
+                numEl.innerText =
+                  targetVal >= 10
+                    ? Math.round(counter.val)
+                    : counter.val.toFixed(1);
+              }
+            },
+          },
+          0.38
+        );
+      }
     }
     // Unit appears subtly underneath the resolved number
     if (unitEl) {
@@ -400,6 +421,7 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     if (heroSection) {
       const heroPhoto = heroSection.querySelector('.documentary-hero-photo-layer');
       const heroHaze = heroSection.querySelector('.documentary-hero-haze-layer');
+      const flowCanvas = heroSection.querySelector('.hero-atmospheric-canvas');
       const heroGlyph = heroSection.querySelector('.documentary-hero-sculptural-glyph');
       const pollutantTitleRow = heroSection.querySelector('.documentary-pollutant-title-row');
       const editorialCol = heroSection.querySelector('.documentary-hero-editorial-col');
@@ -421,6 +443,9 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
       }
       if (heroHaze) {
         heroScrollTl.to(heroHaze, { opacity: 0.35, yPercent: -10, ease: 'none' }, 0);
+      }
+      if (flowCanvas) {
+        heroScrollTl.to(flowCanvas, { opacity: 0.15, yPercent: -12, ease: 'none' }, 0);
       }
       if (heroGlyph) {
         heroScrollTl.to(heroGlyph, { yPercent: -22, scale: 1.15, opacity: 0.01, ease: 'none' }, 0);
@@ -464,12 +489,12 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
       const pinnedBgImg = pinnedSection.querySelector('.documentary-pinned-bg-img');
       const pinnedWatermark = pinnedSection.querySelector('.documentary-pinned-sculptural-watermark');
       const beatCards = pinnedSection.querySelectorAll('.documentary-pinned-card');
-      const stepItems = pinnedSection.querySelectorAll('.doc-ribbon-step-item');
+      const stepItems = containerEl.querySelectorAll('.doc-ribbon-step-item');
 
       if (beatCards.length > 0) {
-        // Initial state: first card visible, others hidden
-        gsap.set(beatCards, { opacity: 0, y: 40, display: 'none' });
-        gsap.set(beatCards[0], { opacity: 1, y: 0, display: 'block' });
+        // Initial state: first card visible, others hidden with autoAlpha (reversible)
+        gsap.set(beatCards, { autoAlpha: 0, y: 30 });
+        gsap.set(beatCards[0], { autoAlpha: 1, y: 0 });
 
         const pinnedTl = gsap.timeline({
           scrollTrigger: {
@@ -496,23 +521,12 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
           },
         });
 
-        // Continuous SVG vector progress line scrubs along entire sequence
-        const ribbonProgressLine = pinnedSection.querySelector('#doc-ribbon-progress-line');
-        if (ribbonProgressLine) {
-          pinnedTl.fromTo(
-            ribbonProgressLine,
-            { strokeDashoffset: 280 },
-            { strokeDashoffset: 0, ease: 'none' },
-            0
-          );
-        }
-
-        // Background image slow cinematic camera scale
+        // Background image slow cinematic camera scale over entire scroll
         if (pinnedBgImg) {
           pinnedTl.fromTo(
             pinnedBgImg,
             { scale: 1.08, y: 0 },
-            { scale: 1.0, y: -15, ease: 'none' },
+            { scale: 1.0, y: -15, ease: 'none', duration: 4.0 },
             0
           );
         }
@@ -522,42 +536,70 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
           pinnedTl.fromTo(
             pinnedWatermark,
             { yPercent: 10, scale: 0.95, opacity: 0.03 },
-            { yPercent: -15, scale: 1.08, opacity: 0.07, ease: 'none' },
+            { yPercent: -15, scale: 1.08, opacity: 0.07, ease: 'none', duration: 4.0 },
             0
           );
         }
 
-        // Crossfade through the 4 narrative cards with coordinated schematic reveal
-        for (let i = 0; i < beatCards.length - 1; i++) {
-          const curr = beatCards[i];
-          const next = beatCards[i + 1];
-
-          pinnedTl.to(
-            curr,
-            { opacity: 0, y: -30, duration: 0.4, onComplete: () => { curr.style.display = 'none'; } },
-            `beat-${i}`
-          );
-
-          pinnedTl.set(next, { display: 'block', y: 30, opacity: 0 });
-
-          pinnedTl.to(
-            next,
-            { opacity: 1, y: 0, duration: 0.4 },
-            `beat-${i}+=0.15`
-          );
-
-          const nextSchematic = next.querySelector('.doc-card-schematic-wrap');
-          if (nextSchematic) {
-            pinnedTl.fromTo(
-              nextSchematic,
-              { opacity: 0.3, y: 12 },
-              { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' },
-              `beat-${i}+=0.22`
-            );
-          }
+        // Evenly spaced, seamless crossfades across all 4 narrative cards
+        // Card 0 active: 0 -> 0.8
+        // Card 0 -> 1: 0.8 -> 1.4
+        // Card 1 active: 1.4 -> 1.8
+        // Card 1 -> 2: 1.8 -> 2.4
+        // Card 2 active: 2.4 -> 2.8
+        // Card 2 -> 3: 2.8 -> 3.4
+        // Card 3 active and held: 3.4 -> 4.0 (never disappears prematurely)
+        if (beatCards.length >= 2) {
+          pinnedTl.to(beatCards[0], { autoAlpha: 0, y: -24, duration: 0.5, ease: 'power2.inOut' }, 0.85);
+          pinnedTl.to(beatCards[1], { autoAlpha: 1, y: 0, duration: 0.5, ease: 'power2.inOut' }, 0.95);
+        }
+        if (beatCards.length >= 3) {
+          pinnedTl.to(beatCards[1], { autoAlpha: 0, y: -24, duration: 0.5, ease: 'power2.inOut' }, 1.85);
+          pinnedTl.to(beatCards[2], { autoAlpha: 1, y: 0, duration: 0.5, ease: 'power2.inOut' }, 1.95);
+        }
+        if (beatCards.length >= 4) {
+          pinnedTl.to(beatCards[2], { autoAlpha: 0, y: -24, duration: 0.5, ease: 'power2.inOut' }, 2.85);
+          pinnedTl.to(beatCards[3], { autoAlpha: 1, y: 0, duration: 0.5, ease: 'power2.inOut' }, 2.95);
         }
       }
     }
+
+    // =======================================================================
+    // TIER 3B-2: CASE DOSSIER CHAPTER STEPPER SYNCHRONIZATION
+    // As user scrolls through the editorial chapters below the pinned sequence,
+    // maintain active phase highlighting on the persistent sticky Case Dossier bar.
+    // =======================================================================
+    const dossierSections = [
+      { id: '#section-where-it-comes-from', stepIdx: 0 },
+      { id: '#section-what-it-does', stepIdx: 1 },
+      { id: '#section-07-why-it-matters', stepIdx: 2 },
+      { id: '#section-08-the-takeaway', stepIdx: 4 },
+    ];
+
+    dossierSections.forEach(({ id, stepIdx }) => {
+      const secEl = containerEl.querySelector(id);
+      if (secEl) {
+        ScrollTrigger.create({
+          trigger: secEl,
+          start: 'top 50%',
+          end: 'bottom 50%',
+          onEnter: () => {
+            const allItems = containerEl.querySelectorAll('.doc-ribbon-step-item');
+            allItems.forEach((item, idx) => {
+              if (idx === stepIdx || (stepIdx === 2 && idx === 3)) item.classList.add('active');
+              else item.classList.remove('active');
+            });
+          },
+          onEnterBack: () => {
+            const allItems = containerEl.querySelectorAll('.doc-ribbon-step-item');
+            allItems.forEach((item, idx) => {
+              if (idx === stepIdx || (stepIdx === 2 && idx === 3)) item.classList.add('active');
+              else item.classList.remove('active');
+            });
+          },
+        });
+      }
+    });
 
     // =======================================================================
     // TIER 3C: CINEMATIC IMAGE CLIP-PATH & PARALLAX TRANSFORMATION
@@ -817,49 +859,21 @@ export function setupDocumentaryAnimations(containerEl, pollutantId = 'pm25') {
     const diurnalSvg = containerEl.querySelector('.doc-diurnal-svg');
     if (diurnalSvg) {
       const chartPath = diurnalSvg.querySelector('path[fill="none"]');
-      const areaPath = diurnalSvg.querySelector('path[fill^="url"]');
-      const points = diurnalSvg.querySelectorAll('circle');
-      const labels = diurnalSvg.querySelectorAll('text');
-
-      const diurnalTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: diurnalSvg,
-          start: 'top 82%',
-          toggleActions: 'play none none none',
-        },
-      });
-
       if (chartPath) {
         const pathLength = 800;
-        diurnalTl.fromTo(
+        gsap.fromTo(
           chartPath,
           { strokeDasharray: pathLength, strokeDashoffset: pathLength },
-          { strokeDashoffset: 0, duration: 1.2, ease: 'power2.out' },
-          0
-        );
-      }
-      if (areaPath) {
-        diurnalTl.fromTo(
-          areaPath,
-          { opacity: 0 },
-          { opacity: 1, duration: 0.8, ease: 'power1.out' },
-          0.35
-        );
-      }
-      if (points.length > 0) {
-        diurnalTl.fromTo(
-          points,
-          { scale: 0, opacity: 0, transformOrigin: 'center center' },
-          { scale: 1, opacity: 1, duration: 0.4, stagger: 0.06, ease: 'back.out(1.5)' },
-          0.45
-        );
-      }
-      if (labels.length > 0) {
-        diurnalTl.fromTo(
-          labels,
-          { opacity: 0, y: 6 },
-          { opacity: 1, y: 0, duration: 0.35, stagger: 0.06, ease: 'power2.out' },
-          0.55
+          {
+            strokeDashoffset: 0,
+            duration: 1.5,
+            ease: 'power2.inOut',
+            scrollTrigger: {
+              trigger: diurnalSvg,
+              start: 'top 82%',
+              toggleActions: 'play none none none',
+            },
+          }
         );
       }
     }

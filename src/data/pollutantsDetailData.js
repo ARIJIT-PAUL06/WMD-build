@@ -323,14 +323,14 @@ export const POLLUTANTS_DATA = {
     delhiPeakSmog: 6.8,
     unit: 'mg/m³',
     theme: {
-      primary: '#f43f5e',
-      primaryRgb: '244, 63, 94',
-      secondary: '#9f1239',
-      accentGlow: 'rgba(244, 63, 94, 0.45)',
-      cardBg: 'rgba(244, 63, 94, 0.06)',
-      cardBorder: 'rgba(244, 63, 94, 0.25)',
-      heroGradient: 'linear-gradient(135deg, rgba(244, 63, 94, 0.22) 0%, rgba(159, 18, 57, 0.08) 50%, rgba(7, 10, 18, 0.95) 100%)',
-      badgeColor: '#fecdd3'
+      primary: '#3b82f6',
+      primaryRgb: '59, 130, 246',
+      secondary: '#1d4ed8',
+      accentGlow: 'rgba(59, 130, 246, 0.45)',
+      cardBg: 'rgba(59, 130, 246, 0.06)',
+      cardBorder: 'rgba(59, 130, 246, 0.25)',
+      heroGradient: 'linear-gradient(135deg, rgba(59, 130, 246, 0.22) 0%, rgba(29, 78, 216, 0.08) 50%, rgba(7, 10, 18, 0.95) 100%)',
+      badgeColor: '#bfdbfe'
     },
     lungsImpact: {
       pulmonaryRegion: 'Alveolar-Capillary Interface & Circulating Blood Stream',
@@ -357,7 +357,7 @@ export const POLLUTANTS_DATA = {
     sizeScale: [
       { label: 'Human Hair', size: '70 µm', color: '#94a3b8', pct: 100 },
       { label: 'Fine Particulate (PM2.5)', size: '2.5 µm', color: '#ef4444', pct: 3.57 },
-      { label: 'CO Molecule', size: '0.0003 µm', color: '#f43f5e', pct: 0.0004 },
+      { label: 'CO Molecule', size: '0.0003 µm', color: '#3b82f6', pct: 0.0004 },
     ],
     documentaries: [
       {
@@ -367,7 +367,7 @@ export const POLLUTANTS_DATA = {
         producer: 'Automotive Safety & Air Quality Research',
         summary: 'Sensor probes measuring in-cabin carboxyhemoglobin buildup for auto-rickshaw commuters and enclosed vehicle drivers stalled in Delhi ring-road tunnels and flyover jams.',
         keyTakeaway: 'Vehicle interior CO levels can reach 18 mg/m³ within 15 minutes of stop-and-go tunnel transit.',
-        accent: '#f43f5e'
+        accent: '#3b82f6'
       },
       {
         id: 'doc-co-2',

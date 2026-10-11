@@ -9,18 +9,18 @@
  *   2. MOVEMENT: Atmospheric boundary layer inversion & plume advection
  *   3. EXPOSURE: Ground-level street canyon receptors & human proximity
  *   4. IMPACT: Deep alveolar penetration & cardiovascular inflammation
- * - Interactive SVG vector progress timeline linking the 4 investigation phases
- * - Scientific stage vector schematics illustrating each phase
+ * - Top progress stepper ribbon (01 to 04) tracking scroll progress
  * - Zero automotive specs; pollutant is the central subject
  */
 
 import React, { useMemo } from 'react';
-import { Layers, Wind, Compass, AlertTriangle } from 'lucide-react';
+import { Layers, Wind, Compass, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 export default function DocumentaryPinnedStory({
   pollutantData,
   cinematicTheme,
   environmentData,
+  hideRibbon = false,
 }) {
   const env = environmentData || {};
   const sourcesList = pollutantData.typicalSources || [];
@@ -85,58 +85,64 @@ export default function DocumentaryPinnedStory({
           >
             {pollutantData.symbol}
           </div>
-          <div
-            className="documentary-pinned-ambient-glow"
-            style={{
-              background: `radial-gradient(ellipse at 50% 60%, ${cinematicTheme.ambientColor || 'rgba(16, 185, 129, 0.12)'} 0%, transparent 70%)`,
-            }}
-          />
+          <div className="documentary-pinned-ambient-glow" style={{ background: `radial-gradient(ellipse at 50% 60%, var(--pollutant-ambient) 0%, transparent 70%)` }} />
         </div>
 
-        {/* Top Progress Stepper Ribbon */}
-        <div className="documentary-pinned-top-ribbon">
-          <div className="doc-ribbon-tag">
-            <span className="doc-ribbon-pulse" style={{ backgroundColor: cinematicTheme.accent }} />
-            <span>CASE DOSSIER // {pollutantData.symbol}</span>
-          </div>
-
-          <div className="doc-ribbon-stepper" aria-label="Investigation Phases">
-            <svg
-              className="doc-ribbon-track-svg"
-              viewBox="0 0 280 6"
-              aria-hidden="true"
-              style={{ position: 'absolute', width: '280px', height: '6px', pointerEvents: 'none' }}
+        {/* Top Progress Stepper Ribbon (rendered when not hoisted to sticky wrapper) */}
+        {!hideRibbon && (
+          <div className="documentary-pinned-top-ribbon">
+            <button
+              type="button"
+              className="doc-ribbon-tag doc-ribbon-tag-btn"
+              onClick={() => {
+                const el = document.getElementById('documentary-pinned-story');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              aria-label={`Jump to start of ${pollutantData.symbol} Case Dossier`}
             >
-              <line x1="10" y1="3" x2="270" y2="3" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="2" />
-              <line
-                id="doc-ribbon-progress-line"
-                x1="10"
-                y1="3"
-                x2="270"
-                y2="3"
-                stroke={cinematicTheme.accent}
-                strokeWidth="2.5"
-                strokeDasharray="260"
-                strokeDashoffset="260"
-              />
-            </svg>
-            {storyBeats.map((beat, idx) => (
-              <div
-                key={beat.step}
-                className={`doc-ribbon-step-item step-item-${idx} ${idx === 0 ? 'active' : ''}`}
-                data-step-index={idx}
-              >
-                <span className="doc-step-num">{beat.step}</span>
-                <span className="doc-step-name">{beat.tag}</span>
-                <span className="doc-step-bar" />
-              </div>
-            ))}
-          </div>
+              <span className="doc-ribbon-pulse" style={{ backgroundColor: 'var(--pollutant-color, var(--pollutant-accent))', boxShadow: 'var(--pollutant-glow, none)' }} />
+              <span>CASE DOSSIER // <span style={{ color: 'var(--pollutant-color)' }}>{pollutantData.symbol}</span></span>
+            </button>
 
-          <div className="doc-ribbon-spec">
-            <span>OBSERVATION EVIDENCE // DELHI NCR</span>
+            <div className="doc-ribbon-stepper" aria-label="Investigation Phases" role="tablist">
+              {storyBeats.map((beat, idx) => (
+                <button
+                  key={beat.step}
+                  type="button"
+                  className={`doc-ribbon-step-item step-item-${idx} ${idx === 0 ? 'active' : ''}`}
+                  data-step-index={idx}
+                  onClick={() => {
+                    const targets = [
+                      'section-where-it-comes-from',
+                      'section-what-it-does',
+                      'section-07-why-it-matters',
+                      'section-08-the-takeaway',
+                    ];
+                    const targetEl = document.getElementById(targets[idx]);
+                    if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  aria-label={`Jump to Phase ${beat.step}: ${beat.tag}`}
+                >
+                  <span className="doc-step-num">{beat.step}</span>
+                  <span className="doc-step-name">{beat.tag}</span>
+                  <span className="doc-step-bar" />
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              className="doc-ribbon-spec doc-ribbon-spec-btn"
+              onClick={() => {
+                const el = document.getElementById('wmd-impact-row') || document.getElementById('section-08-the-takeaway');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              aria-label="Jump to Observation Evidence in Delhi NCR"
+            >
+              <span>OBSERVATION EVIDENCE // DELHI NCR</span>
+            </button>
           </div>
-        </div>
+        )}
 
         {/* Narrative Cards Deck Driven by ScrollTrigger Scrub */}
         <div className="documentary-pinned-cards-deck">
@@ -149,68 +155,18 @@ export default function DocumentaryPinnedStory({
                 data-beat-index={idx}
               >
                 <div className="doc-card-kicker-row">
-                  <span className="doc-card-kicker-badge" style={{ color: cinematicTheme.accent }}>
+                  <span className="doc-card-kicker-badge" style={{ color: 'var(--pollutant-color, var(--bone-200))' }}>
                     <IconComponent size={13} />
-                    <span>{beat.question}</span>
+                    <span>{beat.tag}</span>
                   </span>
-                  <span className="doc-card-counter">PHASE 0{idx + 1} OF 04</span>
                 </div>
 
                 <h3 className="doc-card-headline">{beat.headline}</h3>
                 <p className="doc-card-lead">{beat.lead}</p>
 
-                {/* Schematic Vector Pathway Visual for each scientific phase */}
-                <div className="doc-card-schematic-wrap" aria-hidden="true">
-                  {idx === 0 && (
-                    <svg className="doc-card-schematic-svg" viewBox="0 0 280 36" fill="none">
-                      <circle cx="20" cy="18" r="5" fill={cinematicTheme.accent} />
-                      <circle cx="20" cy="18" r="12" stroke={cinematicTheme.accent} strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
-                      <path d="M 36 18 L 250 18" stroke={cinematicTheme.accent} strokeWidth="1.5" strokeDasharray="4 4" opacity="0.4" />
-                      <path d="M 235 13 L 250 18 L 235 23" stroke={cinematicTheme.accent} strokeWidth="1.5" fill="none" opacity="0.8" />
-                      <circle cx="110" cy="18" r="3" fill="#cbd5e1" opacity="0.5" />
-                      <circle cx="170" cy="18" r="3.5" fill="#cbd5e1" opacity="0.7" />
-                      <text x="50" y="32" fill="#94a3b8" fontSize="8" fontFamily="monospace">EMISSION INJECTION VECTOR</text>
-                    </svg>
-                  )}
-                  {idx === 1 && (
-                    <svg className="doc-card-schematic-svg" viewBox="0 0 280 36" fill="none">
-                      <path d="M 10 10 Q 70 6, 140 10 T 270 10" stroke="#64748b" strokeWidth="1.5" strokeDasharray="4 2" />
-                      <text x="10" y="7" fill="#94a3b8" fontSize="7.5" fontFamily="monospace">INVERSION CEILING &lt; 200m</text>
-                      <path d="M 20 26 Q 80 18, 150 24 T 260 22" stroke={cinematicTheme.accent} strokeWidth="2" />
-                      <circle cx="150" cy="24" r="4" fill={cinematicTheme.accent} />
-                      <text x="165" y="32" fill="#94a3b8" fontSize="7.5" fontFamily="monospace">TRAPPED BASIN PLUME</text>
-                    </svg>
-                  )}
-                  {idx === 2 && (
-                    <svg className="doc-card-schematic-svg" viewBox="0 0 280 36" fill="none">
-                      <path d="M 15 28 L 265 28" stroke="#475569" strokeWidth="1.5" />
-                      <rect x="40" y="14" width="24" height="14" fill="none" stroke="#64748b" strokeWidth="1" />
-                      <rect x="85" y="8" width="30" height="20" fill="none" stroke="#64748b" strokeWidth="1" />
-                      <circle cx="190" cy="18" r="5" fill={cinematicTheme.accent} />
-                      <circle cx="190" cy="18" r="11" stroke={cinematicTheme.accent} strokeWidth="1" strokeDasharray="2 2" opacity="0.7" />
-                      <text x="145" y="32" fill="#94a3b8" fontSize="7.5" fontFamily="monospace">BREATHING ZONE RECEPTOR</text>
-                    </svg>
-                  )}
-                  {idx === 3 && (
-                    <svg className="doc-card-schematic-svg" viewBox="0 0 280 36" fill="none">
-                      <line x1="15" y1="18" x2="265" y2="18" stroke="#334155" strokeWidth="2" />
-                      <line x1="150" y1="6" x2="150" y2="30" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="2 2" />
-                      <text x="156" y="11" fill="#f87171" fontSize="7.5" fontFamily="monospace">NAAQS CEILING</text>
-                      <circle cx="90" cy="18" r="5" fill={cinematicTheme.accent} />
-                      <circle cx="210" cy="18" r="3.5" fill="#f97316" />
-                      <text x="20" y="31" fill="#94a3b8" fontSize="7.5" fontFamily="monospace">CELLULAR DEPOSITION</text>
-                    </svg>
-                  )}
-                </div>
-
                 <div className="doc-card-detail-box">
-                  <div className="doc-detail-accent-bar" style={{ backgroundColor: cinematicTheme.accent }} />
+                  <div className="doc-detail-accent-bar" style={{ backgroundColor: 'var(--pollutant-color, var(--bone-200))' }} />
                   <p className="doc-detail-text">{beat.detail}</p>
-                </div>
-
-                <div className="doc-card-footer-trace">
-                  <span className="doc-trace-label">EVIDENCE RECEPTOR:</span>
-                  <span className="doc-trace-val">{env.environmentContext || 'Delhi NCR Airshed'}</span>
                 </div>
               </article>
             );

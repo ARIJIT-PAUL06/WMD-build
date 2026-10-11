@@ -8,6 +8,14 @@
  * ZERO fabricated scientific claims or values.
  */
 
+/**
+ * First sentence of a passage. Splits only on ., ! or ? followed by whitespace or the end,
+ * so decimals such as "2.5 µm" stay intact.
+ */
+export function firstSentence(text = '') {
+  return text.match(/^.*?[.!?](?=\s|$)/s)?.[0] ?? text;
+}
+
 export const POLLUTANT_EDITORIAL_HEADLINES = {
   pm25: {
     statement: 'Small particles. Large consequences.',
