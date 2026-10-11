@@ -52,7 +52,7 @@ export default function HeatmapSearchBar({
             width: '100%',
           }}
         />
-        {isSearching && <RefreshCw size={11} className="animate-spin" color="#38bdf8" />}
+        {isSearching && <RefreshCw size={11} className="animate-spin" color="#d4a359" />}
         {searchQuery && !isSearching && (
           <button
             onClick={() => {
@@ -104,10 +104,10 @@ export default function HeatmapSearchBar({
                 fontSize: '0.74rem',
                 transition: 'background 0.15s ease',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.18)')}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(217, 155, 65, 0.18)')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
-              <MapPin size={13} color="#38bdf8" style={{ flexShrink: 0 }} />
+              <MapPin size={13} color="#d4a359" style={{ flexShrink: 0 }} />
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'space-between' }}>
                   <strong style={{ color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.text}</strong>
@@ -116,9 +116,9 @@ export default function HeatmapSearchBar({
                       fontSize: '0.6rem',
                       padding: '1px 6px',
                       borderRadius: '999px',
-                      background: 'rgba(56, 189, 248, 0.15)',
-                      color: '#38bdf8',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      background: 'rgba(217, 155, 65, 0.15)',
+                      color: '#f3ce85',
+                      border: '1px solid rgba(217, 155, 65, 0.35)',
                       whiteSpace: 'nowrap',
                       flexShrink: 0
                     }}>

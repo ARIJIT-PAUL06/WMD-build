@@ -205,12 +205,12 @@ export default function HeatmapTelemetryHud({
                   {activePollutant !== 'aqi' && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                       <span>Equivalent Overall AQI:</span>
-                      <strong style={{ color: '#38bdf8' }}>{inspectedPoint.aqi} AQI</strong>
+                      <strong style={{ color: '#d4a359' }}>{inspectedPoint.aqi} AQI</strong>
                     </div>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>Nearest Ground Station:</span>
-                    <span style={{ color: '#38bdf8', fontWeight: 600 }}>
+                    <span style={{ color: '#d4a359', fontWeight: 600 }}>
                       {inspectedPoint?.nearestStation
                         ? `${(typeof inspectedPoint.nearestStation === 'string' ? inspectedPoint.nearestStation.split('(')[0]?.trim() : inspectedPoint.nearestStation) || 'Monitoring Node'} (${inspectedPoint.distanceKm ?? 0} km)`
                         : 'Nearby Monitoring Station'}
@@ -225,14 +225,14 @@ export default function HeatmapTelemetryHud({
               style={{
                 padding: '20px',
                 borderRadius: '16px',
-                border: '1px solid rgba(16, 185, 129, 0.45)',
-                boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(217, 155, 65, 0.45)',
+                boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(217, 155, 65, 0.1)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Radio size={16} color="#10b981" />
-                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#10b981', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  <Radio size={16} color="#e8c87a" />
+                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#e8c87a', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Your Live GPS Vitals
                   </span>
                 </div>
@@ -248,7 +248,7 @@ export default function HeatmapTelemetryHud({
                     gap: '5px',
                   }}
                 >
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981', animation: 'pulse 1.2s infinite' }} />
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#e8c87a', boxShadow: '0 0 8px #e8c87a', animation: 'pulse 1.2s infinite' }} />
                   Satellite Lock
                 </span>
               </div>
@@ -304,14 +304,14 @@ export default function HeatmapTelemetryHud({
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                   <span>GPS Accuracy:</span>
-                  <span style={{ color: '#34d399', fontWeight: 600 }}>
+                  <span style={{ color: '#f3ce85', fontWeight: 600 }}>
                     ±{userLocation.accuracy || 15} meters
                   </span>
                 </div>
                 {nearestStation && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <span>Nearest CAAQMS Sensor:</span>
-                    <span style={{ color: '#38bdf8', fontWeight: 600 }}>
+                    <span style={{ color: '#d4a359', fontWeight: 600 }}>
                       {nearestStation.station?.name
                         ? `${nearestStation.station.name.split(',')[0]?.trim() || nearestStation.station.name} (${nearestStation.distance ?? 0} km)`
                         : 'Nearby CAAQMS Sensor'}
@@ -341,7 +341,7 @@ export default function HeatmapTelemetryHud({
               style={{
                 padding: '20px',
                 borderRadius: '16px',
-                border: '1px solid rgba(56, 189, 248, 0.3)',
+                border: '1px solid rgba(217, 155, 65, 0.3)',
                 boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5)',
                 textAlign: 'center',
               }}
@@ -358,7 +358,7 @@ export default function HeatmapTelemetryHud({
                   margin: '0 auto 12px',
                 }}
               >
-                <Navigation size={20} color="#38bdf8" className={isLocating ? 'animate-spin' : ''} />
+                <Navigation size={20} color="#d4a359" className={isLocating ? 'animate-spin' : ''} />
               </div>
 
               <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', margin: '0 0 6px' }}>
@@ -505,7 +505,7 @@ export default function HeatmapTelemetryHud({
               style={{
                 padding: '12px 14px',
                 borderRadius: '12px',
-                border: '1px solid rgba(56, 189, 248, 0.22)',
+                border: '1px solid rgba(216, 196, 162, 0.16)',
                 minHeight: '84px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -514,14 +514,14 @@ export default function HeatmapTelemetryHud({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <strong style={{ color: '#38bdf8', fontSize: '0.74rem', letterSpacing: '0.03em', textTransform: 'uppercase', fontWeight: 800 }}>
+                <strong style={{ color: '#d4a359', fontSize: '0.74rem', letterSpacing: '0.03em', textTransform: 'uppercase', fontWeight: 800 }}>
                   Recommendations
                 </strong>
                 <span
                   className="glass-pill"
                   style={{
                     fontSize: '0.65rem',
-                    color: '#94a3b8',
+                    color: '#9c9180',
                     padding: '2px 7px',
                     borderRadius: '4px',
                     display: 'inline-flex',
@@ -529,11 +529,11 @@ export default function HeatmapTelemetryHud({
                     gap: '4px',
                   }}
                 >
-                  {isLoadingAdvisory && <RefreshCw size={10} className="animate-spin" color="#38bdf8" />}
+                  {isLoadingAdvisory && <RefreshCw size={10} className="animate-spin" color="#d4a359" />}
                   {isLoadingAdvisory ? 'Updating...' : 'Live Guidance'}
                 </span>
               </div>
-              <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.76rem', lineHeight: 1.45, opacity: isLoadingAdvisory ? 0.75 : 1, transition: 'opacity 0.2s ease' }}>
+              <p style={{ margin: 0, color: '#ede6d6', fontSize: '0.76rem', lineHeight: 1.45, opacity: isLoadingAdvisory ? 0.75 : 1, transition: 'opacity 0.2s ease' }}>
                 {geminiAdvisory}
               </p>
             </div>
@@ -545,8 +545,8 @@ export default function HeatmapTelemetryHud({
             style={{
               padding: '14px 18px',
               borderRadius: '16px',
-              border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(56, 189, 248, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)',
-              background: 'rgba(15, 23, 42, 0.65)',
+              border: isAdaptiveMode && activeRange.isZoomed ? '1px solid rgba(217, 155, 65, 0.40)' : '1px solid rgba(216, 196, 162, 0.14)',
+              background: 'rgba(18, 15, 12, 0.65)',
               transition: 'border-color 0.3s ease',
             }}
           >

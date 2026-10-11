@@ -4,7 +4,7 @@ import React from 'react';
  * Subtle Atmospheric Spores / Micro-Particle Radiator
  * Gently radiates soft ambient spores matching the exact AQI color that dissolve into surroundings.
  */
-export default function AqiSporeAura({ color = '#10b981' }) {
+export default function AqiSporeAura({ color = '#d4a359' }) {
   const sporeTrajectories = [
     { tx: 0, ty: -32, size: 3.2, delay: 0, dur: 3.4 },
     { tx: 22, ty: -24, size: 2.6, delay: 0.8, dur: 3.8 },

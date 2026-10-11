@@ -15,10 +15,23 @@ export default function CrtScreenLensCanvas({
   scrollProgress = 0,
   mousePos = { x: 0, y: 0 },
   onExploreTwin,
+  onSignInClick,
+  user = null,
+  isAuthenticated = false,
+  onLogout,
 }) {
   const mountRef = useRef(null);
   const scrollRef = useRef(scrollProgress);
   const buttonBounds = useRef({ x: 0, y: 0, w: 0, h: 0, active: false });
+  const signInBounds = useRef({ x: 0, y: 0, w: 0, h: 0, active: false });
+  const isSignInHoverRef = useRef(false);
+
+  const onSignInClickRef = useRef(onSignInClick);
+  onSignInClickRef.current = onSignInClick;
+  const onLogoutRef = useRef(onLogout);
+  onLogoutRef.current = onLogout;
+  const authStateRef = useRef({ user, isAuthenticated });
+  authStateRef.current = { user, isAuthenticated };
 
   // Keep scrollRef synchronized with scrollProgress prop if used without ref
   useEffect(() => {
@@ -497,8 +510,241 @@ export default function CrtScreenLensCanvas({
       textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
       textCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // Strictly equal dimensions for Template 1, Template 2, and Template 3
       const isMobile = width < 768;
+
+      // ==============================================================
+      // VAYUVITALS Brand Wordmark (Curved by CRT Screen Curvature)
+      // Painted directly onto the CRT faceplate canvas at the top-left
+      // corner so it organically curves with curveFaceplate() in WebGL!
+      // Styled in the authentic vintage CRT terminal template aesthetic
+      // with Fraktur / Gothic calligraphy (matching opposite Sign In HUD).
+      // ==============================================================
+      const p = Math.max(0, Math.min(1, scroll));
+      let brandR, brandG, brandB;
+      if (p <= 0.5) {
+        const t = p / 0.5;
+        brandR = Math.round(245 + (251 - 245) * t);
+        brandG = Math.round(158 + (191 - 158) * t);
+        brandB = Math.round(11 + (36 - 11) * t);
+      } else {
+        const t = (p - 0.5) / 0.5;
+        brandR = Math.round(251 + (52 - 251) * t);
+        brandG = Math.round(191 + (211 - 191) * t);
+        brandB = Math.round(36 + (153 - 36) * t);
+      }
+      const brandColor = `rgb(${brandR}, ${brandG}, ${brandB})`;
+      const brandGlow = `rgba(${brandR}, ${brandG}, ${brandB}, 0.65)`;
+
+      textCtx.save();
+      // Prominent, authoritative typography laid over the curved TV glass
+      const brandFontSize = isMobile ? 17 : 21;
+      textCtx.font = `900 ${brandFontSize}px "Outfit", -apple-system, BlinkMacSystemFont, sans-serif`;
+      if ('letterSpacing' in textCtx) {
+        textCtx.letterSpacing = isMobile ? '2.0px' : '3.5px';
+      }
+
+      const brandText = 'VAYUVITALS';
+
+      const brandTextMetrics = textCtx.measureText(brandText);
+      const brandTextW = brandTextMetrics.width;
+
+      // Symmetrical box dimensions matching the opposite Sign-In button
+      const brandBoxW = Math.max(isMobile ? 140 : 190, brandTextW + (isMobile ? 36 : 48));
+      const brandBoxH = isMobile ? 38 : 46;
+      const leftInset = isMobile ? Math.max(16, width * 0.04) : Math.max(68, width * 0.038);
+      const brandBoxX = leftInset;
+      const brandBoxY = isMobile ? Math.max(14, height * 0.036 - 3) : Math.max(26, height * 0.036 - 6);
+
+      // 1. Dark Analog Cathode Ray Glass Box Plate
+      textCtx.beginPath();
+      if (textCtx.roundRect) {
+        textCtx.roundRect(brandBoxX, brandBoxY, brandBoxW, brandBoxH, 8);
+      } else {
+        textCtx.rect(brandBoxX, brandBoxY, brandBoxW, brandBoxH);
+      }
+      textCtx.fillStyle = 'rgba(10, 12, 18, 0.90)';
+      textCtx.fill();
+
+      // 2. Phosphor Border with Analog CRT Glow
+      textCtx.save();
+      textCtx.strokeStyle = brandColor;
+      textCtx.lineWidth = 1.4;
+      textCtx.shadowColor = brandGlow;
+      textCtx.shadowBlur = 12;
+      textCtx.stroke();
+      textCtx.restore();
+
+      // 3. Cathode Ray Scanline Texture baked into the brand box face
+      textCtx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+      for (let sy = brandBoxY + 2; sy < brandBoxY + brandBoxH - 2; sy += 3) {
+        textCtx.fillRect(brandBoxX + 2, sy, brandBoxW - 4, 1.2);
+      }
+
+      // 4. Vintage Terminal Corner Crosshairs (Matching Template Reticles)
+      textCtx.save();
+      textCtx.strokeStyle = brandColor;
+      textCtx.lineWidth = 1.8;
+      textCtx.shadowColor = brandGlow;
+      textCtx.shadowBlur = 6;
+      const bMarkLen = isMobile ? 5 : 7;
+      // Top-left
+      textCtx.beginPath();
+      textCtx.moveTo(brandBoxX + 4, brandBoxY + 4 + bMarkLen);
+      textCtx.lineTo(brandBoxX + 4, brandBoxY + 4);
+      textCtx.lineTo(brandBoxX + 4 + bMarkLen, brandBoxY + 4);
+      textCtx.stroke();
+      // Top-right
+      textCtx.beginPath();
+      textCtx.moveTo(brandBoxX + brandBoxW - 4 - bMarkLen, brandBoxY + 4);
+      textCtx.lineTo(brandBoxX + brandBoxW - 4, brandBoxY + 4);
+      textCtx.lineTo(brandBoxX + brandBoxW - 4, brandBoxY + 4 + bMarkLen);
+      textCtx.stroke();
+      // Bottom-left
+      textCtx.beginPath();
+      textCtx.moveTo(brandBoxX + 4, brandBoxY + brandBoxH - 4 - bMarkLen);
+      textCtx.lineTo(brandBoxX + 4, brandBoxY + brandBoxH - 4);
+      textCtx.lineTo(brandBoxX + 4 + bMarkLen, brandBoxY + brandBoxH - 4);
+      textCtx.stroke();
+      // Bottom-right
+      textCtx.beginPath();
+      textCtx.moveTo(brandBoxX + brandBoxW - 4 - bMarkLen, brandBoxY + brandBoxH - 4);
+      textCtx.lineTo(brandBoxX + brandBoxW - 4, brandBoxY + brandBoxH - 4);
+      textCtx.lineTo(brandBoxX + brandBoxW - 4, brandBoxY + brandBoxH - 4 - bMarkLen);
+      textCtx.stroke();
+      textCtx.restore();
+
+      // 5. Brand Wordmark (Cleanly Centered)
+      textCtx.save();
+      textCtx.fillStyle = brandColor;
+      textCtx.shadowColor = brandGlow;
+      textCtx.shadowBlur = isMobile ? 14 : 20;
+      textCtx.textAlign = 'center';
+      textCtx.textBaseline = 'middle';
+      textCtx.fillText(brandText, brandBoxX + brandBoxW / 2, brandBoxY + brandBoxH / 2);
+      textCtx.restore();
+
+      textCtx.restore();
+
+      // ==============================================================
+      // Sign In Button (Curved by CRT Screen Curvature)
+      // Painted directly onto the CRT faceplate canvas at the top-right
+      // corner so it organically curves with curveFaceplate() in WebGL!
+      // Styled in the authentic vintage CRT terminal template aesthetic.
+      // ==============================================================
+      const authOpacity = Math.max(0, 1 - scroll * 4.8);
+      if (authOpacity > 0.01) {
+        const { user: curUser, isAuthenticated: curAuth } = authStateRef.current;
+        textCtx.save();
+        textCtx.globalAlpha = authOpacity;
+
+        const isHovered = isSignInHoverRef.current;
+        const authFontSize = isMobile ? 14 : 17;
+        textCtx.font = `700 ${authFontSize}px "Share Tech Mono", "JetBrains Mono", monospace`;
+        if ('letterSpacing' in textCtx) {
+          textCtx.letterSpacing = isMobile ? '1.0px' : '1.4px';
+        }
+
+        const displayText = curAuth && curUser
+          ? (curUser.email ? curUser.email.split('@')[0] : 'Citizen').toUpperCase()
+          : 'SIGN IN';
+
+        const textMetrics = textCtx.measureText(displayText);
+        const textW = textMetrics.width;
+
+        // Substantially bigger button dimensions to balance VAYUVITALS opposite it
+        const authBtnW = Math.max(isMobile ? 122 : 158, textW + (isMobile ? 40 : 54));
+        const authBtnH = isMobile ? 38 : 46;
+        const rightInset = isMobile ? Math.max(16, width * 0.04) : Math.max(68, width * 0.038);
+        const authBtnX = width - rightInset - authBtnW;
+        const authBtnY = isMobile ? Math.max(14, height * 0.036 - 3) : Math.max(26, height * 0.036 - 6);
+
+        // Template Palette: Vintage phosphor amber with high-contrast cathode plate
+        const accentColor = isHovered ? '#fef08a' : '#d4a359';
+        const accentGlow = isHovered ? 'rgba(254, 240, 138, 0.75)' : 'rgba(212, 163, 89, 0.60)';
+        const plateBg = isHovered ? 'rgba(24, 20, 16, 0.94)' : 'rgba(10, 12, 18, 0.90)';
+
+        // 1. Dark Analog Cathode Ray Glass Box Plate
+        textCtx.beginPath();
+        if (textCtx.roundRect) {
+          textCtx.roundRect(authBtnX, authBtnY, authBtnW, authBtnH, 8);
+        } else {
+          textCtx.rect(authBtnX, authBtnY, authBtnW, authBtnH);
+        }
+        textCtx.fillStyle = plateBg;
+        textCtx.fill();
+
+        // 2. Phosphor Border with Analog CRT Glow
+        textCtx.save();
+        textCtx.strokeStyle = accentColor;
+        textCtx.lineWidth = isHovered ? 1.8 : 1.4;
+        textCtx.shadowColor = accentGlow;
+        textCtx.shadowBlur = isHovered ? 16 : 10;
+        textCtx.stroke();
+        textCtx.restore();
+
+        // 3. Cathode Ray Scanline Texture baked into the button face
+        textCtx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+        for (let sy = authBtnY + 2; sy < authBtnY + authBtnH - 2; sy += 3) {
+          textCtx.fillRect(authBtnX + 2, sy, authBtnW - 4, 1.2);
+        }
+
+        // 4. Vintage Terminal Corner Crosshairs (Matching Template Reticles)
+        textCtx.save();
+        textCtx.strokeStyle = accentColor;
+        textCtx.lineWidth = 1.8;
+        textCtx.shadowColor = accentGlow;
+        textCtx.shadowBlur = isHovered ? 8 : 4;
+        const markLen = isMobile ? 5 : 7;
+        // Top-left
+        textCtx.beginPath();
+        textCtx.moveTo(authBtnX + 4, authBtnY + 4 + markLen);
+        textCtx.lineTo(authBtnX + 4, authBtnY + 4);
+        textCtx.lineTo(authBtnX + 4 + markLen, authBtnY + 4);
+        textCtx.stroke();
+        // Top-right
+        textCtx.beginPath();
+        textCtx.moveTo(authBtnX + authBtnW - 4 - markLen, authBtnY + 4);
+        textCtx.lineTo(authBtnX + authBtnW - 4, authBtnY + 4);
+        textCtx.lineTo(authBtnX + authBtnW - 4, authBtnY + 4 + markLen);
+        textCtx.stroke();
+        // Bottom-left
+        textCtx.beginPath();
+        textCtx.moveTo(authBtnX + 4, authBtnY + authBtnH - 4 - markLen);
+        textCtx.lineTo(authBtnX + 4, authBtnY + authBtnH - 4);
+        textCtx.lineTo(authBtnX + 4 + markLen, authBtnY + authBtnH - 4);
+        textCtx.stroke();
+        // Bottom-right
+        textCtx.beginPath();
+        textCtx.moveTo(authBtnX + authBtnW - 4 - markLen, authBtnY + authBtnH - 4);
+        textCtx.lineTo(authBtnX + authBtnW - 4, authBtnY + authBtnH - 4);
+        textCtx.lineTo(authBtnX + authBtnW - 4, authBtnY + authBtnH - 4 - markLen);
+        textCtx.stroke();
+        textCtx.restore();
+
+        // 5. Monospace Terminal Label (Cleanly Centered)
+        textCtx.save();
+        textCtx.fillStyle = isHovered ? '#ffffff' : '#fef3c7';
+        textCtx.shadowColor = accentGlow;
+        textCtx.shadowBlur = isHovered ? 12 : 6;
+        textCtx.textAlign = 'center';
+        textCtx.textBaseline = 'middle';
+        textCtx.fillText(displayText, authBtnX + authBtnW / 2, authBtnY + authBtnH / 2);
+        textCtx.restore();
+
+        textCtx.restore();
+
+        signInBounds.current = {
+          x: authBtnX,
+          y: authBtnY,
+          w: authBtnW,
+          h: authBtnH,
+          active: authOpacity > 0.5,
+        };
+      } else {
+        signInBounds.current = { x: 0, y: 0, w: 0, h: 0, active: false };
+      }
+
+      // Strictly equal dimensions for Template 1, Template 2, and Template 3
       const cardW = isMobile ? Math.min(width * 0.92, 440) : 510;
       const cardH = isMobile ? 210 : 225;
 
@@ -592,13 +838,40 @@ export default function CrtScreenLensCanvas({
       textTexture.needsUpdate = true;
     };
 
+    // Map viewport screen pointer coords (clientX, clientY) through the shader's
+    // curveFaceplate() to find the exact sampled pixel (fx, fy) on the text faceplate canvas
+    const getFaceplateCoords = (clientX, clientY) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const mx = clientX - rect.left;
+      const my = clientY - rect.top;
+      const aspect = width / height;
+      const curvature = width < 600 ? 0.04 : 0.28;
+      const centeredX = ((mx / width) * 2.0 - 1.0) * aspect;
+      const centeredY = (my / height) * 2.0 - 1.0;
+      const r2 = centeredX * centeredX + centeredY * centeredY;
+      const s = 1.0 + curvature * r2 * 0.38;
+      const fx = (((centeredX * s) / aspect) * 0.5 + 0.5) * width;
+      const fy = (centeredY * s * 0.5 + 0.5) * height;
+      return { mx, my, fx, fy };
+    };
+
     // Interactive button pointer tracking (click & touch)
     const handleCanvasClick = (e) => {
-      const rect = renderer.domElement.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
+      const { fx, fy } = getFaceplateCoords(e.clientX, e.clientY);
+
+      const sBtn = signInBounds.current;
+      if (sBtn && sBtn.active && fx >= sBtn.x && fx <= sBtn.x + sBtn.w && fy >= sBtn.y && fy <= sBtn.y + sBtn.h) {
+        const { isAuthenticated: curAuth } = authStateRef.current;
+        if (curAuth && onLogoutRef.current) {
+          onLogoutRef.current();
+        } else if (onSignInClickRef.current) {
+          onSignInClickRef.current();
+        }
+        return;
+      }
+
       const btn = buttonBounds.current;
-      if (btn && btn.active && mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h) {
+      if (btn && btn.active && fx >= btn.x && fx <= btn.x + btn.w && fy >= btn.y && fy <= btn.y + btn.h) {
         if (onExploreTwin) onExploreTwin();
       }
     };
@@ -606,21 +879,40 @@ export default function CrtScreenLensCanvas({
     const handleCanvasTouch = (e) => {
       if (!e.touches || e.touches.length === 0) return;
       const touch = e.touches[0];
-      const rect = renderer.domElement.getBoundingClientRect();
-      const mx = touch.clientX - rect.left;
-      const my = touch.clientY - rect.top;
+      const { fx, fy } = getFaceplateCoords(touch.clientX, touch.clientY);
+
+      const sBtn = signInBounds.current;
+      if (sBtn && sBtn.active && fx >= sBtn.x && fx <= sBtn.x + sBtn.w && fy >= sBtn.y && fy <= sBtn.y + sBtn.h) {
+        const { isAuthenticated: curAuth } = authStateRef.current;
+        if (curAuth && onLogoutRef.current) {
+          onLogoutRef.current();
+        } else if (onSignInClickRef.current) {
+          onSignInClickRef.current();
+        }
+        return;
+      }
+
       const btn = buttonBounds.current;
-      if (btn && btn.active && mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h) {
+      if (btn && btn.active && fx >= btn.x && fx <= btn.x + btn.w && fy >= btn.y && fy <= btn.y + btn.h) {
         if (onExploreTwin) onExploreTwin();
       }
     };
 
     const handleCanvasMouseMove = (e) => {
-      const rect = renderer.domElement.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
+      const { fx, fy } = getFaceplateCoords(e.clientX, e.clientY);
+
+      const sBtn = signInBounds.current;
+      const isOverSignIn = sBtn && sBtn.active && fx >= sBtn.x && fx <= sBtn.x + sBtn.w && fy >= sBtn.y && fy <= sBtn.y + sBtn.h;
+
+      if (isOverSignIn !== isSignInHoverRef.current) {
+        isSignInHoverRef.current = isOverSignIn;
+        forceTextRedraw = true;
+      }
+
       const btn = buttonBounds.current;
-      if (btn && btn.active && mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h) {
+      const isOverBtn = btn && btn.active && fx >= btn.x && fx <= btn.x + btn.w && fy >= btn.y && fy <= btn.y + btn.h;
+
+      if (isOverBtn || isOverSignIn) {
         renderer.domElement.style.cursor = 'pointer';
       } else {
         renderer.domElement.style.cursor = 'default';
