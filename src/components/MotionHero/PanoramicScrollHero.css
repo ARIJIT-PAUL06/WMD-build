@@ -152,38 +152,6 @@
   transform-origin: top right;
 }
 
-/* Landing-hero Sign In: phosphor-red CRT button echoing the DELHI NCR AIR ALERT card */
-.hero-top-auth-cluster .auth-badge-crt {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 6px;
-  background: rgba(6, 10, 18, 0.72);
-  border: 1.5px solid rgba(239, 68, 68, 0.85);
-  color: #f87171;
-  font-family: 'Share Tech Mono', 'JetBrains Mono', monospace;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
-  box-shadow: 0 0 14px rgba(239, 68, 68, 0.35), inset 0 0 10px rgba(239, 68, 68, 0.12);
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
-}
-
-.hero-top-auth-cluster .auth-badge-crt:hover {
-  color: #fecaca;
-  background: rgba(239, 68, 68, 0.12);
-  box-shadow: 0 0 22px rgba(239, 68, 68, 0.55), inset 0 0 12px rgba(239, 68, 68, 0.2);
-}
-
-.hero-top-auth-cluster .auth-badge-crt:focus-visible {
-  outline: 2px solid #fca5a5;
-  outline-offset: 3px;
-}
 
 /* ============================================================== */
 /* AUTHENTIC FROSTED GLASS LEFT SIDEBAR NAVIGATION                */
@@ -621,8 +589,8 @@
     right: var(--crt-auth-right, 14px);
   }
 
-  .hero-hud-brand span {
-    font-size: 1.15rem !important;
+  .hero-hud-brand .crt-glitch-text {
+    font-size: 1.12rem !important;
     letter-spacing: 0.10em !important;
   }
 
