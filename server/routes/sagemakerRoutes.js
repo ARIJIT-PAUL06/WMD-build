@@ -1,6 +1,7 @@
 import express from 'express';
 import { getAllDirectoryFacilities } from '../advisoryDispatchService.js';
 import { getSchoolAqiForecast } from '../sagemakerService.js';
+import { getModelEvaluation } from '../modelEvaluationService.js';
 
 const router = express.Router();
 
@@ -82,6 +83,19 @@ router.get('/api/sagemaker/forecast', async (req, res) => {
     res.json({ success: true, ...forecast });
   } catch (err) {
     console.error('[API /api/sagemaker/forecast Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Held-out test-set diagnostics for the deployed 48h forecast model
+ * (calibration pairs, per-horizon errors, residual bands, split importance), computed from the model + data files.
+ */
+router.get('/api/model-evaluation', async (req, res) => {
+  try {
+    res.json(await getModelEvaluation());
+  } catch (err) {
+    console.error('[API /api/model-evaluation Error]:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

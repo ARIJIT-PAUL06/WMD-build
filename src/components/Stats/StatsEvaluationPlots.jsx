@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { buildCalibrationGeometry } from './calibrationScatterGeometry';
 
 /**
  * StatsEvaluationPlots
@@ -11,53 +12,25 @@ export default function StatsEvaluationPlots({
   errorDistribution = [],
   featureImportance = [],
   cascadingHorizons = [],
+  evaluation = null,
+  evaluationError = null,
 }) {
   const [hoveredBin, setHoveredBin] = useState(null);
   const [hoveredPoint, setHoveredPoint] = useState(null);
   const [hoveredFeature, setHoveredFeature] = useState(null);
   const [selectedHorizon, setSelectedHorizon] = useState('1h');
 
-  // Calibration scatter sample points [actual, predicted]
-  const scatterPoints = [
-    { id: 1, actual: 35, pred: 38, x: 65, y: 172 },
-    { id: 2, actual: 48, pred: 45, x: 78, y: 165 },
-    { id: 3, actual: 62, pred: 59, x: 92, y: 154 },
-    { id: 4, actual: 75, pred: 71, x: 105, y: 149 },
-    { id: 5, actual: 88, pred: 84, x: 118, y: 142 },
-    { id: 6, actual: 102, pred: 98, x: 135, y: 134 },
-    { id: 7, actual: 115, pred: 112, x: 148, y: 126 },
-    { id: 8, actual: 128, pred: 132, x: 162, y: 122 },
-    { id: 9, actual: 145, pred: 140, x: 178, y: 115 },
-    { id: 10, actual: 160, pred: 155, x: 192, y: 108 },
-    { id: 11, actual: 178, pred: 172, x: 210, y: 101 },
-    { id: 12, actual: 195, pred: 189, x: 225, y: 94 },
-    { id: 13, actual: 210, pred: 204, x: 240, y: 88 },
-    { id: 14, actual: 230, pred: 222, x: 258, y: 81 },
-    { id: 15, actual: 248, pred: 242, x: 275, y: 75 },
-    { id: 16, actual: 265, pred: 258, x: 290, y: 71 },
-    { id: 17, actual: 285, pred: 276, x: 310, y: 64 },
-    { id: 18, actual: 305, pred: 298, x: 330, y: 58 },
-    { id: 19, actual: 325, pred: 315, x: 352, y: 53 },
-    { id: 20, actual: 345, pred: 335, x: 370, y: 48 },
-    { id: 21, actual: 365, pred: 354, x: 390, y: 42 },
-    { id: 22, actual: 385, pred: 372, x: 410, y: 38 },
-    { id: 23, actual: 410, pred: 396, x: 435, y: 33 },
-    { id: 24, actual: 440, pred: 425, x: 460, y: 27 },
-    { id: 25, actual: 465, pred: 450, x: 480, y: 23 },
-    // Dispersion points
-    { id: 26, actual: 58, pred: 74, x: 82, y: 158 },
-    { id: 27, actual: 82, pred: 68, x: 112, y: 156 },
-    { id: 28, actual: 110, pred: 128, x: 140, y: 140 },
-    { id: 29, actual: 138, pred: 122, x: 170, y: 130 },
-    { id: 30, actual: 168, pred: 185, x: 195, y: 98 },
-    { id: 31, actual: 192, pred: 170, x: 220, y: 110 },
-    { id: 32, actual: 228, pred: 248, x: 250, y: 72 },
-    { id: 33, actual: 252, pred: 232, x: 280, y: 88 },
-    { id: 34, actual: 290, pred: 318, x: 315, y: 52 },
-    { id: 35, actual: 320, pred: 295, x: 345, y: 68 },
-    { id: 36, actual: 355, pred: 378, x: 380, y: 36 },
-    { id: 37, actual: 390, pred: 360, x: 420, y: 49 },
-  ];
+  // Real held-out (observed, predicted) pairs sampled server-side from the test partition
+  const calibrationGeometry = buildCalibrationGeometry(evaluation?.scatterSample || []);
+  const scatterPoints = (evaluation?.scatterSample || []).map((p) => ({
+    ...p,
+    x: calibrationGeometry.toX(p.actual),
+    y: calibrationGeometry.toY(p.pred),
+  }));
+  const pearsonText = evaluation ? evaluation.overall.pearson_r.toFixed(4) : '…';
+  const evaluationStatus = evaluationError
+    ? `Held-out evaluation unavailable: ${evaluationError}`
+    : 'Loading held-out evaluation…';
 
   return (
     <div className="stats-eval-grid">
@@ -221,7 +194,7 @@ export default function StatsEvaluationPlots({
         <div className="stats-plot-header">
           <div className="stats-plot-title-row">
             <span className="stats-plot-tag">FIG. 02 / CALIBRATION SCATTER</span>
-            <span className="stats-plot-coord">N = 250 HELD-OUT OBS</span>
+            <span className="stats-plot-coord">{`N = ${scatterPoints.length || '…'} HELD-OUT OBS`}</span>
           </div>
           <h3 className="stats-plot-headline">Observed vs. Forecasted PM2.5</h3>
           <p className="stats-plot-sub">
@@ -260,22 +233,29 @@ export default function StatsEvaluationPlots({
               />
             ))}
 
-            {/* Tolerance corridor ±20 */}
-            <path
-              d="M 50 165 L 485 10 L 500 25 L 65 180 Z"
-              style={{ fill: 'var(--stats-plot-corridor)' }}
-            />
+            {scatterPoints.length > 0 && (
+              <>
+                {/* Tolerance corridor ±20 */}
+                <path d={calibrationGeometry.corridorPath} style={{ fill: 'var(--stats-plot-corridor)' }} />
 
-            {/* 1:1 Perfect Agreement Diagonal */}
-            <line
-              x1="50"
-              y1="180"
-              x2="495"
-              y2="18"
-              style={{ stroke: 'var(--stats-plot-axis)' }}
-              strokeWidth="1.2"
-              strokeDasharray="4,4"
-            />
+                {/* 1:1 Perfect Agreement Diagonal */}
+                <line
+                  x1={calibrationGeometry.diagonal.x1}
+                  y1={calibrationGeometry.diagonal.y1}
+                  x2={calibrationGeometry.diagonal.x2}
+                  y2={calibrationGeometry.diagonal.y2}
+                  style={{ stroke: 'var(--stats-plot-axis)' }}
+                  strokeWidth="1.2"
+                  strokeDasharray="4,4"
+                />
+              </>
+            )}
+
+            {scatterPoints.length === 0 && (
+              <text x="275" y="100" style={{ fill: 'var(--stats-plot-label)' }} fontSize="10" fontFamily="IBM Plex Mono" textAnchor="middle">
+                {evaluationStatus}
+              </text>
+            )}
 
             {/* Axis Baselines */}
             <line x1="50" y1="185" x2="500" y2="185" style={{ stroke: 'var(--stats-plot-axis)' }} strokeWidth="1" />
@@ -313,10 +293,19 @@ export default function StatsEvaluationPlots({
             })}
 
             {/* X Labels */}
-            <text x="50" y="202" style={{ fill: 'var(--stats-plot-label)' }} fontSize="9" fontFamily="IBM Plex Mono" textAnchor="middle">0</text>
-            <text x="200" y="202" style={{ fill: 'var(--stats-plot-label)' }} fontSize="9" fontFamily="IBM Plex Mono" textAnchor="middle">100</text>
-            <text x="350" y="202" style={{ fill: 'var(--stats-plot-label)' }} fontSize="9" fontFamily="IBM Plex Mono" textAnchor="middle">200</text>
-            <text x="495" y="202" style={{ fill: 'var(--stats-plot-label)' }} fontSize="9" fontFamily="IBM Plex Mono" textAnchor="middle">300 µg/m³</text>
+            {scatterPoints.length > 0 && calibrationGeometry.ticks.map((v, i, arr) => (
+              <text
+                key={v}
+                x={calibrationGeometry.toX(v)}
+                y="202"
+                style={{ fill: 'var(--stats-plot-label)' }}
+                fontSize="9"
+                fontFamily="IBM Plex Mono"
+                textAnchor="middle"
+              >
+                {i === arr.length - 1 ? `${v} µg/m³` : v}
+              </text>
+            ))}
           </svg>
 
           {/* Interactive Inspection Tooltip for Scatter Points */}
@@ -334,14 +323,14 @@ export default function StatsEvaluationPlots({
               >
                 <span className="tooltip-title">OBSERVED: {hoveredPoint.actual} µg/m³</span>
                 <span className="tooltip-stat">Forecast: {hoveredPoint.pred} µg/m³</span>
-                <span className="tooltip-note">Residual: {Math.abs(hoveredPoint.actual - hoveredPoint.pred)} µg/m³</span>
+                <span className="tooltip-note">Residual: {Math.abs(hoveredPoint.actual - hoveredPoint.pred).toFixed(1)} µg/m³ · +{hoveredPoint.horizon_hours}h lead</span>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
         <div className="stats-plot-meta-row">
-          <span className="stats-plot-kpi">Pearson Correlation: <strong>R = 0.9031</strong></span>
+          <span className="stats-plot-kpi">Pearson Correlation: <strong>{`R = ${pearsonText}`}</strong></span>
           <span className="stats-plot-kpi">Explained Variance: <strong>R² = 0.8156</strong></span>
         </div>
       </motion.div>
@@ -368,6 +357,9 @@ export default function StatsEvaluationPlots({
         </div>
 
         <div className="stats-features-matrix">
+          {featureImportance.length === 0 && (
+            <p className="stats-plot-sub">{evaluationStatus}</p>
+          )}
           {featureImportance.map((item, idx) => {
             const isFtrHovered = hoveredFeature === item.feature;
             return (
@@ -439,6 +431,11 @@ export default function StatsEvaluationPlots({
               </tr>
             </thead>
             <tbody>
+              {cascadingHorizons.length === 0 && (
+                <tr>
+                  <td className="stats-td-mono" colSpan={7}>{evaluationStatus}</td>
+                </tr>
+              )}
               {cascadingHorizons.map((h) => {
                 const isSelected = selectedHorizon === h.horizon;
                 return (

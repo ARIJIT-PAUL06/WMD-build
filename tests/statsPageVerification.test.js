@@ -14,6 +14,8 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
   let viteServer;
   let StatsPage;
   let StatsPredictionHero;
+  let StatsEvaluationPlots;
+  let evaluation;
 
   before(async () => {
     viteServer = await createServer({
@@ -30,6 +32,14 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
       './src/components/Stats/StatsPredictionHero.jsx'
     );
     StatsPredictionHero = heroMod.default;
+
+    const plotsMod = await viteServer.ssrLoadModule(
+      './src/components/Stats/StatsEvaluationPlots.jsx'
+    );
+    StatsEvaluationPlots = plotsMod.default;
+
+    const { computeModelEvaluation } = await import('../server/modelEvaluationService.js');
+    evaluation = computeModelEvaluation();
   });
 
   after(async () => {
@@ -168,5 +178,39 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
     assert.ok(html.includes('NOW') && html.includes('+48h'), 'Must render X-axis time horizons NOW and +48h');
     assert.ok(html.includes('LIVE REFRESH'), 'Must render LIVE REFRESH button');
     assert.ok(html.includes('SYNCED 04:15:30 PM'), 'Must render SYNCED timestamp');
+    assert.ok(html.includes('stats-telemetry-hud-strip'), 'Must render Option B Telemetry HUD strip');
+    assert.ok(html.includes('TIME HORIZON'), 'Must render Time Horizon HUD cell');
+    assert.ok(html.includes('PREDICTED PM2.5'), 'Must render Predicted PM2.5 HUD cell');
+    assert.ok(html.includes('NAQI HAZARD CATEGORY'), 'Must render NAQI category HUD cell');
+    assert.ok(html.includes('ATMOSPHERIC REGIME'), 'Must render Atmospheric Regime HUD cell');
+  });
+
+  it('8. Section 03 & PredictionHero render authentic held-out calibration scatter, measured Pearson R, and feature splits', () => {
+    const tableHorizons = evaluation.horizons.filter((h) => [1, 3, 6, 12, 24, 48].includes(h.lead_hours));
+    const plotsHtml = renderToString(
+      React.createElement(StatsEvaluationPlots, {
+        errorDistribution: [],
+        featureImportance: evaluation.featureImportance,
+        cascadingHorizons: tableHorizons,
+        evaluation,
+      })
+    );
+
+    assert.ok(plotsHtml.includes(`R = ${evaluation.overall.pearson_r.toFixed(4)}`), 'Must display measured Pearson R');
+    assert.ok(plotsHtml.includes(`N = ${evaluation.scatterSample.length} HELD-OUT OBS`), 'Scatter N must equal plotted sample size');
+    assert.ok(plotsHtml.includes('PM25 NOW'), 'Must display PM25 NOW feature');
+    assert.ok(plotsHtml.includes('(890 splits)'), 'Must display actual split count 890 splits');
+    const h24 = evaluation.horizons.find((h) => h.lead_hours === 24);
+    assert.ok(plotsHtml.includes(h24.mae.toFixed(2)), 'Horizon table must show measured +24h MAE');
+
+    const heroHtml = renderToString(
+      React.createElement(StatsPredictionHero, {
+        forecastData: null,
+        liveBaseline: 82,
+        evaluation,
+        isLoading: false,
+      })
+    );
+    assert.ok(heroHtml.includes(`Calibration Scatter (R = ${evaluation.overall.pearson_r.toFixed(4)})`), 'Hero tab must display measured Pearson R');
   });
 });

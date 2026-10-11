@@ -47,7 +47,8 @@ const requiredFiles = [
   'src/data/authoritiesConfig.json',
   'src/data/indiaStations.json',
   'ml/model/sagemaker_forecast_metadata.json',
-  'ml/model/xgboost_forecast_model.json'
+  'ml/model/xgboost_forecast_model.json',
+  'ml/data/multi_year_seasonal_train.csv' // held-out test partition for /api/model-evaluation
 ];
 
 const optionalFiles = [

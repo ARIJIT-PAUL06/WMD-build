@@ -32,6 +32,8 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
   const [isLoadingForecast, setIsLoadingForecast] = useState(false);
   const [forecastError, setForecastError] = useState(null);
   const [lastRefreshedTime, setLastRefreshedTime] = useState(null);
+  const [modelEvaluation, setModelEvaluation] = useState(null);
+  const [evaluationError, setEvaluationError] = useState(null);
 
   // Enforce scroll reset when mounting
   useEffect(() => {
@@ -111,6 +113,26 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
       fetchRealTimeStats();
     }
   }, [fetchRealTimeStats]);
+
+  // Held-out test-set diagnostics computed server-side from the deployed model + its test partition
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiFetch('/api/model-evaluation');
+        const json = await res.json();
+        if (!res.ok || !json?.success) throw new Error(json?.error || `Evaluation service status: ${res.status}`);
+        if (!cancelled) setModelEvaluation(json);
+      } catch (err) {
+        console.error('[StatsPage] Model evaluation fetch error:', err);
+        if (!cancelled) setEvaluationError(err.message || 'Evaluation service offline');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // GSAP ScrollTrigger Choreography
   useEffect(() => {
@@ -204,6 +226,11 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
     error_distribution,
   } = statsData;
 
+  // Horizons shown in the FIG. 04 table, measured on the held-out test set
+  const TABLE_HORIZONS = [1, 3, 6, 12, 24, 48];
+  const evaluatedHorizons = (modelEvaluation?.horizons || []).filter((h) => TABLE_HORIZONS.includes(h.lead_hours));
+  const horizon24h = modelEvaluation?.horizons?.find((h) => h.lead_hours === 24);
+
   // Staggered animation variants for Framer Motion metric cells
   const metricContainerVariants = {
     hidden: { opacity: 0 },
@@ -262,7 +289,9 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
           {/* 48-Hour Forward Trajectory & Ground-Truth Calibration Showcase (Core USP) */}
           <StatsPredictionHero
             modelMetadata={model_metadata}
-            cascadingHorizons={cascading_horizons}
+            cascadingHorizons={evaluatedHorizons.length > 0 ? evaluatedHorizons : cascading_horizons}
+            evaluation={modelEvaluation}
+            evaluationError={evaluationError}
             forecastData={forecastData}
             liveBaseline={liveDelhiTelemetry?.meanPm25}
             isLoading={isLoadingForecast}
@@ -404,8 +433,10 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
 
           <StatsEvaluationPlots
             errorDistribution={error_distribution}
-            featureImportance={feature_importance}
-            cascadingHorizons={cascading_horizons}
+            featureImportance={modelEvaluation?.featureImportance || feature_importance}
+            cascadingHorizons={evaluatedHorizons.length > 0 ? evaluatedHorizons : cascading_horizons}
+            evaluation={modelEvaluation}
+            evaluationError={evaluationError}
           />
         </section>
 
@@ -437,7 +468,7 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
               <span className="stats-transparency-tag">OPERATIONAL LIMITS</span>
               <h3 className="stats-transparency-title">Known Horizon Boundary</h3>
               <p className="stats-transparency-body">
-                Degradation curve exhibits highest accuracy within +24h (MAE 24.3 µg/m³). Beyond +36h, uncertainty bands widen as weather advection predictions drift.
+                {`Degradation curve exhibits highest accuracy within +24h (MAE ${horizon24h ? horizon24h.mae.toFixed(1) : '24.3'} µg/m³). Beyond +36h, uncertainty bands widen as weather advection predictions drift.`}
               </p>
             </div>
           </div>

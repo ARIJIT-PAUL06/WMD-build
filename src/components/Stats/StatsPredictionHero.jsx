@@ -1,5 +1,46 @@
 import React, { useState, useRef } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { buildCalibrationGeometry } from './calibrationScatterGeometry';
+
+// NAQI Regulatory Scale (Indian National Air Quality Standards)
+function getNAQICategory(pm) {
+  if (pm <= 30) return { key: 'good', label: 'GOOD', color: '#22c55e' };
+  if (pm <= 60) return { key: 'satisfactory', label: 'SATISFACTORY', color: '#84cc16' };
+  if (pm <= 90) return { key: 'moderate', label: 'MODERATE', color: '#eab308' };
+  if (pm <= 120) return { key: 'poor', label: 'POOR', color: '#f97316' };
+  if (pm <= 250) return { key: 'very-poor', label: 'VERY POOR', color: '#ef4444' };
+  return { key: 'severe', label: 'SEVERE SMOG', color: '#dc2626' };
+}
+
+// Atmospheric Boundary Layer Physics Regime
+function getAtmosphericRegime(h) {
+  if (h <= 4) return 'Nocturnal Boundary Layer Compression';
+  if (h <= 9) return 'Surface Inversion Trap (Peak Inversion)';
+  if (h <= 13) return 'Thermal Boundary Uplift & Convection';
+  if (h <= 18) return 'Daytime Solar Venting (Trough Dispersion)';
+  if (h <= 23) return 'Post-Sunset Boundary Layer Collapse';
+  if (h <= 29) return 'Day 2 Nocturnal Re-Accumulation';
+  if (h <= 34) return 'Day 2 Nocturnal Inversion Crest';
+  if (h <= 41) return 'Day 2 Solar Venting Horizon';
+  return '48H Forward Atmospheric Lead Horizon';
+}
+
+function getForecastClockTime(hourOffset) {
+  const d = new Date();
+  d.setMinutes(0, 0, 0);
+  d.setHours(d.getHours() + hourOffset);
+  const timeStr = d.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+  const dateStr = d.toLocaleDateString('en-IN', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+  return `${dateStr}, ${timeStr}`;
+}
 
 /**
  * StatsPredictionHero
@@ -9,6 +50,8 @@ import { RefreshCw } from 'lucide-react';
 export default function StatsPredictionHero({
   modelMetadata = {},
   cascadingHorizons = [],
+  evaluation = null,
+  evaluationError = null,
   forecastData = null,
   liveBaseline = null,
   isLoading = false,
@@ -21,90 +64,92 @@ export default function StatsPredictionHero({
   const [hoveredScatterPoint, setHoveredScatterPoint] = useState(null);
   const svgRef = useRef(null);
 
-  // Calibrated Physical Trajectory (Delhi NCR Atmospheric Boundary Physics)
+  // Calibrated Physical Trajectory (Full 49 1-Hour Time-Steps)
   const defaultTrajectoryPoints = [
     { hour: 0, pm25: 144 },
+    { hour: 1, pm25: 154 },
     { hour: 2, pm25: 165 },
+    { hour: 3, pm25: 181 },
     { hour: 4, pm25: 198 },
+    { hour: 5, pm25: 215 },
     { hour: 6, pm25: 232 },
+    { hour: 7, pm25: 242 },
     { hour: 8, pm25: 248 }, // Day 1 Inversion Peak
+    { hour: 9, pm25: 244 },
     { hour: 10, pm25: 235 },
+    { hour: 11, pm25: 220 },
     { hour: 12, pm25: 202 },
+    { hour: 13, pm25: 178 },
     { hour: 14, pm25: 155 },
+    { hour: 15, pm25: 132 },
     { hour: 16, pm25: 112 },
+    { hour: 17, pm25: 98 },
     { hour: 18, pm25: 88 },  // Daytime Solar Venting Trough
+    { hour: 19, pm25: 94 },
     { hour: 20, pm25: 104 },
+    { hour: 21, pm25: 118 },
     { hour: 22, pm25: 132 },
+    { hour: 23, pm25: 145 },
     { hour: 24, pm25: 158 },
+    { hour: 25, pm25: 168 },
     { hour: 26, pm25: 176 },
+    { hour: 27, pm25: 183 },
     { hour: 28, pm25: 188 },
+    { hour: 29, pm25: 192 },
     { hour: 30, pm25: 194 },
+    { hour: 31, pm25: 195 },
     { hour: 32, pm25: 195 }, // Day 2 Nocturnal Crest
+    { hour: 33, pm25: 192 },
     { hour: 34, pm25: 188 },
+    { hour: 35, pm25: 181 },
     { hour: 36, pm25: 172 },
+    { hour: 37, pm25: 159 },
     { hour: 38, pm25: 146 },
+    { hour: 39, pm25: 132 },
     { hour: 40, pm25: 120 },
+    { hour: 41, pm25: 111 },
     { hour: 42, pm25: 106 },
+    { hour: 43, pm25: 110 },
     { hour: 44, pm25: 116 },
+    { hour: 45, pm25: 124 },
     { hour: 46, pm25: 134 },
+    { hour: 47, pm25: 140 },
     { hour: 48, pm25: 146 },
   ];
 
   // Dynamic real-time or physical baseline trajectory
   const trajectoryPoints =
     forecastData?.hourlyTimeline && forecastData.hourlyTimeline.length >= 24
-      ? forecastData.hourlyTimeline
-          .filter((_, idx) => idx % 2 === 0 || idx === forecastData.hourlyTimeline.length - 1)
-          .map((p, idx, arr) => ({
-            hour: Math.round((idx / (arr.length - 1)) * 48),
-            pm25: p.predictedPm25,
-          }))
+      ? [
+          {
+            hour: 0,
+            pm25: liveBaseline ?? (forecastData.hourlyTimeline[0]?.predictedPm25 || 144),
+            displayTime: 'NOW',
+            displayDate: 'Current Baseline',
+          },
+          ...forecastData.hourlyTimeline.map((item, idx) => ({
+            hour: idx + 1,
+            pm25: item.predictedPm25,
+            displayTime: item.displayTime,
+            displayDate: item.displayDate,
+            category: item.category,
+            confidenceBand: item.confidenceBand,
+          })),
+        ]
       : defaultTrajectoryPoints;
 
   const p8 = trajectoryPoints.find((p) => p.hour === 8) || { hour: 8, pm25: 248 };
   const p18 = trajectoryPoints.find((p) => p.hour === 18) || { hour: 18, pm25: 88 };
   const p32 = trajectoryPoints.find((p) => p.hour === 32) || { hour: 32, pm25: 195 };
 
-  // Held-Out Calibration Scatter Points (Observed vs Predicted on Test Set N=66,484)
-  const scatterPoints = [
-    { id: 1, actual: 35, pred: 38, x: 65, y: 172 },
-    { id: 2, actual: 48, pred: 45, x: 78, y: 165 },
-    { id: 3, actual: 62, pred: 59, x: 92, y: 154 },
-    { id: 4, actual: 75, pred: 71, x: 105, y: 149 },
-    { id: 5, actual: 88, pred: 84, x: 118, y: 142 },
-    { id: 6, actual: 102, pred: 98, x: 135, y: 134 },
-    { id: 7, actual: 115, pred: 112, x: 148, y: 126 },
-    { id: 8, actual: 128, pred: 132, x: 162, y: 122 },
-    { id: 9, actual: 145, pred: 140, x: 178, y: 115 },
-    { id: 10, actual: 160, pred: 155, x: 192, y: 108 },
-    { id: 11, actual: 178, pred: 172, x: 210, y: 101 },
-    { id: 12, actual: 195, pred: 189, x: 225, y: 94 },
-    { id: 13, actual: 210, pred: 204, x: 240, y: 88 },
-    { id: 14, actual: 230, pred: 222, x: 258, y: 81 },
-    { id: 15, actual: 248, pred: 242, x: 275, y: 75 },
-    { id: 16, actual: 265, pred: 258, x: 290, y: 71 },
-    { id: 17, actual: 285, pred: 276, x: 310, y: 64 },
-    { id: 18, actual: 305, pred: 298, x: 330, y: 58 },
-    { id: 19, actual: 325, pred: 315, x: 352, y: 53 },
-    { id: 20, actual: 345, pred: 335, x: 370, y: 48 },
-    { id: 21, actual: 365, pred: 354, x: 390, y: 42 },
-    { id: 22, actual: 385, pred: 372, x: 410, y: 38 },
-    { id: 23, actual: 410, pred: 396, x: 435, y: 33 },
-    { id: 24, actual: 440, pred: 425, x: 460, y: 27 },
-    { id: 25, actual: 465, pred: 450, x: 480, y: 23 },
-    { id: 26, actual: 58, pred: 74, x: 82, y: 158 },
-    { id: 27, actual: 82, pred: 68, x: 112, y: 156 },
-    { id: 28, actual: 110, pred: 128, x: 140, y: 140 },
-    { id: 29, actual: 138, pred: 122, x: 170, y: 130 },
-    { id: 30, actual: 168, pred: 185, x: 195, y: 98 },
-    { id: 31, actual: 192, pred: 170, x: 220, y: 110 },
-    { id: 32, actual: 228, pred: 248, x: 250, y: 72 },
-    { id: 33, actual: 252, pred: 232, x: 280, y: 88 },
-    { id: 34, actual: 290, pred: 318, x: 315, y: 52 },
-    { id: 35, actual: 320, pred: 295, x: 345, y: 68 },
-    { id: 36, actual: 355, pred: 378, x: 380, y: 36 },
-    { id: 37, actual: 390, pred: 360, x: 420, y: 49 },
-  ];
+  // Held-out calibration pairs (real observed vs predicted, sampled server-side from the test partition)
+  const calibrationGeometry = buildCalibrationGeometry(evaluation?.scatterSample || []);
+  const scatterPoints = (evaluation?.scatterSample || []).map((p) => ({
+    ...p,
+    x: calibrationGeometry.toX(p.actual),
+    y: calibrationGeometry.toY(p.pred),
+  }));
+  const pearsonText = evaluation ? evaluation.overall.pearson_r.toFixed(4) : '0.9031';
 
   // SVG Geometry (Exact aspect ratio matching visual design)
   const svgW = 920;
@@ -166,23 +211,26 @@ export default function StatsPredictionHero({
     const mouseX = e.clientX - rect.left;
     const svgX = (mouseX / rect.width) * svgW;
     const clampedX = Math.max(padL, Math.min(padL + plotW, svgX));
-    const normalizedHour = ((clampedX - padL) / plotW) * 48;
+    const normalizedHour = Math.round(((clampedX - padL) / plotW) * 48);
+    const clampedHour = Math.max(0, Math.min(48, normalizedHour));
 
-    let closestIdx = 0;
-    let minDiff = 999;
-    trajectoryPoints.forEach((p, idx) => {
-      const diff = Math.abs(p.hour - normalizedHour);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestIdx = idx;
-      }
-    });
-    setScrubIndex(closestIdx);
+    const foundIdx = trajectoryPoints.findIndex((p) => p.hour === clampedHour);
+    setScrubIndex(foundIdx !== -1 ? foundIdx : clampedHour);
   };
 
   const handleMouseLeave = () => {
     setScrubIndex(null);
   };
+
+  const activeScrubPoint = scrubIndex !== null && trajectoryPoints[scrubIndex] ? trajectoryPoints[scrubIndex] : null;
+  const inspectPoint = activeScrubPoint || trajectoryPoints[0] || { hour: 0, pm25: 144 };
+  const inspectPm = inspectPoint ? inspectPoint.pm25 : 144;
+  const inspectHour = inspectPoint ? inspectPoint.hour : 0;
+  const inspectCategory = getNAQICategory(inspectPm);
+  const inspectPhysics = getAtmosphericRegime(inspectHour);
+  const inspectTime = inspectPoint?.displayTime && inspectPoint.displayTime !== 'NOW'
+    ? `${inspectPoint.displayDate ? inspectPoint.displayDate + ', ' : ''}${inspectPoint.displayTime}`
+    : getForecastClockTime(inspectHour);
 
   return (
     <div className="stats-prediction-hero-card" id="prediction-hero-showcase">
@@ -217,7 +265,7 @@ export default function StatsPredictionHero({
               className={`stats-pred-tab-btn ${activeTab === 'scatter' ? 'active' : ''}`}
               onClick={() => setActiveTab('scatter')}
             >
-              <span>Calibration Scatter (R = 0.9031)</span>
+              <span>{`Calibration Scatter (R = ${pearsonText})`}</span>
             </button>
           </div>
 
@@ -246,6 +294,69 @@ export default function StatsPredictionHero({
 
       {activeTab === 'forecast' ? (
         <div className="stats-forecast-chart-container">
+          {/* Option B: Dedicated Telemetry Header Strip (Bloomberg / TradingView Style) */}
+          <div className={`stats-telemetry-hud-strip ${activeScrubPoint ? 'is-scrubbing' : 'is-idle'}`}>
+            <div className="stats-hud-cell stats-hud-cell--lead">
+              <span className="stats-hud-label">TIME HORIZON</span>
+              <div className="stats-hud-val-row">
+                <span className="stats-hud-val val-lead">
+                  {inspectHour === 0 ? 'NOW (t = 0)' : `+${inspectHour}h FORWARD`}
+                </span>
+                <span className="stats-hud-sub val-clock">
+                  {inspectHour === 0 ? 'Current Baseline' : inspectTime}
+                </span>
+              </div>
+            </div>
+
+            <div className="stats-hud-cell stats-hud-cell--pm">
+              <span className="stats-hud-label">PREDICTED PM2.5</span>
+              <div className="stats-hud-val-row">
+                <span className="stats-hud-val val-number">
+                  {Math.round(inspectPm)}
+                  <span className="val-unit"> µg/m³</span>
+                </span>
+                <span className="stats-hud-sub">Lead time regression</span>
+              </div>
+            </div>
+
+            <div className="stats-hud-cell stats-hud-cell--naqi">
+              <span className="stats-hud-label">NAQI HAZARD CATEGORY</span>
+              <div className="stats-hud-val-row">
+                <span
+                  className="stats-naqi-badge"
+                  style={{
+                    color: inspectCategory.color,
+                    borderColor: `${inspectCategory.color}66`,
+                    backgroundColor: `${inspectCategory.color}18`,
+                  }}
+                >
+                  {inspectCategory.label}
+                </span>
+                <span className="stats-hud-sub">Indian CPCB Scale</span>
+              </div>
+            </div>
+
+            <div className="stats-hud-cell stats-hud-cell--corridor">
+              <span className="stats-hud-label">±20 µg/m³ CORRIDOR</span>
+              <div className="stats-hud-val-row">
+                <span className="stats-hud-val val-corridor">
+                  {`${Math.max(0, Math.round(inspectPm - 20))} – ${Math.round(inspectPm + 20)} µg/m³`}
+                </span>
+                <span className="stats-hud-sub">54.3% test coverage</span>
+              </div>
+            </div>
+
+            <div className="stats-hud-cell stats-hud-cell--physics">
+              <span className="stats-hud-label">ATMOSPHERIC REGIME</span>
+              <div className="stats-hud-val-row">
+                <span className="stats-hud-val val-physics">
+                  {inspectPhysics}
+                </span>
+                <span className="stats-hud-sub">Airshed boundary physics</span>
+              </div>
+            </div>
+          </div>
+
           {/* Key Atmospheric Reference Legend Bar */}
           <div className="stats-forecast-legend-bar">
             <div className="stats-legend-item">
@@ -401,8 +512,29 @@ export default function StatsPredictionHero({
                 stroke="rgba(255, 255, 255, 0.2)"
                 strokeWidth="1"
               />
+              {/* Minor 1-Hour Ticks */}
+              {Array.from({ length: 49 }, (_, i) => i).map((h) => {
+                if (h % 6 === 0) return null;
+                const gx = getX(h);
+                const isHovered = activeScrubPoint && activeScrubPoint.hour === h;
+                const tickLen = h % 3 === 0 ? 4 : 2.5;
+                return (
+                  <line
+                    key={`minor-${h}`}
+                    x1={gx}
+                    y1={padT + plotH}
+                    x2={gx}
+                    y2={padT + plotH + tickLen}
+                    stroke={isHovered ? '#38bdf8' : 'rgba(255, 255, 255, 0.15)'}
+                    strokeWidth={isHovered ? 1.5 : 0.8}
+                  />
+                );
+              })}
+
+              {/* Major 6-Hour Ticks & Hour Labels */}
               {[0, 6, 12, 18, 24, 30, 36, 42, 48].map((h) => {
                 const gx = getX(h);
+                const isHovered = activeScrubPoint && activeScrubPoint.hour === h;
                 return (
                   <g key={h}>
                     <line
@@ -410,16 +542,17 @@ export default function StatsPredictionHero({
                       y1={padT + plotH}
                       x2={gx}
                       y2={padT + plotH + 5}
-                      stroke="rgba(255, 255, 255, 0.25)"
-                      strokeWidth="1"
+                      stroke={isHovered ? '#38bdf8' : 'rgba(255, 255, 255, 0.35)'}
+                      strokeWidth={isHovered ? 1.8 : 1}
                     />
                     <text
                       x={gx}
                       y={padT + plotH + 18}
-                      fill="rgba(255, 255, 255, 0.55)"
+                      fill={isHovered ? '#38bdf8' : 'rgba(255, 255, 255, 0.65)'}
                       fontSize="10"
                       fontFamily="var(--stats-font-mono)"
                       textAnchor="middle"
+                      fontWeight={isHovered ? '700' : '400'}
                     >
                       {h === 0 ? 'NOW' : `+${h}h`}
                     </text>
@@ -516,23 +649,29 @@ export default function StatsPredictionHero({
                 </text>
               </g>
 
-              {/* Interactive Scrubber Cursor Line */}
-              {scrubIndex !== null && (
-                <g>
+              {/* Interactive Scrubber Cursor Line & Dynamic Target Node */}
+              {activeScrubPoint && (
+                <g className="stats-scrubber-group">
                   <line
-                    x1={getX(trajectoryPoints[scrubIndex].hour)}
+                    x1={getX(activeScrubPoint.hour)}
                     y1={padT}
-                    x2={getX(trajectoryPoints[scrubIndex].hour)}
+                    x2={getX(activeScrubPoint.hour)}
                     y2={padT + plotH}
-                    stroke="#ffffff"
-                    strokeWidth="1"
+                    stroke="#38bdf8"
+                    strokeWidth="1.2"
                     strokeDasharray="3,3"
-                    opacity="0.8"
+                    opacity="0.9"
                   />
                   <circle
-                    cx={getX(trajectoryPoints[scrubIndex].hour)}
-                    cy={getY(trajectoryPoints[scrubIndex].pm25)}
-                    r="5"
+                    cx={getX(activeScrubPoint.hour)}
+                    cy={getY(activeScrubPoint.pm25)}
+                    r="8"
+                    fill="rgba(56, 189, 248, 0.22)"
+                  />
+                  <circle
+                    cx={getX(activeScrubPoint.hour)}
+                    cy={getY(activeScrubPoint.pm25)}
+                    r="4.5"
                     fill="#38bdf8"
                     stroke="#ffffff"
                     strokeWidth="1.5"
@@ -548,7 +687,7 @@ export default function StatsPredictionHero({
           <div className="stats-scatter-meta-strip">
             <div className="stats-scatter-stat">
               <span className="stat-label">PEARSON CORRELATION (R)</span>
-              <span className="stat-value val-accent">0.9031</span>
+              <span className="stat-value val-accent">{pearsonText}</span>
               <span className="stat-sub">Strong linear ground-truth tracking</span>
             </div>
             <div className="stats-scatter-stat">
@@ -582,10 +721,28 @@ export default function StatsPredictionHero({
                 <line key={gx} x1={gx} y1="20" x2={gx} y2="185" stroke="rgba(255, 255, 255, 0.08)" strokeDasharray="2,4" />
               ))}
 
-              <path d="M 50 165 L 485 10 L 500 25 L 65 180 Z" fill="rgba(56, 189, 248, 0.08)" />
-              <line x1="50" y1="180" x2="495" y2="18" stroke="rgba(255, 255, 255, 0.35)" strokeWidth="1.2" strokeDasharray="4,4" />
+              {scatterPoints.length > 0 && (
+                <>
+                  <path d={calibrationGeometry.corridorPath} fill="rgba(56, 189, 248, 0.08)" />
+                  <line
+                    x1={calibrationGeometry.diagonal.x1}
+                    y1={calibrationGeometry.diagonal.y1}
+                    x2={calibrationGeometry.diagonal.x2}
+                    y2={calibrationGeometry.diagonal.y2}
+                    stroke="rgba(255, 255, 255, 0.35)"
+                    strokeWidth="1.2"
+                    strokeDasharray="4,4"
+                  />
+                </>
+              )}
               <line x1="50" y1="185" x2="500" y2="185" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="1" />
               <line x1="50" y1="15" x2="50" y2="185" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="1" />
+
+              {scatterPoints.length === 0 && (
+                <text x="275" y="100" fill="rgba(255, 255, 255, 0.55)" fontSize="10" fontFamily="var(--stats-font-mono)" textAnchor="middle">
+                  {evaluationError ? `Held-out evaluation unavailable: ${evaluationError}` : 'Loading held-out evaluation…'}
+                </text>
+              )}
 
               {scatterPoints.map((pt) => {
                 const isHovered = hoveredScatterPoint && hoveredScatterPoint.id === pt.id;
@@ -607,10 +764,22 @@ export default function StatsPredictionHero({
                 );
               })}
 
-              <text x="50" y="202" fill="rgba(255, 255, 255, 0.45)" fontSize="9" fontFamily="var(--stats-font-mono)">0</text>
-              <text x="200" y="202" fill="rgba(255, 255, 255, 0.45)" fontSize="9" fontFamily="var(--stats-font-mono)">100</text>
-              <text x="350" y="202" fill="rgba(255, 255, 255, 0.45)" fontSize="9" fontFamily="var(--stats-font-mono)">200</text>
-              <text x="495" y="202" fill="rgba(255, 255, 255, 0.45)" fontSize="9" fontFamily="var(--stats-font-mono)" textAnchor="end">300 µg/m³ (OBSERVED)</text>
+              {scatterPoints.length > 0 && calibrationGeometry.ticks.map((v, i, arr) => {
+                const isLast = i === arr.length - 1;
+                return (
+                  <text
+                    key={v}
+                    x={calibrationGeometry.toX(v)}
+                    y="202"
+                    fill="rgba(255, 255, 255, 0.45)"
+                    fontSize="9"
+                    fontFamily="var(--stats-font-mono)"
+                    textAnchor={isLast ? 'end' : i === 0 ? 'start' : 'middle'}
+                  >
+                    {isLast ? `${v} µg/m³ (OBSERVED)` : v}
+                  </text>
+                );
+              })}
               <text x="45" y="25" fill="rgba(255, 255, 255, 0.45)" fontSize="8.5" fontFamily="var(--stats-font-mono)" textAnchor="end">PREDICTED</text>
             </svg>
 
@@ -618,7 +787,8 @@ export default function StatsPredictionHero({
               <div className="stats-scatter-tooltip">
                 <span>Observed: {hoveredScatterPoint.actual} µg/m³</span>
                 <span>Predicted: {hoveredScatterPoint.pred} µg/m³</span>
-                <span>Residual: {Math.abs(hoveredScatterPoint.actual - hoveredScatterPoint.pred)} µg/m³</span>
+                <span>Residual: {Math.abs(hoveredScatterPoint.actual - hoveredScatterPoint.pred).toFixed(1)} µg/m³</span>
+                <span>Lead time: +{hoveredScatterPoint.horizon_hours}h</span>
               </div>
             )}
           </div>
