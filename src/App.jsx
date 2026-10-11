@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Film, MapPin, Truck, Info, BarChart2 } from 'lucide-react';
+import { Film, MapPin, Truck, Info, BarChart2, Cloud } from 'lucide-react';
 import PanoramicScrollHero from './components/MotionHero/PanoramicScrollHero';
 import LazySection from './components/common/LazySection';
 
@@ -13,7 +13,9 @@ const PollutantDocumentary = React.lazy(() => import('./components/PollutantDocu
 const SchoolSafetyContainer = React.lazy(() => import('./components/SchoolSafety/SchoolSafetyContainer'));
 const AboutPage = React.lazy(() => import('./components/About/AboutPage'));
 const StatsPage = React.lazy(() => import('./components/Stats/StatsPage'));
+const AwsServicesPage = React.lazy(() => import('./components/AwsServices/AwsServicesPage'));
 import AuthHeaderBadge from './components/Auth/AuthHeaderBadge';
+import AppFooter from './components/Footer/AppFooter';
 
 const PageFallback = () => <div style={{ minHeight: '100vh', background: '#070a12' }} />;
 
@@ -91,9 +93,24 @@ export default function App() {
     );
   };
 
+  const checkIsAwsServicesRequested = () => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    const hash = (window.location.hash || '').toLowerCase();
+    const path = (window.location.pathname || '').toLowerCase();
+    return (
+      params.get('page') === 'aws-services' ||
+      params.get('view') === 'aws-services' ||
+      params.get('aws') === 'true' ||
+      hash === '#aws' ||
+      path === '/aws-services'
+    );
+  };
+
   const [isGlobalMonitorOpen, setIsGlobalMonitorOpen] = useState(checkIsMonitorRequested);
   const [isAboutOpen, setIsAboutOpen] = useState(checkIsAboutRequested);
   const [isStatsOpen, setIsStatsOpen] = useState(checkIsStatsRequested);
+  const [isAwsServicesOpen, setIsAwsServicesOpen] = useState(checkIsAwsServicesRequested);
   const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 1024 : false));
   const [activeMobileTab, setActiveMobileTab] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -168,6 +185,13 @@ export default function App() {
       const nextStatsOpen = checkIsStatsRequested();
       setIsStatsOpen(nextStatsOpen);
       if (nextStatsOpen && typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+      }
+      const nextAwsServicesOpen = checkIsAwsServicesRequested();
+      setIsAwsServicesOpen(nextAwsServicesOpen);
+      if (nextAwsServicesOpen && typeof window !== 'undefined') {
         window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
         if (document.documentElement) document.documentElement.scrollTop = 0;
         if (document.body) document.body.scrollTop = 0;
@@ -395,6 +419,51 @@ export default function App() {
     );
   }
 
+  const handleOpenAwsServices = () => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+      const url = new URL(window.location);
+      url.searchParams.set('page', 'aws-services');
+      window.history.pushState({}, '', url);
+    }
+    setIsAwsServicesOpen(true);
+  };
+
+  const handleCloseAwsServices = () => {
+    setIsAwsServicesOpen(false);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location);
+      url.searchParams.delete('page');
+      if (url.searchParams.get('view') === 'aws-services') {
+        url.searchParams.delete('view');
+      }
+      if (url.searchParams.get('aws') === 'true') {
+        url.searchParams.delete('aws');
+      }
+      if (url.hash.toLowerCase() === '#aws') {
+        url.hash = '';
+      }
+      window.history.pushState({}, '', url);
+    }
+  };
+
+  // Render Dedicated Architectural AWS Services Page when active
+  if (isAwsServicesOpen) {
+    return (
+      <React.Suspense fallback={<PageFallback />}>
+        <AwsServicesPage
+          onBack={handleCloseAwsServices}
+          onOpenDashboard={() => {
+            handleCloseAwsServices();
+            scrollToHeatmap();
+          }}
+        />
+      </React.Suspense>
+    );
+  }
+
   // Render Full-Screen Cinematic Pollutant Documentary Experience when active
   if (documentaryState.isOpen) {
     return (
@@ -479,6 +548,18 @@ export default function App() {
         {activeMobileTab === 'story' && (
           <div style={{ paddingBottom: '74px' }}>
             <PanoramicScrollHero onExploreTwin={() => setActiveMobileTab('map')} />
+            <AppFooter
+              onHome={() => {
+                setActiveMobileTab('story');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onMap={() => setActiveMobileTab('map')}
+              onPollutants={() => setActiveMobileTab('cargo')}
+              onStats={handleOpenStats}
+              onAbout={handleOpenAbout}
+              onBackToCargo={() => setActiveMobileTab('cargo')}
+              currentRoute="home"
+            />
           </div>
         )}
 
@@ -500,6 +581,24 @@ export default function App() {
                 onOpenDocumentary={handleOpenDocumentary}
               />
             </React.Suspense>
+            <AppFooter
+              onHome={() => {
+                setActiveMobileTab('story');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onMap={() => setActiveMobileTab('map')}
+              onPollutants={() => {
+                setActiveMobileTab('cargo');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onStats={handleOpenStats}
+              onAbout={handleOpenAbout}
+              onBackToCargo={() => {
+                const el = document.getElementById('atmospheric-cargo-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              currentRoute="pollutants"
+            />
           </div>
         )}
 
@@ -563,6 +662,16 @@ export default function App() {
             <BarChart2 size={18} />
             <span>Stats</span>
           </button>
+
+          <button
+            id="mobile-tab-aws"
+            className={`mobile-app-nav-btn ${isAwsServicesOpen ? 'active' : ''}`}
+            onClick={handleOpenAwsServices}
+            aria-label="AWS Services"
+          >
+            <Cloud size={18} />
+            <span>AWS</span>
+          </button>
         </nav>
 
         {/* Autonomous Atmospheric Shield & Emergency Monitor Test Bench */}
@@ -586,7 +695,16 @@ export default function App() {
         onExploreTwin={scrollToHeatmap}
         onOpenAbout={handleOpenAbout}
         onOpenStats={handleOpenStats}
-        currentRoute={isAboutOpen ? 'about' : (isStatsOpen ? 'statistics' : undefined)}
+        onOpenAwsServices={handleOpenAwsServices}
+        currentRoute={
+          isAboutOpen
+            ? 'about'
+            : isStatsOpen
+            ? 'statistics'
+            : isAwsServicesOpen
+            ? 'aws-services'
+            : undefined
+        }
       />
 
       {/* 2. MODERN AQI SPATIAL HEATMAP OF DELHI */}
@@ -605,6 +723,36 @@ export default function App() {
           onOpenDocumentary={handleOpenDocumentary}
         />
       </LazySection>
+
+      {/* 4. SHARED VAYUVITALS ENVIRONMENTAL INTELLIGENCE FOOTER */}
+      <AppFooter
+        onHome={() => {
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location);
+            url.searchParams.delete('page');
+            url.searchParams.delete('view');
+            url.hash = '';
+            window.history.pushState({}, '', url);
+          }
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onMap={scrollToHeatmap}
+        onPollutants={() => {
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location);
+            url.hash = '#pollutants';
+            window.history.pushState({}, '', url);
+          }
+          const el = document.getElementById('atmospheric-cargo-section') || document.getElementById('atmospheric-cargo-placeholder');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onStats={handleOpenStats}
+        onAbout={handleOpenAbout}
+        onBackToCargo={() => {
+          const el = document.getElementById('atmospheric-cargo-section') || document.getElementById('atmospheric-cargo-placeholder');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+      />
 
       {/* Autonomous Atmospheric Shield & Emergency Monitor Test Bench */}
       {isGlobalMonitorOpen && (

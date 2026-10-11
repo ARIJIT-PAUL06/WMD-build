@@ -9,6 +9,7 @@ import StatsGrain from './StatsGrain';
 import statsData from '../../data/statsModelMetrics.json';
 import { apiFetch } from '../../utils/apiFetch';
 import './StatsPage.css';
+import AppFooter from '../Footer/AppFooter';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
@@ -26,12 +27,13 @@ if (typeof window !== 'undefined') {
  */
 export default function StatsPage({ onBack, onOpenDashboard }) {
   const pageRef = useRef(null);
-  const [activeDatasetSubset, setActiveDatasetSubset] = useState('ALL');
   const [forecastData, setForecastData] = useState(null);
   const [liveDelhiTelemetry, setLiveDelhiTelemetry] = useState(null);
   const [isLoadingForecast, setIsLoadingForecast] = useState(false);
   const [forecastError, setForecastError] = useState(null);
   const [lastRefreshedTime, setLastRefreshedTime] = useState(null);
+  const [modelEvaluation, setModelEvaluation] = useState(null);
+  const [evaluationError, setEvaluationError] = useState(null);
 
   // Enforce scroll reset when mounting
   useEffect(() => {
@@ -112,6 +114,26 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
     }
   }, [fetchRealTimeStats]);
 
+  // Held-out test-set diagnostics computed server-side from the deployed model + its test partition
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiFetch('/api/model-evaluation');
+        const json = await res.json();
+        if (!res.ok || !json?.success) throw new Error(json?.error || `Evaluation service status: ${res.status}`);
+        if (!cancelled) setModelEvaluation(json);
+      } catch (err) {
+        console.error('[StatsPage] Model evaluation fetch error:', err);
+        if (!cancelled) setEvaluationError(err.message || 'Evaluation service offline');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // GSAP ScrollTrigger Choreography
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -122,14 +144,6 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
 
     const ctx = gsap.context(() => {
       if (!prefersReducedMotion) {
-        // Hero typography reveal
-        gsap.from('.stats-instrument-header', {
-          opacity: 0,
-          y: 28,
-          duration: 1.1,
-          ease: 'power3.out',
-        });
-
         // Section header reveals on scroll
         const sections = gsap.utils.toArray('.stats-section');
         sections.forEach((sec) => {
@@ -155,6 +169,13 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
       ctx.revert();
     };
   }, []);
+
+  // Async data changes section heights; recompute trigger offsets so reveals fire at the right scroll position
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const id = window.requestAnimationFrame(() => ScrollTrigger.refresh());
+    return () => window.cancelAnimationFrame(id);
+  }, [modelEvaluation, forecastData, evaluationError, forecastError]);
 
   // Safe navigation back to previous route or default dashboard fallback
   const handleGoBack = useCallback(() => {
@@ -203,6 +224,15 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
     cascading_horizons,
     error_distribution,
   } = statsData;
+
+  // Training timestamp of the deployed model (ISO, UTC)
+  const [trainedDate, trainedClock = ''] = model_metadata.trained_at.split('T');
+  const trainedTime = trainedClock.slice(0, 8);
+
+  // Horizons shown in the FIG. 04 table, measured on the held-out test set
+  const TABLE_HORIZONS = [1, 3, 6, 12, 24, 48];
+  const evaluatedHorizons = (modelEvaluation?.horizons || []).filter((h) => TABLE_HORIZONS.includes(h.lead_hours));
+  const horizon24h = modelEvaluation?.horizons?.find((h) => h.lead_hours === 24);
 
   // Staggered animation variants for Framer Motion metric cells
   const metricContainerVariants = {
@@ -262,7 +292,9 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
           {/* 48-Hour Forward Trajectory & Ground-Truth Calibration Showcase (Core USP) */}
           <StatsPredictionHero
             modelMetadata={model_metadata}
-            cascadingHorizons={cascading_horizons}
+            cascadingHorizons={evaluatedHorizons.length > 0 ? evaluatedHorizons : cascading_horizons}
+            evaluation={modelEvaluation}
+            evaluationError={evaluationError}
             forecastData={forecastData}
             liveBaseline={liveDelhiTelemetry?.meanPm25}
             isLoading={isLoadingForecast}
@@ -281,19 +313,19 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
           >
             <motion.div className="stats-metric-cell" variants={metricItemVariants}>
               <span className="stats-metric-label">EXPLAINED VARIANCE (R²)</span>
-              <span className="stats-metric-value">{(model_metadata.r2_explained_variance * 100).toFixed(1)}%</span>
+              <span className="stats-metric-value">{`${(model_metadata.r2_explained_variance * 100).toFixed(1)}%`}</span>
               <span className="stats-metric-sub">{`R² = ${model_metadata.r2_explained_variance}`}</span>
             </motion.div>
 
             <motion.div className="stats-metric-cell" variants={metricItemVariants}>
               <span className="stats-metric-label">TEST ACCURACY (±20 µg/m³)</span>
-              <span className="stats-metric-value">{model_metadata.accuracy_within_20}%</span>
+              <span className="stats-metric-value">{`${model_metadata.accuracy_within_20}%`}</span>
               <span className="stats-metric-sub">Within ±20 µg/m³ of truth</span>
             </motion.div>
 
             <motion.div className="stats-metric-cell" variants={metricItemVariants}>
               <span className="stats-metric-label">TEST ACCURACY (±40 µg/m³)</span>
-              <span className="stats-metric-value">{model_metadata.accuracy_within_40}%</span>
+              <span className="stats-metric-value">{`${model_metadata.accuracy_within_40}%`}</span>
               <span className="stats-metric-sub">Wide industrial corridor</span>
             </motion.div>
 
@@ -327,35 +359,12 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
             <span className="stats-section-coord">LAT: 28.40N–28.85N / LON: 76.90E–77.40E</span>
           </div>
 
-          {/* Interactive Subset Filter Controls */}
+          {/* Dataset Archive Scope */}
           <div className="stats-filter-controls-row">
-            <div className="stats-filter-pill-group" role="tablist" aria-label="Dataset perspective filter">
-              {[
-                { key: 'ALL', label: 'Full Archive Lattice (332k Pairs)' },
-                { key: 'TRAIN', label: '80% Train Subset' },
-                { key: 'TEST', label: '20% Held-Out Horizon' },
-              ].map((btn) => {
-                const isActive = activeDatasetSubset === btn.key;
-                return (
-                  <button
-                    key={btn.key}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    className={`stats-filter-pill ${isActive ? 'active' : ''}`}
-                    onClick={() => setActiveDatasetSubset(btn.key)}
-                  >
-                    {isActive && (
-                      <motion.div
-                        className="stats-filter-pill-bg"
-                        layoutId="datasetFilterPillBg"
-                        transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-                      />
-                    )}
-                    <span>{btn.label}</span>
-                  </button>
-                );
-              })}
+            <div className="stats-filter-pill-group">
+              <div className="stats-filter-pill active">
+                <span>Full Archive Lattice (332k Pairs)</span>
+              </div>
             </div>
             <span className="stats-filter-caption">CPCB REGULATORY ARCHIVE TELEMETRY</span>
           </div>
@@ -399,13 +408,15 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
               <span className="stats-section-tag">03 / EMPIRICAL EVALUATION</span>
               <h2 className="stats-section-headline">Verified Test-Set Diagnostics</h2>
             </div>
-            <span className="stats-section-coord">N = 66,484 TEST INTERVALS</span>
+            <span className="stats-section-coord">{`N = ${(modelEvaluation?.testPairs ?? 66484).toLocaleString('en-US')} TEST INTERVALS`}</span>
           </div>
 
           <StatsEvaluationPlots
             errorDistribution={error_distribution}
-            featureImportance={feature_importance}
-            cascadingHorizons={cascading_horizons}
+            featureImportance={modelEvaluation?.featureImportance || feature_importance}
+            cascadingHorizons={evaluatedHorizons.length > 0 ? evaluatedHorizons : cascading_horizons}
+            evaluation={modelEvaluation}
+            evaluationError={evaluationError}
           />
         </section>
 
@@ -437,7 +448,7 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
               <span className="stats-transparency-tag">OPERATIONAL LIMITS</span>
               <h3 className="stats-transparency-title">Known Horizon Boundary</h3>
               <p className="stats-transparency-body">
-                Degradation curve exhibits highest accuracy within +24h (MAE 24.3 µg/m³). Beyond +36h, uncertainty bands widen as weather advection predictions drift.
+                {`Degradation curve exhibits highest accuracy within +24h (MAE ${horizon24h ? horizon24h.mae.toFixed(1) : '24.3'} µg/m³). Beyond +36h, uncertainty bands widen as weather advection predictions drift.`}
               </p>
             </div>
           </div>
@@ -470,8 +481,8 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
 
             <div className="stats-footer-meta-col">
               <span className="stats-footer-meta-label">LAST VERIFIED TRAINING</span>
-              <span className="stats-footer-meta-val">2026-10-08</span>
-              <span className="stats-footer-meta-sub">04:07:52 UTC</span>
+              <span className="stats-footer-meta-val">{trainedDate}</span>
+              <span className="stats-footer-meta-sub">{`${trainedTime} UTC`}</span>
             </div>
           </div>
 
@@ -482,6 +493,38 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
           </div>
         </section>
       </main>
+
+      {/* Shared VayuVitals Environmental Intelligence Footer */}
+      <AppFooter
+        currentRoute="statistics"
+        onHome={onBack}
+        onMap={onOpenDashboard}
+        onStats={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onAbout={() => {
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location);
+            url.searchParams.set('page', 'about');
+            window.history.pushState({}, '', url);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          }
+        }}
+        onBackToCargo={() => {
+          if (onBack) onBack();
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location);
+            url.searchParams.delete('page');
+            url.hash = '#pollutants';
+            window.history.pushState({}, '', url);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+            setTimeout(() => {
+              const el = document.getElementById('atmospheric-cargo-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }, 50);
+          }
+        }}
+      />
     </div>
   );
 }

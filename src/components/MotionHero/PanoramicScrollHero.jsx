@@ -4,12 +4,11 @@ import {
   MapPin,
   Wind,
   BarChart3,
-  Info
+  Info,
+  Cloud,
 } from 'lucide-react';
 import CrtScreenLensCanvas from './CrtScreenLensCanvas';
-import AuthHeaderBadge from '../Auth/AuthHeaderBadge';
 import { useAuth } from '../../context/AuthContext';
-import { crtCornerAnchor } from './crtFaceplate';
 import './PanoramicScrollHero.css';
 
 /**
@@ -37,6 +36,8 @@ function getBrandTheme(progress) {
     accentColor: `rgb(${rgb})`,
     glow: `rgba(${rgb}, 0.65)`,
     glowSoft: `rgba(${rgb}, 0.25)`,
+    glowCore: `rgba(${rgb}, 0.85)`,
+    glowMid: `rgba(${rgb}, 0.5)`,
     ambient: `rgba(${rgb}, 0.12)`,
     spotlight: `rgba(${rgb}, 0.16)`,
   };
@@ -62,6 +63,16 @@ function getRouteFromUrl() {
     path === '/stats'
   ) {
     return 'statistics';
+  }
+
+  if (
+    params.get('page') === 'aws-services' ||
+    params.get('view') === 'aws-services' ||
+    params.get('aws') === 'true' ||
+    hash === '#aws' ||
+    path === '/aws-services'
+  ) {
+    return 'aws-services';
   }
 
   if (
@@ -95,30 +106,19 @@ function getRouteFromUrl() {
   return 'home';
 }
 
-// Faceplate-space inset of the brand / auth corners on the curved CRT glass (0..1 of the screen).
-// Hard glass edge is at 0.025 and the shader vignette fades in up to 0.06; 0.035–0.06 is the usable range.
-const CRT_CORNER_INSET_X = 0.045;
-const CRT_CORNER_INSET_Y = 0.05;
-// 1 = follow the glass exactly; lower to soften the tilt.
-const CRT_TILT_FACTOR = 1;
-
 export default function PanoramicScrollHero({
   onExploreTwin,
   onOpenAbout,
   onOpenStats,
+  onOpenAwsServices,
   currentRoute,
 }) {
-  const auth = useAuth() || {};
-  const { user, isAuthenticated, openAuthModal, logout } = auth;
-
+  const { user, isAuthenticated, openAuthModal, logout } = useAuth();
   const trackRef = useRef(null);
   const canvasRef = useRef(null);
   const spotlightRef = useRef(null);
-  const brandTextRef = useRef(null);
   const bottomFadeRef = useRef(null);
-  const authContainerRef = useRef(null);
   const viewportRef = useRef(null);
-  const brandHudRef = useRef(null);
 
   // High-frequency values use refs instead of React state to eliminate re-renders during interaction
   const scrollProgressRef = useRef(0);
@@ -218,6 +218,8 @@ export default function PanoramicScrollHero({
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     } else if (id === 'statistics') {
       if (onOpenStats) onOpenStats();
+    } else if (id === 'aws-services') {
+      if (onOpenAwsServices) onOpenAwsServices();
     } else if (id === 'about') {
       if (onOpenAbout) onOpenAbout();
     }
@@ -228,16 +230,6 @@ export default function PanoramicScrollHero({
     const theme = getBrandTheme(progress);
     spotlightColorRef.current = theme.spotlight;
 
-    if (brandHudRef.current) {
-      brandHudRef.current.style.setProperty('--crt-brand-color', theme.textColor);
-      brandHudRef.current.style.setProperty('--crt-brand-glow', theme.glow);
-      brandHudRef.current.style.setProperty('--crt-brand-glow-soft', theme.glowSoft);
-    }
-
-    if (brandTextRef.current) {
-      brandTextRef.current.style.color = '#ffffff';
-      brandTextRef.current.style.textShadow = `-1.5px 0 rgba(34, 211, 238, 0.85), 1.5px 0 rgba(239, 68, 68, 0.85), 0 0 16px ${theme.glow}, 0 0 32px ${theme.glowSoft}`;
-    }
     if (bottomFadeRef.current) {
       bottomFadeRef.current.style.background = `linear-gradient(to bottom, rgba(7, 10, 18, 0.45) 0%, transparent 14%, transparent 60%, rgba(7, 10, 18, 0.88) 85%, #070a12 100%), ${theme.ambient}`;
     }
@@ -258,17 +250,16 @@ export default function PanoramicScrollHero({
 
       updateBrandStyles(progress);
 
-      if (authContainerRef.current) {
-        authContainerRef.current.style.opacity = '0';
-        authContainerRef.current.style.pointerEvents = 'none';
-      }
-
       const rightPhase = progress >= 0.68;
       setIsRightPhase(prev => (prev !== rightPhase ? rightPhase : prev));
 
       // Dynamic section indicator when scrolling through desktop view
       const activeUrlRoute = getRouteFromUrl();
-      if (activeUrlRoute === 'about' || activeUrlRoute === 'statistics') {
+      if (
+        activeUrlRoute === 'about' ||
+        activeUrlRoute === 'statistics' ||
+        activeUrlRoute === 'aws-services'
+      ) {
         setActiveNav(activeUrlRoute);
       } else {
         const cargoEl =
@@ -397,40 +388,7 @@ export default function PanoramicScrollHero({
     };
   }, []);
 
-  // Pin the brand and auth cluster to the curved CRT glass corners (mirrors the shader's barrel math)
-  useEffect(() => {
-    const place = () => {
-      const root = viewportRef.current;
-      if (!root) return;
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const brandW = brandHudRef.current ? brandHudRef.current.offsetWidth : 240;
-      const authW = authContainerRef.current ? authContainerRef.current.offsetWidth : 120;
 
-      const brand = crtCornerAnchor(CRT_CORNER_INSET_X, CRT_CORNER_INSET_Y, brandW, w, h, 'left');
-      const auth = crtCornerAnchor(1 - CRT_CORNER_INSET_X, CRT_CORNER_INSET_Y, authW, w, h, 'right');
-
-      root.style.setProperty('--crt-brand-left', `${brand.x}px`);
-      root.style.setProperty('--crt-brand-top', `${brand.y}px`);
-      root.style.setProperty('--crt-brand-tilt', `${brand.angle * CRT_TILT_FACTOR}deg`);
-      root.style.setProperty('--crt-auth-right', `${auth.x}px`);
-      root.style.setProperty('--crt-auth-top', `${auth.y}px`);
-      root.style.setProperty('--crt-auth-tilt', `${auth.angle * CRT_TILT_FACTOR}deg`);
-    };
-
-    place();
-    window.addEventListener('resize', place);
-    // Re-measure once web fonts settle (the wordmark width changes when Outfit loads)
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
-    // Auth badge width changes between loading / Sign In / signed-in states
-    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(place) : null;
-    if (ro && authContainerRef.current) ro.observe(authContainerRef.current);
-
-    return () => {
-      window.removeEventListener('resize', place);
-      if (ro) ro.disconnect();
-    };
-  }, []);
 
   return (
     <div
@@ -466,9 +424,9 @@ export default function PanoramicScrollHero({
           scrollProgressRef={scrollProgressRef}
           mousePosRef={mousePosRef}
           onExploreTwin={onExploreTwin}
-          onSignInClick={() => openAuthModal && openAuthModal('signIn')}
           user={user}
           isAuthenticated={isAuthenticated}
+          onSignInClick={openAuthModal}
           onLogout={logout}
         />
 
@@ -601,6 +559,18 @@ export default function PanoramicScrollHero({
 
           <button
             type="button"
+            className={`hero-nav-item ${activeNav === 'aws-services' ? 'active' : ''} ${getSidebarFlickerClass()}`}
+            style={getSidebarFlickerStyle(430)}
+            onClick={() => handleNavClick('aws-services')}
+            aria-label="AWS Services"
+            id="hero-sidebar-nav-aws"
+          >
+            <Cloud size={19} className="hero-nav-icon" />
+            <span className="hero-nav-tooltip" role="tooltip">AWS Services</span>
+          </button>
+
+          <button
+            type="button"
             className={`hero-nav-item ${activeNav === 'about' ? 'active' : ''} ${getSidebarFlickerClass()}`}
             style={getSidebarFlickerStyle(480)}
             onClick={() => handleNavClick('about')}
@@ -611,31 +581,6 @@ export default function PanoramicScrollHero({
             <span className="hero-nav-tooltip" role="tooltip">About</span>
           </button>
         </aside>
-
-        {/* ============================================================== */}
-        {/* TOP BRAND DISPLAY & AUTH HUD ACCESSIBILITY OVERLAYS             */}
-        {/* Rendered visually on the TV curved glass canvas with authentic  */}
-        {/* TV screen curvature; DOM elements retained for a11y & tests.    */}
-        {/* ============================================================== */}
-        <div className="hero-top-hud" ref={brandHudRef} style={{ opacity: 0, pointerEvents: 'none', position: 'absolute', visibility: 'hidden' }}>
-          <div className="hero-hud-brand">
-            <span ref={brandTextRef}>VAYUVITALS</span>
-          </div>
-        </div>
-
-        <div
-          ref={authContainerRef}
-          className="hero-top-auth-cluster"
-          style={{
-            position: 'absolute',
-            zIndex: 15,
-            opacity: 0,
-            pointerEvents: 'none',
-            visibility: 'hidden',
-          }}
-        >
-          <AuthHeaderBadge />
-        </div>
       </div>
     </div>
   );
