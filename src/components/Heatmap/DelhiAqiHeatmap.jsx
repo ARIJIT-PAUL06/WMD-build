@@ -2716,20 +2716,34 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
           </div>
         ) : (
           <div
-            className={`glass-panel-master ${getPanelClass()}`}
+            className={`glass-panel-master ${getPanelClass()} hide-scrollbar`}
             style={{
               pointerEvents: 'auto',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: '12px',
-              flexWrap: 'wrap',
-              padding: '8px 16px',
+              gap: isSidebarOpen ? '8px' : '12px',
+              flexWrap: 'nowrap',
+              padding: isSidebarOpen ? '6px 12px' : '8px 16px',
               borderRadius: '14px',
+              overflowX: 'auto',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
             }}
           >
             {/* Engine Title & Last Updated */}
-            <div className={getBtnFlickerClass()} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', ...getBtnFlickerStyle(500) }}>
+            <div
+              className={getBtnFlickerClass()}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: isSidebarOpen ? '6px' : '8px',
+                flexWrap: 'nowrap',
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
+                ...getBtnFlickerStyle(500),
+              }}
+            >
               <span
                 style={{
                   width: '7px',
@@ -2737,17 +2751,44 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   borderRadius: '50%',
                   background: '#d4a359',
                   boxShadow: '0 0 10px #d4a359',
+                  flexShrink: 0,
                 }}
               />
-              <span style={{ fontSize: '0.76rem', fontWeight: 800, letterSpacing: '0.04em', color: '#ede6d6' }}>
+              <span
+                style={{
+                  fontSize: isSidebarOpen ? '0.74rem' : '0.76rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.04em',
+                  color: '#ede6d6',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 INDIA AQI ENGINE
               </span>
               <span style={{ fontSize: '0.68rem', color: '#9c9180' }}>•</span>
-              <span style={{ fontSize: '0.7rem', color: '#ede6d6', fontWeight: 500 }}>{lastUpdated}</span>
+              <span
+                style={{
+                  fontSize: isSidebarOpen ? '0.68rem' : '0.7rem',
+                  color: '#ede6d6',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {lastUpdated}
+              </span>
             </div>
 
             {/* Right Deck: Controls, Location, Glide, Orbit & Telemetry Toggle */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: isSidebarOpen ? '6px' : '10px',
+                flexWrap: 'nowrap',
+                minWidth: 0,
+                flexShrink: 1,
+              }}
+            >
 
               {/* Glide Dropdown Button with Search Icon */}
               <button
@@ -2755,22 +2796,24 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 className={`glass-cuboid-btn ${isGlideDropdownOpen ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
                 style={{
                   height: '34px',
-                  padding: '0 14px',
+                  padding: isSidebarOpen ? '0 10px' : '0 14px',
                   borderRadius: '8px',
-                  fontSize: '0.76rem',
+                  fontSize: isSidebarOpen ? '0.72rem' : '0.76rem',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '6px',
+                  gap: isSidebarOpen ? '5px' : '6px',
                   boxSizing: 'border-box',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                   ...getBtnFlickerStyle(640),
                 }}
                 title="Toggle Glide cities and search bar dropdown"
               >
-                <Search size={13} color="#d4a359" />
+                <Search size={isSidebarOpen ? 12 : 13} color="#d4a359" />
                 <span>Glide & Search</span>
                 <ChevronDown
-                  size={13}
+                  size={isSidebarOpen ? 12 : 13}
                   style={{
                     transform: isGlideDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                     transition: 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -2783,7 +2826,9 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '3px',
+                  gap: isSidebarOpen ? '2px' : '3px',
+                  flexShrink: 0,
+                  flexWrap: 'nowrap',
                 }}
               >
                 {[
@@ -2801,18 +2846,19 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                     className={`glass-cuboid-btn ${activePollutant === m.id ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
                     style={{
                       height: '34px',
-                      width: '54px',
-                      minWidth: '54px',
+                      width: isSidebarOpen ? '42px' : '52px',
+                      minWidth: isSidebarOpen ? '38px' : '48px',
                       padding: '0',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       borderRadius: '8px',
-                      fontSize: '0.74rem',
+                      fontSize: isSidebarOpen ? '0.70rem' : '0.74rem',
                       fontWeight: 700,
                       cursor: 'pointer',
                       whiteSpace: 'nowrap',
                       boxSizing: 'border-box',
+                      flexShrink: 0,
                       ...getBtnFlickerStyle(760 + idx * 100),
                     }}
                   >
@@ -2826,7 +2872,9 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '3px',
+                  gap: isSidebarOpen ? '3px' : '4px',
+                  flexShrink: 0,
+                  flexWrap: 'nowrap',
                 }}
               >
                 {/* Refresh Live Button */}
@@ -2836,20 +2884,20 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   className={`glass-cuboid-btn ${getBtnFlickerClass()}`}
                   style={{
                     height: '34px',
-                    width: '144px',
-                    minWidth: '144px',
-                    padding: '0 10px',
+                    padding: isSidebarOpen ? '0 9px' : '0 12px',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '6px',
+                    gap: '5px',
                     borderRadius: '8px',
-                    fontSize: '0.76rem',
+                    fontSize: isSidebarOpen ? '0.72rem' : '0.76rem',
                     boxSizing: 'border-box',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
                     ...getBtnFlickerStyle(1500),
                   }}
                 >
-                  <RefreshCw size={13} className={isLoadingLive ? 'animate-spin' : ''} />
+                  <RefreshCw size={12} className={isLoadingLive ? 'animate-spin' : ''} />
                   <span>Refresh</span>
                 </button>
 
@@ -2860,25 +2908,26 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                   className={`glass-cuboid-btn ${userLocation.isLiveGps ? 'glass-cuboid-btn-success' : ''} ${getBtnFlickerClass()}`}
                   style={{
                     height: '34px',
-                    width: '144px',
-                    minWidth: '144px',
-                    padding: '0 10px',
+                    padding: isSidebarOpen ? '0 9px' : '0 12px',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '6px',
+                    gap: '5px',
                     borderRadius: '8px',
-                    fontSize: '0.76rem',
+                    fontSize: isSidebarOpen ? '0.72rem' : '0.76rem',
                     boxSizing: 'border-box',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    maxWidth: isSidebarOpen ? '135px' : '170px',
                     ...getBtnFlickerStyle(1620),
                   }}
                 >
                   {isLocating ? (
-                    <RefreshCw size={13} className="animate-spin" color="#d4a359" />
+                    <RefreshCw size={12} className="animate-spin" color="#d4a359" />
                   ) : userLocation.isLiveGps ? (
                     <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#e8c87a', boxShadow: '0 0 8px #e8c87a', animation: 'pulse 1.2s infinite', flexShrink: 0 }} />
                   ) : (
-                    <Navigation size={13} color="#d4a359" />
+                    <Navigation size={12} color="#d4a359" />
                   )}
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {isLocating
@@ -2896,20 +2945,20 @@ export default function DelhiAqiHeatmap({ onDrawerChange } = {}) {
                     className={`glass-cuboid-btn ${isFollowingUser ? 'glass-cuboid-btn-active' : ''} ${getBtnFlickerClass()}`}
                     style={{
                       height: '34px',
-                      width: '144px',
-                      minWidth: '144px',
-                      padding: '0 10px',
+                      padding: isSidebarOpen ? '0 9px' : '0 12px',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '6px',
+                      gap: '5px',
                       borderRadius: '8px',
-                      fontSize: '0.76rem',
+                      fontSize: isSidebarOpen ? '0.72rem' : '0.76rem',
                       boxSizing: 'border-box',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
                       ...getBtnFlickerStyle(1740),
                     }}
                   >
-                    <LocateFixed size={13} color={isFollowingUser ? '#f3ce85' : '#9c9180'} />
+                    <LocateFixed size={12} color={isFollowingUser ? '#f3ce85' : '#9c9180'} />
                     <span>Follow: {isFollowingUser ? 'ON' : 'OFF'}</span>
                   </button>
                 )}

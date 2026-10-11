@@ -37,7 +37,7 @@ export default function HeatmapControlsDeck({
       className={`glass-panel-master ${getPanelClass()}`}
       style={{
         position: 'absolute',
-        bottom: isMobile ? '20px' : '52px',
+        bottom: isMobile ? '12px' : '24px',
         left: isMobile ? '12px' : '24px',
         right: isMobile ? '12px' : (isSidebarOpen ? '444px' : '24px'),
         maxWidth: isMobile ? 'calc(100% - 24px)' : (isSidebarOpen ? 'calc(100% - 468px)' : 'calc(100% - 48px)'),
@@ -49,7 +49,7 @@ export default function HeatmapControlsDeck({
         borderRadius: '16px',
         maxHeight: isMobile ? '38vh' : 'none',
         overflowY: isMobile ? 'auto' : 'visible',
-        transition: 'right 0.35s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+        transition: 'bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1), right 0.35s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
       {/* Click hint & Telemetry status row */}

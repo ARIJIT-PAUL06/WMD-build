@@ -88,6 +88,17 @@ body {
   background: #475569;
 }
 
+/* Utility to hide scrollbars while maintaining scroll functionality */
+.hide-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 /* Glassmorphism Containers - Authentic Old Tinted Optical Glass */
 .glass-panel {
   background: var(--bg-glass);
