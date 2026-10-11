@@ -1,0 +1,1406 @@
+/**
+ * AboutPage.css
+ * VayuVitals - Editorial Environmental Poster Experience
+ * Inspired by High-Impact Air-Pollution Infographics
+ *
+ * Core Concept:
+ * - Sequence of powerful environmental posters, not a conventional website
+ * - Dramatic billowing smoke, atmospheric haze, industrial emissions
+ * - Oversized typography (clamp-based), huge statistics as focal points
+ * - Minimal text (10–15%), strong negative space and cinematic contrast
+ * - Space Grotesk for headlines, IBM Plex Mono for technical data
+ * - Fully responsive across mobile, tablet, and desktop
+ */
+
+/* ==========================================================================
+   1. GLOBAL CONTAINER & ATMOSPHERE
+   ========================================================================== */
+.about-page {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #07090e;
+  color: #f8fafc;
+  --about-font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --about-font-body: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --about-font-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  font-family: var(--about-font-body);
+  overflow-x: clip;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.about-page *,
+.about-page *::before,
+.about-page *::after {
+  box-sizing: border-box;
+}
+
+.about-ambient-background {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.04) 0%, transparent 60%),
+    radial-gradient(circle at 90% 40%, rgba(244, 63, 94, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 10% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 50%),
+    #07090e;
+}
+
+/* ==========================================================================
+   2. REUSABLE TOP-LEFT CIRCULAR BACK BUTTON
+   ========================================================================== */
+.about-back-button-root {
+  position: fixed;
+  top: 28px;
+  left: 28px;
+  z-index: 120;
+}
+
+.about-back-button {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(11, 15, 23, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.about-back-button:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateX(-3px);
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.75);
+}
+
+.about-back-button:active {
+  transform: translateX(-1px) scale(0.96);
+}
+
+.about-back-button:focus-visible {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4);
+}
+
+.about-back-icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.2;
+  transition: transform 0.25s ease;
+}
+
+.about-back-button:hover .about-back-icon {
+  transform: translateX(-2px);
+}
+
+.about-back-tooltip {
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-6px);
+  background: rgba(11, 15, 23, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f8fafc;
+  font-family: var(--about-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  padding: 5px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+}
+
+.about-back-button-root:hover .about-back-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* ==========================================================================
+   3. MINIMAL TOP FLOATING ACTION PILLS
+   ========================================================================== */
+.about-top-bar {
+  position: fixed;
+  top: 24px;
+  right: 28px;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.about-nav-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  background: rgba(11, 15, 23, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  font-family: var(--about-font-mono);
+  font-size: 0.76rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.about-nav-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   4. EDITORIAL POSTER SHARED LABELS & TYPOGRAPHY
+   ========================================================================== */
+.about-content-wrapper {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+.about-poster-index {
+  font-family: var(--about-font-mono);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: #38bdf8;
+  opacity: 0.9;
+}
+
+.about-poster-category {
+  font-family: var(--about-font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.about-section-header {
+  max-width: 1360px;
+  margin: 0 auto 56px auto;
+  padding: 0 40px;
+}
+
+.about-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.about-section-headline {
+  font-family: var(--about-font-display);
+  font-size: clamp(2.4rem, 6vw, 4.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.0;
+  color: #ffffff;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+}
+
+.about-section-subline {
+  font-size: clamp(1rem, 1.8vw, 1.3rem);
+  color: #cbd5e1;
+  font-weight: 400;
+  margin: 0;
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   01. HERO — THE AIR WE SHARE
+   ========================================================================== */
+.about-hero-section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-end;
+  padding: 100px 48px 72px 48px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.about-hero-media-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.about-hero-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  filter: contrast(1.1) brightness(0.72) saturate(0.85);
+  transform: scale(1.02);
+  will-change: transform;
+}
+
+.about-hero-gradient-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(7, 9, 14, 0.45) 0%, rgba(7, 9, 14, 0.1) 40%, rgba(7, 9, 14, 0.85) 90%, #07090e 100%),
+    radial-gradient(ellipse at center, transparent 40%, rgba(7, 9, 14, 0.6) 100%);
+  pointer-events: none;
+}
+
+.about-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1360px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.about-hero-badge-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: rgba(11, 15, 23, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 24px;
+}
+
+.about-hero-headline {
+  font-family: var(--about-font-display);
+  font-size: clamp(3.8rem, 11vw, 9.5rem);
+  font-weight: 850;
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  color: #ffffff;
+  margin: 0 0 20px 0;
+  text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
+}
+
+.about-hero-title-line {
+  display: block;
+}
+
+.about-hero-word {
+  display: inline-block;
+  transform-origin: 50% 100%;
+  will-change: transform, opacity;
+}
+
+.about-hero-subline {
+  font-family: var(--about-font-body);
+  font-size: clamp(1.2rem, 2.4vw, 1.85rem);
+  font-weight: 400;
+  color: #e2e8f0;
+  margin: 0 0 48px 0;
+  letter-spacing: -0.01em;
+  opacity: 0.92;
+}
+
+.about-scroll-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #94a3b8;
+  font-family: var(--about-font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.about-scroll-line {
+  display: inline-block;
+  width: 38px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.about-scroll-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: #38bdf8;
+  animation: aboutScrollLineAnim 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes aboutScrollLineAnim {
+  0% { left: -100%; }
+  50% { left: 100%; }
+  100% { left: 100%; }
+}
+
+/* ==========================================================================
+   02. THE SCALE OF THE PROBLEM (INFOGRAPHIC POSTER DIRECTLY INSPIRED BY REF)
+   ========================================================================== */
+.about-scale-section {
+  position: relative;
+  width: 100%;
+  min-height: 110vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 48px 100px 48px;
+  box-sizing: border-box;
+  overflow: hidden;
+  background-color: #07090e;
+}
+
+.about-scale-media-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.about-scale-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 35% center;
+  filter: contrast(1.12) brightness(0.92);
+  transform: scale(1.02);
+  will-change: transform;
+}
+
+/* Strategic atmospheric overlay keeping smoke dramatic while ensuring pure white text readability */
+.about-scale-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    /* Dark contrast gradient backing behind the right-hand text zone */
+    linear-gradient(90deg, transparent 0%, transparent 28%, rgba(7, 9, 14, 0.45) 52%, rgba(7, 9, 14, 0.88) 100%),
+    /* Vertical edge blends into adjacent sections */
+    linear-gradient(180deg, #07090e 0%, transparent 18%, transparent 82%, #07090e 100%);
+  pointer-events: none;
+}
+
+.about-scale-poster-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1360px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top Right "DID YOU KNOW?" Header from Reference */
+.about-infographic-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.about-infographic-index-tag {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.about-did-you-know {
+  font-family: var(--about-font-display);
+  font-size: clamp(1.4rem, 3.2vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+  margin: 0;
+  text-transform: uppercase;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.9);
+}
+
+/* Asymmetric Editorial Layout flowing around the central cloud */
+.about-scale-editorial-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  align-items: center;
+  gap: 40px;
+  min-height: 68vh;
+}
+
+/* Left Column: Visual breathing stage for the central smoke cloud */
+.about-scale-cloud-stage {
+  position: relative;
+  height: 100%;
+  min-height: 400px;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 28px;
+}
+
+.about-scale-cloud-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: rgba(11, 15, 23, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.about-cloud-tag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 10px #38bdf8;
+  animation: pulseStation 2.4s infinite ease-in-out;
+}
+
+.about-cloud-tag-text {
+  font-family: var(--about-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: #e2e8f0;
+  text-transform: uppercase;
+}
+
+/* Right Column: Asymmetric text canvas flowing in the cloud's negative space */
+.about-scale-text-canvas {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding-left: 10px;
+}
+
+/* Stat tabs switcher */
+.about-stat-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 28px;
+  align-self: flex-start;
+  background: rgba(11, 15, 23, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 4px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.about-stat-tab-pill {
+  border: none;
+  background: transparent;
+  color: #cbd5e1;
+  font-family: var(--about-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.about-stat-tab-pill:hover {
+  color: #ffffff;
+}
+
+.about-stat-tab-pill.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Pure White Typography Hero Block */
+.about-infographic-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.about-infographic-prefix {
+  font-family: var(--about-font-display);
+  font-size: clamp(1.2rem, 2.4vw, 2.1rem);
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: -6px;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.9);
+  letter-spacing: -0.01em;
+}
+
+/* Massive 76% Headline - Crisp Brilliant White */
+.about-infographic-stat-number {
+  font-family: var(--about-font-display);
+  font-size: clamp(6.5rem, 18vw, 15rem);
+  font-weight: 900;
+  line-height: 0.85;
+  letter-spacing: -0.06em;
+  color: #ffffff;
+  text-shadow:
+    0 4px 35px rgba(0, 0, 0, 0.95),
+    0 2px 12px rgba(0, 0, 0, 0.95);
+  user-select: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Enormous "Indians" Target Label - Crisp Brilliant White */
+.about-infographic-target-label {
+  font-family: var(--about-font-display);
+  font-size: clamp(3.8rem, 11vw, 9.5rem);
+  font-weight: 900;
+  line-height: 0.88;
+  letter-spacing: -0.05em;
+  color: #ffffff;
+  text-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.95),
+    0 2px 10px rgba(0, 0, 0, 0.95);
+  margin: 0 0 24px 0;
+}
+
+/* Crisp White Supporting Environmental Fact */
+.about-infographic-fact {
+  font-family: var(--about-font-display);
+  font-size: clamp(1.1rem, 2.2vw, 1.55rem);
+  font-weight: 500;
+  line-height: 1.48;
+  color: #ffffff;
+  max-width: 620px;
+  margin: 0 0 28px 0;
+  text-shadow: 0 3px 20px rgba(0, 0, 0, 0.95);
+}
+
+/* Clearly Visible Compact Source Attribution */
+.about-infographic-source-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 22px;
+  background: rgba(11, 15, 23, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  max-width: 680px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.about-source-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--about-font-mono);
+  font-size: 0.8rem;
+  color: #cbd5e1;
+}
+
+.about-source-label {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.about-source-divider {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.about-source-benchmark {
+  color: #38bdf8;
+  font-size: 0.74rem;
+}
+
+.about-source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffffff;
+  font-family: var(--about-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  padding: 5px 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  transition: all 0.2s ease;
+}
+
+.about-source-link:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   03. WHAT WE BREATHE (SEVEN CHEMICAL POSTERS)
+   ========================================================================== */
+.about-pollutants-section {
+  position: relative;
+  width: 100%;
+  padding: 120px 0 100px 0;
+  background: #07090e;
+}
+
+.about-pollutants-poster-grid {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 28px;
+}
+
+.about-pollutant-poster {
+  position: relative;
+  min-height: 440px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0d121c;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 32px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  outline: none;
+}
+
+.about-pollutant-poster:hover,
+.about-pollutant-poster.is-active-pollutant {
+  transform: translateY(-6px);
+  border-color: var(--pollutant-accent, rgba(255, 255, 255, 0.3));
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.7), 0 0 30px var(--pollutant-glow, rgba(56, 189, 248, 0.2));
+}
+
+.about-pollutant-poster:focus-visible {
+  border-color: var(--pollutant-accent, #38bdf8);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.4);
+}
+
+.about-poster-media-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.about-poster-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: contrast(1.1) brightness(0.48) saturate(0.85);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease;
+}
+
+.about-pollutant-poster:hover .about-poster-bg-img {
+  transform: scale(1.05);
+  filter: contrast(1.15) brightness(0.58) saturate(0.95);
+}
+
+.about-poster-vignette {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(7, 9, 14, 0.4) 0%, rgba(7, 9, 14, 0.2) 40%, rgba(7, 9, 14, 0.95) 90%, #07090e 100%);
+  pointer-events: none;
+}
+
+.about-poster-top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.about-poster-tag {
+  font-family: var(--about-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.about-poster-arrow-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e2e8f0;
+  transition: all 0.25s ease;
+}
+
+.about-pollutant-poster:hover .about-poster-arrow-wrap {
+  background: var(--pollutant-accent, #38bdf8);
+  color: #07090e;
+  transform: translateX(3px);
+}
+
+.about-poster-bottom {
+  position: relative;
+  z-index: 2;
+}
+
+/* Enormous Chemical Symbol */
+.about-pollutant-huge-symbol {
+  font-family: var(--about-font-display);
+  font-size: clamp(3.2rem, 6.5vw, 5.5rem);
+  font-weight: 850;
+  letter-spacing: -0.05em;
+  line-height: 0.95;
+  color: #ffffff;
+  margin-bottom: 8px;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+}
+
+.about-pollutant-editorial-name {
+  font-family: var(--about-font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.01em;
+}
+
+.about-pollutant-short-phrase {
+  font-family: var(--about-font-body);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #94a3b8;
+  margin: 0;
+  max-width: 320px;
+}
+
+/* ==========================================================================
+   04. THE INVISIBLE THREAT (THREE EDITORIAL SEQUENCE FRAMES)
+   ========================================================================== */
+.about-threat-section {
+  position: relative;
+  width: 100%;
+  background: #07090e;
+}
+
+.about-threat-sequence {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.about-threat-frame {
+  position: relative;
+  width: 100%;
+  min-height: 85vh;
+  display: flex;
+  align-items: flex-end;
+  padding: 80px 48px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.about-threat-media-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.about-threat-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  filter: contrast(1.12) brightness(0.68) saturate(0.85);
+}
+
+.about-threat-gradient {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(7, 9, 14, 0.3) 0%, rgba(7, 9, 14, 0.15) 30%, rgba(7, 9, 14, 0.85) 85%, #07090e 100%),
+    radial-gradient(circle at center, transparent 40%, rgba(7, 9, 14, 0.7) 100%);
+  pointer-events: none;
+}
+
+.about-threat-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1360px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.about-threat-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.about-threat-headline {
+  font-family: var(--about-font-display);
+  font-size: clamp(2.8rem, 7.8vw, 6.5rem);
+  font-weight: 850;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+  margin: 0 0 18px 0;
+  max-width: 1100px;
+  text-transform: uppercase;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+}
+
+.about-threat-micro {
+  font-family: var(--about-font-body);
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
+  color: #cbd5e1;
+  margin: 0;
+  max-width: 640px;
+  line-height: 1.45;
+}
+
+/* ==========================================================================
+   05. WHY VAYUVITALS (THREE VISUAL COMPOSITIONS)
+   ========================================================================== */
+.about-why-section {
+  position: relative;
+  width: 100%;
+  padding: 120px 0 100px 0;
+  background: #07090e;
+}
+
+.about-why-compositions-container {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+}
+
+.about-why-composition {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  align-items: center;
+  gap: 48px;
+  background: rgba(13, 18, 28, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 44px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
+}
+
+.about-why-visual-display {
+  position: relative;
+  width: 100%;
+  min-height: 280px;
+  background: #070a12;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+}
+
+/* Composition 01: Air-Quality Map Visual */
+.about-map-mesh-visual {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  background:
+    radial-gradient(circle at center, rgba(56, 189, 248, 0.06) 0%, transparent 70%),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 32px 32px, 32px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.about-map-radar-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+.ring-1 { width: 90px; height: 90px; }
+.ring-2 { width: 180px; height: 180px; }
+.ring-3 { width: 260px; height: 260px; border-style: dashed; }
+
+.about-map-sweep {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  top: 50%;
+  left: 50%;
+  transform-origin: 0 0;
+  background: conic-gradient(from 0deg, rgba(56, 189, 248, 0.25) 0deg, transparent 60deg);
+  animation: radarSweepAnim 5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes radarSweepAnim {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.about-map-station-pin {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pin-1 { top: 32%; left: 34%; }
+.pin-2 { top: 58%; left: 56%; }
+.pin-3 { top: 40%; left: 70%; }
+
+.station-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f43f5e;
+  box-shadow: 0 0 12px #f43f5e;
+  animation: pulseStation 2s infinite;
+}
+
+.pin-3 .station-pulse {
+  background: #f59e0b;
+  box-shadow: 0 0 12px #f59e0b;
+}
+
+@keyframes pulseStation {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.4); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+.station-label {
+  font-family: var(--about-font-mono);
+  font-size: 0.72rem;
+  color: #f1f5f9;
+  background: rgba(11, 15, 23, 0.85);
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  white-space: nowrap;
+}
+
+.about-map-hud-meta {
+  position: absolute;
+  bottom: 12px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--about-font-mono);
+  font-size: 0.68rem;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+
+/* Composition 02: Chemical Spectrum Visual */
+.about-spectral-visual {
+  width: 100%;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.about-spectral-bar-item {
+  display: grid;
+  grid-template-columns: 60px 1fr 80px;
+  align-items: center;
+  gap: 16px;
+}
+
+.spec-label {
+  font-family: var(--about-font-mono);
+  font-size: 0.82rem;
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+.spec-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.spec-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s ease;
+}
+
+.fill-pm25 { background: linear-gradient(90deg, #f59e0b, #f43f5e); }
+.fill-pm10 { background: linear-gradient(90deg, #38bdf8, #818cf8); }
+.fill-no2 { background: linear-gradient(90deg, #fb923c, #f43f5e); }
+.fill-o3 { background: linear-gradient(90deg, #34d399, #06b6d4); }
+
+.spec-val {
+  font-family: var(--about-font-mono);
+  font-size: 0.74rem;
+  color: #94a3b8;
+  text-align: right;
+}
+
+.about-spectral-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--about-font-mono);
+  font-size: 0.68rem;
+  color: #64748b;
+}
+
+/* Composition 03: Trend Diurnal Waveform Visual */
+.about-trend-graph-visual {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 20px 24px;
+}
+
+.about-trend-svg {
+  width: 100%;
+  height: 180px;
+}
+
+.about-trend-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--about-font-mono);
+  font-size: 0.68rem;
+  color: #64748b;
+}
+
+/* Why VayuVitals Text Blocks */
+.about-why-text-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.about-why-step-num {
+  font-family: var(--about-font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #38bdf8;
+  margin-bottom: 8px;
+}
+
+.about-why-title {
+  font-family: var(--about-font-display);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  margin: 0 0 14px 0;
+  text-transform: uppercase;
+}
+
+.about-why-sentence {
+  font-family: var(--about-font-body);
+  font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+  line-height: 1.5;
+  color: #cbd5e1;
+  margin: 0;
+  max-width: 480px;
+}
+
+/* ==========================================================================
+   06. THE CLOSING FRAME
+   ========================================================================== */
+.about-closing-section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 48px;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-align: center;
+}
+
+.about-closing-media-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.about-closing-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  filter: contrast(1.15) brightness(0.65) saturate(0.85);
+  transform: scale(1.02);
+}
+
+.about-closing-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at center, rgba(7, 9, 14, 0.25) 0%, rgba(7, 9, 14, 0.45) 100%),
+    linear-gradient(180deg, #07090e 0%, rgba(7, 9, 14, 0.35) 25%, transparent 60%, transparent 100%);
+  pointer-events: none;
+}
+
+.about-closing-content {
+  position: relative;
+  z-index: 2;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.about-closing-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.about-closing-headline {
+  font-family: var(--about-font-display);
+  font-size: clamp(3.2rem, 9.5vw, 7.8rem);
+  font-weight: 850;
+  line-height: 0.94;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+  margin: 0 0 20px 0;
+  text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
+}
+
+.about-closing-subline {
+  font-family: var(--about-font-body);
+  font-size: clamp(1.2rem, 2.2vw, 1.8rem);
+  color: #e2e8f0;
+  margin: 0 0 44px 0;
+  letter-spacing: -0.01em;
+}
+
+.about-closing-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 36px;
+  border-radius: 9999px;
+  background: #ffffff;
+  color: #07090e;
+  font-family: var(--about-font-display);
+  font-size: 0.95rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 30px rgba(255, 255, 255, 0.25);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.about-closing-cta-btn:hover {
+  background: #38bdf8;
+  color: #07090e;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(56, 189, 248, 0.4);
+}
+
+.about-closing-cta-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.about-closing-cta-arrow {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.25s ease;
+}
+
+.about-closing-cta-btn:hover .about-closing-cta-arrow {
+  transform: translateX(4px);
+}
+
+/* ==========================================================================
+   RESPONSIVENESS (TABLET & MOBILE)
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .about-scale-editorial-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    min-height: auto;
+  }
+
+  .about-scale-cloud-stage {
+    min-height: auto;
+    padding-bottom: 0;
+  }
+
+  .about-scale-text-canvas {
+    padding-left: 0;
+  }
+
+  .about-scale-overlay {
+    background:
+      linear-gradient(180deg, rgba(7, 9, 14, 0.2) 0%, rgba(7, 9, 14, 0.55) 35%, rgba(7, 9, 14, 0.9) 100%),
+      linear-gradient(180deg, #07090e 0%, transparent 15%, transparent 85%, #07090e 100%);
+  }
+
+  .about-why-composition {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .about-back-button-root {
+    top: 18px;
+    left: 18px;
+  }
+
+  .about-top-bar {
+    top: 18px;
+    right: 18px;
+  }
+
+  .about-hero-section {
+    padding: 90px 24px 50px 24px;
+  }
+
+  .about-scale-section {
+    padding: 85px 20px 65px 20px;
+  }
+
+  .about-infographic-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+  }
+
+  .about-infographic-source-box {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .about-section-header,
+  .about-pollutants-poster-grid,
+  .about-why-compositions-container {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .about-pollutants-poster-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .about-threat-frame {
+    padding: 60px 20px;
+    min-height: 70vh;
+  }
+
+  .about-why-composition {
+    padding: 24px;
+    border-radius: 18px;
+  }
+
+  .about-closing-section {
+    padding: 80px 20px;
+  }
+}
+
+/* ==========================================================================
+   PREFERS-REDUCED-MOTION
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .about-hero-media,
+  .about-scale-media,
+  .about-threat-media,
+  .about-closing-media,
+  .about-poster-bg-img {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .about-scroll-line::after,
+  .about-map-sweep,
+  .station-pulse {
+    animation: none !important;
+  }
+}

@@ -15,6 +15,7 @@
  */
 
 import React, { useRef, useEffect, useState } from 'react';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { documentaryMapService } from '../../services/documentaryMapService.js';
 
 export default function DocumentaryLocationMap({

@@ -74,9 +74,8 @@ export default function HeatmapTelemetryHud({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Activity size={16} color="#38bdf8" />
-            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              {activePollutant === 'aqi' ? 'Air Quality & Advisory HUD' : `${activePollutant.toUpperCase()} Atmospheric Telemetry HUD`}
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#ffffff', letterSpacing: '0.02em' }}>
+              {activePollutant === 'aqi' ? 'Air Quality & Advisory' : `${activePollutant.toUpperCase()} Atmospheric Telemetry`}
             </span>
           </div>
 

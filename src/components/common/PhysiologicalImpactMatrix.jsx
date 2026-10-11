@@ -60,8 +60,7 @@ export default function PhysiologicalImpactMatrix({
     <div className="visual-health-impact-matrix" id="visual-health-impact-matrix">
       <div className="impact-matrix-header">
         <div className="matrix-title-badge">
-          <ShieldAlert size={14} style={{ color: accentColor }} />
-          <span>PHYSIOLOGICAL VULNERABILITY MATRIX</span>
+          <span>Target Organ Systems & Vulnerability</span>
         </div>
         <div className="matrix-demographic-tabs" role="tablist" aria-label="Demographic View Switcher">
           <button

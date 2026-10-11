@@ -113,8 +113,11 @@ describe('Pollutant Documentary Pages - Configurator Cleanliness & Environmental
     assert.ok(!content.includes('vehicleProfile.vehicleCategory'), 'Must not display vehicle classification');
   });
 
-  it('7. verifies that PinnedScrollStory.jsx has removed vehicle classification ribbon', () => {
-    const content = fs.readFileSync(path.join(COMPONENT_DIR, 'PinnedScrollStory.jsx'), 'utf-8');
+  it('7. verifies that DocumentaryPinnedStory.jsx has removed vehicle classification ribbon', () => {
+    const filePath = fs.existsSync(path.join(COMPONENT_DIR, 'DocumentaryPinnedStory.jsx'))
+      ? path.join(COMPONENT_DIR, 'DocumentaryPinnedStory.jsx')
+      : path.join(COMPONENT_DIR, 'PinnedScrollStory.jsx');
+    const content = fs.readFileSync(filePath, 'utf-8');
 
     assert.ok(!content.includes('vehicleProfile.vehicleCategory'), 'Must not render vehicleCategory');
     assert.ok(content.includes('OBSERVATION EVIDENCE // DELHI NCR'), 'Must render observation evidence tag');

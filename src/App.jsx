@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Film, MapPin, Truck } from 'lucide-react';
+import { Film, MapPin, Truck, Info, BarChart2 } from 'lucide-react';
 import PanoramicScrollHero from './components/MotionHero/PanoramicScrollHero';
 import LazySection from './components/common/LazySection';
 
@@ -11,6 +11,8 @@ const AtmosphericCargoTruck = React.lazy(() => import('./components/CargoTruck/A
 const PollutantDetailPage = React.lazy(() => import('./components/PollutantDetail/PollutantDetailPage'));
 const PollutantDocumentary = React.lazy(() => import('./components/PollutantDocumentary/PollutantDocumentary'));
 const SchoolSafetyContainer = React.lazy(() => import('./components/SchoolSafety/SchoolSafetyContainer'));
+const AboutPage = React.lazy(() => import('./components/About/AboutPage'));
+const StatsPage = React.lazy(() => import('./components/Stats/StatsPage'));
 import AuthHeaderBadge from './components/Auth/AuthHeaderBadge';
 
 const PageFallback = () => <div style={{ minHeight: '100vh', background: '#070a12' }} />;
@@ -61,7 +63,37 @@ export default function App() {
     );
   };
 
+  const checkIsAboutRequested = () => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    const hash = (window.location.hash || '').toLowerCase();
+    const path = (window.location.pathname || '').toLowerCase();
+    return (
+      params.get('page') === 'about' ||
+      params.get('view') === 'about' ||
+      params.get('about') === 'true' ||
+      hash === '#about' ||
+      path === '/about'
+    );
+  };
+
+  const checkIsStatsRequested = () => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    const hash = (window.location.hash || '').toLowerCase();
+    const path = (window.location.pathname || '').toLowerCase();
+    return (
+      params.get('page') === 'stats' ||
+      params.get('view') === 'stats' ||
+      params.get('stats') === 'true' ||
+      hash === '#stats' ||
+      path === '/stats'
+    );
+  };
+
   const [isGlobalMonitorOpen, setIsGlobalMonitorOpen] = useState(checkIsMonitorRequested);
+  const [isAboutOpen, setIsAboutOpen] = useState(checkIsAboutRequested);
+  const [isStatsOpen, setIsStatsOpen] = useState(checkIsStatsRequested);
   const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 1024 : false));
   const [activeMobileTab, setActiveMobileTab] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -122,6 +154,20 @@ export default function App() {
       const nextDocState = checkDocumentaryState();
       setDocumentaryState(nextDocState);
       if (nextDocState.isOpen && typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+      }
+      const nextAboutOpen = checkIsAboutRequested();
+      setIsAboutOpen(nextAboutOpen);
+      if (nextAboutOpen && typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+      }
+      const nextStatsOpen = checkIsStatsRequested();
+      setIsStatsOpen(nextStatsOpen);
+      if (nextStatsOpen && typeof window !== 'undefined') {
         window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
         if (document.documentElement) document.documentElement.scrollTop = 0;
         if (document.body) document.body.scrollTop = 0;
@@ -254,6 +300,100 @@ export default function App() {
       heatmapRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  const handleOpenAbout = () => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+      const url = new URL(window.location);
+      url.searchParams.set('page', 'about');
+      window.history.pushState({}, '', url);
+    }
+    setIsAboutOpen(true);
+  };
+
+  const handleCloseAbout = () => {
+    setIsAboutOpen(false);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location);
+      url.searchParams.delete('page');
+      if (url.searchParams.get('view') === 'about') {
+        url.searchParams.delete('view');
+      }
+      if (url.searchParams.get('about') === 'true') {
+        url.searchParams.delete('about');
+      }
+      if (url.hash.toLowerCase() === '#about') {
+        url.hash = '';
+      }
+      window.history.pushState({}, '', url);
+    }
+  };
+
+  // Render Dedicated Cinematic About Page when active
+  if (isAboutOpen) {
+    return (
+      <React.Suspense fallback={<PageFallback />}>
+        <AboutPage
+          onBack={handleCloseAbout}
+          onSelectPollutant={(pollutantId) => {
+            handleCloseAbout();
+            handleOpenDocumentary(pollutantId);
+          }}
+          onOpenDashboard={() => {
+            handleCloseAbout();
+            scrollToHeatmap();
+          }}
+        />
+      </React.Suspense>
+    );
+  }
+
+  const handleOpenStats = () => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+      const url = new URL(window.location);
+      url.searchParams.set('page', 'stats');
+      window.history.pushState({}, '', url);
+    }
+    setIsStatsOpen(true);
+  };
+
+  const handleCloseStats = () => {
+    setIsStatsOpen(false);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location);
+      url.searchParams.delete('page');
+      if (url.searchParams.get('view') === 'stats') {
+        url.searchParams.delete('view');
+      }
+      if (url.searchParams.get('stats') === 'true') {
+        url.searchParams.delete('stats');
+      }
+      if (url.hash.toLowerCase() === '#stats') {
+        url.hash = '';
+      }
+      window.history.pushState({}, '', url);
+    }
+  };
+
+  // Render Dedicated Monochromatic Stats / ML Research Page when active
+  if (isStatsOpen) {
+    return (
+      <React.Suspense fallback={<PageFallback />}>
+        <StatsPage
+          onBack={handleCloseStats}
+          onOpenDashboard={() => {
+            handleCloseStats();
+            scrollToHeatmap();
+          }}
+        />
+      </React.Suspense>
+    );
+  }
 
   // Render Full-Screen Cinematic Pollutant Documentary Experience when active
   if (documentaryState.isOpen) {
@@ -403,6 +543,26 @@ export default function App() {
             <Truck size={18} />
             <span>Cargo Hauler</span>
           </button>
+
+          <button
+            id="mobile-tab-about"
+            className={`mobile-app-nav-btn ${isAboutOpen ? 'active' : ''}`}
+            onClick={handleOpenAbout}
+            aria-label="About VayuVitals"
+          >
+            <Info size={18} />
+            <span>About</span>
+          </button>
+
+          <button
+            id="mobile-tab-stats"
+            className={`mobile-app-nav-btn ${isStatsOpen ? 'active' : ''}`}
+            onClick={handleOpenStats}
+            aria-label="ML Stats"
+          >
+            <BarChart2 size={18} />
+            <span>Stats</span>
+          </button>
         </nav>
 
         {/* Autonomous Atmospheric Shield & Emergency Monitor Test Bench */}
@@ -422,7 +582,12 @@ export default function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#070a12', position: 'relative' }}>
       {/* 1. MOTION HERO: Horizontal Scroll-Scrub Experience */}
-      <PanoramicScrollHero onExploreTwin={scrollToHeatmap} />
+      <PanoramicScrollHero
+        onExploreTwin={scrollToHeatmap}
+        onOpenAbout={handleOpenAbout}
+        onOpenStats={handleOpenStats}
+        currentRoute={isAboutOpen ? 'about' : (isStatsOpen ? 'statistics' : undefined)}
+      />
 
       {/* 2. MODERN AQI SPATIAL HEATMAP OF DELHI */}
       <div ref={heatmapRef}>

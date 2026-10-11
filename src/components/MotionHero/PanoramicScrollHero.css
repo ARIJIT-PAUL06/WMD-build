@@ -119,9 +119,9 @@
 /* 5. Minimalist Floating Telemetry HUD Capsule */
 .hero-top-hud {
   position: absolute;
-  top: 24px;
-  left: 28px;
-  z-index: 15;
+  top: 26px;
+  left: 96px;
+  z-index: 30;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -136,6 +136,127 @@
   pointer-events: auto;
 }
 
+/* ============================================================== */
+/* AUTHENTIC FROSTED GLASS LEFT SIDEBAR NAVIGATION                */
+/* ============================================================== */
+.hero-left-sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 70px;
+  z-index: 28;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 110px;
+  padding-bottom: 32px;
+  padding-left: 12px;
+  padding-right: 12px;
+  gap: 16px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(90deg, rgba(7, 10, 18, 0.55) 0%, rgba(7, 10, 18, 0.20) 85%, transparent 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  pointer-events: auto;
+}
+
+.hero-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.hero-nav-item:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.hero-nav-item.active {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.hero-nav-icon {
+  flex-shrink: 0;
+  opacity: 0.82;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.hero-nav-item:hover .hero-nav-icon,
+.hero-nav-item.active .hero-nav-icon {
+  opacity: 1;
+}
+
+/* Tooltip Badge: Displays ONLY when hovered */
+.hero-nav-tooltip {
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-6px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+  background: rgba(11, 18, 28, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 7px 14px;
+  border-radius: 10px;
+  font-family: var(--font-heading, 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif);
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.18s ease;
+  z-index: 60;
+}
+
+.hero-nav-tooltip::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-right-color: rgba(255, 255, 255, 0.18);
+}
+
+.hero-nav-tooltip::after {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 4px solid transparent;
+  border-right-color: rgba(11, 18, 28, 0.94);
+}
+
+.hero-nav-item:hover .hero-nav-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
+
+>>>>>>> origin/main
 .hero-hud-brand {
   font-family: var(--font-heading, 'Outfit', sans-serif);
   font-weight: 800;
@@ -145,6 +266,43 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.hero-about-link-btn {
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  padding: 5px 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hero-about-link-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.hero-about-link-btn:active {
+  transform: translateY(0);
+}
+
+.hero-about-link-btn:focus-visible {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35);
 }
 
 .hero-hud-pill {
@@ -388,6 +546,21 @@
 }
 
 /* Mobile Responsive Optimizations */
+@media (max-width: 900px) {
+  .hero-left-sidebar {
+    display: none;
+  }
+
+  .hero-top-hud {
+    left: 20px;
+    top: 18px;
+  }
+
+  .hero-crt-top-tube {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .hero-top-hud {
     top: 14px;
@@ -413,4 +586,5 @@
     box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
   }
 }
+
 

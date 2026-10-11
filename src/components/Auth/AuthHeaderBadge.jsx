@@ -1,43 +1,22 @@
-import React, { useState } from 'react';
-import { Shield, User, LogOut, LogIn, School, Radio } from 'lucide-react';
+import React from 'react';
+import { User, LogOut, LogIn, School } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function AuthHeaderBadge() {
   const { user, isAuthenticated, isLoading, openAuthModal, logout } = useAuth();
-  const [hoverSignIn, setHoverSignIn] = useState(false);
-  const [hoverSignUp, setHoverSignUp] = useState(false);
-  const [hoverLogout, setHoverLogout] = useState(false);
 
   if (isLoading) {
     return (
       <div
         style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '6px 14px',
-          borderRadius: '8px',
-          background: 'rgba(6, 11, 22, 0.78)',
-          border: '1px solid rgba(56, 189, 248, 0.2)',
-          backdropFilter: 'blur(14px)',
-          fontFamily: '"Share Tech Mono", "JetBrains Mono", monospace',
-          fontSize: '0.72rem',
-          letterSpacing: '0.08em',
-          color: '#38bdf8',
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.5)',
+          padding: '6px 12px',
+          borderRadius: '9999px',
+          background: 'rgba(255, 255, 255, 0.05)',
+          fontSize: '0.75rem',
+          color: '#94a3b8'
         }}
       >
-        <span
-          style={{
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
-            background: '#38bdf8',
-            boxShadow: '0 0 8px #38bdf8',
-            animation: 'pulse 1.4s infinite ease-in-out',
-          }}
-        />
-        <span>CONNECTING GATE...</span>
+        Authenticating...
       </div>
     );
   }
@@ -46,201 +25,113 @@ export default function AuthHeaderBadge() {
     return (
       <div
         style={{
-          display: 'inline-flex',
+          display: 'flex',
           alignItems: 'center',
           gap: '10px',
-          background: 'rgba(6, 11, 22, 0.82)',
-          border: '1px solid rgba(56, 189, 248, 0.28)',
-          borderRadius: '8px',
-          padding: '5px 8px 5px 12px',
+          background: 'rgba(15, 23, 42, 0.8)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          borderRadius: '12px',
+          padding: '6px 8px 6px 14px',
           backdropFilter: 'blur(14px)',
           WebkitBackdropFilter: 'blur(14px)',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(56, 189, 248, 0.06)',
-          transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+          boxShadow: '0 4px 18px rgba(0, 0, 0, 0.28)'
         }}
       >
-        {/* Active connection pulse */}
-        <span
-          style={{
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
-            background: '#10b981',
-            boxShadow: '0 0 8px #10b981',
-            flexShrink: 0,
-          }}
-          title="Active Session"
-        />
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {user.isSchoolAdmin ? (
             <School size={14} color="#38bdf8" />
           ) : (
             <User size={14} color="#34d399" />
           )}
-          <span
-            style={{
-              fontFamily: "'Outfit', sans-serif",
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              letterSpacing: '0.04em',
-              color: '#f1f5f9',
-            }}
-          >
-            {user.email ? user.email.split('@')[0].toUpperCase() : 'CITIZEN'}
+          <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#f1f5f9' }}>
+            {user.email ? user.email.split('@')[0] : 'Citizen'}
           </span>
           <span
             style={{
-              fontFamily: '"Share Tech Mono", "JetBrains Mono", monospace',
-              fontSize: '0.64rem',
+              fontSize: '0.65rem',
               fontWeight: 700,
-              letterSpacing: '0.08em',
               padding: '2px 6px',
-              borderRadius: '4px',
-              background: user.isSchoolAdmin ? 'rgba(56, 189, 248, 0.16)' : 'rgba(16, 185, 129, 0.16)',
-              border: user.isSchoolAdmin ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(16, 185, 129, 0.4)',
+              borderRadius: '9999px',
+              background: user.isSchoolAdmin ? 'rgba(56, 189, 248, 0.2)' : 'rgba(16, 185, 129, 0.2)',
               color: user.isSchoolAdmin ? '#38bdf8' : '#34d399',
-              textTransform: 'uppercase',
+              textTransform: 'uppercase'
             }}
           >
-            {user.isSchoolAdmin ? 'ADMIN' : 'CITIZEN'}
+            {user.isSchoolAdmin ? 'Admin' : 'Citizen'}
           </span>
         </div>
 
         <button
           onClick={logout}
           title="Sign Out"
-          onMouseEnter={() => setHoverLogout(true)}
-          onMouseLeave={() => setHoverLogout(false)}
           style={{
-            background: hoverLogout ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.06)',
-            border: hoverLogout ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '6px',
-            width: '26px',
-            height: '26px',
+            background: 'rgba(255, 255, 255, 0.08)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '28px',
+            height: '28px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: hoverLogout ? '#f87171' : '#94a3b8',
+            color: '#94a3b8',
             cursor: 'pointer',
-            transition: 'all 0.18s ease',
-            boxShadow: hoverLogout ? '0 0 10px rgba(239, 68, 68, 0.35)' : 'none',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#f87171';
+            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '#94a3b8';
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
           }}
         >
-          <LogOut size={12} />
+          <LogOut size={13} />
         </button>
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '4px 6px',
-        borderRadius: '10px',
-        background: 'rgba(6, 11, 22, 0.74)',
-        border: '1px solid rgba(255, 255, 255, 0.14)',
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.6), inset 0 0 10px rgba(56, 189, 248, 0.05)',
-      }}
-    >
-      {/* Monospace Terminal Status Indicator */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '0 6px 0 6px',
-        }}
-      >
-        <span
-          style={{
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
-            background: '#10b981',
-            boxShadow: '0 0 8px rgba(16, 185, 129, 0.8)',
-          }}
-        />
-        <span
-          style={{
-            fontFamily: '"Share Tech Mono", "JetBrains Mono", monospace',
-            fontSize: '0.66rem',
-            letterSpacing: '0.12em',
-            color: '#94a3b8',
-            textTransform: 'uppercase',
-          }}
-        >
-          SYS // AUTH
-        </span>
-      </div>
-
-      {/* Sign In Button */}
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
       <button
+        type="button"
         onClick={() => openAuthModal('signIn')}
-        onMouseEnter={() => setHoverSignIn(true)}
-        onMouseLeave={() => setHoverSignIn(false)}
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '6px',
-          padding: '6px 13px',
-          borderRadius: '7px',
-          background: hoverSignIn ? 'rgba(15, 23, 42, 0.95)' : 'rgba(15, 23, 42, 0.72)',
-          border: hoverSignIn ? '1px solid rgba(56, 189, 248, 0.75)' : '1px solid rgba(56, 189, 248, 0.28)',
-          color: hoverSignIn ? '#ffffff' : '#cbd5e1',
-          fontFamily: "'Outfit', sans-serif",
-          fontSize: '0.78rem',
-          fontWeight: 700,
-          letterSpacing: '0.04em',
+          gap: '8px',
+          padding: '9px 16px',
+          borderRadius: '12px',
+          background: 'rgba(255, 255, 255, 0.08)',
+          border: '1px solid rgba(255, 255, 255, 0.16)',
+          color: '#cbd5e1',
+          fontFamily: "var(--font-heading, 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif)",
+          fontSize: '0.86rem',
+          fontWeight: 500,
+          letterSpacing: '-0.01em',
           cursor: 'pointer',
-          transition: 'all 0.18s ease',
-          boxShadow: hoverSignIn
-            ? '0 0 16px rgba(56, 189, 248, 0.35), inset 0 0 8px rgba(56, 189, 248, 0.15)'
-            : '0 2px 8px rgba(0, 0, 0, 0.3)',
-          transform: hoverSignIn ? 'translateY(-1px)' : 'translateY(0)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
+          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+          userSelect: 'none',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.14)';
+          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.28)';
+          e.currentTarget.style.color = '#ffffff';
+          e.currentTarget.style.transform = 'translateY(-1px)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.16)';
+          e.currentTarget.style.color = '#cbd5e1';
+          e.currentTarget.style.transform = 'translateY(0)';
         }}
       >
-        <LogIn size={12} color={hoverSignIn ? '#38bdf8' : '#94a3b8'} />
-        <span>SIGN IN</span>
-      </button>
-
-      {/* Sign Up Button */}
-      <button
-        onClick={() => openAuthModal('signUp')}
-        onMouseEnter={() => setHoverSignUp(true)}
-        onMouseLeave={() => setHoverSignUp(false)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '6px 15px',
-          borderRadius: '7px',
-          background: hoverSignUp
-            ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(5, 150, 105, 1) 100%)'
-            : 'linear-gradient(135deg, rgba(5, 150, 105, 0.9) 0%, rgba(16, 185, 129, 0.95) 100%)',
-          border: hoverSignUp
-            ? '1px solid rgba(52, 211, 153, 0.9)'
-            : '1px solid rgba(52, 211, 153, 0.55)',
-          color: '#ffffff',
-          fontFamily: "'Outfit', sans-serif",
-          fontSize: '0.78rem',
-          fontWeight: 800,
-          letterSpacing: '0.04em',
-          cursor: 'pointer',
-          transition: 'all 0.18s ease',
-          boxShadow: hoverSignUp
-            ? '0 0 22px rgba(16, 185, 129, 0.55), 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4)'
-            : '0 0 14px rgba(16, 185, 129, 0.3), 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
-          transform: hoverSignUp ? 'translateY(-1px)' : 'translateY(0)',
-        }}
-      >
-        <Shield size={12} color="#ffffff" />
-        <span>SIGN UP</span>
+        <LogIn size={15} style={{ opacity: 0.85 }} />
+        <span>Sign In</span>
       </button>
     </div>
   );
