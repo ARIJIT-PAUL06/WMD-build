@@ -1652,6 +1652,128 @@
   color: var(--stats-bone-100);
 }
 
+/* Option B: Dedicated Telemetry Header Strip (Bloomberg / TradingView Style) */
+.stats-telemetry-hud-strip {
+  display: grid;
+  grid-template-columns: 1.35fr 1.15fr 1.15fr 1.15fr 1.6fr;
+  gap: 12px;
+  padding: 12px 18px;
+  margin-bottom: 16px;
+  background: rgba(14, 18, 22, 0.95);
+  border: 1px solid var(--stats-rule-strong);
+  border-left: 3px solid var(--stats-accent);
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.stats-telemetry-hud-strip.is-scrubbing {
+  border-left-color: #38bdf8;
+  background: rgba(15, 23, 38, 0.98);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(56, 189, 248, 0.15);
+}
+
+.stats-hud-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-left: 1px solid var(--stats-rule);
+  padding-left: 12px;
+}
+
+.stats-hud-cell:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+
+.stats-hud-cell .stats-hud-label {
+  font-family: var(--stats-font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--stats-sage-400);
+}
+
+.stats-hud-val-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stats-hud-val {
+  font-family: var(--stats-font-mono);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--stats-bone-100);
+  line-height: 1.2;
+}
+
+.stats-hud-val.val-number {
+  font-family: var(--stats-font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--stats-bone-100);
+  letter-spacing: -0.01em;
+}
+
+.stats-hud-val .val-unit {
+  font-family: var(--stats-font-mono);
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--stats-sage-400);
+}
+
+.stats-hud-val.val-lead {
+  color: #38bdf8;
+}
+
+.stats-hud-val.val-corridor {
+  color: var(--stats-bone-200);
+}
+
+.stats-hud-val.val-physics {
+  color: var(--stats-accent);
+  font-family: var(--stats-font-serif);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.stats-hud-sub {
+  font-family: var(--stats-font-mono);
+  font-size: 0.68rem;
+  color: var(--stats-sage-500);
+  letter-spacing: 0.04em;
+}
+
+.stats-hud-sub.val-clock {
+  color: #38bdf8;
+  opacity: 0.85;
+}
+
+.stats-naqi-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--stats-font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 2px;
+  border: 1px solid;
+  width: fit-content;
+}
+
+@media (max-width: 1024px) {
+  .stats-telemetry-hud-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-telemetry-hud-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
 .stats-forecast-legend-bar {
   display: flex;
   align-items: center;
@@ -1708,10 +1830,13 @@
   padding: 10px;
   position: relative;
   cursor: crosshair;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .stats-forecast-svg {
   width: 100%;
+  min-width: 820px;
   height: auto;
   display: block;
 }

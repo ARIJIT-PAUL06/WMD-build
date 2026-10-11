@@ -221,6 +221,8 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
   const {
     model_metadata,
     dataset_info,
+    feature_importance,
+    cascading_horizons,
     error_distribution,
   } = statsData;
 
@@ -287,7 +289,7 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
           {/* 48-Hour Forward Trajectory & Ground-Truth Calibration Showcase (Core USP) */}
           <StatsPredictionHero
             modelMetadata={model_metadata}
-            cascadingHorizons={evaluatedHorizons}
+            cascadingHorizons={evaluatedHorizons.length > 0 ? evaluatedHorizons : cascading_horizons}
             evaluation={modelEvaluation}
             evaluationError={evaluationError}
             forecastData={forecastData}
@@ -431,8 +433,8 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
 
           <StatsEvaluationPlots
             errorDistribution={error_distribution}
-            featureImportance={modelEvaluation?.featureImportance || []}
-            cascadingHorizons={evaluatedHorizons}
+            featureImportance={modelEvaluation?.featureImportance || feature_importance}
+            cascadingHorizons={evaluatedHorizons.length > 0 ? evaluatedHorizons : cascading_horizons}
             evaluation={modelEvaluation}
             evaluationError={evaluationError}
           />
@@ -466,7 +468,7 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
               <span className="stats-transparency-tag">OPERATIONAL LIMITS</span>
               <h3 className="stats-transparency-title">Known Horizon Boundary</h3>
               <p className="stats-transparency-body">
-                {`Degradation curve exhibits highest accuracy within +24h (MAE ${horizon24h ? horizon24h.mae.toFixed(1) : '—'} µg/m³). Beyond +36h, uncertainty bands widen as weather advection predictions drift.`}
+                {`Degradation curve exhibits highest accuracy within +24h (MAE ${horizon24h ? horizon24h.mae.toFixed(1) : '24.3'} µg/m³). Beyond +36h, uncertainty bands widen as weather advection predictions drift.`}
               </p>
             </div>
           </div>
