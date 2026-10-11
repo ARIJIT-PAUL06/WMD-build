@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { buildCalibrationGeometry } from './calibrationScatterGeometry';
 
+// Both plots draw into a 540 × 220 viewBox; the wrapper keeps that aspect ratio, so viewBox
+// coordinates map to wrapper percentages at any rendered size.
+const PLOT_VB_W = 540;
+const PLOT_VB_H = 220;
+const toPctX = (x) => `${(x / PLOT_VB_W) * 100}%`;
+const toPctY = (y) => `${(y / PLOT_VB_H) * 100}%`;
+
 /**
  * StatsEvaluationPlots
  * Precision scientific monochrome plots matching the reference instrument aesthetic.
@@ -22,12 +29,17 @@ export default function StatsEvaluationPlots({
 
   // Real held-out (observed, predicted) pairs sampled server-side from the test partition
   const calibrationGeometry = buildCalibrationGeometry(evaluation?.scatterSample || []);
+  const scatterBox = calibrationGeometry.box;
   const scatterPoints = (evaluation?.scatterSample || []).map((p) => ({
     ...p,
     x: calibrationGeometry.toX(p.actual),
     y: calibrationGeometry.toY(p.pred),
   }));
   const pearsonText = evaluation ? evaluation.overall.pearson_r.toFixed(4) : '…';
+  const r2Text = evaluation ? evaluation.overall.r2.toFixed(4) : '…';
+  const acc20Text = evaluation ? `${evaluation.overall.acc_20}%` : '…';
+  const acc40Text = evaluation ? `${evaluation.overall.acc_40}%` : '…';
+  const hoveredBinX = hoveredBin !== null ? 75 + hoveredBin * 88 : 0;
   const evaluationStatus = evaluationError
     ? `Held-out evaluation unavailable: ${evaluationError}`
     : 'Loading held-out evaluation…';
@@ -163,8 +175,10 @@ export default function StatsEvaluationPlots({
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
                 style={{
-                  left: `${75 + hoveredBin * 88}px`,
-                  bottom: '50px',
+                  left: toPctX(hoveredBinX),
+                  bottom: toPctY(50),
+                  // Keep the tooltip inside the plot near either edge
+                  x: hoveredBinX < 140 ? '0%' : hoveredBinX > 400 ? '-100%' : '-50%',
                 }}
               >
                 <span className="tooltip-title">ERROR INTERVAL: {errorDistribution[hoveredBin].range}</span>
@@ -176,8 +190,8 @@ export default function StatsEvaluationPlots({
         </div>
 
         <div className="stats-plot-meta-row">
-          <span className="stats-plot-kpi">Cumulative Accuracy: <strong>54.3% within ±20 µg/m³</strong></span>
-          <span className="stats-plot-kpi">Wide Corridor: <strong>76.8% within ±40 µg/m³</strong></span>
+          <span className="stats-plot-kpi">Cumulative Accuracy: <strong>{`${acc20Text} within ±20 µg/m³`}</strong></span>
+          <span className="stats-plot-kpi">Wide Corridor: <strong>{`${acc40Text} within ±40 µg/m³`}</strong></span>
         </div>
       </motion.div>
 
@@ -202,35 +216,33 @@ export default function StatsEvaluationPlots({
           </p>
         </div>
 
-        <div className="stats-svg-plot-wrap">
+        <div className="stats-svg-plot-wrap stats-svg-plot-wrap--scatter">
           <svg
             className="stats-scatter-svg"
-            viewBox="0 0 540 220"
+            viewBox={`0 0 ${scatterBox.width} ${scatterBox.height}`}
             preserveAspectRatio="xMidYMid meet"
             aria-label="Observed versus Forecasted Calibration Scatter"
           >
-            {/* Grid Lines */}
-            {[50, 100, 150].map((gy) => (
-              <line
-                key={gy}
-                x1="50"
-                y1={gy}
-                x2="500"
-                y2={gy}
-                style={{ stroke: 'var(--stats-plot-grid)' }}
-                strokeDasharray="2,4"
-              />
-            ))}
-            {[150, 270, 390].map((gx) => (
-              <line
-                key={gx}
-                x1={gx}
-                y1="20"
-                x2={gx}
-                y2="185"
-                style={{ stroke: 'var(--stats-plot-grid)' }}
-                strokeDasharray="2,4"
-              />
+            {/* Grid lines on the labelled tick values */}
+            {scatterPoints.length > 0 && calibrationGeometry.ticks.slice(1).map((v) => (
+              <g key={`grid-${v}`}>
+                <line
+                  x1={scatterBox.left}
+                  y1={calibrationGeometry.toY(v)}
+                  x2={scatterBox.right}
+                  y2={calibrationGeometry.toY(v)}
+                  style={{ stroke: 'var(--stats-plot-grid)' }}
+                  strokeDasharray="2,4"
+                />
+                <line
+                  x1={calibrationGeometry.toX(v)}
+                  y1={scatterBox.top}
+                  x2={calibrationGeometry.toX(v)}
+                  y2={scatterBox.bottom}
+                  style={{ stroke: 'var(--stats-plot-grid)' }}
+                  strokeDasharray="2,4"
+                />
+              </g>
             ))}
 
             {scatterPoints.length > 0 && (
@@ -252,14 +264,21 @@ export default function StatsEvaluationPlots({
             )}
 
             {scatterPoints.length === 0 && (
-              <text x="275" y="100" style={{ fill: 'var(--stats-plot-label)' }} fontSize="10" fontFamily="IBM Plex Mono" textAnchor="middle">
+              <text
+                x={(scatterBox.left + scatterBox.right) / 2}
+                y={(scatterBox.top + scatterBox.bottom) / 2}
+                style={{ fill: 'var(--stats-plot-label)' }}
+                fontSize="10"
+                fontFamily="IBM Plex Mono"
+                textAnchor="middle"
+              >
                 {evaluationStatus}
               </text>
             )}
 
             {/* Axis Baselines */}
-            <line x1="50" y1="185" x2="500" y2="185" style={{ stroke: 'var(--stats-plot-axis)' }} strokeWidth="1" />
-            <line x1="50" y1="15" x2="50" y2="185" style={{ stroke: 'var(--stats-plot-axis)' }} strokeWidth="1" />
+            <line x1={scatterBox.left} y1={scatterBox.bottom} x2={scatterBox.right} y2={scatterBox.bottom} style={{ stroke: 'var(--stats-plot-axis)' }} strokeWidth="1" />
+            <line x1={scatterBox.left} y1={scatterBox.top} x2={scatterBox.left} y2={scatterBox.bottom} style={{ stroke: 'var(--stats-plot-axis)' }} strokeWidth="1" />
 
             {/* Empirical Scatter Points */}
             {scatterPoints.map((pt) => {
@@ -292,20 +311,52 @@ export default function StatsEvaluationPlots({
               );
             })}
 
-            {/* X Labels */}
-            {scatterPoints.length > 0 && calibrationGeometry.ticks.map((v, i, arr) => (
-              <text
-                key={v}
-                x={calibrationGeometry.toX(v)}
-                y="202"
-                style={{ fill: 'var(--stats-plot-label)' }}
-                fontSize="9"
-                fontFamily="IBM Plex Mono"
-                textAnchor="middle"
-              >
-                {i === arr.length - 1 ? `${v} µg/m³` : v}
-              </text>
+            {/* Axis tick labels (shared µg/m³ domain on both axes) */}
+            {scatterPoints.length > 0 && calibrationGeometry.ticks.map((v) => (
+              <g key={`tick-${v}`}>
+                <text
+                  x={calibrationGeometry.toX(v)}
+                  y={scatterBox.bottom + 15}
+                  style={{ fill: 'var(--stats-plot-label)' }}
+                  fontSize="9"
+                  fontFamily="IBM Plex Mono"
+                  textAnchor="middle"
+                >
+                  {v}
+                </text>
+                <text
+                  x={scatterBox.left - 7}
+                  y={calibrationGeometry.toY(v) + 3}
+                  style={{ fill: 'var(--stats-plot-label)' }}
+                  fontSize="9"
+                  fontFamily="IBM Plex Mono"
+                  textAnchor="end"
+                >
+                  {v}
+                </text>
+              </g>
             ))}
+            <text
+              x={(scatterBox.left + scatterBox.right) / 2}
+              y={scatterBox.height - 8}
+              style={{ fill: 'var(--stats-plot-label)' }}
+              fontSize="9"
+              fontFamily="IBM Plex Mono"
+              textAnchor="middle"
+              letterSpacing="0.08em"
+            >
+              OBSERVED PM2.5 (µg/m³)
+            </text>
+            <text
+              transform={`translate(11 ${(scatterBox.top + scatterBox.bottom) / 2}) rotate(-90)`}
+              style={{ fill: 'var(--stats-plot-label)' }}
+              fontSize="9"
+              fontFamily="IBM Plex Mono"
+              textAnchor="middle"
+              letterSpacing="0.08em"
+            >
+              PREDICTED PM2.5 (µg/m³)
+            </text>
           </svg>
 
           {/* Interactive Inspection Tooltip for Scatter Points */}
@@ -317,8 +368,11 @@ export default function StatsEvaluationPlots({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
                 style={{
-                  left: `${hoveredPoint.x + 10}px`,
-                  top: `${hoveredPoint.y - 30}px`,
+                  left: `${(hoveredPoint.x / scatterBox.width) * 100}%`,
+                  top: `${(hoveredPoint.y / scatterBox.height) * 100}%`,
+                  // Offset away from the point; flip to the left / below near the right and top edges
+                  x: hoveredPoint.x > 330 ? 'calc(-100% - 10px)' : '10px',
+                  y: hoveredPoint.y < 70 ? '10px' : 'calc(-100% - 10px)',
                 }}
               >
                 <span className="tooltip-title">OBSERVED: {hoveredPoint.actual} µg/m³</span>
@@ -331,7 +385,7 @@ export default function StatsEvaluationPlots({
 
         <div className="stats-plot-meta-row">
           <span className="stats-plot-kpi">Pearson Correlation: <strong>{`R = ${pearsonText}`}</strong></span>
-          <span className="stats-plot-kpi">Explained Variance: <strong>R² = 0.8156</strong></span>
+          <span className="stats-plot-kpi">Explained Variance: <strong>{`R² = ${r2Text}`}</strong></span>
         </div>
       </motion.div>
 
@@ -372,7 +426,7 @@ export default function StatsEvaluationPlots({
                 transition={{ duration: 0.15 }}
               >
                 <div className="stats-feature-info">
-                  <span className="stats-feature-idx">0{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}</span>
+                  <span className="stats-feature-idx">{String(idx + 1).padStart(2, '0')}</span>
                   <span className="stats-feature-name">{item.label}</span>
                 </div>
 

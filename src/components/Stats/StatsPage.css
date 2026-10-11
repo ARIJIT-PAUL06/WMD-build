@@ -58,7 +58,10 @@
   --stats-font-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
 
   /* Spacing */
-  --stats-gutter: clamp(16px, 5vw, 72px);           /* matches WMD 72px at desktop, 16px on phones */
+  /* Content column caps at 1440px and centres on wide/ultrawide displays; sections stay full-bleed.
+     Padding % resolves against the page width, so this is resolution- and scrollbar-independent. */
+  --stats-content-max: 1440px;
+  --stats-gutter: max(clamp(16px, 5vw, 72px), calc((100% - var(--stats-content-max)) / 2));
   --stats-section-pad-y: clamp(64px, 8vw, 104px);
 
   position: relative;
@@ -71,6 +74,12 @@
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Identical glyph rendering across Windows / macOS: never let the OS fake bold/italic weights,
+     and stop mobile Safari / Windows touch browsers from inflating text */
+  font-synthesis: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
 }
 
 .stats-page *,
@@ -278,16 +287,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   width: 100%;
   padding-bottom: 18px;
   border-bottom: 1px solid var(--stats-rule);
-  gap: 20px;
+  gap: 12px 20px;
 }
 
 .stats-hero-nav-left {
   display: flex;
   align-items: center;
   gap: 16px;
+  min-width: 0;
+}
+
+.stats-hero-nav-left .stats-back-button {
+  flex-shrink: 0;
 }
 
 .stats-inst-tag-line {
@@ -301,7 +316,8 @@
 .stats-hero-nav-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 8px 16px;
 }
 
 .stats-instrument-header {
@@ -407,7 +423,7 @@
 /* Metric Strip (Open Editorial Strip) */
 .stats-hero-metrics-strip {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0;
   padding-top: 0;
   border-top: 1px solid var(--stats-rule-strong);
@@ -655,7 +671,7 @@
 
 .stats-section--parchment .stats-dataset-meta-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0;
   border-top: 1px solid var(--stats-rule-ink);
   padding-top: 0;
@@ -710,7 +726,7 @@
 
 .stats-dataset-meta-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0;
   border-top: 1px solid var(--stats-rule-strong);
   padding-top: 0;
@@ -759,7 +775,7 @@
 .stats-eval-grid,
 .stats-eval-plots-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 56px 48px;
   width: 100%;
 }
@@ -778,6 +794,7 @@
   gap: 20px;
   position: relative;
   border-radius: 0;
+  min-width: 0;
 }
 
 .stats-plot-header {
@@ -790,6 +807,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 16px;
 }
 
 .stats-plot-tag {
@@ -830,9 +849,16 @@
 .stats-svg-plot-wrap {
   position: relative;
   width: 100%;
-  height: 220px;
+  /* Match the 540 × 220 viewBox exactly so the plot scales uniformly at every width
+     (no letterboxing) and overlay tooltips can be positioned in viewBox percentages */
+  aspect-ratio: 540 / 220;
   border: 1px solid var(--stats-rule);
   background: var(--stats-plot-bg);
+}
+
+/* Calibration scatter (FIG. 02) uses a taller 540 × 300 viewBox so points are not squashed */
+.stats-svg-plot-wrap--scatter {
+  aspect-ratio: 540 / 300;
 }
 
 .stats-needle-svg,
@@ -904,7 +930,7 @@
 
 .stats-feature-row {
   display: grid;
-  grid-template-columns: 220px 1fr 140px;
+  grid-template-columns: 220px minmax(0, 1fr) 140px;
   align-items: center;
   gap: 16px;
   border-bottom: 1px solid var(--stats-rule);
@@ -1071,7 +1097,7 @@
    ========================================================================== */
 .stats-transparency-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 40px;
   margin-bottom: 64px;
 }
@@ -1126,7 +1152,7 @@
 
 .stats-footer-metadata-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0;
   border-top: 1px solid var(--stats-rule-strong);
 }
@@ -1194,7 +1220,7 @@
    ========================================================================== */
 @media (max-width: 1199px) {
   .stats-hero-metrics-strip {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .stats-hero-metrics-strip .stats-metric-cell:nth-child(4),
@@ -1209,7 +1235,7 @@
 
   .stats-dataset-meta-grid,
   .stats-section--parchment .stats-dataset-meta-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .stats-dataset-meta-grid .stats-dset-cell:nth-child(3),
@@ -1227,11 +1253,11 @@
 
   .stats-eval-grid,
   .stats-eval-plots-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .stats-footer-metadata-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .stats-footer-metadata-grid .stats-footer-meta-col:nth-child(4),
@@ -1245,7 +1271,7 @@
   }
 
   .stats-feature-row {
-    grid-template-columns: 160px 1fr 110px;
+    grid-template-columns: 160px minmax(0, 1fr) 110px;
   }
 }
 
@@ -1255,7 +1281,7 @@
   }
 
   .stats-hero-metrics-strip {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .stats-hero-metrics-strip .stats-metric-cell {
@@ -1276,7 +1302,7 @@
 
   .stats-dataset-meta-grid,
   .stats-section--parchment .stats-dataset-meta-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .stats-dset-cell,
@@ -1300,11 +1326,11 @@
   }
 
   .stats-transparency-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .stats-footer-metadata-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .stats-footer-meta-col {
@@ -1324,7 +1350,7 @@
   }
 
   .stats-feature-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
   }
 
@@ -1359,7 +1385,7 @@
 
 @media (max-width: 479px) {
   .stats-hero-metrics-strip {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .stats-metric-value {
@@ -1368,7 +1394,7 @@
 
   .stats-dataset-meta-grid,
   .stats-section--parchment .stats-dataset-meta-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .stats-dset-cell:nth-child(2n),
@@ -1388,7 +1414,7 @@
   }
 
   .stats-footer-metadata-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .stats-footer-meta-col:nth-child(2n) {
@@ -1616,6 +1642,8 @@
 
 .stats-pred-tabs-group {
   display: flex;
+  flex-wrap: wrap;
+  max-width: 100%;
   gap: 4px;
   background: rgba(0, 0, 0, 0.4);
   padding: 3px;
@@ -1655,7 +1683,7 @@
 /* Option B: Dedicated Telemetry Header Strip (Bloomberg / TradingView Style) */
 .stats-telemetry-hud-strip {
   display: grid;
-  grid-template-columns: 1.35fr 1.15fr 1.15fr 1.15fr 1.6fr;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.15fr) minmax(0, 1.15fr) minmax(0, 1.15fr) minmax(0, 1.6fr);
   gap: 12px;
   padding: 12px 18px;
   margin-bottom: 16px;
@@ -1764,13 +1792,38 @@
 
 @media (max-width: 1024px) {
   .stats-telemetry-hud-strip {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 14px;
+  }
+
+  /* Left column of each row starts flush; the regime cell spans the final row instead of orphaning */
+  .stats-telemetry-hud-strip .stats-hud-cell:nth-child(odd) {
+    border-left: none;
+    padding-left: 0;
+  }
+
+  .stats-telemetry-hud-strip .stats-hud-cell--physics {
+    grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 640px) {
   .stats-telemetry-hud-strip {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stats-telemetry-hud-strip .stats-hud-cell {
+    border-left: none;
+    padding-left: 0;
+  }
+
+  .stats-pred-tabs-group {
+    border-radius: 18px;
+  }
+
+  .stats-pred-tab-btn {
+    white-space: normal;
+    text-align: left;
   }
 }
 

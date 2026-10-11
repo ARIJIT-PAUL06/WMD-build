@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { buildCalibrationGeometry } from './calibrationScatterGeometry';
+import statsData from '../../data/statsModelMetrics.json';
 
 // NAQI Regulatory Scale (Indian National Air Quality Standards)
 function getNAQICategory(pm) {
@@ -48,7 +49,7 @@ function getForecastClockTime(hourOffset) {
  * Exact faithful implementation of the VayuVitals Atmospheric Research Instrument specification.
  */
 export default function StatsPredictionHero({
-  modelMetadata = {},
+  modelMetadata = statsData.model_metadata,
   cascadingHorizons = [],
   evaluation = null,
   evaluationError = null,
@@ -143,13 +144,21 @@ export default function StatsPredictionHero({
   const p32 = trajectoryPoints.find((p) => p.hour === 32) || { hour: 32, pm25: 195 };
 
   // Held-out calibration pairs (real observed vs predicted, sampled server-side from the test partition)
-  const calibrationGeometry = buildCalibrationGeometry(evaluation?.scatterSample || []);
+  // Hero scatter plot box: wider viewBox than FIG. 02 so it fills the full-width card without oversized text
+  const HERO_SCATTER_BOX = { width: 960, height: 440, left: 76, right: 932, top: 20, bottom: 376 };
+  const calibrationGeometry = buildCalibrationGeometry(evaluation?.scatterSample || [], HERO_SCATTER_BOX);
+  const scatterBox = calibrationGeometry.box;
   const scatterPoints = (evaluation?.scatterSample || []).map((p) => ({
     ...p,
     x: calibrationGeometry.toX(p.actual),
     y: calibrationGeometry.toY(p.pred),
   }));
   const pearsonText = evaluation ? evaluation.overall.pearson_r.toFixed(4) : '0.9031';
+  // Held-out metrics: live evaluation when loaded, otherwise the deployed model's training metadata
+  const overallR2 = evaluation?.overall?.r2 ?? modelMetadata.r2_explained_variance;
+  const overallMae = evaluation?.overall?.mae ?? modelMetadata.test_mae_ug_m3;
+  const corridorCoverage = evaluation?.overall?.acc_20 ?? modelMetadata.accuracy_within_20;
+  const testPairs = evaluation?.testPairs;
 
   // SVG Geometry (Exact aspect ratio matching visual design)
   const svgW = 920;
@@ -342,7 +351,7 @@ export default function StatsPredictionHero({
                 <span className="stats-hud-val val-corridor">
                   {`${Math.max(0, Math.round(inspectPm - 20))} – ${Math.round(inspectPm + 20)} µg/m³`}
                 </span>
-                <span className="stats-hud-sub">54.3% test coverage</span>
+                <span className="stats-hud-sub">{`${corridorCoverage ?? '…'}% test coverage`}</span>
               </div>
             </div>
 
@@ -365,7 +374,7 @@ export default function StatsPredictionHero({
             </div>
             <div className="stats-legend-item">
               <span className="stats-legend-swatch confidence-band-swatch" />
-              <span>±20 µg/m³ Operational Corridor (54.3% Coverage)</span>
+              <span>{`±20 µg/m³ Operational Corridor (${corridorCoverage ?? '…'}% Coverage)`}</span>
             </div>
             <div className="stats-legend-item">
               <span className="stats-legend-swatch severe-line-swatch" />
@@ -692,33 +701,34 @@ export default function StatsPredictionHero({
             </div>
             <div className="stats-scatter-stat">
               <span className="stat-label">EXPLAINED VARIANCE (R²)</span>
-              <span className="stat-value">81.6%</span>
-              <span className="stat-sub">R² = 0.8156 on held-out test intervals</span>
+              <span className="stat-value">{overallR2 != null ? `${(overallR2 * 100).toFixed(1)}%` : '…'}</span>
+              <span className="stat-sub">{`R² = ${overallR2 ?? '…'} on held-out test intervals`}</span>
             </div>
             <div className="stats-scatter-stat">
               <span className="stat-label">TEST SAMPLE POPULATION</span>
-              <span className="stat-value">66,484</span>
+              <span className="stat-value">{testPairs != null ? testPairs.toLocaleString('en-US') : '…'}</span>
               <span className="stat-sub">20% chronological test partition</span>
             </div>
             <div className="stats-scatter-stat">
               <span className="stat-label">REGRESSION ERROR (MAE)</span>
-              <span className="stat-value">27.92 µg/m³</span>
+              <span className="stat-value">{overallMae != null ? `${overallMae} µg/m³` : '…'}</span>
               <span className="stat-sub">Mean absolute deviation across airshed</span>
             </div>
           </div>
 
           <div className="stats-scatter-canvas-wrap">
             <svg
-              viewBox="0 0 540 220"
+              viewBox={`0 0 ${scatterBox.width} ${scatterBox.height}`}
               className="stats-scatter-svg"
               preserveAspectRatio="xMidYMid meet"
               aria-label="Observed versus Forecasted Calibration Scatter"
             >
-              {[50, 100, 150].map((gy) => (
-                <line key={gy} x1="50" y1={gy} x2="500" y2={gy} stroke="rgba(255, 255, 255, 0.08)" strokeDasharray="2,4" />
-              ))}
-              {[150, 270, 390].map((gx) => (
-                <line key={gx} x1={gx} y1="20" x2={gx} y2="185" stroke="rgba(255, 255, 255, 0.08)" strokeDasharray="2,4" />
+              {/* Grid lines on the labelled tick values */}
+              {scatterPoints.length > 0 && calibrationGeometry.ticks.slice(1).map((v) => (
+                <g key={`grid-${v}`}>
+                  <line x1={scatterBox.left} y1={calibrationGeometry.toY(v)} x2={scatterBox.right} y2={calibrationGeometry.toY(v)} stroke="rgba(255, 255, 255, 0.08)" strokeDasharray="2,4" />
+                  <line x1={calibrationGeometry.toX(v)} y1={scatterBox.top} x2={calibrationGeometry.toX(v)} y2={scatterBox.bottom} stroke="rgba(255, 255, 255, 0.08)" strokeDasharray="2,4" />
+                </g>
               ))}
 
               {scatterPoints.length > 0 && (
@@ -735,11 +745,18 @@ export default function StatsPredictionHero({
                   />
                 </>
               )}
-              <line x1="50" y1="185" x2="500" y2="185" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="1" />
-              <line x1="50" y1="15" x2="50" y2="185" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="1" />
+              <line x1={scatterBox.left} y1={scatterBox.bottom} x2={scatterBox.right} y2={scatterBox.bottom} stroke="rgba(255, 255, 255, 0.3)" strokeWidth="1" />
+              <line x1={scatterBox.left} y1={scatterBox.top} x2={scatterBox.left} y2={scatterBox.bottom} stroke="rgba(255, 255, 255, 0.3)" strokeWidth="1" />
 
               {scatterPoints.length === 0 && (
-                <text x="275" y="100" fill="rgba(255, 255, 255, 0.55)" fontSize="10" fontFamily="var(--stats-font-mono)" textAnchor="middle">
+                <text
+                  x={(scatterBox.left + scatterBox.right) / 2}
+                  y={(scatterBox.top + scatterBox.bottom) / 2}
+                  fill="rgba(255, 255, 255, 0.55)"
+                  fontSize="12"
+                  fontFamily="var(--stats-font-mono)"
+                  textAnchor="middle"
+                >
                   {evaluationError ? `Held-out evaluation unavailable: ${evaluationError}` : 'Loading held-out evaluation…'}
                 </text>
               )}
@@ -756,7 +773,7 @@ export default function StatsPredictionHero({
                     <circle
                       cx={pt.x}
                       cy={pt.y}
-                      r={isHovered ? 5.0 : 2.2}
+                      r={isHovered ? 6 : 3}
                       fill={isHovered ? '#38bdf8' : 'rgba(255, 255, 255, 0.85)'}
                       opacity={isHovered ? 1 : 0.85}
                     />
@@ -764,23 +781,30 @@ export default function StatsPredictionHero({
                 );
               })}
 
-              {scatterPoints.length > 0 && calibrationGeometry.ticks.map((v, i, arr) => {
-                const isLast = i === arr.length - 1;
-                return (
-                  <text
-                    key={v}
-                    x={calibrationGeometry.toX(v)}
-                    y="202"
-                    fill="rgba(255, 255, 255, 0.45)"
-                    fontSize="9"
-                    fontFamily="var(--stats-font-mono)"
-                    textAnchor={isLast ? 'end' : i === 0 ? 'start' : 'middle'}
-                  >
-                    {isLast ? `${v} µg/m³ (OBSERVED)` : v}
+              {/* Axis tick labels (shared µg/m³ domain on both axes) */}
+              {scatterPoints.length > 0 && calibrationGeometry.ticks.map((v) => (
+                <g key={`tick-${v}`}>
+                  <text x={calibrationGeometry.toX(v)} y={scatterBox.bottom + 20} fill="rgba(255, 255, 255, 0.45)" fontSize="11" fontFamily="var(--stats-font-mono)" textAnchor="middle">
+                    {v}
                   </text>
-                );
-              })}
-              <text x="45" y="25" fill="rgba(255, 255, 255, 0.45)" fontSize="8.5" fontFamily="var(--stats-font-mono)" textAnchor="end">PREDICTED</text>
+                  <text x={scatterBox.left - 10} y={calibrationGeometry.toY(v) + 4} fill="rgba(255, 255, 255, 0.45)" fontSize="11" fontFamily="var(--stats-font-mono)" textAnchor="end">
+                    {v}
+                  </text>
+                </g>
+              ))}
+              <text x={(scatterBox.left + scatterBox.right) / 2} y={scatterBox.height - 14} fill="rgba(255, 255, 255, 0.45)" fontSize="11" fontFamily="var(--stats-font-mono)" textAnchor="middle" letterSpacing="0.08em">
+                OBSERVED PM2.5 (µg/m³)
+              </text>
+              <text
+                transform={`translate(18 ${(scatterBox.top + scatterBox.bottom) / 2}) rotate(-90)`}
+                fill="rgba(255, 255, 255, 0.45)"
+                fontSize="11"
+                fontFamily="var(--stats-font-mono)"
+                textAnchor="middle"
+                letterSpacing="0.08em"
+              >
+                PREDICTED PM2.5 (µg/m³)
+              </text>
             </svg>
 
             {hoveredScatterPoint && (

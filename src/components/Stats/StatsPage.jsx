@@ -143,14 +143,6 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
 
     const ctx = gsap.context(() => {
       if (!prefersReducedMotion) {
-        // Hero typography reveal
-        gsap.from('.stats-instrument-header', {
-          opacity: 0,
-          y: 28,
-          duration: 1.1,
-          ease: 'power3.out',
-        });
-
         // Section header reveals on scroll
         const sections = gsap.utils.toArray('.stats-section');
         sections.forEach((sec) => {
@@ -176,6 +168,13 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
       ctx.revert();
     };
   }, []);
+
+  // Async data changes section heights; recompute trigger offsets so reveals fire at the right scroll position
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const id = window.requestAnimationFrame(() => ScrollTrigger.refresh());
+    return () => window.cancelAnimationFrame(id);
+  }, [modelEvaluation, forecastData, evaluationError, forecastError]);
 
   // Safe navigation back to previous route or default dashboard fallback
   const handleGoBack = useCallback(() => {
@@ -224,6 +223,10 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
     cascading_horizons,
     error_distribution,
   } = statsData;
+
+  // Training timestamp of the deployed model (ISO, UTC)
+  const [trainedDate, trainedClock = ''] = model_metadata.trained_at.split('T');
+  const trainedTime = trainedClock.slice(0, 8);
 
   // Horizons shown in the FIG. 04 table, measured on the held-out test set
   const TABLE_HORIZONS = [1, 3, 6, 12, 24, 48];
@@ -309,19 +312,19 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
           >
             <motion.div className="stats-metric-cell" variants={metricItemVariants}>
               <span className="stats-metric-label">EXPLAINED VARIANCE (R²)</span>
-              <span className="stats-metric-value">{(model_metadata.r2_explained_variance * 100).toFixed(1)}%</span>
+              <span className="stats-metric-value">{`${(model_metadata.r2_explained_variance * 100).toFixed(1)}%`}</span>
               <span className="stats-metric-sub">{`R² = ${model_metadata.r2_explained_variance}`}</span>
             </motion.div>
 
             <motion.div className="stats-metric-cell" variants={metricItemVariants}>
               <span className="stats-metric-label">TEST ACCURACY (±20 µg/m³)</span>
-              <span className="stats-metric-value">{model_metadata.accuracy_within_20}%</span>
+              <span className="stats-metric-value">{`${model_metadata.accuracy_within_20}%`}</span>
               <span className="stats-metric-sub">Within ±20 µg/m³ of truth</span>
             </motion.div>
 
             <motion.div className="stats-metric-cell" variants={metricItemVariants}>
               <span className="stats-metric-label">TEST ACCURACY (±40 µg/m³)</span>
-              <span className="stats-metric-value">{model_metadata.accuracy_within_40}%</span>
+              <span className="stats-metric-value">{`${model_metadata.accuracy_within_40}%`}</span>
               <span className="stats-metric-sub">Wide industrial corridor</span>
             </motion.div>
 
@@ -404,7 +407,7 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
               <span className="stats-section-tag">03 / EMPIRICAL EVALUATION</span>
               <h2 className="stats-section-headline">Verified Test-Set Diagnostics</h2>
             </div>
-            <span className="stats-section-coord">N = 66,484 TEST INTERVALS</span>
+            <span className="stats-section-coord">{`N = ${(modelEvaluation?.testPairs ?? 66484).toLocaleString('en-US')} TEST INTERVALS`}</span>
           </div>
 
           <StatsEvaluationPlots
@@ -477,8 +480,8 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
 
             <div className="stats-footer-meta-col">
               <span className="stats-footer-meta-label">LAST VERIFIED TRAINING</span>
-              <span className="stats-footer-meta-val">2026-10-08</span>
-              <span className="stats-footer-meta-sub">04:07:52 UTC</span>
+              <span className="stats-footer-meta-val">{trainedDate}</span>
+              <span className="stats-footer-meta-sub">{`${trainedTime} UTC`}</span>
             </div>
           </div>
 
