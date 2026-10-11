@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { buildCalibrationGeometry } from './calibrationScatterGeometry';
 
 /**
  * StatsPredictionHero
@@ -9,6 +10,8 @@ import { RefreshCw } from 'lucide-react';
 export default function StatsPredictionHero({
   modelMetadata = {},
   cascadingHorizons = [],
+  evaluation = null,
+  evaluationError = null,
   forecastData = null,
   liveBaseline = null,
   isLoading = false,
@@ -65,46 +68,32 @@ export default function StatsPredictionHero({
   const p18 = trajectoryPoints.find((p) => p.hour === 18) || { hour: 18, pm25: 88 };
   const p32 = trajectoryPoints.find((p) => p.hour === 32) || { hour: 32, pm25: 195 };
 
-  // Held-Out Calibration Scatter Points (Observed vs Predicted on Test Set N=66,484)
-  const scatterPoints = [
-    { id: 1, actual: 35, pred: 38, x: 65, y: 172 },
-    { id: 2, actual: 48, pred: 45, x: 78, y: 165 },
-    { id: 3, actual: 62, pred: 59, x: 92, y: 154 },
-    { id: 4, actual: 75, pred: 71, x: 105, y: 149 },
-    { id: 5, actual: 88, pred: 84, x: 118, y: 142 },
-    { id: 6, actual: 102, pred: 98, x: 135, y: 134 },
-    { id: 7, actual: 115, pred: 112, x: 148, y: 126 },
-    { id: 8, actual: 128, pred: 132, x: 162, y: 122 },
-    { id: 9, actual: 145, pred: 140, x: 178, y: 115 },
-    { id: 10, actual: 160, pred: 155, x: 192, y: 108 },
-    { id: 11, actual: 178, pred: 172, x: 210, y: 101 },
-    { id: 12, actual: 195, pred: 189, x: 225, y: 94 },
-    { id: 13, actual: 210, pred: 204, x: 240, y: 88 },
-    { id: 14, actual: 230, pred: 222, x: 258, y: 81 },
-    { id: 15, actual: 248, pred: 242, x: 275, y: 75 },
-    { id: 16, actual: 265, pred: 258, x: 290, y: 71 },
-    { id: 17, actual: 285, pred: 276, x: 310, y: 64 },
-    { id: 18, actual: 305, pred: 298, x: 330, y: 58 },
-    { id: 19, actual: 325, pred: 315, x: 352, y: 53 },
-    { id: 20, actual: 345, pred: 335, x: 370, y: 48 },
-    { id: 21, actual: 365, pred: 354, x: 390, y: 42 },
-    { id: 22, actual: 385, pred: 372, x: 410, y: 38 },
-    { id: 23, actual: 410, pred: 396, x: 435, y: 33 },
-    { id: 24, actual: 440, pred: 425, x: 460, y: 27 },
-    { id: 25, actual: 465, pred: 450, x: 480, y: 23 },
-    { id: 26, actual: 58, pred: 74, x: 82, y: 158 },
-    { id: 27, actual: 82, pred: 68, x: 112, y: 156 },
-    { id: 28, actual: 110, pred: 128, x: 140, y: 140 },
-    { id: 29, actual: 138, pred: 122, x: 170, y: 130 },
-    { id: 30, actual: 168, pred: 185, x: 195, y: 98 },
-    { id: 31, actual: 192, pred: 170, x: 220, y: 110 },
-    { id: 32, actual: 228, pred: 248, x: 250, y: 72 },
-    { id: 33, actual: 252, pred: 232, x: 280, y: 88 },
-    { id: 34, actual: 290, pred: 318, x: 315, y: 52 },
-    { id: 35, actual: 320, pred: 295, x: 345, y: 68 },
-    { id: 36, actual: 355, pred: 378, x: 380, y: 36 },
-    { id: 37, actual: 390, pred: 360, x: 420, y: 49 },
-  ];
+  // Held-out calibration pairs (real observed vs predicted, sampled server-side from the test partition)
+  const calibrationGeometry = buildCalibrationGeometry(evaluation?.scatterSample || []);
+  const scatterPoints = (evaluation?.scatterSample || []).map((p) => ({
+    ...p,
+    x: calibrationGeometry.toX(p.actual),
+    y: calibrationGeometry.toY(p.pred),
+  }));
+  const pearsonText = evaluation ? evaluation.overall.pearson_r.toFixed(4) : '…';
+
+  // Empirical P10–P90 residual band per lead hour (log space), linearly interpolated between trained horizons
+  const residualHorizons = (evaluation?.horizons || []).slice().sort((a, b) => a.lead_hours - b.lead_hours);
+  const hasBand = residualHorizons.length > 0;
+  const residualQuantilesAt = (hour) => {
+    const h = Math.max(residualHorizons[0].lead_hours, Math.min(hour, residualHorizons[residualHorizons.length - 1].lead_hours));
+    const hiIdx = residualHorizons.findIndex((r) => r.lead_hours >= h);
+    const hi = residualHorizons[hiIdx];
+    const lo = residualHorizons[Math.max(0, hiIdx - 1)];
+    const t = hi.lead_hours === lo.lead_hours ? 0 : (h - lo.lead_hours) / (hi.lead_hours - lo.lead_hours);
+    return {
+      p10: lo.log_residual_p10 + (hi.log_residual_p10 - lo.log_residual_p10) * t,
+      p90: lo.log_residual_p90 + (hi.log_residual_p90 - lo.log_residual_p90) * t,
+    };
+  };
+  const bandCoverage = hasBand
+    ? (residualHorizons.reduce((s, r) => s + r.band_coverage_pct, 0) / residualHorizons.length).toFixed(0)
+    : null;
 
   // SVG Geometry (Exact aspect ratio matching visual design)
   const svgW = 920;
@@ -120,10 +109,11 @@ export default function StatsPredictionHero({
   const getX = (hour) => padL + (hour / 48) * plotW;
   const getY = (val) => padT + plotH - (Math.min(maxPm, Math.max(0, val)) / maxPm) * plotH;
 
-  // Build SVG Paths for Median Forecast and Confidence Band (±20 µg/m³)
+  // Build SVG Paths for Median Forecast and the empirical P10–P90 error band
   const linePoints = trajectoryPoints.map((p) => [getX(p.hour), getY(p.pm25)]);
-  const upperPoints = trajectoryPoints.map((p) => [getX(p.hour), getY(p.pm25 + 20)]);
-  const lowerPoints = trajectoryPoints.map((p) => [getX(p.hour), getY(Math.max(0, p.pm25 - 20))]);
+  const bandBound = (p, key) => Math.max(0, Math.expm1(Math.log1p(p.pm25) + residualQuantilesAt(p.hour)[key]));
+  const upperPoints = hasBand ? trajectoryPoints.map((p) => [getX(p.hour), getY(bandBound(p, 'p90'))]) : [];
+  const lowerPoints = hasBand ? trajectoryPoints.map((p) => [getX(p.hour), getY(bandBound(p, 'p10'))]) : [];
 
   const createSmoothPath = (pts) => {
     if (pts.length === 0) return '';
@@ -146,7 +136,9 @@ export default function StatsPredictionHero({
   const upperPathD = createSmoothPath(upperPoints);
   const lowerRev = [...lowerPoints].reverse();
   const lowerPathD = createSmoothPath(lowerRev);
-  const confidenceBandD = `${upperPathD} L ${lowerRev[0][0].toFixed(1)} ${lowerRev[0][1].toFixed(1)} ${lowerPathD.replace('M', 'L')} Z`;
+  const confidenceBandD = hasBand
+    ? `${upperPathD} L ${lowerRev[0][0].toFixed(1)} ${lowerRev[0][1].toFixed(1)} ${lowerPathD.replace('M', 'L')} Z`
+    : '';
 
   // Reticle Corner Brackets (exact framing shown in reference image)
   const frameL = 16;
@@ -217,7 +209,7 @@ export default function StatsPredictionHero({
               className={`stats-pred-tab-btn ${activeTab === 'scatter' ? 'active' : ''}`}
               onClick={() => setActiveTab('scatter')}
             >
-              <span>Calibration Scatter (R = 0.9031)</span>
+              <span>{`Calibration Scatter (R = ${pearsonText})`}</span>
             </button>
           </div>
 
@@ -252,10 +244,12 @@ export default function StatsPredictionHero({
               <span className="stats-legend-swatch forecast-line-swatch" />
               <span>Median Forecast Trajectory</span>
             </div>
-            <div className="stats-legend-item">
-              <span className="stats-legend-swatch confidence-band-swatch" />
-              <span>±20 µg/m³ Operational Corridor (54.3% Coverage)</span>
-            </div>
+            {hasBand && (
+              <div className="stats-legend-item">
+                <span className="stats-legend-swatch confidence-band-swatch" />
+                <span>{`P10–P90 Empirical Error Band (${bandCoverage}% Held-Out Coverage)`}</span>
+              </div>
+            )}
             <div className="stats-legend-item">
               <span className="stats-legend-swatch severe-line-swatch" />
               <span>Severe Smog Alert (250 µg/m³)</span>
@@ -378,10 +372,14 @@ export default function StatsPredictionHero({
                 );
               })}
 
-              {/* Shaded Probabilistic Confidence Corridor (±20 µg/m³) */}
-              <path d={confidenceBandD} fill="url(#confidenceBandGrad)" />
-              <path d={upperPathD} fill="none" stroke="rgba(195, 175, 120, 0.22)" strokeWidth="0.8" />
-              <path d={createSmoothPath(lowerPoints)} fill="none" stroke="rgba(195, 175, 120, 0.22)" strokeWidth="0.8" />
+              {/* Shaded empirical P10–P90 error band (held-out residual quantiles per lead hour) */}
+              {hasBand && (
+                <>
+                  <path d={confidenceBandD} fill="url(#confidenceBandGrad)" />
+                  <path d={upperPathD} fill="none" stroke="rgba(195, 175, 120, 0.22)" strokeWidth="0.8" />
+                  <path d={createSmoothPath(lowerPoints)} fill="none" stroke="rgba(195, 175, 120, 0.22)" strokeWidth="0.8" />
+                </>
+              )}
 
               {/* Continuous Forecast Median Spline Curve (Warm Ivory Line) */}
               <path
@@ -548,7 +546,7 @@ export default function StatsPredictionHero({
           <div className="stats-scatter-meta-strip">
             <div className="stats-scatter-stat">
               <span className="stat-label">PEARSON CORRELATION (R)</span>
-              <span className="stat-value val-accent">0.9031</span>
+              <span className="stat-value val-accent">{pearsonText}</span>
               <span className="stat-sub">Strong linear ground-truth tracking</span>
             </div>
             <div className="stats-scatter-stat">
@@ -582,10 +580,28 @@ export default function StatsPredictionHero({
                 <line key={gx} x1={gx} y1="20" x2={gx} y2="185" stroke="rgba(255, 255, 255, 0.08)" strokeDasharray="2,4" />
               ))}
 
-              <path d="M 50 165 L 485 10 L 500 25 L 65 180 Z" fill="rgba(56, 189, 248, 0.08)" />
-              <line x1="50" y1="180" x2="495" y2="18" stroke="rgba(255, 255, 255, 0.35)" strokeWidth="1.2" strokeDasharray="4,4" />
+              {scatterPoints.length > 0 && (
+                <>
+                  <path d={calibrationGeometry.corridorPath} fill="rgba(56, 189, 248, 0.08)" />
+                  <line
+                    x1={calibrationGeometry.diagonal.x1}
+                    y1={calibrationGeometry.diagonal.y1}
+                    x2={calibrationGeometry.diagonal.x2}
+                    y2={calibrationGeometry.diagonal.y2}
+                    stroke="rgba(255, 255, 255, 0.35)"
+                    strokeWidth="1.2"
+                    strokeDasharray="4,4"
+                  />
+                </>
+              )}
               <line x1="50" y1="185" x2="500" y2="185" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="1" />
               <line x1="50" y1="15" x2="50" y2="185" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="1" />
+
+              {scatterPoints.length === 0 && (
+                <text x="275" y="100" fill="rgba(255, 255, 255, 0.55)" fontSize="10" fontFamily="var(--stats-font-mono)" textAnchor="middle">
+                  {evaluationError ? `Held-out evaluation unavailable: ${evaluationError}` : 'Loading held-out evaluation…'}
+                </text>
+              )}
 
               {scatterPoints.map((pt) => {
                 const isHovered = hoveredScatterPoint && hoveredScatterPoint.id === pt.id;
@@ -607,10 +623,22 @@ export default function StatsPredictionHero({
                 );
               })}
 
-              <text x="50" y="202" fill="rgba(255, 255, 255, 0.45)" fontSize="9" fontFamily="var(--stats-font-mono)">0</text>
-              <text x="200" y="202" fill="rgba(255, 255, 255, 0.45)" fontSize="9" fontFamily="var(--stats-font-mono)">100</text>
-              <text x="350" y="202" fill="rgba(255, 255, 255, 0.45)" fontSize="9" fontFamily="var(--stats-font-mono)">200</text>
-              <text x="495" y="202" fill="rgba(255, 255, 255, 0.45)" fontSize="9" fontFamily="var(--stats-font-mono)" textAnchor="end">300 µg/m³ (OBSERVED)</text>
+              {scatterPoints.length > 0 && calibrationGeometry.ticks.map((v, i, arr) => {
+                const isLast = i === arr.length - 1;
+                return (
+                  <text
+                    key={v}
+                    x={calibrationGeometry.toX(v)}
+                    y="202"
+                    fill="rgba(255, 255, 255, 0.45)"
+                    fontSize="9"
+                    fontFamily="var(--stats-font-mono)"
+                    textAnchor={isLast ? 'end' : i === 0 ? 'start' : 'middle'}
+                  >
+                    {isLast ? `${v} µg/m³ (OBSERVED)` : v}
+                  </text>
+                );
+              })}
               <text x="45" y="25" fill="rgba(255, 255, 255, 0.45)" fontSize="8.5" fontFamily="var(--stats-font-mono)" textAnchor="end">PREDICTED</text>
             </svg>
 
@@ -618,7 +646,8 @@ export default function StatsPredictionHero({
               <div className="stats-scatter-tooltip">
                 <span>Observed: {hoveredScatterPoint.actual} µg/m³</span>
                 <span>Predicted: {hoveredScatterPoint.pred} µg/m³</span>
-                <span>Residual: {Math.abs(hoveredScatterPoint.actual - hoveredScatterPoint.pred)} µg/m³</span>
+                <span>Residual: {Math.abs(hoveredScatterPoint.actual - hoveredScatterPoint.pred).toFixed(1)} µg/m³</span>
+                <span>Lead time: +{hoveredScatterPoint.horizon_hours}h</span>
               </div>
             )}
           </div>

@@ -14,6 +14,8 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
   let viteServer;
   let StatsPage;
   let StatsPredictionHero;
+  let StatsEvaluationPlots;
+  let evaluation;
 
   before(async () => {
     viteServer = await createServer({
@@ -30,6 +32,15 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
       './src/components/Stats/StatsPredictionHero.jsx'
     );
     StatsPredictionHero = heroMod.default;
+
+    const plotsMod = await viteServer.ssrLoadModule(
+      './src/components/Stats/StatsEvaluationPlots.jsx'
+    );
+    StatsEvaluationPlots = plotsMod.default;
+
+    // Real held-out diagnostics, computed from the deployed model + its test partition
+    const { computeModelEvaluation } = await import('../server/modelEvaluationService.js');
+    evaluation = computeModelEvaluation();
   });
 
   after(async () => {
@@ -94,23 +105,39 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
     assert.ok(!html.includes('stats-dataset-canvas-wrap'), 'Must eliminate synthetic dataset particle wave canvas');
   });
 
-  it('4. Section 03 (Model Evaluation) renders real regression residual histogram, calibration scatter, and feature splits', () => {
-    const html = renderToString(
+  it('4. Section 03 (Model Evaluation) renders residual histogram, live calibration scatter, feature splits and horizons', () => {
+    const pageHtml = renderToString(
       React.createElement(StatsPage, {
         onBack: () => {},
         onOpenDashboard: () => {},
       })
     );
 
-    assert.ok(html.includes('FIG. 01 / REGRESSION RESIDUALS'), 'Must render Fig 01 Residuals');
-    assert.ok(html.includes('Absolute Error Distribution'), 'Must render absolute error distribution');
-    assert.ok(html.includes('FIG. 02 / CALIBRATION SCATTER'), 'Must render Fig 02 Calibration Scatter');
-    assert.ok(html.includes('R = 0.9031') || html.includes('0.903'), 'Must display Pearson R correlation');
-    assert.ok(html.includes('FIG. 03 / FEATURE IMPORTANCE'), 'Must render Fig 03 Feature Importance');
-    assert.ok(html.includes('PM25 NOW'), 'Must display top feature PM25 NOW');
-    assert.ok(html.includes('8,248 splits'), 'Must display actual split count 8,248 splits');
-    assert.ok(html.includes('FIG. 04 / TEMPORAL DEGRADATION'), 'Must render Fig 04 Temporal Horizon Table');
-    assert.ok(html.includes('+1h') && html.includes('+24h') && html.includes('+48h'), 'Must display cascading horizons');
+    assert.ok(pageHtml.includes('FIG. 01 / REGRESSION RESIDUALS'), 'Must render Fig 01 Residuals');
+    assert.ok(pageHtml.includes('Absolute Error Distribution'), 'Must render absolute error distribution');
+    assert.ok(pageHtml.includes('FIG. 02 / CALIBRATION SCATTER'), 'Must render Fig 02 Calibration Scatter');
+    assert.ok(pageHtml.includes('FIG. 03 / FEATURE IMPORTANCE'), 'Must render Fig 03 Feature Importance');
+    assert.ok(pageHtml.includes('FIG. 04 / TEMPORAL DEGRADATION'), 'Must render Fig 04 Temporal Horizon Table');
+    assert.ok(pageHtml.includes('Loading held-out evaluation'), 'Before the evaluation API responds, plots show a loading state');
+    assert.ok(!pageHtml.includes('8,248 splits'), 'Must not render the old hard-coded split count');
+
+    const tableHorizons = evaluation.horizons.filter((h) => [1, 3, 6, 12, 24, 48].includes(h.lead_hours));
+    const html = renderToString(
+      React.createElement(StatsEvaluationPlots, {
+        errorDistribution: [],
+        featureImportance: evaluation.featureImportance,
+        cascadingHorizons: tableHorizons,
+        evaluation,
+      })
+    );
+
+    assert.ok(html.includes(`R = ${evaluation.overall.pearson_r.toFixed(4)}`), 'Must display the measured Pearson R');
+    assert.ok(html.includes(`N = ${evaluation.scatterSample.length} HELD-OUT OBS`), 'Scatter N must equal the plotted sample size');
+    assert.ok(html.includes('PM25 NOW'), 'Must display PM25 NOW feature');
+    assert.ok(html.includes('(890 splits)'), 'Must display the split count read from the model file');
+    assert.ok(html.includes('+1h') && html.includes('+24h') && html.includes('+48h'), 'Must display evaluated horizons');
+    const h24 = evaluation.horizons.find((h) => h.lead_hours === 24);
+    assert.ok(html.includes(h24.mae.toFixed(2)), 'Horizon table must show the measured +24h MAE');
   });
 
   it('5. Prediction Hero & Zero-Synthetic Layout eliminates synthetic WebGL canvases and emphasizes USP', () => {
@@ -123,7 +150,7 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
 
     assert.ok(!html.includes('stats-terrain-frame'), 'Must eliminate synthetic mountain particle terrain');
     assert.ok(!html.includes('stats-dist-canvas-wrap'), 'Must eliminate Section 04 synthetic particle wave');
-    assert.ok(html.includes('Calibration Scatter (R = 0.9031)'), 'Must include calibration scatter USP toggle');
+    assert.ok(html.includes('Calibration Scatter (R = '), 'Must include calibration scatter USP toggle');
     assert.ok(html.includes('CORE PREDICTIVE ENGINE (USP)'), 'Must highlight core predictive engine USP');
   });
 
@@ -156,7 +183,7 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
 
     assert.ok(html.includes('48-Hour Forward PM2.5 Trajectory'), 'Must render headline title');
     assert.ok(html.includes('Median Forecast Trajectory'), 'Must render Median Forecast Trajectory legend');
-    assert.ok(html.includes('±20 µg/m³ Operational Corridor (54.3% Coverage)'), 'Must render corridor legend item');
+    assert.ok(!html.includes('Empirical Error Band'), 'Without evaluation data no error band is drawn');
     assert.ok(html.includes('Severe Smog Alert (250 µg/m³)'), 'Must render Severe Smog Alert (250 µg/m³)');
     assert.ok(html.includes('CPCB Clean Standard (60 µg/m³)'), 'Must render CPCB Clean Standard (60 µg/m³)');
     assert.ok(html.includes('DAY 1: NEXT 24 HOURS (PRIMARY WARNING WINDOW)'), 'Must render Day 1 operational header');
@@ -164,9 +191,23 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
     assert.ok(html.includes('+8h: INVERSION SPIKE 248'), 'Must render +8h Inversion Spike pin');
     assert.ok(html.includes('+18h: SOLAR VENTING 88'), 'Must render +18h Solar Venting pin');
     assert.ok(html.includes('+32h: DAY 2 CREST 195'), 'Must render +32h Day 2 Crest pin');
-    assert.ok(html.includes('Calibration Scatter (R = 0.9031)'), 'Must render Calibration Scatter tab pill');
+    assert.ok(html.includes('Calibration Scatter (R = …)'), 'Calibration tab shows a placeholder until evaluation loads');
     assert.ok(html.includes('NOW') && html.includes('+48h'), 'Must render X-axis time horizons NOW and +48h');
     assert.ok(html.includes('LIVE REFRESH'), 'Must render LIVE REFRESH button');
     assert.ok(html.includes('SYNCED 04:15:30 PM'), 'Must render SYNCED timestamp');
+  });
+
+  it('8. StatsPredictionHero draws the empirical P10–P90 band and measured R once evaluation data is present', () => {
+    const html = renderToString(
+      React.createElement(StatsPredictionHero, {
+        forecastData: null,
+        evaluation,
+        isLoading: false,
+      })
+    );
+
+    const coverage = (evaluation.horizons.reduce((s, h) => s + h.band_coverage_pct, 0) / evaluation.horizons.length).toFixed(0);
+    assert.ok(html.includes(`P10–P90 Empirical Error Band (${coverage}% Held-Out Coverage)`), 'Must render empirical band legend');
+    assert.ok(html.includes(`Calibration Scatter (R = ${evaluation.overall.pearson_r.toFixed(4)})`), 'Must render measured R in tab');
   });
 });
