@@ -142,6 +142,7 @@
   --pollutant-surface-tint: rgba(168, 85, 247, 0.06);
 }
 
+.wmd-doc {
   background-color: var(--ink-900);
   color: var(--bone-200);
   font-family: 'Archivo', -apple-system, BlinkMacSystemFont, sans-serif;

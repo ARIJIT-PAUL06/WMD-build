@@ -13,6 +13,7 @@ import { createServer } from 'vite';
 describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
   let viteServer;
   let StatsPage;
+  let StatsPredictionHero;
 
   before(async () => {
     viteServer = await createServer({
@@ -24,6 +25,11 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
       './src/components/Stats/StatsPage.jsx'
     );
     StatsPage = statsMod.default;
+
+    const heroMod = await viteServer.ssrLoadModule(
+      './src/components/Stats/StatsPredictionHero.jsx'
+    );
+    StatsPredictionHero = heroMod.default;
   });
 
   after(async () => {
@@ -44,7 +50,7 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
     assert.ok(html.includes('stats-laboratory-grid-bg'), 'Should render laboratory grid background');
   });
 
-  it('2. Section 01 (Hero — Model Performance) displays real model name, verified accuracy, and technical annotations', () => {
+  it('2. Section 01 (Hero — Model Performance) displays real model name, verified accuracy, and 48-Hour Prediction Hero', () => {
     const html = renderToString(
       React.createElement(StatsPage, {
         onBack: () => {},
@@ -59,10 +65,11 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
     assert.ok(html.includes('76.8%'), 'Must display verified test accuracy within ±40 µg/m³ (76.8%)');
     assert.ok(html.includes('27.92'), 'Must display verified test MAE (27.92 µg/m³)');
     assert.ok(html.includes('42.92'), 'Must display verified test RMSE (42.92 µg/m³)');
-    assert.ok(html.includes('-8/7C6'), 'Must include technical reference annotation -8/7C6 from reference design');
-    assert.ok(html.includes('8:010:008'), 'Must include technical coordinate code 8:010:008');
+    assert.ok(!html.includes('-8/7C6'), 'Must remove synthetic decorator code -8/7C6');
+    assert.ok(html.includes('AWS SAGEMAKER SERVERLESS · AP-SOUTH-1'), 'Must include authentic cloud telemetry AWS SageMaker Serverless');
     assert.ok(html.includes('stats-back-button'), 'Must include top-left circular back button');
-    assert.ok(html.includes('stats-terrain-frame'), 'Must render 3D particle terrain frame');
+    assert.ok(html.includes('prediction-hero-showcase'), 'Must render 48-hour prediction hero showcase');
+    assert.ok(html.includes('48-Hour Forward PM2.5 Trajectory'), 'Must display 48-Hour Forward PM2.5 Trajectory USP');
     assert.ok(
       html.includes('Classification metrics (F1-Score / Precision / Recall / ROC) are not applicable'),
       'Must clearly label non-applicable metrics per Zero-Faking Directive'
@@ -84,7 +91,7 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
     assert.ok(html.includes('14 Variables'), 'Must display verified 14 engineered variables');
     assert.ok(html.includes('80% (265,932 pairs)'), 'Must display 80% train split');
     assert.ok(html.includes('20% (66,484 held-out pairs)'), 'Must display 20% test split');
-    assert.ok(html.includes('stats-dataset-canvas-wrap'), 'Must render particle wave canvas container');
+    assert.ok(!html.includes('stats-dataset-canvas-wrap'), 'Must eliminate synthetic dataset particle wave canvas');
   });
 
   it('4. Section 03 (Model Evaluation) renders real regression residual histogram, calibration scatter, and feature splits', () => {
@@ -106,7 +113,7 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
     assert.ok(html.includes('+1h') && html.includes('+24h') && html.includes('+48h'), 'Must display cascading horizons');
   });
 
-  it('5. Section 04 (Data Distribution) displays observation topography and multi-year temporal span', () => {
+  it('5. Prediction Hero & Zero-Synthetic Layout eliminates synthetic WebGL canvases and emphasizes USP', () => {
     const html = renderToString(
       React.createElement(StatsPage, {
         onBack: () => {},
@@ -114,9 +121,10 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
       })
     );
 
-    assert.ok(html.includes('Historical Observation Distribution'), 'Must display historical distribution headline');
-    assert.ok(html.includes('stats-dist-canvas-wrap'), 'Must render distribution particle canvas wrap');
-    assert.ok(html.includes('2021-10-15 → 2023-08-15'), 'Must display observation time span');
+    assert.ok(!html.includes('stats-terrain-frame'), 'Must eliminate synthetic mountain particle terrain');
+    assert.ok(!html.includes('stats-dist-canvas-wrap'), 'Must eliminate Section 04 synthetic particle wave');
+    assert.ok(html.includes('Calibration Scatter (R = 0.9031)'), 'Must include calibration scatter USP toggle');
+    assert.ok(html.includes('CORE PREDICTIVE ENGINE (USP)'), 'Must highlight core predictive engine USP');
   });
 
   it('6. Section 05 (Technical Footer) provides lineage, AWS SageMaker architecture, and Zero-Faking declaration', () => {
@@ -133,5 +141,32 @@ describe('VayuVitals Monochromatic Scientific Stats Page Verification', () => {
     assert.ok(html.includes('80/20 Chronological'), 'Footer must state chronological evaluation protocol');
     assert.ok(html.includes('2026-10-08'), 'Footer must state verified training date');
     assert.ok(html.includes('Zero-Faking Directive'), 'Footer must uphold Zero-Faking Directive');
+  });
+
+  it('7. StatsPredictionHero faithfully renders exact 48-hour continuous trajectory SVG, 4-tier legend, atmospheric pins, and calibration tab', () => {
+    const html = renderToString(
+      React.createElement(StatsPredictionHero, {
+        forecastData: null,
+        liveBaseline: 82,
+        isLoading: false,
+        onRefresh: () => {},
+        lastRefreshedTime: '04:15:30 PM',
+      })
+    );
+
+    assert.ok(html.includes('48-Hour Forward PM2.5 Trajectory'), 'Must render headline title');
+    assert.ok(html.includes('Median Forecast Trajectory'), 'Must render Median Forecast Trajectory legend');
+    assert.ok(html.includes('±20 µg/m³ Operational Corridor (54.3% Coverage)'), 'Must render corridor legend item');
+    assert.ok(html.includes('Severe Smog Alert (250 µg/m³)'), 'Must render Severe Smog Alert (250 µg/m³)');
+    assert.ok(html.includes('CPCB Clean Standard (60 µg/m³)'), 'Must render CPCB Clean Standard (60 µg/m³)');
+    assert.ok(html.includes('DAY 1: NEXT 24 HOURS (PRIMARY WARNING WINDOW)'), 'Must render Day 1 operational header');
+    assert.ok(html.includes('DAY 2: 24H TO 48H FORWARD LEAD HORIZON'), 'Must render Day 2 operational header');
+    assert.ok(html.includes('+8h: INVERSION SPIKE 248'), 'Must render +8h Inversion Spike pin');
+    assert.ok(html.includes('+18h: SOLAR VENTING 88'), 'Must render +18h Solar Venting pin');
+    assert.ok(html.includes('+32h: DAY 2 CREST 195'), 'Must render +32h Day 2 Crest pin');
+    assert.ok(html.includes('Calibration Scatter (R = 0.9031)'), 'Must render Calibration Scatter tab pill');
+    assert.ok(html.includes('NOW') && html.includes('+48h'), 'Must render X-axis time horizons NOW and +48h');
+    assert.ok(html.includes('LIVE REFRESH'), 'Must render LIVE REFRESH button');
+    assert.ok(html.includes('SYNCED 04:15:30 PM'), 'Must render SYNCED timestamp');
   });
 });

@@ -64,14 +64,18 @@ router.get('/api/sagemaker/forecast', async (req, res) => {
       threshold
     } = req.query;
 
+    const parsedBase = (basePm25 !== undefined && basePm25 !== null && basePm25 !== '')
+      ? parseInt(basePm25, 10)
+      : undefined;
+
     const forecast = await getSchoolAqiForecast({
-      schoolId: schoolId || facilityId || 'dps_rk_puram',
-      schoolName: schoolName || facilityName || 'Delhi Public School, R.K. Puram',
-      facilityId: facilityId || schoolId || 'dps_rk_puram',
-      facilityName: facilityName || schoolName || 'Delhi Public School, R.K. Puram',
-      lat: lat ? parseFloat(lat) : 28.5672,
-      lon: lon ? parseFloat(lon) : 77.1741,
-      basePm25: basePm25 ? parseInt(basePm25, 10) : 145,
+      schoolId: schoolId || facilityId || 'delhi_regional',
+      schoolName: schoolName || facilityName || 'Delhi NCR Regional Airshed',
+      facilityId: facilityId || schoolId || 'delhi_regional',
+      facilityName: facilityName || schoolName || 'Delhi NCR Regional Airshed',
+      lat: lat ? parseFloat(lat) : 28.6139,
+      lon: lon ? parseFloat(lon) : 77.2090,
+      basePm25: parsedBase,
       threshold: threshold ? parseInt(threshold, 10) : 60
     });
 
