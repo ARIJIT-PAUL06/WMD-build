@@ -14,6 +14,7 @@ const SchoolSafetyContainer = React.lazy(() => import('./components/SchoolSafety
 const AboutPage = React.lazy(() => import('./components/About/AboutPage'));
 const StatsPage = React.lazy(() => import('./components/Stats/StatsPage'));
 import AuthHeaderBadge from './components/Auth/AuthHeaderBadge';
+import AppFooter from './components/Footer/AppFooter';
 
 const PageFallback = () => <div style={{ minHeight: '100vh', background: '#070a12' }} />;
 
@@ -479,6 +480,18 @@ export default function App() {
         {activeMobileTab === 'story' && (
           <div style={{ paddingBottom: '74px' }}>
             <PanoramicScrollHero onExploreTwin={() => setActiveMobileTab('map')} />
+            <AppFooter
+              onHome={() => {
+                setActiveMobileTab('story');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onMap={() => setActiveMobileTab('map')}
+              onPollutants={() => setActiveMobileTab('cargo')}
+              onStats={handleOpenStats}
+              onAbout={handleOpenAbout}
+              onBackToCargo={() => setActiveMobileTab('cargo')}
+              currentRoute="home"
+            />
           </div>
         )}
 
@@ -500,6 +513,24 @@ export default function App() {
                 onOpenDocumentary={handleOpenDocumentary}
               />
             </React.Suspense>
+            <AppFooter
+              onHome={() => {
+                setActiveMobileTab('story');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onMap={() => setActiveMobileTab('map')}
+              onPollutants={() => {
+                setActiveMobileTab('cargo');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onStats={handleOpenStats}
+              onAbout={handleOpenAbout}
+              onBackToCargo={() => {
+                const el = document.getElementById('atmospheric-cargo-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              currentRoute="pollutants"
+            />
           </div>
         )}
 
@@ -605,6 +636,36 @@ export default function App() {
           onOpenDocumentary={handleOpenDocumentary}
         />
       </LazySection>
+
+      {/* 4. SHARED VAYUVITALS ENVIRONMENTAL INTELLIGENCE FOOTER */}
+      <AppFooter
+        onHome={() => {
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location);
+            url.searchParams.delete('page');
+            url.searchParams.delete('view');
+            url.hash = '';
+            window.history.pushState({}, '', url);
+          }
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onMap={scrollToHeatmap}
+        onPollutants={() => {
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location);
+            url.hash = '#pollutants';
+            window.history.pushState({}, '', url);
+          }
+          const el = document.getElementById('atmospheric-cargo-section') || document.getElementById('atmospheric-cargo-placeholder');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onStats={handleOpenStats}
+        onAbout={handleOpenAbout}
+        onBackToCargo={() => {
+          const el = document.getElementById('atmospheric-cargo-section') || document.getElementById('atmospheric-cargo-placeholder');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+      />
 
       {/* Autonomous Atmospheric Shield & Emergency Monitor Test Bench */}
       {isGlobalMonitorOpen && (

@@ -149,4 +149,31 @@ describe('VayuVitals Environmental Poster Redesign About Page Verification', () 
     assert.ok(html.includes('EXPLORE LIVE AIR'), 'CTA button must read "EXPLORE LIVE AIR"');
     assert.strictEqual(html.includes('about-footer'), false, 'Footer section must be completely removed from About page');
   });
+
+  it('8. Meet the Team renders centered heading and four name tags in exact order', () => {
+    const html = renderToString(
+      React.createElement(AboutPage, {
+        onBack: () => {},
+        onSelectPollutant: () => {},
+        onOpenDashboard: () => {},
+      })
+    );
+
+    assert.ok(html.includes('MEET THE TEAM'), 'Must contain centered "MEET THE TEAM" headline');
+    assert.ok(html.includes('about-team-grid'), 'Must render about-team-grid container');
+    assert.ok(html.includes('ARIJIT'), 'Must render member ARIJIT');
+    assert.ok(html.includes('DEEP'), 'Must render member DEEP');
+    assert.ok(html.includes('SIDDHARTH'), 'Must render member SIDDHARTH');
+    assert.ok(html.includes('ARYAN'), 'Must render member ARYAN');
+    assert.ok(html.includes('about-team-arrow-wrapper'), 'Must render circular arrow badge');
+
+    // Verify exact ordering in rendered markup
+    const posArijit = html.indexOf('ARIJIT');
+    const posDeep = html.indexOf('DEEP');
+    const posSiddharth = html.indexOf('SIDDHARTH');
+    const posAryan = html.indexOf('ARYAN');
+    assert.ok(posArijit < posDeep, '01 ARIJIT must precede 02 DEEP');
+    assert.ok(posDeep < posSiddharth, '02 DEEP must precede 03 SIDDHARTH');
+    assert.ok(posSiddharth < posAryan, '03 SIDDHARTH must precede 04 ARYAN');
+  });
 });

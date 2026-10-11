@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { ArrowLeft, ArrowRight, Activity, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Activity, ExternalLink } from 'lucide-react';
+import { motion } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { POLLUTANT_DOCUMENTARY_LIST } from '../../data/pollutantDocumentaries';
 import './AboutPage.css';
 import AboutGrain from './AboutGrain';
+import AppFooter from '../Footer/AppFooter';
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
@@ -29,6 +31,13 @@ const POLLUTANT_EDITORIAL_DESCRIPTIONS = {
   o3: 'Secondary photochemical oxidant formed under intense sunlight.',
   nh3: 'Volatile agricultural and livestock gas fueling aerosol synthesis.',
 };
+
+const TEAM_MEMBERS = [
+  { id: '01', name: 'ARIJIT' },
+  { id: '02', name: 'DEEP' },
+  { id: '03', name: 'SIDDHARTH' },
+  { id: '04', name: 'ARYAN' },
+];
 
 const VERIFIED_STATS = [
   {
@@ -355,6 +364,26 @@ export default function AboutPage({ onBack, onSelectPollutant, onOpenDashboard }
           }
         );
       }
+
+      // CLOSING SCENE: INTEGRATED MEET THE TEAM ENTRANCE
+      const teamBlock = el.querySelector('.about-closing-team');
+      if (teamBlock) {
+        gsap.fromTo(
+          teamBlock,
+          { opacity: 0, y: 20 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.85,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: teamBlock,
+              start: 'top 92%',
+              toggleActions: 'play none none none',
+            },
+          }
+        );
+      }
     }, el);
 
     return () => ctx.revert();
@@ -579,9 +608,9 @@ export default function AboutPage({ onBack, onSelectPollutant, onOpenDashboard }
             <div className="about-threat-frame">
               <div className="about-threat-media-wrap" aria-hidden="true">
                 <img
-                  src="/assets/about/industrial_smoke_plant.jpg"
-                  alt="Industrial smoke plant releasing emissions"
-                  className="about-threat-media"
+                  src="/assets/about/delhi_smog_skyline.webp"
+                  alt="Delhi skyline enveloped in atmospheric smog at dawn with elevated metro rail and India Gate"
+                  className="about-threat-media about-threat-media-inversion"
                   loading="lazy"
                 />
                 <div className="about-threat-gradient" />
@@ -858,9 +887,61 @@ export default function AboutPage({ onBack, onSelectPollutant, onOpenDashboard }
               <span>EXPLORE LIVE AIR</span>
               <ArrowRight className="about-closing-cta-arrow" aria-hidden="true" />
             </button>
+
+            {/* INTEGRATED COMPACT MEET THE TEAM */}
+            <div className="about-closing-team" id="team" aria-label="Meet The Team">
+              <h3 className="about-closing-team-headline">MEET THE TEAM</h3>
+              <div className="about-team-grid about-team-compact-grid">
+                {TEAM_MEMBERS.map((member) => (
+                  <motion.div
+                    key={member.id}
+                    className="about-team-card about-team-card-compact"
+                    whileHover={{
+                      y: -2,
+                      borderColor: 'rgba(255, 255, 255, 0.28)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.07)',
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                  >
+                    <div className="about-team-compact-left">
+                      <span className="about-team-number about-team-compact-num">{member.id}</span>
+                      <span className="about-team-name about-team-compact-name">{member.name}</span>
+                    </div>
+                    <div className="about-team-arrow-wrapper about-team-compact-arrow-wrap" aria-hidden="true">
+                      <ArrowUpRight className="about-team-arrow-icon about-team-compact-arrow" />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
       </main>
+
+      {/* Shared VayuVitals Environmental Intelligence Footer */}
+      <AppFooter
+        currentRoute="about"
+        onHome={onBack}
+        onMap={onOpenDashboard}
+        onAbout={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onBackToCargo={() => {
+          if (onBack) onBack();
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location);
+            url.searchParams.delete('page');
+            url.hash = '#pollutants';
+            window.history.pushState({}, '', url);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+            setTimeout(() => {
+              const el = document.getElementById('atmospheric-cargo-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }, 50);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import StatsGrain from './StatsGrain';
 import statsData from '../../data/statsModelMetrics.json';
 import { apiFetch } from '../../utils/apiFetch';
 import './StatsPage.css';
+import AppFooter from '../Footer/AppFooter';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
@@ -492,6 +493,38 @@ export default function StatsPage({ onBack, onOpenDashboard }) {
           </div>
         </section>
       </main>
+
+      {/* Shared VayuVitals Environmental Intelligence Footer */}
+      <AppFooter
+        currentRoute="statistics"
+        onHome={onBack}
+        onMap={onOpenDashboard}
+        onStats={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onAbout={() => {
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location);
+            url.searchParams.set('page', 'about');
+            window.history.pushState({}, '', url);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          }
+        }}
+        onBackToCargo={() => {
+          if (onBack) onBack();
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location);
+            url.searchParams.delete('page');
+            url.hash = '#pollutants';
+            window.history.pushState({}, '', url);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+            setTimeout(() => {
+              const el = document.getElementById('atmospheric-cargo-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }, 50);
+          }
+        }}
+      />
     </div>
   );
 }

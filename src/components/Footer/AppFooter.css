@@ -1,0 +1,432 @@
+/* =============================================================================
+   VAYUVITALS COMPACT EDITORIAL FOOTER (AppFooter.css)
+   Aesthetic: Refined Editorial Serif, Muted Copper Accents & Solid Black
+   Desktop Height: ~75–85px (Compact Bounded Height)
+   Typography: Distinct, Readable Editorial Scale
+   Mobile / Tablet: Content-Driven Compact Height
+   ============================================================================= */
+
+.vayu-footer {
+  position: relative;
+  width: 100%;
+  min-height: 75px;
+  background-color: #000000;
+  background: #000000;
+  border-top: 1px solid rgba(192, 113, 79, 0.22);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+@media (min-width: 1024px) {
+  .vayu-footer {
+    height: 78px;
+    min-height: 75px;
+    max-height: 85px;
+  }
+}
+
+/* ── Solid Black (#000000) Background - Zero Imagery or Gradients ────────── */
+.vayu-footer__backdrop,
+.vayu-footer__vignette {
+  display: none !important;
+}
+
+/* ── Scaled Circular Halo Ring Outline (from reference design) ──────────── */
+.vayu-footer__halo-ring {
+  position: absolute;
+  right: calc(3% + 5px);
+  top: -20px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 1px solid rgba(192, 113, 79, 0.22);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* ── Content Grid Container (1250px Max Width, Centered Horizontally) ────── */
+.vayu-footer__container {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  max-width: 1250px;
+  margin: 0 auto;
+  padding: 6px 28px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+/* ── LEFT SIDE: Branding, Tagline & Corner-Bracket Statement ─────────────── */
+.vayu-footer__left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Top-Left Hairline Corner Accent */
+.vayu-footer__bracket-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.vayu-footer__lines-accent {
+  position: relative;
+  width: 15px;
+  height: 34px;
+  flex-shrink: 0;
+}
+
+.vayu-footer__line-horiz {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 15px;
+  height: 1px;
+  background-color: rgba(192, 113, 79, 0.65);
+}
+
+.vayu-footer__line-vert {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 34px;
+  background-color: rgba(192, 113, 79, 0.65);
+}
+
+.vayu-footer__statement {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  color: #ded8cb;
+  line-height: 1.25;
+  margin: 0;
+  text-transform: uppercase;
+  padding-top: 1px;
+}
+
+.vayu-footer__statement-line {
+  display: block;
+}
+
+.vayu-footer__brand-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.vayu-footer__logo {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1;
+  color: #f5f0e6;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  user-select: none;
+}
+
+.vayu-footer__subtitle {
+  font-family: 'Archivo', 'IBM Plex Mono', sans-serif;
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: #a8a29e;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+/* ── CENTER: Left Sidebar Destination Navigation Links ───────────────────── */
+.vayu-footer__nav-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.vayu-footer__nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 4px 14px;
+}
+
+.vayu-footer__nav-link {
+  background: none;
+  border: none;
+  padding: 3px 2px;
+  font-family: 'IBM Plex Mono', 'Space Grotesk', monospace;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  text-decoration: none;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.vayu-footer__nav-link:hover {
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(192, 113, 79, 0.45);
+}
+
+.vayu-footer__nav-link:focus-visible {
+  outline: 2px solid rgba(192, 113, 79, 0.8);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.vayu-footer__nav-link.active {
+  color: #f5f0e6;
+  font-weight: 600;
+}
+
+.vayu-footer__nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3.5px;
+  height: 3.5px;
+  border-radius: 50%;
+  background-color: #c0714f;
+  box-shadow: 0 0 5px #c0714f;
+}
+
+.vayu-footer__nav-divider {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background-color: rgba(192, 113, 79, 0.4);
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+/* ── RIGHT SIDE: Tagline Quote & Atmospheric Cargo Link ──────────────────── */
+.vayu-footer__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  gap: 4px;
+}
+
+.vayu-footer__tagline {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: #d6d0c4;
+  line-height: 1.25;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.vayu-footer__tagline-line {
+  display: block;
+}
+
+.vayu-footer__cargo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(192, 113, 79, 0.08);
+  border: 1px solid rgba(192, 113, 79, 0.45);
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-family: 'Archivo', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  color: #c0714f;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.22s ease, border-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
+  white-space: nowrap;
+}
+
+.vayu-footer__cargo-btn:hover {
+  background-color: rgba(192, 113, 79, 0.22);
+  border-color: #c0714f;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(192, 113, 79, 0.35);
+}
+
+.vayu-footer__cargo-btn:focus-visible {
+  outline: 2px solid #c0714f;
+  outline-offset: 2px;
+}
+
+/* ── TABLET RESPONSIVE (768px – 1023px) ──────────────────────────────────── */
+@media (max-width: 1023px) and (min-width: 768px) {
+  .vayu-footer {
+    height: auto;
+    min-height: 75px;
+    padding: 10px 0;
+  }
+
+  .vayu-footer__container {
+    padding: 6px 20px;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+  }
+
+  .vayu-footer__nav-group {
+    grid-column: 1 / -1;
+    order: 3;
+    padding-top: 5px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .vayu-footer__nav {
+    flex-wrap: wrap;
+    gap: 4px 14px;
+  }
+
+  .vayu-footer__logo {
+    font-size: 20px;
+  }
+
+  .vayu-footer__subtitle {
+    font-size: 8px;
+  }
+
+  .vayu-footer__statement {
+    font-size: 9.5px;
+  }
+
+  .vayu-footer__nav-link {
+    font-size: 10.5px;
+  }
+
+  .vayu-footer__tagline {
+    font-size: 9.5px;
+  }
+
+  .vayu-footer__cargo-btn {
+    font-size: 9.5px;
+    padding: 4px 11px;
+  }
+
+  .vayu-footer__halo-ring {
+    right: 12px;
+    top: -15px;
+    width: 100px;
+    height: 100px;
+  }
+}
+
+/* ── MOBILE RESPONSIVE (< 768px) ─────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .vayu-footer {
+    height: auto;
+    min-height: auto;
+    padding: 16px 0 18px 0;
+  }
+
+  .vayu-footer__container {
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .vayu-footer__left {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .vayu-footer__bracket-wrap {
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .vayu-footer__lines-accent {
+    width: 14px;
+    height: 28px;
+  }
+
+  .vayu-footer__line-horiz {
+    width: 14px;
+  }
+
+  .vayu-footer__line-vert {
+    height: 28px;
+  }
+
+  .vayu-footer__logo {
+    font-size: 21px;
+  }
+
+  .vayu-footer__subtitle {
+    font-size: 8px;
+    letter-spacing: 0.16em;
+  }
+
+  .vayu-footer__statement {
+    font-size: 9.5px;
+  }
+
+  .vayu-footer__nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 12px;
+    max-width: 340px;
+  }
+
+  .vayu-footer__nav-link {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+
+  .vayu-footer__nav-divider {
+    display: none;
+  }
+
+  .vayu-footer__right {
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+  }
+
+  .vayu-footer__tagline {
+    font-size: 9.5px;
+  }
+
+  .vayu-footer__cargo-btn {
+    font-size: 9.5px;
+    padding: 5px 13px;
+  }
+
+  .vayu-footer__halo-ring {
+    display: none;
+  }
+}
+
+/* ── REDUCED MOTION PREFERENCE ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .vayu-footer__nav-link,
+  .vayu-footer__cargo-btn {
+    transition: none !important;
+  }
+}
