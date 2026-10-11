@@ -161,4 +161,22 @@ describe('VayuVitals Shared Environmental Intelligence Footer Verification', () 
     assert.strictEqual(matches, 1, 'StatsPage must render AppFooter exactly once');
     assert.ok(html.includes('vayu-footer'), 'StatsPage must contain vayu-footer');
   });
+
+  it('10. AwsServicesPage renders the shared VayuVitals footer exactly once', async () => {
+    const awsMod = await viteServer.ssrLoadModule(
+      './src/components/AwsServices/AwsServicesPage.jsx'
+    );
+    const AwsServicesPage = awsMod.default;
+
+    const html = renderToString(
+      React.createElement(AwsServicesPage, {
+        onBack: () => {},
+        onOpenDashboard: () => {},
+      })
+    );
+
+    const matches = (html.match(/id="app-footer"/g) || []).length;
+    assert.strictEqual(matches, 1, 'AwsServicesPage must render AppFooter exactly once');
+    assert.ok(html.includes('vayu-footer'), 'AwsServicesPage must contain vayu-footer');
+  });
 });

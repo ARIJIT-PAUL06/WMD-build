@@ -68,7 +68,7 @@ describe('VayuVitals Navigation Architecture Verification', () => {
     assert.ok(html.includes('VAYUVITALS'), 'Must render VAYUVITALS brand text');
   });
 
-  it('3. Left sidebar contains all 5 primary navigation items including Statistics and About', () => {
+  it('3. Left sidebar contains all 6 primary navigation items including Statistics, AWS Services, and About', () => {
     const html = renderToString(
       React.createElement(PanoramicScrollHero, {
         onExploreTwin: () => {},
@@ -82,6 +82,7 @@ describe('VayuVitals Navigation Architecture Verification', () => {
     assert.ok(html.includes('id="hero-sidebar-nav-map"'), 'Must render Live AQI Map sidebar button');
     assert.ok(html.includes('id="hero-sidebar-nav-pollutants"'), 'Must render Pollutants sidebar button');
     assert.ok(html.includes('id="hero-sidebar-nav-stats"'), 'Must render Statistics sidebar button');
+    assert.ok(html.includes('id="hero-sidebar-nav-aws"'), 'Must render AWS Services sidebar button');
     assert.ok(html.includes('id="hero-sidebar-nav-about"'), 'Must render About sidebar button');
   });
 
@@ -130,6 +131,23 @@ describe('VayuVitals Navigation Architecture Verification', () => {
     assert.ok(
       html.includes('class="hero-nav-item active"') && html.includes('id="hero-sidebar-nav-home"'),
       'Home sidebar button must have active class when currentRoute is home'
+    );
+  });
+
+  it('7. Active sidebar item updates correctly when route is aws-services', () => {
+    const html = renderToString(
+      React.createElement(PanoramicScrollHero, {
+        onExploreTwin: () => {},
+        onOpenAbout: () => {},
+        onOpenStats: () => {},
+        onOpenAwsServices: () => {},
+        currentRoute: 'aws-services',
+      })
+    );
+
+    assert.ok(
+      html.includes('class="hero-nav-item active"') && html.includes('id="hero-sidebar-nav-aws"'),
+      'AWS Services sidebar button must have active class when currentRoute is aws-services'
     );
   });
 });

@@ -4,7 +4,8 @@ import {
   MapPin,
   Wind,
   BarChart3,
-  Info
+  Info,
+  Cloud,
 } from 'lucide-react';
 import CrtScreenLensCanvas from './CrtScreenLensCanvas';
 import AuthHeaderBadge from '../Auth/AuthHeaderBadge';
@@ -78,6 +79,16 @@ function getRouteFromUrl() {
   }
 
   if (
+    params.get('page') === 'aws-services' ||
+    params.get('view') === 'aws-services' ||
+    params.get('aws') === 'true' ||
+    hash === '#aws' ||
+    path === '/aws-services'
+  ) {
+    return 'aws-services';
+  }
+
+  if (
     params.get('page') === 'about' ||
     params.get('view') === 'about' ||
     params.get('about') === 'true' ||
@@ -119,6 +130,7 @@ export default function PanoramicScrollHero({
   onExploreTwin,
   onOpenAbout,
   onOpenStats,
+  onOpenAwsServices,
   currentRoute,
 }) {
   const trackRef = useRef(null);
@@ -193,6 +205,8 @@ export default function PanoramicScrollHero({
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     } else if (id === 'statistics') {
       if (onOpenStats) onOpenStats();
+    } else if (id === 'aws-services') {
+      if (onOpenAwsServices) onOpenAwsServices();
     } else if (id === 'about') {
       if (onOpenAbout) onOpenAbout();
     }
@@ -241,7 +255,11 @@ export default function PanoramicScrollHero({
 
       // Dynamic section indicator when scrolling through desktop view
       const activeUrlRoute = getRouteFromUrl();
-      if (activeUrlRoute === 'about' || activeUrlRoute === 'statistics') {
+      if (
+        activeUrlRoute === 'about' ||
+        activeUrlRoute === 'statistics' ||
+        activeUrlRoute === 'aws-services'
+      ) {
         setActiveNav(activeUrlRoute);
       } else {
         const cargoEl =
@@ -550,6 +568,17 @@ export default function PanoramicScrollHero({
           >
             <BarChart3 size={19} className="hero-nav-icon" />
             <span className="hero-nav-tooltip" role="tooltip">Statistics</span>
+          </button>
+
+          <button
+            type="button"
+            className={`hero-nav-item ${activeNav === 'aws-services' ? 'active' : ''}`}
+            onClick={() => handleNavClick('aws-services')}
+            aria-label="AWS Services"
+            id="hero-sidebar-nav-aws"
+          >
+            <Cloud size={19} className="hero-nav-icon" />
+            <span className="hero-nav-tooltip" role="tooltip">AWS Services</span>
           </button>
 
           <button

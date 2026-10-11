@@ -1,0 +1,401 @@
+/**
+ * AwsServicesPage.css
+ * VayuVitals - AWS Services Architectural Catalog Stylesheet
+ *
+ * Inherits the complete visual design system from StatsPage.css.
+ * Strict Scope Rules:
+ * - Scoped strictly under .aws-page
+ * - Uses ONLY existing --stats-* tokens; zero external colour literals
+ * - Grids use minmax(0, 1fr) tracks for bulletproof cross-OS rendering
+ */
+
+/* ==========================================================================
+   1. HERO METRIC STRIP OVERRIDE (4-COLUMNS)
+   ========================================================================== */
+.aws-page .stats-hero-metrics-strip {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 899px) {
+  .aws-page .stats-hero-metrics-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 479px) {
+  .aws-page .stats-hero-metrics-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ==========================================================================
+   2. ARCHITECTURE FLOW LANES (PARCHMENT SECTION)
+   ========================================================================== */
+.aws-page .aws-arch-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  width: 100%;
+}
+
+.aws-page .aws-arch-lane {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  padding-bottom: 36px;
+  border-bottom: 1px dashed var(--stats-rule-ink);
+}
+
+.aws-page .aws-arch-lane:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.aws-page .aws-arch-lane-header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+}
+
+.aws-page .aws-arch-lane-badge {
+  font-family: var(--stats-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--stats-accent-deep);
+  background: rgba(63, 106, 94, 0.12);
+  border: 1px solid var(--stats-rule-ink);
+  padding: 3px 8px;
+  text-transform: uppercase;
+}
+
+.aws-page .aws-arch-lane-title {
+  font-family: var(--stats-font-serif);
+  font-size: clamp(1.4rem, 2.2vw, 1.85rem);
+  font-weight: 600;
+  color: var(--stats-ink-900);
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+.aws-page .aws-arch-lane-sub {
+  font-family: var(--stats-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--stats-olive-600);
+}
+
+.aws-page .aws-arch-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  position: relative;
+  width: 100%;
+}
+
+.aws-page .aws-arch-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--stats-rule-ink);
+  padding: 20px 18px;
+  box-sizing: border-box;
+  transition: background-color 200ms ease, border-color 200ms ease, transform 200ms ease;
+}
+
+.aws-page .aws-arch-node:hover {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: var(--stats-accent-deep);
+}
+
+.aws-page .aws-arch-connector {
+  position: absolute;
+  top: 50%;
+  right: -12px;
+  width: 10px;
+  height: 2px;
+  background: var(--stats-rule-ink);
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.aws-page .aws-arch-connector::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -3px;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 5px solid var(--stats-rule-ink);
+}
+
+.aws-page .aws-arch-node:last-child .aws-arch-connector {
+  display: none;
+}
+
+.aws-page .aws-arch-step-num {
+  font-family: var(--stats-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--stats-accent-deep);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.aws-page .aws-arch-step-title {
+  font-family: var(--stats-font-label);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--stats-ink-900);
+  margin: 0 0 4px;
+}
+
+.aws-page .aws-arch-step-service {
+  font-family: var(--stats-font-serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--stats-accent-deep);
+  margin-bottom: 8px;
+  line-height: 1.25;
+}
+
+.aws-page .aws-arch-step-detail {
+  font-family: var(--stats-font-serif);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--stats-olive-600);
+  margin: 0;
+}
+
+/* Architecture flow responsive stacking */
+@media (max-width: 1199px) and (min-width: 900px) {
+  .aws-page .aws-arch-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .aws-page .aws-arch-node:nth-child(2) .aws-arch-connector {
+    display: none;
+  }
+}
+
+@media (max-width: 899px) {
+  .aws-page .aws-arch-steps {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .aws-page .aws-arch-connector {
+    top: auto;
+    bottom: -10px;
+    right: 50%;
+    width: 2px;
+    height: 8px;
+    transform: translateX(50%);
+  }
+
+  .aws-page .aws-arch-connector::after {
+    top: auto;
+    bottom: 0;
+    right: -3px;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid var(--stats-rule-ink);
+  }
+}
+
+/* ==========================================================================
+   3. SERVICE CATALOGUE CARDS GRID (DEEP BAND)
+   ========================================================================== */
+.aws-page .aws-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+.aws-page .aws-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--stats-ink-900);
+  border: 1px solid var(--stats-rule);
+  padding: 28px 24px;
+  box-sizing: border-box;
+  transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+
+.aws-page .aws-card:hover {
+  border-color: var(--stats-accent-rule);
+  box-shadow: 0 8px 30px var(--stats-shadow);
+  transform: translateY(-2px);
+}
+
+.aws-page .aws-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.aws-page .aws-card-tag {
+  font-family: var(--stats-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--stats-accent);
+  background: var(--stats-accent-tint);
+  border: 1px solid var(--stats-accent-rule);
+  padding: 3px 8px;
+}
+
+.aws-page .aws-card-region {
+  font-family: var(--stats-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--stats-sage-400);
+  text-transform: uppercase;
+}
+
+.aws-page .aws-card-name {
+  font-family: var(--stats-font-serif);
+  font-size: clamp(1.45rem, 2.1vw, 1.85rem);
+  font-weight: 600;
+  color: var(--stats-bone-100);
+  margin: 0 0 10px;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.aws-page .aws-card-purpose {
+  font-family: var(--stats-font-serif);
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: var(--stats-bone-200);
+  opacity: 0.9;
+  margin: 0 0 20px;
+}
+
+.aws-page .aws-card-bullets {
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-grow: 1;
+}
+
+.aws-page .aws-card-bullets li {
+  position: relative;
+  font-family: var(--stats-font-serif);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--stats-sage-400);
+  padding-left: 18px;
+}
+
+.aws-page .aws-card-bullets li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--stats-accent);
+}
+
+.aws-page .aws-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--stats-rule);
+  padding-top: 16px;
+  margin: 0;
+}
+
+.aws-page .aws-card-meta-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.aws-page .aws-card-meta-item dt {
+  font-family: var(--stats-font-label);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--stats-sage-500);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.aws-page .aws-card-meta-item dd {
+  margin: 0;
+  font-family: var(--stats-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--stats-bone-200);
+  text-align: right;
+  word-break: break-all;
+}
+
+.aws-page .aws-card-meta-item dd code {
+  color: var(--stats-accent);
+  background: transparent;
+  font-family: inherit;
+}
+
+/* Service cards responsive breakpoints */
+@media (max-width: 1199px) and (min-width: 480px) {
+  .aws-page .aws-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 479px) {
+  .aws-page .aws-cards-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ==========================================================================
+   4. FOOTER METADATA GRID RESPONSIVE BREAKPOINTS
+   ========================================================================== */
+@media (max-width: 1199px) and (min-width: 900px) {
+  .aws-page .stats-footer-metadata-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .aws-page .stats-footer-meta-col:nth-child(4) {
+    border-top: 1px solid var(--stats-rule);
+    border-left: 0;
+  }
+
+  .aws-page .stats-footer-meta-col:nth-child(5) {
+    border-top: 1px solid var(--stats-rule);
+  }
+}
+
+/* ==========================================================================
+   5. REDUCED MOTION PREFERENCES
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .aws-page .aws-card,
+  .aws-page .aws-arch-node {
+    transition: none !important;
+    transform: none !important;
+  }
+}
