@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import CrtScreenLensCanvas from './CrtScreenLensCanvas';
 import AuthHeaderBadge from '../Auth/AuthHeaderBadge';
+import { crtCornerAnchor } from './crtFaceplate';
 import './PanoramicScrollHero.css';
 
 /**
@@ -93,6 +94,13 @@ function getRouteFromUrl() {
   return 'home';
 }
 
+// Faceplate-space inset of the brand / auth corners on the curved CRT glass (0..1 of the screen).
+// Hard glass edge is at 0.025 and the shader vignette fades in up to 0.06; 0.035–0.06 is the usable range.
+const CRT_CORNER_INSET_X = 0.045;
+const CRT_CORNER_INSET_Y = 0.05;
+// 1 = follow the glass exactly; lower to soften the tilt.
+const CRT_TILT_FACTOR = 1;
+
 export default function PanoramicScrollHero({
   onExploreTwin,
   onOpenAbout,
@@ -105,6 +113,8 @@ export default function PanoramicScrollHero({
   const brandTextRef = useRef(null);
   const bottomFadeRef = useRef(null);
   const authContainerRef = useRef(null);
+  const viewportRef = useRef(null);
+  const brandHudRef = useRef(null);
 
   // High-frequency values use refs instead of React state to eliminate re-renders during interaction
   const scrollProgressRef = useRef(0);
@@ -346,6 +356,41 @@ export default function PanoramicScrollHero({
     };
   }, []);
 
+  // Pin the brand and auth cluster to the curved CRT glass corners (mirrors the shader's barrel math)
+  useEffect(() => {
+    const place = () => {
+      const root = viewportRef.current;
+      if (!root) return;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const brandW = brandHudRef.current ? brandHudRef.current.offsetWidth : 240;
+      const authW = authContainerRef.current ? authContainerRef.current.offsetWidth : 120;
+
+      const brand = crtCornerAnchor(CRT_CORNER_INSET_X, CRT_CORNER_INSET_Y, brandW, w, h, 'left');
+      const auth = crtCornerAnchor(1 - CRT_CORNER_INSET_X, CRT_CORNER_INSET_Y, authW, w, h, 'right');
+
+      root.style.setProperty('--crt-brand-left', `${brand.x}px`);
+      root.style.setProperty('--crt-brand-top', `${brand.y}px`);
+      root.style.setProperty('--crt-brand-tilt', `${brand.angle * CRT_TILT_FACTOR}deg`);
+      root.style.setProperty('--crt-auth-right', `${auth.x}px`);
+      root.style.setProperty('--crt-auth-top', `${auth.y}px`);
+      root.style.setProperty('--crt-auth-tilt', `${auth.angle * CRT_TILT_FACTOR}deg`);
+    };
+
+    place();
+    window.addEventListener('resize', place);
+    // Re-measure once web fonts settle (the wordmark width changes when Outfit loads)
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+    // Auth badge width changes between loading / Sign In / signed-in states
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(place) : null;
+    if (ro && authContainerRef.current) ro.observe(authContainerRef.current);
+
+    return () => {
+      window.removeEventListener('resize', place);
+      if (ro) ro.disconnect();
+    };
+  }, []);
+
   return (
     <div
       ref={trackRef}
@@ -358,6 +403,7 @@ export default function PanoramicScrollHero({
     >
       {/* Sticky Fullscreen Viewport */}
       <div
+        ref={viewportRef}
         style={{
           position: 'sticky',
           top: 0,
@@ -502,23 +548,25 @@ export default function PanoramicScrollHero({
         {/* ============================================================== */}
         {/* TOP BRAND DISPLAY (Clean, Modern, Warm Amber)                 */}
         {/* ============================================================== */}
-        <div className="hero-top-hud">
-          <div className="hero-hud-brand">
-            <span
-              ref={brandTextRef}
-              style={{
-                fontFamily: "'Outfit', sans-serif",
-                fontWeight: 900,
-                fontSize: '1.45rem',
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-                color: '#f59e0b',
-                textShadow: '0 0 16px rgba(245, 158, 11, 0.65), 0 0 32px rgba(245, 158, 11, 0.25)',
-                transition: 'color 0.15s ease, text-shadow 0.15s ease',
-              }}
-            >
-              VAYUVITALS
-            </span>
+        <div className="hero-top-hud" ref={brandHudRef}>
+          <div className="hero-crt-tilt hero-crt-tilt--left">
+            <div className="hero-hud-brand">
+              <span
+                ref={brandTextRef}
+                style={{
+                  fontFamily: "'Outfit', sans-serif",
+                  fontWeight: 900,
+                  fontSize: '1.45rem',
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  color: '#f59e0b',
+                  textShadow: '0 0 16px rgba(245, 158, 11, 0.65), 0 0 32px rgba(245, 158, 11, 0.25)',
+                  transition: 'color 0.15s ease, text-shadow 0.15s ease',
+                }}
+              >
+                VAYUVITALS
+              </span>
+            </div>
           </div>
         </div>
 
@@ -532,14 +580,14 @@ export default function PanoramicScrollHero({
           className="hero-top-auth-cluster"
           style={{
             position: 'absolute',
-            top: '24px',
-            right: '28px',
             zIndex: 15,
             transition: 'transform 0.06s linear, opacity 0.1s ease',
             willChange: 'transform, opacity',
           }}
         >
-          <AuthHeaderBadge />
+          <div className="hero-crt-tilt hero-crt-tilt--right">
+            <AuthHeaderBadge variant="crt" />
+          </div>
         </div>
       </div>
     </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { User, LogOut, LogIn, School } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-export default function AuthHeaderBadge() {
+export default function AuthHeaderBadge({ variant = 'default' } = {}) {
   const { user, isAuthenticated, isLoading, openAuthModal, logout } = useAuth();
 
   if (isLoading) {
@@ -89,6 +89,19 @@ export default function AuthHeaderBadge() {
           <LogOut size={13} />
         </button>
       </div>
+    );
+  }
+
+  if (variant === 'crt') {
+    return (
+      <button
+        type="button"
+        onClick={() => openAuthModal('signIn')}
+        className="auth-badge-crt"
+      >
+        <LogIn size={15} style={{ opacity: 0.85 }} />
+        <span>Sign In</span>
+      </button>
     );
   }
 

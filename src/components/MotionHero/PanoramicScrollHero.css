@@ -119,21 +119,70 @@
 /* 5. Minimalist Floating Telemetry HUD Capsule */
 .hero-top-hud {
   position: absolute;
-  top: 26px;
-  left: 96px;
-  z-index: 30;
+  top: var(--crt-brand-top, 26px);
+  left: var(--crt-brand-left, 96px);
+  z-index: 15;            /* was 30: now sits under the CRT glass (.hero-crt-screen-curvature, z 16) like the auth cluster */
   display: flex;
   align-items: center;
   gap: 14px;
-  pointer-events: auto;
+  pointer-events: none;   /* was auto: the wordmark is not interactive; keeps the canvas beneath clickable */
 }
 
 .hero-top-auth-cluster {
   position: absolute;
-  top: 24px;
-  right: 28px;
+  top: var(--crt-auth-top, 24px);
+  right: var(--crt-auth-right, 28px);
   z-index: 15;
   pointer-events: auto;
+}
+
+/* Tilt follows the CRT barrel curvature; lives on a child so scroll-driven transforms on the parent don't clobber it */
+.hero-crt-tilt {
+  display: flex;
+  align-items: center;
+}
+
+.hero-crt-tilt--left {
+  transform: rotate(var(--crt-brand-tilt, 0deg));
+  transform-origin: top left;
+}
+
+.hero-crt-tilt--right {
+  transform: rotate(var(--crt-auth-tilt, 0deg));
+  transform-origin: top right;
+}
+
+/* Landing-hero Sign In: phosphor-red CRT button echoing the DELHI NCR AIR ALERT card */
+.hero-top-auth-cluster .auth-badge-crt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: rgba(6, 10, 18, 0.72);
+  border: 1.5px solid rgba(239, 68, 68, 0.85);
+  color: #f87171;
+  font-family: 'Share Tech Mono', 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.35), inset 0 0 10px rgba(239, 68, 68, 0.12);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.hero-top-auth-cluster .auth-badge-crt:hover {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.12);
+  box-shadow: 0 0 22px rgba(239, 68, 68, 0.55), inset 0 0 12px rgba(239, 68, 68, 0.2);
+}
+
+.hero-top-auth-cluster .auth-badge-crt:focus-visible {
+  outline: 2px solid #fca5a5;
+  outline-offset: 3px;
 }
 
 /* ============================================================== */
@@ -256,7 +305,6 @@
 }
 
 
->>>>>>> origin/main
 .hero-hud-brand {
   font-family: var(--font-heading, 'Outfit', sans-serif);
   font-weight: 800;
@@ -552,8 +600,8 @@
   }
 
   .hero-top-hud {
-    left: 20px;
-    top: 18px;
+    left: var(--crt-brand-left, 20px);
+    top: var(--crt-brand-top, 18px);
   }
 
   .hero-crt-top-tube {
@@ -563,14 +611,14 @@
 
 @media (max-width: 768px) {
   .hero-top-hud {
-    top: 14px;
-    left: 14px;
+    top: var(--crt-brand-top, 14px);
+    left: var(--crt-brand-left, 14px);
     gap: 8px;
   }
 
   .hero-top-auth-cluster {
-    top: 14px;
-    right: 14px;
+    top: var(--crt-auth-top, 14px);
+    right: var(--crt-auth-right, 14px);
   }
 
   .hero-hud-brand span {
