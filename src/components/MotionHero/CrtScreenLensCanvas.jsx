@@ -15,23 +15,10 @@ export default function CrtScreenLensCanvas({
   scrollProgress = 0,
   mousePos = { x: 0, y: 0 },
   onExploreTwin,
-  onSignInClick,
-  user = null,
-  isAuthenticated = false,
-  onLogout,
 }) {
   const mountRef = useRef(null);
   const scrollRef = useRef(scrollProgress);
   const buttonBounds = useRef({ x: 0, y: 0, w: 0, h: 0, active: false });
-  const signInBounds = useRef({ x: 0, y: 0, w: 0, h: 0, active: false });
-  const isSignInHoverRef = useRef(false);
-
-  const onSignInClickRef = useRef(onSignInClick);
-  onSignInClickRef.current = onSignInClick;
-  const onLogoutRef = useRef(onLogout);
-  onLogoutRef.current = onLogout;
-  const authStateRef = useRef({ user, isAuthenticated });
-  authStateRef.current = { user, isAuthenticated };
 
   // Keep scrollRef synchronized with scrollProgress prop if used without ref
   useEffect(() => {
@@ -510,106 +497,8 @@ export default function CrtScreenLensCanvas({
       textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
       textCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const isMobile = width < 768;
-
-      // ==============================================================
-      // VAYUVITALS Brand Wordmark (Curved by CRT Screen Curvature)
-      // Painted directly onto the CRT faceplate canvas at the top-left
-      // corner so it organically curves with curveFaceplate() in WebGL!
-      // ==============================================================
-      const p = Math.max(0, Math.min(1, scroll));
-      let brandR, brandG, brandB;
-      if (p <= 0.5) {
-        const t = p / 0.5;
-        brandR = Math.round(245 + (251 - 245) * t);
-        brandG = Math.round(158 + (191 - 158) * t);
-        brandB = Math.round(11 + (36 - 11) * t);
-      } else {
-        const t = (p - 0.5) / 0.5;
-        brandR = Math.round(251 + (52 - 251) * t);
-        brandG = Math.round(191 + (211 - 191) * t);
-        brandB = Math.round(36 + (153 - 36) * t);
-      }
-      const brandColor = `rgb(${brandR}, ${brandG}, ${brandB})`;
-      const brandGlow = `rgba(${brandR}, ${brandG}, ${brandB}, 0.65)`;
-
-      textCtx.save();
-      // Prominent, authoritative typography laid over the curved TV glass
-      const brandFontSize = isMobile ? 22 : 32;
-      textCtx.font = `900 ${brandFontSize}px "Outfit", -apple-system, BlinkMacSystemFont, sans-serif`;
-      if ('letterSpacing' in textCtx) {
-        textCtx.letterSpacing = isMobile ? '2.5px' : '4px';
-      }
-      textCtx.fillStyle = brandColor;
-      textCtx.shadowColor = brandGlow;
-      textCtx.shadowBlur = isMobile ? 16 : 24;
-      textCtx.textBaseline = 'top';
-
-      const brandX = isMobile ? Math.max(16, width * 0.04) : Math.max(68, width * 0.038);
-      const brandY = isMobile ? Math.max(18, height * 0.036) : Math.max(32, height * 0.036);
-      textCtx.fillText('VAYUVITALS', brandX, brandY);
-      textCtx.restore();
-
-      // ==============================================================
-      // Sign In Button (Curved by CRT Screen Curvature)
-      // Painted directly onto the CRT faceplate canvas at the top-right
-      // corner so it organically curves with curveFaceplate() in WebGL!
-      // ==============================================================
-      const authOpacity = Math.max(0, 1 - scroll * 4.8);
-      if (authOpacity > 0.01) {
-        const { user: curUser, isAuthenticated: curAuth } = authStateRef.current;
-        textCtx.save();
-        textCtx.globalAlpha = authOpacity;
-        const authFontSize = isMobile ? 13 : 15;
-        textCtx.font = `700 ${authFontSize}px "Outfit", -apple-system, BlinkMacSystemFont, sans-serif`;
-        const isHovered = isSignInHoverRef.current;
-        const displayText = curAuth && curUser
-          ? (curUser.email ? curUser.email.split('@')[0] : 'Citizen')
-          : 'Sign In';
-
-        const textMetrics = textCtx.measureText(displayText);
-        const authBtnW = textMetrics.width + (isMobile ? 28 : 38);
-        const authBtnH = isMobile ? 32 : 38;
-        const rightInset = isMobile ? Math.max(16, width * 0.04) : Math.max(68, width * 0.038);
-        const authBtnX = width - rightInset - authBtnW;
-        const authBtnY = isMobile ? Math.max(18, height * 0.036) : Math.max(32, height * 0.036);
-
-        // Translucent CRT glass pill backdrop
-        textCtx.fillStyle = isHovered ? 'rgba(255, 255, 255, 0.18)' : 'rgba(15, 23, 42, 0.78)';
-        textCtx.beginPath();
-        if (textCtx.roundRect) {
-          textCtx.roundRect(authBtnX, authBtnY, authBtnW, authBtnH, 10);
-        } else {
-          textCtx.rect(authBtnX, authBtnY, authBtnW, authBtnH);
-        }
-        textCtx.fill();
-
-        textCtx.strokeStyle = isHovered ? 'rgba(255, 255, 255, 0.40)' : 'rgba(255, 255, 255, 0.20)';
-        textCtx.lineWidth = 1.4;
-        textCtx.shadowColor = isHovered ? 'rgba(255, 255, 255, 0.35)' : 'rgba(0, 0, 0, 0.45)';
-        textCtx.shadowBlur = isHovered ? 14 : 8;
-        textCtx.stroke();
-
-        textCtx.fillStyle = isHovered ? '#ffffff' : '#f1f5f9';
-        textCtx.textAlign = 'center';
-        textCtx.textBaseline = 'middle';
-        textCtx.shadowColor = 'rgba(0, 0, 0, 0.45)';
-        textCtx.shadowBlur = 6;
-        textCtx.fillText(displayText, authBtnX + authBtnW / 2, authBtnY + authBtnH / 2);
-        textCtx.restore();
-
-        signInBounds.current = {
-          x: authBtnX,
-          y: authBtnY,
-          w: authBtnW,
-          h: authBtnH,
-          active: authOpacity > 0.5,
-        };
-      } else {
-        signInBounds.current = { x: 0, y: 0, w: 0, h: 0, active: false };
-      }
-
       // Strictly equal dimensions for Template 1, Template 2, and Template 3
+      const isMobile = width < 768;
       const cardW = isMobile ? Math.min(width * 0.92, 440) : 510;
       const cardH = isMobile ? 210 : 225;
 
@@ -703,40 +592,13 @@ export default function CrtScreenLensCanvas({
       textTexture.needsUpdate = true;
     };
 
-    // Map viewport screen pointer coords (clientX, clientY) through the shader's
-    // curveFaceplate() to find the exact sampled pixel (fx, fy) on the text faceplate canvas
-    const getFaceplateCoords = (clientX, clientY) => {
-      const rect = renderer.domElement.getBoundingClientRect();
-      const mx = clientX - rect.left;
-      const my = clientY - rect.top;
-      const aspect = width / height;
-      const curvature = width < 600 ? 0.04 : 0.28;
-      const centeredX = ((mx / width) * 2.0 - 1.0) * aspect;
-      const centeredY = (my / height) * 2.0 - 1.0;
-      const r2 = centeredX * centeredX + centeredY * centeredY;
-      const s = 1.0 + curvature * r2 * 0.38;
-      const fx = (((centeredX * s) / aspect) * 0.5 + 0.5) * width;
-      const fy = (centeredY * s * 0.5 + 0.5) * height;
-      return { mx, my, fx, fy };
-    };
-
     // Interactive button pointer tracking (click & touch)
     const handleCanvasClick = (e) => {
-      const { fx, fy } = getFaceplateCoords(e.clientX, e.clientY);
-
-      const sBtn = signInBounds.current;
-      if (sBtn && sBtn.active && fx >= sBtn.x && fx <= sBtn.x + sBtn.w && fy >= sBtn.y && fy <= sBtn.y + sBtn.h) {
-        const { isAuthenticated: curAuth } = authStateRef.current;
-        if (curAuth && onLogoutRef.current) {
-          onLogoutRef.current();
-        } else if (onSignInClickRef.current) {
-          onSignInClickRef.current();
-        }
-        return;
-      }
-
+      const rect = renderer.domElement.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
       const btn = buttonBounds.current;
-      if (btn && btn.active && fx >= btn.x && fx <= btn.x + btn.w && fy >= btn.y && fy <= btn.y + btn.h) {
+      if (btn && btn.active && mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h) {
         if (onExploreTwin) onExploreTwin();
       }
     };
@@ -744,40 +606,21 @@ export default function CrtScreenLensCanvas({
     const handleCanvasTouch = (e) => {
       if (!e.touches || e.touches.length === 0) return;
       const touch = e.touches[0];
-      const { fx, fy } = getFaceplateCoords(touch.clientX, touch.clientY);
-
-      const sBtn = signInBounds.current;
-      if (sBtn && sBtn.active && fx >= sBtn.x && fx <= sBtn.x + sBtn.w && fy >= sBtn.y && fy <= sBtn.y + sBtn.h) {
-        const { isAuthenticated: curAuth } = authStateRef.current;
-        if (curAuth && onLogoutRef.current) {
-          onLogoutRef.current();
-        } else if (onSignInClickRef.current) {
-          onSignInClickRef.current();
-        }
-        return;
-      }
-
+      const rect = renderer.domElement.getBoundingClientRect();
+      const mx = touch.clientX - rect.left;
+      const my = touch.clientY - rect.top;
       const btn = buttonBounds.current;
-      if (btn && btn.active && fx >= btn.x && fx <= btn.x + btn.w && fy >= btn.y && fy <= btn.y + btn.h) {
+      if (btn && btn.active && mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h) {
         if (onExploreTwin) onExploreTwin();
       }
     };
 
     const handleCanvasMouseMove = (e) => {
-      const { fx, fy } = getFaceplateCoords(e.clientX, e.clientY);
-
-      const sBtn = signInBounds.current;
-      const isOverSignIn = sBtn && sBtn.active && fx >= sBtn.x && fx <= sBtn.x + sBtn.w && fy >= sBtn.y && fy <= sBtn.y + sBtn.h;
-
-      if (isOverSignIn !== isSignInHoverRef.current) {
-        isSignInHoverRef.current = isOverSignIn;
-        forceTextRedraw = true;
-      }
-
+      const rect = renderer.domElement.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
       const btn = buttonBounds.current;
-      const isOverBtn = btn && btn.active && fx >= btn.x && fx <= btn.x + btn.w && fy >= btn.y && fy <= btn.y + btn.h;
-
-      if (isOverBtn || isOverSignIn) {
+      if (btn && btn.active && mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h) {
         renderer.domElement.style.cursor = 'pointer';
       } else {
         renderer.domElement.style.cursor = 'default';
