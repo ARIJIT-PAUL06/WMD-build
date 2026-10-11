@@ -35,7 +35,7 @@ const POLLUTANT_SPECS = [
     healthImpact: 'Trapped in upper tracheobronchial airways causing chronic bronchitis, emphysema, and acute asthma exacerbations.',
     targetSystems: ['Upper Respiratory Tract', 'Bronchial Mucosa', 'Pediatric Sensitivity'],
     accentColor: '#f97316',
-    contBg: 'linear-gradient(180deg, #7c2d12 0%, #431407 100%)',
+    contBg: 'linear-gradient(180deg, #9a3412 0%, #431407 100%)',
     contBorder: '#f97316',
     contGlow: 'rgba(249, 115, 22, 0.5)'
   },
@@ -50,7 +50,7 @@ const POLLUTANT_SPECS = [
     healthImpact: 'Deep airway mucosal inflamer, precursor to secondary particulate nitrates and ground-level ozone formation.',
     targetSystems: ['Deep Airway Mucosa', 'Vascular Endothelium', 'Pediatric Sensitivity'],
     accentColor: '#eab308',
-    contBg: 'linear-gradient(180deg, #713f12 0%, #3f2008 100%)',
+    contBg: 'linear-gradient(180deg, #854d0e 0%, #3f2008 100%)',
     contBorder: '#eab308',
     contGlow: 'rgba(234, 179, 8, 0.45)'
   },
@@ -65,9 +65,9 @@ const POLLUTANT_SPECS = [
     healthImpact: 'Potent bronchoconstrictor; drives acidic aerosol formation and environmental acid precipitation.',
     targetSystems: ['Bronchial Mucosa', 'Nasopharyngeal Tract', 'Respiratory Sensitivity'],
     accentColor: '#10b981',
-    contBg: 'linear-gradient(180deg, #064e3b 0%, #022c22 100%)',
+    contBg: 'linear-gradient(180deg, #065f46 0%, #022c22 100%)',
     contBorder: '#10b981',
-    contGlow: 'rgba(16, 185, 129, 0.4)'
+    contGlow: 'rgba(16, 185, 129, 0.45)'
   },
   {
     id: 'co',
@@ -79,10 +79,10 @@ const POLLUTANT_SPECS = [
     source: 'Incomplete combustion in idling motor vehicles, biomass cooking chulhas, forest brushfires.',
     healthImpact: 'Binds with hemoglobin to form carboxyhemoglobin, impairing oxygen delivery to myocardial and cerebral tissues.',
     targetSystems: ['Myocardial Tissue', 'Cerebral Microvasculature', 'Fetal Hemoglobin Sensitivity'],
-    accentColor: '#f43f5e',
-    contBg: 'linear-gradient(180deg, #881337 0%, #4c0519 100%)',
-    contBorder: '#f43f5e',
-    contGlow: 'rgba(244, 63, 94, 0.45)'
+    accentColor: '#3b82f6',
+    contBg: 'linear-gradient(180deg, #1d4ed8 0%, #0b1e47 100%)',
+    contBorder: '#3b82f6',
+    contGlow: 'rgba(59, 130, 246, 0.55)'
   },
   {
     id: 'o3',
@@ -95,9 +95,9 @@ const POLLUTANT_SPECS = [
     healthImpact: 'Powerful cellular oxidant; damages alveolar linings, induces coughing, chest tightness, and long-term lung scarring.',
     targetSystems: ['Alveolar Epithelium', 'Tracheobronchial Lining', 'Pediatric Sensitivity'],
     accentColor: '#06b6d4',
-    contBg: 'linear-gradient(180deg, #164e63 0%, #083344 100%)',
+    contBg: 'linear-gradient(180deg, #0e7490 0%, #083344 100%)',
     contBorder: '#06b6d4',
-    contGlow: 'rgba(6, 182, 212, 0.45)'
+    contGlow: 'rgba(6, 182, 212, 0.5)'
   },
   {
     id: 'nh3',
@@ -110,9 +110,9 @@ const POLLUTANT_SPECS = [
     healthImpact: 'Reacts with atmospheric nitric and sulfuric acids to synthesize regional ammonium salt smog hazes.',
     targetSystems: ['Nasopharyngeal Mucosa', 'Upper Respiratory Tract', 'Ocular Mucosa'],
     accentColor: '#a855f7',
-    contBg: 'linear-gradient(180deg, #581c87 0%, #2e1065 100%)',
+    contBg: 'linear-gradient(180deg, #6b21a8 0%, #2e1065 100%)',
     contBorder: '#a855f7',
-    contGlow: 'rgba(168, 85, 247, 0.5)'
+    contGlow: 'rgba(168, 85, 247, 0.55)'
   }
 ];
 

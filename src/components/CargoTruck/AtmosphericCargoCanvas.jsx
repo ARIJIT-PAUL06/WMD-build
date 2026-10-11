@@ -19,7 +19,7 @@ const POLLUTANT_3D_COORDS = {
   pm10: { x: -10, y: 35, color: '#f97316' },
   no2:  { x: 65,  y: 35, color: '#eab308' },
   so2:  { x: 140, y: 35, color: '#10b981' },
-  co:   { x: 215, y: 35, color: '#f43f5e' },
+  co:   { x: 215, y: 35, color: '#3b82f6' },
   o3:   { x: 290, y: 35, color: '#06b6d4' },
   nh3:  { x: 365, y: 35, color: '#a855f7' },
 };

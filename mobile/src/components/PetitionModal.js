@@ -469,7 +469,7 @@ export default function PetitionModal({
     }
   };
 
-  // Dispatch Action 2: Copy for Portal (CPGRAMS / DPCC)
+  // Dispatch Action 2: Copy for Portal (CPGRAMS / DPCC / Green Delhi)
   const handleCopyForPortal = async () => {
     if (!activeDraftText) return;
     try {
@@ -483,11 +483,32 @@ export default function PetitionModal({
       }
 
       const docket = await persistDocket(DOCKET_STATUS.DRAFT);
-      if (docket) {
+      if (docket && copied) {
         setActionSuccessNotice(
-          copied
-            ? `Text copied to clipboard! Saved to docket [${docket.referenceId}] as Draft. Ready for CPGRAMS / DPCC portal.`
-            : `Saved to docket [${docket.referenceId}] as Draft.`
+          `Affidavit [${docket.referenceId}] copied to clipboard! Ready to paste into portal.`
+        );
+
+        Alert.alert(
+          'Dossier Copied to Clipboard!',
+          `Affidavit [${docket.referenceId}] is copied to your clipboard.\n\nOpen an official government grievance submission portal now?`,
+          [
+            {
+              text: 'Open CPGRAMS',
+              onPress: () => Linking.openURL('https://pgportal.gov.in')
+            },
+            {
+              text: 'Open DPCC Portal',
+              onPress: () => Linking.openURL('https://dpcc.delhigovt.nic.in')
+            },
+            {
+              text: 'Open Green Delhi',
+              onPress: () => Linking.openURL(Platform.OS === 'android' ? 'https://play.google.com/store/apps/details?id=com.delhi.greendelhi' : 'https://greendelhi.delhi.gov.in')
+            },
+            {
+              text: 'Close',
+              style: 'cancel'
+            }
+          ]
         );
       }
     } catch (_err) {

@@ -114,7 +114,7 @@
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #38bdf8;
+  color: var(--bone-200, #d8cfb9);
   text-transform: uppercase;
 }
 
@@ -154,9 +154,9 @@
   color: #f1f5f9;
 }
 
-.organ-icon.cardio { color: #ef4444; }
-.organ-icon.resp { color: #38bdf8; }
-.organ-icon.cogn { color: #a855f7; }
+.organ-icon.cardio { color: var(--bone-200, #d8cfb9); }
+.organ-icon.resp { color: var(--bone-100, #ece5d3); }
+.organ-icon.cogn { color: var(--bone-300, #b9b19c); }
 
 .organ-severity-tag {
   font-family: var(--font-mono, 'IBM Plex Mono', monospace);
@@ -170,11 +170,11 @@
 }
 
 .severity-high, .severity-very-high, .severity-extreme {
-  color: #f87171;
+  color: var(--bone-100, #ece5d3);
 }
 
 .severity-moderate, .severity-low-mod {
-  color: #f59e0b;
+  color: var(--bone-300, #b9b19c);
 }
 
 .organ-bar-track {
@@ -192,18 +192,18 @@
 }
 
 .organ-bar-fill.cardio {
-  background: linear-gradient(90deg, #f87171, #ef4444);
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  background: linear-gradient(90deg, var(--sage-500, #6f7462), var(--bone-200, #d8cfb9));
+  box-shadow: none;
 }
 
 .organ-bar-fill.resp {
-  background: linear-gradient(90deg, #38bdf8, #0ea5e9);
-  box-shadow: 0 0 8px rgba(14, 165, 233, 0.4);
+  background: linear-gradient(90deg, var(--sage-400, #8e927e), var(--bone-100, #ece5d3));
+  box-shadow: none;
 }
 
 .organ-bar-fill.cogn {
-  background: linear-gradient(90deg, #c084fc, #a855f7);
-  box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+  background: linear-gradient(90deg, var(--olive-600, #2a2d24), var(--bone-300, #b9b19c));
+  box-shadow: none;
 }
 
 .organ-caption {
@@ -227,7 +227,7 @@
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #f59e0b;
+  color: var(--bone-200, #d8cfb9);
   text-transform: uppercase;
 }
 
@@ -254,11 +254,11 @@
 }
 
 .demo-comparison-card.children {
-  border-left: 3px solid #ef4444;
+  border-left: 3px solid var(--bone-200, #d8cfb9);
 }
 
 .demo-comparison-card.adults {
-  border-left: 3px solid #10b981;
+  border-left: 3px solid var(--sage-500, #6f7462);
 }
 
 .demo-card-top {
@@ -431,21 +431,21 @@
 
 .flow-node-item.active .flow-node-orb {
   border-color: #ffffff;
-  background: var(--node-accent, #10b981);
-  color: #070a12;
-  box-shadow: 0 0 16px var(--node-accent, rgba(16, 185, 129, 0.6));
+  background: var(--bone-100, #ece5d3);
+  color: var(--ink-900, #0d0f0c);
+  box-shadow: 0 0 12px rgba(216, 207, 185, 0.4);
 }
 
 .flow-node-item.passed .flow-node-orb {
-  border-color: var(--node-accent, #10b981);
-  color: var(--node-accent, #10b981);
+  border-color: var(--bone-300, #b9b19c);
+  color: var(--bone-300, #b9b19c);
 }
 
 .node-pulse-ring {
   position: absolute;
   inset: -6px;
   border-radius: 50%;
-  border: 1px solid var(--node-accent, #10b981);
+  border: 1px solid var(--bone-200, rgba(216, 207, 185, 0.4));
   animation: nodePulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
   pointer-events: none;
 }
@@ -503,7 +503,7 @@
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #38bdf8;
+  color: var(--bone-200, #d8cfb9);
   text-transform: uppercase;
 }
 
@@ -662,7 +662,7 @@
 }
 
 .comp-header-icon {
-  color: #38bdf8;
+  color: var(--bone-200, #d8cfb9);
 }
 
 .comp-header-title {
@@ -684,15 +684,15 @@
 }
 
 .comp-status-chip.exceeded {
-  background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(216, 207, 185, 0.12);
+  color: var(--bone-100, #ece5d3);
+  border: 1px solid rgba(216, 207, 185, 0.35);
 }
 
 .comp-status-chip.safe {
-  background: rgba(16, 185, 129, 0.18);
-  color: #6ee7b7;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(142, 146, 126, 0.14);
+  color: var(--sage-400, #8e927e);
+  border: 1px solid rgba(142, 146, 126, 0.3);
 }
 
 .comp-columns-grid {
@@ -724,8 +724,8 @@
 }
 
 .comp-column.primary-obs {
-  background: rgba(15, 23, 42, 0.45);
-  border-color: rgba(56, 189, 248, 0.2);
+  background: rgba(20, 22, 17, 0.65);
+  border-color: rgba(216, 207, 185, 0.3);
 }
 
 .comp-col-top {
@@ -786,20 +786,20 @@
 }
 
 .comp-bar-fill.critical {
-  background: linear-gradient(90deg, #f87171, #ef4444);
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+  background: linear-gradient(90deg, var(--bone-300, #b9b19c), var(--bone-100, #ece5d3));
+  box-shadow: 0 0 8px rgba(236, 229, 211, 0.25);
 }
 
 .comp-bar-fill.nominal {
-  background: linear-gradient(90deg, #34d399, #10b981);
+  background: linear-gradient(90deg, var(--sage-500, #6f7462), var(--sage-400, #8e927e));
 }
 
 .comp-bar-fill.standard {
-  background: #f59e0b;
+  background: var(--bone-200, #d8cfb9);
 }
 
 .comp-bar-fill.who {
-  background: #38bdf8;
+  background: var(--sage-500, #6f7462);
 }
 
 .comp-col-footer {

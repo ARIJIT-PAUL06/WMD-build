@@ -10,6 +10,7 @@ const AutonomousMonitorModal = React.lazy(() => import('./components/Dashboard/A
 const AtmosphericCargoTruck = React.lazy(() => import('./components/CargoTruck/AtmosphericCargoTruck'));
 const PollutantDetailPage = React.lazy(() => import('./components/PollutantDetail/PollutantDetailPage'));
 const PollutantDocumentary = React.lazy(() => import('./components/PollutantDocumentary/PollutantDocumentary'));
+const SchoolSafetyContainer = React.lazy(() => import('./components/SchoolSafety/SchoolSafetyContainer'));
 import AuthHeaderBadge from './components/Auth/AuthHeaderBadge';
 
 const PageFallback = () => <div style={{ minHeight: '100vh', background: '#070a12' }} />;
@@ -264,6 +265,24 @@ export default function App() {
           onSelectPollutant={handleDocumentarySelectPollutant}
         />
       </React.Suspense>
+    );
+  }
+
+  const isSchoolOnly = typeof window !== 'undefined' && (
+    window.location.search.includes('view=school') ||
+    window.location.hash === '#school'
+  );
+
+  if (isSchoolOnly) {
+    return (
+      <div style={{ width: '100%', minHeight: '100vh', background: '#070a12', position: 'relative' }}>
+        <div style={{ position: 'fixed', top: '20px', right: '24px', zIndex: 9999 }}>
+          <AuthHeaderBadge />
+        </div>
+        <React.Suspense fallback={<PageFallback />}>
+          <SchoolSafetyContainer onBackToMap={scrollToHeatmap} />
+        </React.Suspense>
+      </div>
     );
   }
 

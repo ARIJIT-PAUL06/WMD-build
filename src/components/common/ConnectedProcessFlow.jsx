@@ -10,8 +10,8 @@ import { Layers, Wind, Activity, Zap, CheckCircle2, ArrowRight } from 'lucide-re
 export default function ConnectedProcessFlow({
   stages = [],
   title = 'ATMOSPHERIC TRANSPORT PIPELINE',
-  subtitle = 'The continuous physical journey from emission injection to receptor inhalation',
-  accentColor = '#10b981',
+  subtitle = '',
+  accentColor = 'var(--bone-200)',
 }) {
   const [activeStageIdx, setActiveStageIdx] = useState(0);
 
@@ -21,31 +21,26 @@ export default function ConnectedProcessFlow({
       step: '01',
       stage: 'Injection',
       detail: 'Combustion tailpipes and industrial boilers eject primary plumes into the surface canopy.',
-      tag: 'Source Vector',
     },
     {
       step: '02',
       stage: 'Thermal Buoyancy',
       detail: 'Warm flue gases rise; horizontal pressure gradients disperse aerosols across neighborhoods.',
-      tag: 'Advection',
     },
     {
       step: '03',
       stage: 'Inversion Ceiling',
       detail: 'Winter radiative cooling locks pollutants beneath a compressed 150m boundary ceiling.',
-      tag: 'Trapping',
     },
     {
       step: '04',
       stage: 'Secondary Smog',
       detail: 'Gaseous precursors react photochemically in stagnant air to synthesize new particulate mass.',
-      tag: 'Chemistry',
     },
     {
       step: '05',
       stage: 'Inhalation Exposure',
       detail: 'Aerosols descend into human breathing zones and regulatory monitoring receptors.',
-      tag: 'Deposition',
     },
   ];
 
@@ -59,7 +54,7 @@ export default function ConnectedProcessFlow({
             <Layers size={13} style={{ color: accentColor }} />
             <span>{title}</span>
           </span>
-          <p className="flow-subtitle">{subtitle}</p>
+          {subtitle && <p className="flow-subtitle">{subtitle}</p>}
         </div>
         <div className="flow-step-counter">
           STAGE <strong>{flowStages[activeStageIdx]?.step || '01'}</strong> / {String(flowStages.length).padStart(2, '0')}
@@ -68,13 +63,13 @@ export default function ConnectedProcessFlow({
 
       {/* Connected Nodes Pathway */}
       <div className="flow-pipeline-track" role="list">
-        {/* Continuous glowing path bar behind nodes */}
+        {/* Continuous path bar behind nodes */}
         <div className="flow-pipeline-line" aria-hidden="true">
           <div
             className="flow-pipeline-progress"
             style={{
-              width: `${(activeStageIdx / (flowStages.length - 1)) * 100}%`,
-              background: `linear-gradient(90deg, #10b981, ${accentColor})`,
+              width: `${(activeStageIdx / Math.max(1, flowStages.length - 1)) * 100}%`,
+              background: `linear-gradient(90deg, var(--sage-500), ${accentColor})`,
             }}
           />
         </div>

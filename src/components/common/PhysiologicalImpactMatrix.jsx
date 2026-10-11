@@ -92,8 +92,7 @@ export default function PhysiologicalImpactMatrix({
         {/* LEFT PANEL: Organ System Impact Meters */}
         <div className="organ-vulnerability-deck">
           <div className="organ-deck-heading">
-            <span className="deck-tag">TARGET SYSTEM INFILTRATION</span>
-            <span className="deck-sub">{pollutantName} anatomical exposure severity</span>
+            <span className="deck-tag">TARGET PHYSIOLOGY</span>
           </div>
 
           <div className="organ-meter-row">

@@ -1,3 +1,7 @@
+/* Cascade layer order for the whole app: the universal reset sits lowest so layered
+   component stylesheets (documentary: legacy < wmd) are not flattened by it. */
+@layer reset, legacy, wmd;
+
 @import './components/common/commonVisuals.css';
 
 :root {
@@ -44,10 +48,12 @@
   --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@layer reset {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 }
 
 body {
@@ -1400,4 +1406,17 @@ input[type="range"]::-webkit-slider-thumb:hover {
   animation: crtButtonFlicker 0.38s linear forwards;
   animation-delay: 1.95s;
   pointer-events: auto !important;
+}
+
+/* Completely suppress and hide cooperative gestures prompt overlay on the map */
+.mapboxgl-scroll-zoom-blocker,
+.mapboxgl-touch-pan-blocker,
+.mapboxgl-scroll-zoom-blocker-show,
+.mapboxgl-touch-pan-blocker-show {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: none !important;
+  animation: none !important;
 }

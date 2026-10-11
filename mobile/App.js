@@ -26,6 +26,8 @@ import BottomDialogBox from './src/components/BottomDialogBox';
 import BottomNavBar from './src/components/BottomNavBar';
 import PetitionModal from './src/components/PetitionModal';
 import AuthModal from './src/components/AuthModal';
+import PortalHandoffModal from './src/components/PortalHandoffModal';
+import * as Clipboard from 'expo-clipboard';
 import indiaStations from './src/data/indiaStations.json';
 import {
   getAllDockets,
@@ -45,32 +47,63 @@ import {
 
 const OFFICIAL_PORTALS = [
   {
+    id: 'cpgrams',
     name: 'CPGRAMS Central',
     sub: 'Govt. of India Citizen Redressal',
     url: 'https://pgportal.gov.in',
     badge: 'Central Portal',
     icon: 'globe-outline',
+    description: 'Central DARPG portal for National Air Quality grievances & inter-ministerial complaints.',
   },
   {
-    name: 'DoE Environmental Cell',
-    sub: 'Directorate of Education (NCT Delhi)',
-    url: 'http://edudel.nic.in',
-    badge: 'Schools / Campuses',
-    icon: 'school-outline',
-  },
-  {
+    id: 'dpcc',
     name: 'DPCC Grievance',
     sub: 'Delhi Pollution Control Committee',
     url: 'https://dpcc.delhigovt.nic.in',
-    badge: 'Industrial / Waste',
+    badge: 'State Committee',
     icon: 'shield-outline',
+    email: 'msdpcc@nic.in',
+    description: 'Nodal authority for industrial, construction, and biomass burning violations under Air Act 1981.',
   },
   {
+    id: 'greendelhi',
+    name: 'Green Delhi App',
+    sub: 'Govt. of NCT Delhi Redressal',
+    url: Platform.OS === 'android'
+      ? 'https://play.google.com/store/apps/details?id=com.delhi.greendelhi'
+      : 'https://greendelhi.delhi.gov.in',
+    badge: '24x7 Delhi App',
+    icon: 'leaf-outline',
+    description: 'Official 24x7 Delhi Govt pollution complaint system with geotagged photo capture.',
+  },
+  {
+    id: 'caqm',
+    name: 'CAQM NCR Cell',
+    sub: 'Commission for Air Quality NCR',
+    url: 'https://caqm.nic.in',
+    badge: 'NCR Commission',
+    icon: 'business-outline',
+    email: 'caqm-ncr@gov.in',
+    description: 'Statutory commission overseeing GRAP Stage I-IV enforcement across Delhi-NCR.',
+  },
+  {
+    id: 'edudel',
+    name: 'DoE Environmental Cell',
+    sub: 'Directorate of Education (NCT)',
+    url: 'http://edudel.nic.in',
+    badge: 'Schools / Campuses',
+    icon: 'school-outline',
+    email: 'addldir-edu@delhi.gov.in',
+    description: 'Nodal Directorate for classroom air purifiers, outdoor recess suspension, and school campus health.',
+  },
+  {
+    id: 'mcd',
     name: 'MCD 311 Portal',
     sub: 'Municipal Biomass & Dust Control',
     url: 'https://mcdonline.nic.in',
     badge: 'Civic / Roads',
     icon: 'construct-outline',
+    description: 'Municipal Corporation of Delhi civic complaints for road dust, garbage burning, and sweeping.',
   },
 ];
 
@@ -92,6 +125,11 @@ export default function App() {
   const [authUser, setAuthUser] = useState(null);
   const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('signIn');
+
+  // Official Gov Portal Handoff Modal State
+  const [isPortalModalVisible, setIsPortalModalVisible] = useState(false);
+  const [selectedPortalForHandoff, setSelectedPortalForHandoff] = useState(null);
+  const [portalTargetDocket, setPortalTargetDocket] = useState(null);
 
   const refreshDockets = useCallback(async () => {
     try {
@@ -159,6 +197,81 @@ export default function App() {
       }
     } catch (err) {
       console.warn('Failed sharing docket:', err);
+    }
+  };
+
+  const handleOpenPortalHandoff = (portal = null, docket = null) => {
+    const chosenPortal = portal || OFFICIAL_PORTALS[0];
+    const chosenDocket = docket || (localDockets.length > 0 ? localDockets[0] : null);
+    setSelectedPortalForHandoff(chosenPortal);
+    setPortalTargetDocket(chosenDocket);
+    setIsPortalModalVisible(true);
+  };
+
+  const handleCopyAndOpenPortal = async (portal, docket = null) => {
+    try {
+      const targetDocket = docket || portalTargetDocket || (localDockets.length > 0 ? localDockets[0] : null);
+      let copied = false;
+      if (targetDocket) {
+        const text = targetDocket.sentDraftText || targetDocket.activeDraftText || (targetDocket.selectedLanguage === 'hi' ? targetDocket.letterTextHi : targetDocket.letterTextEn);
+        if (Clipboard && Clipboard.setStringAsync) {
+          await Clipboard.setStringAsync(text);
+          copied = true;
+        } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+          await navigator.clipboard.writeText(text);
+          copied = true;
+        }
+      }
+
+      setIsPortalModalVisible(false);
+
+      if (copied && targetDocket) {
+        Alert.alert(
+          'Dossier Copied!',
+          `Affidavit [${targetDocket.referenceId}] is copied to your clipboard.\n\nOpening ${portal.name}...\n\n1. Log in with Mobile OTP\n2. Paste this verified text into the grievance box\n3. Note your Gov Registration / Diary Number.`,
+          [
+            {
+              text: 'Open Portal',
+              onPress: async () => {
+                await Linking.openURL(portal.url).catch(() => {
+                  Alert.alert('Cannot Open URL', `Unable to open: ${portal.url}`);
+                });
+              }
+            }
+          ]
+        );
+      } else {
+        await Linking.openURL(portal.url).catch(() => {
+          Alert.alert('Cannot Open URL', `Unable to open: ${portal.url}`);
+        });
+      }
+    } catch (err) {
+      console.warn('Portal copy error:', err);
+      Linking.openURL(portal.url).catch(() => {});
+    }
+  };
+
+  const handleEmailNodalOfficer = async (docket, portal = null) => {
+    try {
+      if (!docket) return;
+      const email = portal?.email || docket?.authority?.email || 'msdpcc@nic.in';
+      const text = docket.sentDraftText || docket.activeDraftText || (docket.selectedLanguage === 'hi' ? docket.letterTextHi : docket.letterTextEn);
+      const subject = `[SEC 10 AIR ACT] Statutory Grievance: ${docket.targetName} [Ref: ${docket.referenceId}]`;
+      const mailto = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+
+      setIsPortalModalVisible(false);
+
+      const supported = await Linking.canOpenURL(mailto).catch(() => true);
+      if (!supported && Platform.OS !== 'web') {
+        Alert.alert('No Mail Client', `Could not open mail app. Please copy text and email directly to ${email}`);
+        return;
+      }
+
+      await Linking.openURL(mailto);
+      await updateDocketStatus(docket.id, DOCKET_STATUS.OPENED_IN_MAIL);
+      refreshDockets();
+    } catch (err) {
+      console.warn('Mail dispatch error:', err);
     }
   };
 
@@ -591,13 +704,9 @@ export default function App() {
             <View style={styles.portalsGrid}>
               {OFFICIAL_PORTALS.map((portal) => (
                 <TouchableOpacity
-                  key={portal.name}
+                  key={portal.id || portal.name}
                   activeOpacity={0.75}
-                  onPress={() => {
-                    Linking.openURL(portal.url).catch(() => {
-                      Alert.alert('Cannot Open Portal', `Could not open ${portal.url}`);
-                    });
-                  }}
+                  onPress={() => handleOpenPortalHandoff(portal)}
                   style={styles.portalCard}
                 >
                   <View style={styles.portalTopRow}>
@@ -611,8 +720,10 @@ export default function App() {
                   <Text style={styles.portalName} numberOfLines={1}>{portal.name}</Text>
                   <Text style={styles.portalSub} numberOfLines={2}>{portal.sub}</Text>
                   <View style={styles.portalLaunchRow}>
-                    <Text style={styles.portalLaunchText}>OPEN PORTAL</Text>
-                    <Ionicons name="open-outline" size={11} color="#00f0ff" />
+                    <Text style={styles.portalLaunchText}>
+                      {portal.email ? 'PORTAL + EMAIL' : 'OPEN PORTAL'}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={11} color="#00f0ff" />
                   </View>
                 </TouchableOpacity>
               ))}
@@ -691,14 +802,35 @@ export default function App() {
                       </Text>
                     </View>
 
-                    {/* Docket Action Buttons */}
+                    {/* Direct Portal & Nodal Dispatch Row */}
+                    <View style={styles.docketDispatchRow}>
+                      <TouchableOpacity
+                        activeOpacity={0.75}
+                        onPress={() => handleOpenPortalHandoff(null, docket)}
+                        style={styles.docketPortalBtn}
+                      >
+                        <Ionicons name="copy-outline" size={13} color="#040711" />
+                        <Text style={styles.docketPortalBtnText}>FILE ON PORTAL</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        activeOpacity={0.75}
+                        onPress={() => handleEmailNodalOfficer(docket)}
+                        style={styles.docketEmailBtn}
+                      >
+                        <Ionicons name="mail" size={13} color="#00f0ff" />
+                        <Text style={styles.docketEmailBtnText}>EMAIL NODAL CELL</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Secondary Utilities Row */}
                     <View style={styles.docketActionsRow}>
                       <TouchableOpacity
                         activeOpacity={0.7}
                         onPress={() => handleShareDocket(docket)}
                         style={styles.docketActionBtn}
                       >
-                        <Ionicons name="share-social-outline" size={13} color="#00f0ff" />
+                        <Ionicons name="share-social-outline" size={12} color="#00f0ff" />
                         <Text style={styles.docketActionBtnText}>SHARE</Text>
                       </TouchableOpacity>
 
@@ -708,7 +840,7 @@ export default function App() {
                           onPress={() => handleMarkDocketSent(docket)}
                           style={[styles.docketActionBtn, { borderColor: 'rgba(16, 185, 129, 0.4)' }]}
                         >
-                          <Ionicons name="checkmark-circle-outline" size={13} color="#10b981" />
+                          <Ionicons name="checkmark-circle-outline" size={12} color="#10b981" />
                           <Text style={[styles.docketActionBtnText, { color: '#10b981' }]}>MARK SENT</Text>
                         </TouchableOpacity>
                       )}
@@ -718,7 +850,7 @@ export default function App() {
                         onPress={() => handleDeleteDocket(docket)}
                         style={[styles.docketActionBtn, { borderColor: 'rgba(239, 68, 68, 0.4)' }]}
                       >
-                        <Ionicons name="trash-outline" size={13} color="#ef4444" />
+                        <Ionicons name="trash-outline" size={12} color="#ef4444" />
                         <Text style={[styles.docketActionBtnText, { color: '#ef4444' }]}>DELETE</Text>
                       </TouchableOpacity>
                     </View>
@@ -932,6 +1064,19 @@ export default function App() {
             setAuthUser(user);
             refreshDockets();
           }}
+        />
+
+        {/* ============================================================== */}
+        {/* OFFICIAL GOV PORTAL HANDOFF & DIRECT DISPATCH MODAL            */}
+        {/* ============================================================== */}
+        <PortalHandoffModal
+          visible={isPortalModalVisible}
+          onClose={() => setIsPortalModalVisible(false)}
+          portal={selectedPortalForHandoff}
+          dockets={localDockets}
+          initialDocket={portalTargetDocket}
+          onCopyAndOpen={handleCopyAndOpenPortal}
+          onEmailNodal={handleEmailNodalOfficer}
         />
       </View>
     </SafeAreaView>
@@ -1549,6 +1694,50 @@ const styles = StyleSheet.create({
     color: '#64748b',
     fontFamily: 'monospace',
     marginLeft: 4,
+  },
+  docketDispatchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  docketPortalBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#00f0ff',
+    borderRadius: 8,
+    paddingVertical: 7,
+    paddingHorizontal: 8,
+    gap: 6,
+  },
+  docketPortalBtnText: {
+    fontSize: 10,
+    fontWeight: '900',
+    fontFamily: 'monospace',
+    color: '#040711',
+    letterSpacing: 0.3,
+  },
+  docketEmailBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 240, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: '#00f0ff',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    gap: 6,
+  },
+  docketEmailBtnText: {
+    fontSize: 10,
+    fontWeight: '800',
+    fontFamily: 'monospace',
+    color: '#00f0ff',
+    letterSpacing: 0.3,
   },
   docketActionsRow: {
     flexDirection: 'row',
