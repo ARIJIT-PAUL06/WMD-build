@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import CrtScreenLensCanvas from './CrtScreenLensCanvas';
 import AuthHeaderBadge from '../Auth/AuthHeaderBadge';
+import { useAuth } from '../../context/AuthContext';
 import { crtCornerAnchor } from './crtFaceplate';
 import './PanoramicScrollHero.css';
 
@@ -107,6 +108,9 @@ export default function PanoramicScrollHero({
   onOpenStats,
   currentRoute,
 }) {
+  const auth = useAuth() || {};
+  const { user, isAuthenticated, openAuthModal, logout } = auth;
+
   const trackRef = useRef(null);
   const canvasRef = useRef(null);
   const spotlightRef = useRef(null);
@@ -189,9 +193,15 @@ export default function PanoramicScrollHero({
     const theme = getBrandTheme(progress);
     spotlightColorRef.current = theme.spotlight;
 
+    if (brandHudRef.current) {
+      brandHudRef.current.style.setProperty('--crt-brand-color', theme.textColor);
+      brandHudRef.current.style.setProperty('--crt-brand-glow', theme.glow);
+      brandHudRef.current.style.setProperty('--crt-brand-glow-soft', theme.glowSoft);
+    }
+
     if (brandTextRef.current) {
-      brandTextRef.current.style.color = theme.textColor;
-      brandTextRef.current.style.textShadow = `0 0 16px ${theme.glow}, 0 0 32px ${theme.glowSoft}`;
+      brandTextRef.current.style.color = '#ffffff';
+      brandTextRef.current.style.textShadow = `-1.5px 0 rgba(34, 211, 238, 0.85), 1.5px 0 rgba(239, 68, 68, 0.85), 0 0 16px ${theme.glow}, 0 0 32px ${theme.glowSoft}`;
     }
     if (bottomFadeRef.current) {
       bottomFadeRef.current.style.background = `linear-gradient(to bottom, rgba(7, 10, 18, 0.45) 0%, transparent 14%, transparent 60%, rgba(7, 10, 18, 0.88) 85%, #070a12 100%), ${theme.ambient}`;
@@ -214,12 +224,8 @@ export default function PanoramicScrollHero({
       updateBrandStyles(progress);
 
       if (authContainerRef.current) {
-        // Natural physical scroll-up: shifts upward and fades out smoothly with the front page
-        const yShift = -progress * 260;
-        const opacity = Math.max(0, 1 - progress * 4.8);
-        authContainerRef.current.style.transform = `translateY(${yShift}px)`;
-        authContainerRef.current.style.opacity = `${opacity}`;
-        authContainerRef.current.style.pointerEvents = opacity <= 0.05 ? 'none' : 'auto';
+        authContainerRef.current.style.opacity = '0';
+        authContainerRef.current.style.pointerEvents = 'none';
       }
 
       const rightPhase = progress >= 0.68;
@@ -425,6 +431,10 @@ export default function PanoramicScrollHero({
           scrollProgressRef={scrollProgressRef}
           mousePosRef={mousePosRef}
           onExploreTwin={onExploreTwin}
+          onSignInClick={() => openAuthModal && openAuthModal('signIn')}
+          user={user}
+          isAuthenticated={isAuthenticated}
+          onLogout={logout}
         />
 
         {/* Phase 3 Interactive CTA Hotspot Overlay */}
@@ -546,48 +556,28 @@ export default function PanoramicScrollHero({
         </aside>
 
         {/* ============================================================== */}
-        {/* TOP BRAND DISPLAY (Clean, Modern, Warm Amber)                 */}
+        {/* TOP BRAND DISPLAY & AUTH HUD ACCESSIBILITY OVERLAYS             */}
+        {/* Rendered visually on the TV curved glass canvas with authentic  */}
+        {/* TV screen curvature; DOM elements retained for a11y & tests.    */}
         {/* ============================================================== */}
-        <div className="hero-top-hud" ref={brandHudRef}>
-          <div className="hero-crt-tilt hero-crt-tilt--left">
-            <div className="hero-hud-brand">
-              <span
-                ref={brandTextRef}
-                style={{
-                  fontFamily: "'Outfit', sans-serif",
-                  fontWeight: 900,
-                  fontSize: '1.45rem',
-                  letterSpacing: '0.15em',
-                  textTransform: 'uppercase',
-                  color: '#f59e0b',
-                  textShadow: '0 0 16px rgba(245, 158, 11, 0.65), 0 0 32px rgba(245, 158, 11, 0.25)',
-                  transition: 'color 0.15s ease, text-shadow 0.15s ease',
-                }}
-              >
-                VAYUVITALS
-              </span>
-            </div>
+        <div className="hero-top-hud" ref={brandHudRef} style={{ opacity: 0, pointerEvents: 'none', position: 'absolute', visibility: 'hidden' }}>
+          <div className="hero-hud-brand">
+            <span ref={brandTextRef}>VAYUVITALS</span>
           </div>
         </div>
 
-        {/* ============================================================== */}
-        {/* CITIZEN AUTHENTICATION HUD (Blended Behind CRT Screen Lens)   */}
-        {/* Sits at z-index: 15 behind .hero-crt-screen-curvature (z-16)  */}
-        {/* Scrolls up and vanishes with the front page as user scrubs!   */}
-        {/* ============================================================== */}
         <div
           ref={authContainerRef}
           className="hero-top-auth-cluster"
           style={{
             position: 'absolute',
             zIndex: 15,
-            transition: 'transform 0.06s linear, opacity 0.1s ease',
-            willChange: 'transform, opacity',
+            opacity: 0,
+            pointerEvents: 'none',
+            visibility: 'hidden',
           }}
         >
-          <div className="hero-crt-tilt hero-crt-tilt--right">
-            <AuthHeaderBadge variant="crt" />
-          </div>
+          <AuthHeaderBadge />
         </div>
       </div>
     </div>
